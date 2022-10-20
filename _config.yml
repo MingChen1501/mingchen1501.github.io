@@ -10,12 +10,12 @@ show_excerpts: true # set to true to show excerpts on the homepage
 # Minima date format
 # refer to https://shopify.github.io/liquid/filters/date/ if you want to customize this
 minima:
-  date_format: "Bài viết được đăng lúc: %d-%m-%Y %H:%M."
+  date_format: "Bài viết được đăng lúc: %d-%m-%Y."
 
   # generate social links in footer
   social_links:
     # twitter: jekyllrb
-    github: MingChen1501
+    github: starminh123
     # devto: jekyll
     # dribbble: jekyll
     facebook: "100031205593441"
