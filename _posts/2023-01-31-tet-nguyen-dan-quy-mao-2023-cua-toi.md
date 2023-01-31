@@ -47,7 +47,7 @@ Bảo tượng phật hoàng Trần Nhân Tông trên núi Yên Tử. Bảo tư�
 ![DongPagoda](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/way_to_Dong_pagoda_2.JPG)
 Nhà mình mọi năm thường đi leo núi Yên tử (bây giờ toàn ngồi cáp treo là chính, leo là phụ :D :D ). Tuy có cáp treo hỗ trợ nhưng mà, leo lên đỉnh Yên tử vẫn xứng đáng được gọi là đau chân đó (●'◡'●)
 
-![DongPagoda2](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/Dong_pagoda.JPG.JPG)
+![DongPagoda2](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/Dong_pagoda.JPG)
 Đây là chùa Đồng nằm trên đỉnh núi Yên tử cao hơn 1000m so với mực nước biển
 
 ![TamTrucPagoda](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/tam_truc-pagoda.JPG)
