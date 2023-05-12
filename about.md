@@ -1,6 +1,6 @@
 ---
 layout: page
-title: giới thiệu
+title: Giới thiệu
 permalink: /about-me/
 ---
 
