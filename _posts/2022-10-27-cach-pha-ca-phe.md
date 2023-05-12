@@ -4,7 +4,7 @@ author: Ming Chen
 title: "Cách pha cà phê"
 ---
 
->Một ly cà phê ngon là phải vừa ngọt vừa đắng
+>Một ly cà phê ngon là phải vừa ngọt vừa đắng ![buoc2](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg)
 
 * Cho cà phê vào 1/2 phin.
 

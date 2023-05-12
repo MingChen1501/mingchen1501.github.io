@@ -4,9 +4,7 @@ author: Ming Chen
 title: "Tết Quý Mão 2023"
 ---
 
->Nhân dịp đầu xuân năm mới Quý Mão 2023, chúc mọi người một năm mới an lành, may mắn.
-
-![Greeting](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_year_greatings_2.JPG)
+>Nhân dịp đầu xuân năm mới Quý Mão 2023, chúc mọi người một năm mới an lành, may mắn. ![Greeting](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_year_greatings_2.JPG)
 
 *Năm nay là mình tròn 2 giáp rồi, nhanh thật, chả mấy mà già nhỉ. Sau đây mình xin được chia sẻ về kỳ nghỉ tết của mình.*
 

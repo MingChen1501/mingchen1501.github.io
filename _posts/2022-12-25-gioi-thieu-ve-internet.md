@@ -4,7 +4,7 @@ author: Ming Chen
 title: "Giải thích về Internet"
 ---
 
->Internet là mạng máy tính phổ biến nhất thế giới. Nó bắt đầu như một dự án nghiên cứu học thuật vào năm 1969. Và trở thành một mạng lưới thương mại toàn cầu vào những năm 1990.
+>Internet là mạng máy tính phổ biến nhất thế giới. Nó bắt đầu như một dự án nghiên cứu học thuật vào năm 1969. Và trở thành một mạng lưới thương mại toàn cầu vào những năm 1990. ![Image](https://noguiltlife.com/wp-content/uploads/2016/11/al-gore-internet-e1541085150286.jpg.webp)
 
 ## Internet là cái gì ?
 
