@@ -54,4 +54,4 @@ Computer Programming, May 2021 – present
 
 - **Coursework:** Data Structure & Algorithm, Computer Architecture, networking, Programming languages, Database, Android programming.
 
-<https://mingchen.me/assets/CV-Tran-Cong-Minh-14-5-23.pdf>(link)
+<https://mingchen.me/assets/CV-Tran-Cong-Minh-14-5-23.pdf>
