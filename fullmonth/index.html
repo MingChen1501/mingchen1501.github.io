@@ -8,7 +8,10 @@
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="🎉 Fullmonth Gạo 🎉">
   <meta property="og:description" content="Thiệp mời tham dự tiệc đầy tháng của Trần Bảo Ngọc - Gạo">
-  <meta property="og:image" content="https://mingchen.id.vn/fullmonth/peeps-avatar-alpha%20(6).png">
+  <meta property="og:image" content="https://mingchen.id.vn/fullmonth/peeps-avatar-alpha (6).png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:url" content="https://mingchen.id.vn/fullmonth">
   <meta property="og:type" content="website">
 
@@ -78,6 +81,30 @@
     .invite-img{
       max-width:200px;
       border-radius:50%;
+      display:block;
+    }
+    .gallery{
+      display:flex;
+      justify-content:center;
+      gap:20px;
+      margin-top:2rem;
+      flex-wrap:wrap;
+    }
+    .gallery-item{
+      width:120px;
+      height:120px;
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      transition:transform 0.3s ease;
+    }
+    .gallery-item:hover{
+      transform:scale(1.05);
+    }
+    .gallery-item img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
       display:block;
     }
     .countdown{
@@ -227,6 +254,15 @@
         padding: 10px;
       }
       
+      .gallery {
+        gap: 12px;
+      }
+      
+      .gallery-item {
+        width: 100px;
+        height: 100px;
+      }
+      
       .countdown {
         gap: 6px;
       }
@@ -260,6 +296,19 @@
     <!-- White circle photo -->
     <div class="photo-wrapper">
       <img src="peeps-avatar-alpha (6).png" alt="Siddharth 3D Photo" class="invite-img" />
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery">
+      <div class="gallery-item">
+        <img src="peeps-avatar-alpha (6).png" alt="Gallery Image 1" />
+      </div>
+      <div class="gallery-item">
+        <img src="peeps-avatar-alpha (6).png" alt="Gallery Image 2" />
+      </div>
+      <div class="gallery-item">
+        <img src="peeps-avatar-alpha (6).png" alt="Gallery Image 3" />
+      </div>
     </div>
 
     <!-- Countdown -->
