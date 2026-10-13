@@ -5,56 +5,49 @@ author:
 description: > # this means to ignore newlines until "show_excerpts:"
   Hola world, mình là Ming, đây là nơi mình chia sẻ linh tinh trong học tập và cuộc sống
 
-show_excerpts: true # set to true to show excerpts on the homepage
-
-# Minima date format
-# refer to https://shopify.github.io/liquid/filters/date/ if you want to customize this
-minima:
-  date_format: "Bài viết được đăng lúc: %d-%m-%Y."
-
-  # generate social links in footer
-  social_links:
-    # twitter: jekyllrb
-    github: MingChen1501
-    # devto: jekyll
-    # dribbble: jekyll
-    facebook: mingchenn1501
-    # flickr:   jekyll
-    instagram: mingchenn1501
-    linkedin: mingchen1501
-    # pinterest: jekyll
-    # youtube: jekyll
-    youtube_channel: UCriw08sS1Jg4ftN8Wd3Wefg
-    youtube_channel_name: MinG Chen
-    # telegram: jekyll
-    # googleplus: +jekyll
-    # microdotblog: jekyll
-    # keybase: jekyll
-
-    # Mastodon instances
-    # mastodon:
-    # - username: jekyll
-    #   instance: example.com
-    # - username: jekyll2
-    #   instance: example.com
-
-    # GitLab instances
-    # gitlab:
-    # - username: jekyll
-    #   instance: example.com
-    # - username: jekyll2
-    #   instance: example.com
-
-# If you want to link only specific pages in your header, uncomment
-# this and add the path to the pages in order as they should show up
+# If you want to link only specific pages in your header, list them here
+# under `minima.nav_pages` (paths as represented via Liquid).
 header_pages:
   - about.md
   - portfolio.md
-
 
 # Build settings
 theme: minima
 
 plugins:
- - jekyll-feed
- - jekyll-seo-tag
+  - jekyll-feed
+  - jekyll-seo-tag
+
+sass:
+  quiet_deps: true
+  silence_deprecations: [import]
+
+minima:
+  # Skin selection: classic, dark, auto, solarized, solarized-light, solarized-dark
+  skin: classic
+
+  # Specific pages for site navigation
+  nav_pages:
+    - about.md
+    - portfolio.md
+
+  show_excerpts: true
+
+  date_format: "Bài viết được đăng lúc: %d-%m-%Y."
+
+  social_links:
+    - title: GitHub
+      icon: github
+      url: "https://github.com/MingChen1501"
+    - title: Facebook
+      icon: facebook
+      url: "https://facebook.com/mingchenn1501"
+    - title: Instagram
+      icon: instagram
+      url: "https://instagram.com/mingchenn1501"
+    - title: LinkedIn
+      icon: linkedin
+      url: "https://www.linkedin.com/in/mingchen1501"
+    - title: YouTube (MinG Chen)
+      icon: youtube
+      url: "https://www.youtube.com/channel/UCriw08sS1Jg4ftN8Wd3Wefg"
