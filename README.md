@@ -1,16 +1,37 @@
-# minima
+> [!WARNING]
+> **The `master` branch is under active development towards a semver-major release with non-backwards-compatible changes.**
+> 
+> While you may use this theme in the current state either via the `jekyll-remote-theme` plugin or via a Gemfile, it is
+> recommended to point to a particular git ref that does not break your site's existing render and gradually update to a
+> newer git ref via a pull request after consulting this repository's commit-log and README.
+>
+> **Pointing directly to the `HEAD` commit of the `master` branch is risky and may contain changes that break your site.** 
+>
+> Example of pointing to a particular git ref via `jekyll-remote-theme` plugin:
+> ```yaml
+> # _config.yml
+>
+> remote_theme: "jekyll/minima@1e8a445"
+> ```
+> Example of pointing to a particular git ref via `Gemfile` (with `theme: minima` in `_config.yml`)
+> ```ruby
+> # Gemfile
+>
+> gem "minima", github: "jekyll/minima", ref: "1e8a445"
+> ```
 
-*Minima is a one-size-fits-all Jekyll theme for writers*. It's Jekyll's default (and first) theme. It's what you get when you run `jekyll new`.
+<br/><br/>
 
-***Disclaimer:** The information here may vary depending on the version you're using. Please refer to the `README.md` bundled
-within the theme-gem for information specific to your version or by pointing your browser to the Git tag corresponding to your
-version. e.g. https://github.com/jekyll/minima/blob/v2.5.0/README.md*  
-*Running `bundle show minima` will provide you with the local path to your current theme version.*
-
-
-[Theme preview](https://jekyll.github.io/minima/)
-
-![minima theme preview](/screenshot.png)
+<div align="center">
+  <p><em><strong>Disclaimer:</strong> The information here may vary depending on the version you're using.<br/>
+  Please refer to the <code>README.md</code> bundled within the theme-gem for information specific to your version or by pointing
+  your browser to the Git tag corresponding to your version. e.g. https://github.com/jekyll/minima/blob/v2.5.0/README.md.<br/>
+  Running <code>bundle show minima</code> will provide you with the local path to your current theme version.</em></p>
+  <img src="/readme_banner.svg"/>
+  <p>It's Jekyll's default (and first) theme. It's what you get when you run <code>jekyll new</code>.</p>
+  <p><a href="https://jekyll.github.io/minima/">Theme preview</a></p>
+  <p><img src="/screenshot.png"/></p>
+</div>
 
 ## Installation
 
@@ -33,10 +54,33 @@ Minima has been scaffolded by the `jekyll new-theme` command and therefore has a
 
 Refers to files within the `_layouts` directory, that define the markup for your theme.
 
-  - `default.html` &mdash; The base layout that lays the foundation for subsequent layouts. The derived layouts inject their contents into this file at the line that says ` {{ content }} ` and are linked to this file via [FrontMatter](https://jekyllrb.com/docs/frontmatter/) declaration `layout: default`.
+  - `base.html` &mdash; The base layout that lays the foundation for subsequent layouts. The derived layouts inject their
+    contents into this file at the line that says ` {{ content }} ` and are linked to this file via
+    [FrontMatter](https://jekyllrb.com/docs/frontmatter/) declaration `layout: base`.
   - `home.html` &mdash; The layout for your landing-page / home-page / index-page. [[More Info.](#home-layout)]
   - `page.html` &mdash; The layout for your documents that contain FrontMatter, but are not posts.
   - `post.html` &mdash; The layout for your posts.
+
+#### Base Layout
+
+From Minima v3 onwards, the base layout is named **`base.html`** instead of `default.html` to avoid confusing new users into
+assuming that name holds special status.
+
+Users migrating from older versions with customized `_layouts/default.html` are advised to rename their copy to
+`_layouts/base.html`. Migrating users with additional customized layouts may either update front matter references to former
+`default.html` layout or create a new `default.html` layout referencing the current `base.html`, whichever route being the
+easiest:
+
+```
+---
+# new `_layouts/default.html` for backwards-compatibility when multiple
+# layouts have been customized.
+
+layout: base
+---
+
+{{ content }}
+```
 
 #### Home Layout
 
@@ -60,13 +104,16 @@ The title for this section is `Posts` by default and rendered with an `<h2>` tag
 
 Refers to snippets of code within the `_includes` directory that can be inserted in multiple layouts (and another include-file as well) within the same theme-gem.
 
-  - `disqus_comments.html` &mdash; Code to markup disqus comment box.
+  - `comments.html` &mdash; Markup to render comments (via Disqus; active only when Jekyll environment is set to `production`).
   - `footer.html` &mdash; Defines the site's footer section.
   - `google-analytics.html` &mdash; Inserts Google Analytics module (active only in production environment).
   - `head.html` &mdash; Code-block that defines the `<head></head>` in *default* layout.
   - `custom-head.html` &mdash; Placeholder to allow users to add more metadata to `<head />`.
-  - `header.html` &mdash; Defines the site's main header section. By default, pages with a defined `title` attribute will have links displayed here.
-  - `social.html` &mdash; Renders social-media icons based on the `minima:social_links` data in the config file.
+  - `header.html` &mdash; Defines the site's main header section that consists of the site's *title* and *navigation*.
+  - `nav-items.html` &mdash; Contains the logic and markup to render individual link items for the site's navigation.
+  - `social.html` &mdash; Renders social-media icons based on the `minima:social_links` data in the config file using
+    the latest version of Font Awesome Free webfonts via remote CDN.
+  - `sub-footer.html` &mdash; Placeholder to allow inserting markup (e.g. deferred scripts) before the `</body>` tag.
 
 
 ### Sass
@@ -90,8 +137,8 @@ Refers to various asset files within the `assets` directory.
 
   - `assets/css/style.scss` &mdash; Imports sass files from within the `_sass` directory and gets processed into the theme's
     stylesheet: `assets/css/styles.css`.
-  - `assets/minima-social-icons.svg` &mdash; A composite SVG file comprised of *symbols* related to various social-media icons.
-    This file is used as-is without any processing. Refer [section on social networks](#social-networks) for its usage.
+  - `assets/minima-social-icons.html` &mdash; Imports enabled social-media icon graphic and gets processed into a composite SVG file.
+    Refer [section on social networks](#social-networks) for its usage.
 
 
 ### Plugins
@@ -133,8 +180,9 @@ Therefore, your `assets/css/style.scss` should contain the following at minimum:
 ---
 ---
 
-@import "minima/skins/{{ site.minima.skin | default: 'classic' }}";
-@import "minima/initialize";
+@import
+  "minima/skins/{{ site.minima.skin | default: 'classic' }}",
+  "minima/initialize";
 ```
 
 #### Skins
@@ -173,10 +221,17 @@ Minima 2.0      | Minima 3.0
 
 ##### Available skins
 
-- classic
-- dark
-- solarized
-- solarized-dark
+Skin setting    | Description
+--------------- | -----------
+classic         | Default, light color scheme.
+dark            | Dark variant of the classic skin.
+auto            | *Adaptive skin* based on the default classic and dark skins.
+solarized       | *Adaptive skin* for [solarized](https://github.com/solarized) color scheme skins.
+solarized-light | Light variant of solarized color scheme.
+solarized-dark  | Dark variant of solarized color scheme.
+
+*:bulb: Adaptive skins switch between the "light" and "dark" variants based on the user's operating system setting or browser setting
+(via CSS Media Query [prefers-color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)).*
 
 ### Customize navigation links
 
@@ -185,10 +240,13 @@ This allows you to set which pages you want to appear in the navigation area and
 For instance, to only link to the `about` and the `portfolio` page, add the following to your `_config.yml`:
 
 ```yaml
-header_pages:
-  - about.md
-  - portfolio.md
+minima:
+  nav_pages:
+    - about.md
+    - portfolio.md
 ```
+> [!WARNING]
+> Please note that **`site.header_pages`** is **`site.minima.nav_pages`** in Minima 3.0
 
 
 ### Change default date format
@@ -214,22 +272,20 @@ You can *add* custom metadata to the `<head />` of your layouts by creating a fi
 
 ### Enabling comments (via Disqus)
 
-Optionally, if you have a Disqus account, you can tell Jekyll to use it to show a comments section below each post.
-
-:warning: `url`, e.g. `https://example.com`, must be set in you config file for Disqus to work.
-
-To enable it, after setting the url field, you also need to add the following lines to your Jekyll site:
+Optionally, if you have a Disqus account, you can render a comments section below each post with the following configuration:
 
 ```yaml
-  disqus:
-    shortname: my_disqus_shortname
+url: "https://my_domain.com"
+disqus:
+  shortname: my_disqus_shortname
 ```
 
 You can find out more about Disqus' shortnames [here](https://help.disqus.com/installation/whats-a-shortname).
 
 Comments are enabled by default and will only appear in production, i.e., `JEKYLL_ENV=production`
 
-If you don't want to display comments for a particular post you can disable them by adding `comments: false` to that post's YAML Front Matter.
+If you don't want to display comments for a particular post you can disable them by adding `comments: false` to that
+post's YAML Front Matter.
 
 ### Author Metadata
 
@@ -251,59 +307,54 @@ Minima 2.x    | Minima 3.0
 
 ### Social networks
 
-You can add links to the accounts you have on other sites, with respective icon, by adding one or more of the following options in your config.
-From `Minima-3.0` onwards, the usernames are to be nested under `minima.social_links`, with the keys being simply the social-network's name:
+You can add links to the accounts you have on other sites, with respective icon as an SVG graphic, via the config file.
+From `Minima-3.0` onwards, the social media data is sourced from config key `minima.social_links`. It is a list of key-value pairs, each entry
+corresponding to a link rendered in the footer. For example, to render links to Jekyll GitHub repository and Twitter account (now X), one
+should have:
 
 ```yaml
 minima:
   social_links:
-    twitter: jekyllrb
-    github: jekyll
-    stackoverflow: "11111"
-    dribbble: jekyll
-    facebook: jekyll
-    flickr: jekyll
-    instagram: jekyll
-    linkedin: jekyll
-    pinterest: jekyll
-    telegram: jekyll
-    microdotblog: jekyll
-    keybase: jekyll
-
-    mastodon:
-     - username: jekyll
-       instance: example.com
-     - username: jekyll2
-       instance: example.com
-
-    gitlab:
-     - username: jekyll
-       instance: example.com
-     - username: jekyll2
-       instance: example.com
-
-    youtube: jekyll
-    youtube_channel: UC8CXR0-3I70i1tfPg1PAE1g
-    youtube_channel_name: CloudCannon
+    - title: Jekyll repository at GitHub
+      icon: github
+      url: "https://github.com/jekyll/jekyll"
+    - title: Jekyll at X (formerly Twitter)
+      icon: x-twitter
+      url: "https://x.com/jekyllrb"
 ```
 
+where `title` corresponds to the link-title displayed when a visitor hovers mouse-pointer over url / icon and
+`icon` refers to the Font Awesome icon id. e.g. `github` corresponds to `fa-github`.
+
+Social platform icons are rendered using the latest version of Font Awesome Free webfonts sourced via remote CDN.
+The full list of available social icons can be found at https://fontawesome.com/search?ic=brands
+
+> [!NOTE]
+> The link to your site's main syndication feed is always rendered as the last item of the social-links list.<br />
+> You may opt to not have this link rendered at all by setting config **`minima.hide_site_feed_link`** to `true`:
+> ```yaml
+> minima:
+>   hide_site_feed_link: true  # `false` or `null` by default
+> ```
 
 ### Enabling Google Analytics
 
 To enable Google Analytics, add the following lines to your Jekyll site:
 
 ```yaml
-  google_analytics: UA-NNNNNNNN-N
+google_analytics: G-NNNNNNNNNN  // The former `UA-NNNNNNNN-N` format is no longer supported by Google
 ```
 
-Google Analytics will only appear in production, i.e., `JEKYLL_ENV=production`
+Google Analytics will only appear in production, i.e., `JEKYLL_ENV=production`.
 
 ### Enabling Excerpts on the Home Page
 
-To display post-excerpts on the Home Page, simply add the following to your `_config.yml`:
+To display post-excerpts on the Home Page, simply set `show_excerpts` under top-level key `minima` to `true` in your
+`_config.yml`:
 
 ```yaml
-show_excerpts: true
+minima:
+  show_excerpts: true
 ```
 
 
