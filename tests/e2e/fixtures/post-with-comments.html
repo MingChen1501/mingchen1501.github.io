@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>E2E Sample Post (comments enabled)</title>
+</head>
+<body>
+  <!--
+    Fixture mirroring the production render of `_layouts/post.html` for a post
+    with comments enabled (no `comments: false` front matter), with
+    JEKYLL_ENV=production and site.disqus.shortname=e2e-test-shortname.
+
+    The comments block below keeps the exact structure of
+    `_includes/comments.html` with Liquid variables substituted:
+      page.url        -> /2026/01/01/e2e-sample-post.html
+      page.id         -> /2026/01/01/e2e-sample-post
+      disqus shortname -> e2e-test-shortname
+    `test_comments_markup.py` guards against drift between this fixture
+    and the real templates.
+  -->
+  <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+    <header class="post-header">
+      <h1 class="post-title p-name" itemprop="name headline">E2E Sample Post</h1>
+    </header>
+
+    <div class="post-content e-content" itemprop="articleBody">
+      <p>Hello from the comments E2E fixture.</p>
+    </div>
+
+    <div id="disqus_thread"></div>
+    <script>
+      var disqus_config = function () {
+        this.page.url = 'http://localhost:8080/2026/01/01/e2e-sample-post.html';
+        this.page.identifier = '/2026/01/01/e2e-sample-post';
+      };
+      (function() {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://e2e-test-shortname.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+      })();
+    </script>
+    <noscript>
+      Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+    </noscript>
+
+    <a class="u-url" href="/2026/01/01/e2e-sample-post.html" hidden></a>
+  </article>
+</body>
+</html>

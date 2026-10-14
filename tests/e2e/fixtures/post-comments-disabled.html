@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>E2E Sample Post (comments disabled)</title>
+</head>
+<body>
+  <!--
+    Fixture mirroring the production render of `_layouts/post.html` for a post
+    with `comments: false` front matter: the disabled message is shown and the
+    comments include is skipped entirely.
+  -->
+  <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+    <header class="post-header">
+      <h1 class="post-title p-name" itemprop="name headline">E2E Sample Post</h1>
+    </header>
+
+    <div class="post-content e-content" itemprop="articleBody">
+      <p>Hello from the comments E2E fixture.</p>
+    </div>
+
+    <div class="comments-disabled-message">
+      Comments have been disabled for this post.
+    </div>
+
+    <a class="u-url" href="/2026/01/01/e2e-sample-post.html" hidden></a>
+  </article>
+</body>
+</html>
