@@ -9,9 +9,9 @@ title: "Thử setup orchestration cho AI coding agent"
 ## Vì sao thử?
 - Dạo này thấy anh em dùng các coding agent ngày càng nhiều, mỗi agent lại có chỗ mạnh riêng.
 - Một mình điều phối nhiều session/worker thủ công thì hơi rối, nên mình muốn thử có một lớp orchestration để quản lý công việc cho gọn.
-- Long về thì đây cũng là bước nhỏ trong việc tối ưu luồng code của mình.
+- Về lâu dài thì đây cũng là bước nhỏ trong việc tối ưu luồng code của mình.
 
-## Thử today
+## Thử hôm nay
 - Setup xong rồi chạy thử một vài tác vụ nhỏ.
 - Cảm giác luồng làm việc rõ ràng hơn, agent có vẻ "biết việc" hơn khi được điều phối và theo dõi trạng thái.
 - Có chỗ còn chưa quen, nhưng tổng thể thấy đáng để tiếp tục thử thêm.
