@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>E2E Sample Post (no Disqus shortname configured)</title>
+</head>
+<body>
+  <!--
+    Fixture mirroring the production render of `_layouts/post.html` when
+    `site.disqus.shortname` is NOT configured: `_includes/comments.html`
+    renders nothing, so the page has no comment thread at all.
+  -->
+  <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+    <header class="post-header">
+      <h1 class="post-title p-name" itemprop="name headline">E2E Sample Post</h1>
+    </header>
+
+    <div class="post-content e-content" itemprop="articleBody">
+      <p>Hello from the comments E2E fixture.</p>
+    </div>
+
+    <a class="u-url" href="/2026/01/01/e2e-sample-post.html" hidden></a>
+  </article>
+</body>
+</html>

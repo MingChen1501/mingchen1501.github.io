@@ -1,0 +1,3 @@
+# End-to-end (browser) test dependencies for the comments feature.
+pytest>=8.0
+playwright>=1.44

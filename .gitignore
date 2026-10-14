@@ -21,4 +21,10 @@ Gemfile.lock
 ehthumbs.db
 Thumbs.db
 
+# E2E test artifacts
+.pytest_cache/
+tests/e2e/__pycache__/
+playwright-report/
+test-results/
+
 generating...
