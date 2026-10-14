@@ -74,8 +74,14 @@ def test_enabled_fixture_matches_template_structure():
     html = _read(ENABLED_FIXTURE)
     assert '<div id="disqus_thread"></div>' in html
     assert "disqus_config" in html
-    assert "/2026/01/01/e2e-sample-post.html" in html
-    assert "this.page.identifier" in html
+    # Assert the full assignment values: the identifier is a substring of
+    # the URL path, so bare substring checks would pass even if the
+    # identifier assignment were dropped from the fixture.
+    assert (
+        "this.page.url = 'http://localhost:8080/2026/01/01/e2e-sample-post.html'"
+        in html
+    )
+    assert "this.page.identifier = '/2026/01/01/e2e-sample-post'" in html
     assert "e2e-test-shortname.disqus.com/embed.js" in html
     assert "<noscript>" in html
 

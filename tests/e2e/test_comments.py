@@ -101,10 +101,18 @@ def test_enabled_post_configures_page_url_and_identifier(page, e2e_server):
     )
 
     assert config_script is not None, "expected an inline disqus_config script"
-    assert POST_PATH in config_script, (
+    lines = config_script.splitlines()
+    # Assert on the assignment lines specifically: POST_IDENTIFIER is a
+    # substring of POST_PATH, so whole-script substring checks would pass
+    # even if the identifier wiring were broken.
+    url_lines = [line for line in lines if "this.page.url" in line]
+    assert url_lines, "disqus_config should assign this.page.url"
+    assert POST_PATH in url_lines[0], (
         "disqus_config should carry the canonical page URL path"
     )
-    assert POST_IDENTIFIER in config_script, (
+    identifier_lines = [line for line in lines if "this.page.identifier" in line]
+    assert identifier_lines, "disqus_config should assign this.page.identifier"
+    assert POST_IDENTIFIER in identifier_lines[0], (
         "disqus_config should carry the page identifier"
     )
 

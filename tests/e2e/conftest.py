@@ -31,4 +31,5 @@ def e2e_server():
         yield f"http://{host}:{port}"
     finally:
         server.shutdown()
+        server.server_close()
         thread.join(timeout=5)
