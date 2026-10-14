@@ -47,7 +47,7 @@ Cựu phó tổng thống AI Gore thường được trích dẫn là đã tuyê
 Không ai điều hành Internet. Nó được tổ chức như một mạng lưới phi tập trung của các mạng lưới. hàng nghìn công ty, trường học, chính phủ và các thực thể khác vận hành mạng của riêng họ và trao đổi lưu lượng với nhau dựa trên các thỏa thuận kết nối tự nguyện.
 Các tiêu chuẩn kỹ thuật dùng chung giúp Internet hoạt động được quản lý bởi một tổ chức có tên là lực lượng đặc nhiệm kỹ thuật internent (Internet engineering task force - IETF). IETF là một tổ chức mở; bất kỳ ai cũng được tự do tham dự các cuộc họp, đề xuất các tiêu chuẩn mới và đề xuất các thay đổi đối với các tiêu chuẩn hiện có. Không ai bắt buộc phải áp dụng các tiểu chuẩn được IETF xác nhận, nhưng quy trình ra quyết định dựa trên sự đồng thuận của IETF giúp đảm bảo rằng các khuyến nghị của nó thường được cộng đồng internet chấp nhận.
 ![Image](https://www.shutterstock.com/image-vector/ietf-internet-engineering-task-force-260nw-2101446037.jpg)
-Tập đoàn cấp số và tên cho Internet (The Internet Corporation for Assigned Names and Numbers - ICANN) đôi khi được mô tả là chịu trách nhiểm quản trị internet. Đúng như tên gọi, ICANN chịu trách nhiệm phân phối tên miền (như mingchen.me) và địa chỉ IP. Nhưng ICANN không kiểm soát ai có thể kết nối với internet hoặc loại thông tin nào có thể được gửi qua internet.
+Tập đoàn cấp số và tên cho Internet (The Internet Corporation for Assigned Names and Numbers - ICANN) đôi khi được mô tả là chịu trách nhiểm quản trị internet. Đúng như tên gọi, ICANN chịu trách nhiệm phân phối tên miền (như mingchen.id.vn) và địa chỉ IP. Nhưng ICANN không kiểm soát ai có thể kết nối với internet hoặc loại thông tin nào có thể được gửi qua internet.
 ![Image](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRzB66p6cGl20j_seWl2RfRks-EeSleS5qhA&usqp=CAU)
 
 ## Địa chỉ IP (IP address) là gì ?
@@ -121,7 +121,7 @@ SSL được netscape giới thiệu vào năm 1994. Trong những năm đầu, 
 
 ## DNS là gì ?
 
-DNS - Domain Name System - Hệ thống phân giải tên miền là lý do bạn có thể truy cập mingchen bằng cách nhập mingchen.me vào trình duyệt của mình thay vì một địa chỉ số khó nhớ, chẳng hạn như 216.146.46.10.
+DNS - Domain Name System - Hệ thống phân giải tên miền là lý do bạn có thể truy cập mingchen bằng cách nhập mingchen.id.vn vào trình duyệt của mình thay vì một địa chỉ số khó nhớ, chẳng hạn như 216.146.46.10.
 Hệ thống có thứ bậc. ví dụ: tên miền .com được quản lý bởi một công ty có tên là Verisign. Verisign chỉ định các tên miền phụ như google.com và facebook.com. ngược lại, chủ sở hữu các miền cấp hai này có thể tạo các miền phụ như mail.google.com và maps.google.com.
 Bởi vì các trang web phổ biến sử dụng tên miền để tự nhận dạng công khai, nên tính bảo mật của DNS ngày càng trở thành mỗi quang tâm. Tội phạm cũng như gián điệp của chính phủ đã tìm cách xâm phạm DNS để mạo danh các trang web phổ biến như facebook.com và gmail.com và chặn liên lạc riêng tư của họ. một tiêu chuẩn đưuọc gọi là DNSSEC tìm cách tăng cường bảo mật DNS bằng mã hóa, nhưng ít người chấp nhận nó.
 ![Image](https://media.geeksforgeeks.org/wp-content/uploads/20200822065029/UntitledDiagram.png)
