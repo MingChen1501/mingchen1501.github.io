@@ -270,9 +270,40 @@ You can *add* custom metadata to the `<head />` of your layouts by creating a fi
 2. [Customize](#customization) default `_includes/custom-head.html` in your source directory and insert the given code snippet.
 
 
-### Enabling comments (via Disqus)
+### Enabling comments
 
-Optionally, if you have a Disqus account, you can render a comments section below each post with the following configuration:
+Comments are rendered below posts using one provider selected by configuration. The recommended provider is
+Giscus, which stores threads in GitHub Discussions. Disqus remains supported for existing configurations.
+
+```yaml
+comments:
+  provider: giscus   # none | giscus | disqus
+  dev: false         # render comments in non-production builds for testing
+
+giscus:
+  repo: MingChen1501/mingchen1501.github.io
+  repo_id: ...
+  category: Announcements
+  category_id: ...
+  mapping: pathname
+  strict: "0"
+  reactions_enabled: "1"
+  emit_metadata: "0"
+  input_position: bottom
+  theme: preferred_color_scheme
+  lang: vi
+  loading: lazy
+```
+
+To enable Giscus:
+
+1. Enable GitHub Discussions on the repository.
+2. Install the Giscus GitHub App on the repository.
+3. Choose a discussion category (Open-source `Announcements` is recommended).
+4. Obtain `repo_id` and `category_id` from the Giscus setup page and add them to `_config.yml`.
+
+Legacy Disqus configurations still work when `site.comments.provider` is unset and `site.disqus.shortname`
+is present. You can also use the original configuration directly:
 
 ```yaml
 url: "https://my_domain.com"
@@ -280,12 +311,10 @@ disqus:
   shortname: my_disqus_shortname
 ```
 
+Comments only appear in production (`JEKYLL_ENV=production`) unless `comments.dev: true` is set.
+Set `comments: false` in a post's front matter to disable comments for that post.
+
 You can find out more about Disqus' shortnames [here](https://help.disqus.com/installation/whats-a-shortname).
-
-Comments are enabled by default and will only appear in production, i.e., `JEKYLL_ENV=production`
-
-If you don't want to display comments for a particular post you can disable them by adding `comments: false` to that
-post's YAML Front Matter.
 
 ### Author Metadata
 
