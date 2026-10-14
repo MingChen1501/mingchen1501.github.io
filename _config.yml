@@ -41,3 +41,23 @@ theme: minima
 plugins:
  - jekyll-feed
  - jekyll-seo-tag
+
+# Comments
+comments:
+  provider: giscus   # none | giscus | disqus
+  dev: false         # render comments in non-production builds for testing
+
+# Giscus (GitHub Discussions) configuration
+giscus:
+  repo: MingChen1501/mingchen1501.github.io
+  repo_id: R_kgDOHBJg8A
+  category: Announcements
+  category_id: DIC_kwDOHBJg8M4DIbBW
+  mapping: pathname
+  strict: "0"
+  reactions_enabled: "1"
+  emit_metadata: "0"
+  input_position: bottom
+  theme: preferred_color_scheme
+  lang: vi
+  loading: lazy

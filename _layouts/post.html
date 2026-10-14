@@ -36,15 +36,32 @@ layout: base
     {{ content }}
   </div>
 
-  {% if jekyll.environment == 'production' -%}
-    {% if page.comments == false -%}
-    <div class="comments-disabled-message">
-      Comments have been disabled for this post.
-    </div>
-    {% else -%}
+  {%- assign comments_provider = site.comments.provider | default: '' -%}
+  {%- if comments_provider == '' and site.disqus.shortname -%}
+    {%- assign comments_provider = 'disqus' -%}
+  {%- endif -%}
+  {%- if comments_provider == '' -%}
+    {%- assign comments_provider = 'none' -%}
+  {%- endif -%}
+
+  {%- assign allow_comments = false -%}
+  {%- if jekyll.environment == 'production' -%}
+    {%- assign allow_comments = true -%}
+  {%- elsif site.comments.dev == true -%}
+    {%- assign allow_comments = true -%}
+  {%- endif -%}
+
+  {%- if allow_comments -%}
+    {%- if page.comments == false -%}
+      {%- if comments_provider != 'none' -%}
+      <div class="comments-disabled-message" role="status">
+        Comments have been disabled for this post.
+      </div>
+      {%- endif -%}
+    {%- else -%}
       {%- include comments.html -%}
-    {% endif -%}
-  {% endif -%}
+    {%- endif -%}
+  {%- endif -%}
 
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
 </article>
