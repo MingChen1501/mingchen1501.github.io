@@ -295,12 +295,36 @@ giscus:
   loading: lazy
 ```
 
-To enable Giscus:
+To enable Giscus step by step (owner clicks required — a worker session cannot
+install a GitHub App via OAuth on your behalf):
 
-1. Enable GitHub Discussions on the repository.
-2. Install the Giscus GitHub App on the repository.
-3. Choose a discussion category (Open-source `Announcements` is recommended).
-4. Obtain `repo_id` and `category_id` from the Giscus setup page and add them to `_config.yml`.
+1. Enable GitHub Discussions (already on for this repo — verified via the API:
+   `has_discussions: true`). If you ever need to re-check, go to
+   `https://github.com/MingChen1501/mingchen1501.github.io/settings` and look
+   for the Discussions checkbox under Features.
+2. Install the Giscus App:
+   - Open <https://github.com/apps/giscus> and click **Install**.
+   - Choose **Only select repositories** and pick
+     `MingChen1501/mingchen1501.github.io`, then **Install**.
+   - This step is still pending: the Giscus backend currently answers
+     `403 {"error":"giscus is not installed on this repository"}` for this repo,
+     so live threads will not load until the install completes.
+3. Pick a discussion category. This repo uses the default `Announcements`
+   category; creating a dedicated `Comments` category later is optional.
+4. Get the IDs from <https://giscus.app>:
+   - Enter `MingChen1501/mingchen1501.github.io` in the **Repository** field.
+   - Tick the checklist until every item is green (public repo, Giscus App
+     installed, Discussions enabled).
+   - Under **Page ↔️ Discussions Mapping** keep `pathname` (matches
+     `giscus.mapping` below); under **Discussion Category** pick
+     `Announcements` (matches `giscus.category`).
+   - Copy the generated `data-repo-id` value into `giscus.repo_id` and the
+     `data-category-id` value into `giscus.category_id` in `_config.yml`.
+   - Already-verified values for this repo (confirmed against the GitHub API,
+     no change needed): `repo_id: R_kgDOHBJg8A`,
+     `category_id: DIC_kwDOHBJg8M4DIbBW` (`Announcements`).
+5. Rebuild/redeploy the site and open any post: the Giscus thread should load
+   instead of the "Comments are temporarily unavailable." fallback.
 
 Legacy Disqus configurations still work when `site.comments.provider` is unset and `site.disqus.shortname`
 is present. You can also use the original configuration directly:
