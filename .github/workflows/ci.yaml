@@ -17,13 +17,13 @@ jobs:
       JEKYLL_VERSION: ${{ matrix.jekyll }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Check image sizes
         run: script/check-images
-      - name: Set Up Ruby 2.7
+      - name: Set Up Ruby 3.3
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7
+          ruby-version: "3.3"
           bundler-cache: true
       - name: Run tests
         run: script/cibuild
