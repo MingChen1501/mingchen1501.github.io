@@ -54,4 +54,13 @@ Computer Programming, May 2021 – present
 
 - **Coursework:** Data Structure & Algorithm, Computer Architecture, networking, Programming languages, Database, Android programming.
 
-(link)<https://mingchen.me/assets/resume-26-5-23.pdf>
+## Resume (PDF)
+
+<object data="{{ '/assets/resume-26-5-23.pdf' | relative_url }}" type="application/pdf" width="100%" height="800px">
+  <p>
+    Trình duyệt của bạn không xem được PDF trực tiếp.
+    <a href="{{ '/assets/resume-26-5-23.pdf' | relative_url }}">Tải resume (PDF)</a>
+  </p>
+</object>
+
+[Tải resume (PDF)]({{ '/assets/resume-26-5-23.pdf' | relative_url }})
