@@ -33,14 +33,27 @@ Check by eye after build + tests are green, since some bugs only appear in produ
 ## Taxonomy and front matter
 
 - Posts use `tags: [one-of-4-pillars]` (max 4/post) and a `description`
-  (~120-155 chars); a missing `tags` keeps the post off `/tags/`, while a missing
+  (~120-155 chars); a missing `tags` keeps the post out of the tag pages and off
+  the post sidebar, while a missing
   `description` falls back to the post excerpt or the site description instead of a
   post-specific summary.
 - The 4 pillars are `backend-production`, `ai-agent`, `linux-tooling`,
-  `doi-song` — no free-form tags.
+  `doi-song` — no free-form tags. Every tag in use needs `tags/<tag>.md`
+  (`layout: tag`, `permalink: /tags/<tag>/`) and its `tags.md` entry; the tag chip
+  on the post links there. `tests/e2e/test_post_layout_markup.py` guards both.
 - New posts follow the template in
   `.opencode/skills/jekyll-post/references/front-matter.md` and the README
   "Writing a new post (mingchen.id.vn taxonomy)" section.
+
+## Post layout and tag pages (epic #44)
+
+- Post pages are two columns above 960px: main = post, secondary = tags +
+  "Bài viết cùng chủ đề". Below that it must collapse to a single column and the
+  sidebar sits under the article. A post without `tags` renders no sidebar at all.
+- The comments block stays **outside** the grid, full width, below both columns.
+- `/tags/` is an index of the 4 pillars linking to `/tags/<tag>/`; each tag page
+  lists the posts with that tag. A tag chip that 404s usually means a missing
+  `tags/<tag>.md` (the guard tests catch this before the build does).
 
 ## Image conventions
 

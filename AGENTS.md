@@ -32,7 +32,14 @@ deployed with GitHub Pages from the `master` branch.
   `.opencode/skills/jekyll-post/references/front-matter.md`.
 - Static pages: `layout: page` + `permalink`; to add a page to the top nav, add its
   path to `minima.nav_pages` in `_config.yml`. The `/tags/` page (`tags.md`) is
-  already listed there and groups posts by pillar.
+  already listed there and is the index of the 4 pillars.
+- Taxonomy pages (#44): each pillar has a front-matter-only page `tags/<tag>.md`
+  (`layout: tag`, `tag: <pillar>`, `permalink: /tags/<tag>/`) because GitHub Pages
+  builds with `--safe` (no archive/tagging plugin). Post pages render a secondary
+  column with the post's tags + posts sharing its first tag
+  (`_layouts/post.html`, `_includes/post-tags.html`, styles in
+  `_sass/minima/custom-styles.scss`). A new tag needs both the page file and its
+  `tags.md` entry — `tests/e2e/test_post_layout_markup.py` guards this.
 - Comments use Giscus (`comments.provider: giscus`); only rendered in production
   (`JEKYLL_ENV=production`), unless `comments.dev: true`. Do not break the logic in
   `_layouts/post.html` and `_includes/comments.html` — the E2E tests depend on it.

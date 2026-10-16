@@ -1,0 +1,16 @@
+{%- comment -%}
+  Tag chips for a post (issue #45). Each chip links to that tag's page
+  (`/tags/<tag>/`, issue #46).
+
+  Usage: {% include post-tags.html tags=page.tags %}
+{%- endcomment -%}
+{%- assign chips = include.tags | default: empty -%}
+{%- if chips.size > 0 -%}
+<ul class="tag-chip-list">
+  {%- for tag in chips -%}
+  <li>
+    <a class="tag-chip" rel="tag" href="{{ '/tags/' | append: tag | append: '/' | relative_url }}">{{ tag | escape }}</a>
+  </li>
+  {%- endfor -%}
+</ul>
+{%- endif -%}

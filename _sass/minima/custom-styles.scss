@@ -1,2 +1,136 @@
 // Placeholder to allow defining custom styles that override everything else.
 // (Use `_sass/minima/custom-variables.scss` to override variable defaults)
+
+// ---------------------------------------------------------------------------
+// Site-specific styles (mingchen.id.vn fork). Imported last, so it overrides
+// both the skin and `minima/layout`.
+//
+// Post page layout (#45, epic #44): main column = the post, secondary column =
+// the post's tags + the other posts sharing its first tag. Tag chips link to
+// the per-tag pages (#46) implemented in `_layouts/tag.html`.
+// ---------------------------------------------------------------------------
+
+// The two-column post page needs more room than Minima's 800px content width.
+// Keyed on the layout class set in `_layouts/base.html`.
+@media screen and (min-width: 960px) {
+  .layout-post .wrapper {
+    max-width: 1080px;
+  }
+}
+
+.post-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-unit;
+}
+
+@media screen and (min-width: 960px) {
+  .post-layout {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: $spacing-unit * 1.5;
+  }
+}
+
+.post-sidebar {
+  align-self: start;
+  font-size: $small-font-size;
+
+  @media screen and (min-width: 960px) {
+    position: sticky;
+    top: $spacing-unit;
+  }
+}
+
+.post-sidebar__section {
+  margin-bottom: $spacing-unit;
+  padding-top: $spacing-unit * 0.5;
+  border-top: 1px solid $border-color-01;
+
+  &:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.post-sidebar__heading {
+  margin: 0 0 $spacing-unit * 0.4;
+  @include relative-font-size(0.8125);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $brand-color-dimmed;
+}
+
+// Tag chips: post sidebar (#45) and the tag index / tag pages (#46).
+ul.tag-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin: 0;
+  }
+}
+
+.tag-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid $border-color-01;
+  border-radius: 999px;
+  font-size: $small-font-size;
+  line-height: 1.6;
+  color: $text-color;
+
+  &:hover,
+  &:focus {
+    border-color: $brand-color-dark;
+    color: $brand-color-dark;
+    text-decoration: none;
+  }
+}
+
+ul.related-posts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin-bottom: $spacing-unit * 0.4;
+
+    .post-meta {
+      display: block;
+    }
+  }
+}
+
+// Tag index (`/tags/`) and tag pages (`/tags/<tag>/`).
+ul.tag-index {
+  margin: 0 0 $spacing-unit;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin-bottom: $spacing-unit * 0.4;
+  }
+}
+
+.tag-index__count {
+  margin-left: 8px;
+  font-size: $small-font-size;
+  color: $brand-color-dimmed;
+}
+
+.tag-page__intro {
+  color: $brand-color-dimmed;
+}
+
+.tag-page__back {
+  margin-top: $spacing-unit * 1.5;
+}
+
+.post-description {
+  margin-bottom: 0;
+}

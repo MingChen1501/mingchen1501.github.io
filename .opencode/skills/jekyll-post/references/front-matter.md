@@ -21,7 +21,7 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 | `author` | Author name. Ming's posts use `author: Ming Chen`. |
 | `date` | Defaults to the `YYYY-MM-DD` in the file name. Only add it for a specific time, e.g. `2026-10-17 08:00:00 +0700`. |
 | `modified_date` | Updated date — the layout adds an "Updated:" line. |
-| `tags` | Required — exactly one (max 4) of the 4 content pillars: `backend-production`, `ai-agent`, `linux-tooling`, `doi-song`. Drives the `/tags/` page grouping. |
+| `tags` | Required — exactly one (max 4) of the 4 content pillars: `backend-production`, `ai-agent`, `linux-tooling`, `doi-song`. Drives the `/tags/` index, the post page's secondary tag column and the `/tags/<tag>/` page. |
 | `description` | Required — ~120-155 chars; rendered as `<meta name="description">` by `jekyll-seo-tag`. |
 | `comments: false` | Disable comments for this post only (posts have Giscus by default). |
 
@@ -33,6 +33,11 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
   fall back to the post excerpt or the site description instead of a post-specific
   summary.
 - See README "Writing a new post (mingchen.id.vn taxonomy)" for the canonical template.
+- A brand-new tag (rare: the pillars are fixed) also needs `tags/<tag>.md`
+  (`layout: tag`, `tag: <pillar>`, `permalink: /tags/<tag>/`) plus its entry in
+  `tags.md`, otherwise the tag chip on the post 404s.
+  `tests/e2e/test_post_layout_markup.py` fails when a published post uses a tag
+  with no page.
 
 ## Real example in this repo
 

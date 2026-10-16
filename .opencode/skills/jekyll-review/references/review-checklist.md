@@ -7,6 +7,13 @@
   their priority order: `site.comments.provider` → legacy Disqus → `none`.
 - `page.title` rendered to HTML must pass through `escape` (currently done in `_layouts/post.html`
   — do not drop this filter).
+- Post layout (#45): `.post-layout` must keep the post as the main column with the
+  tags/related-posts `<aside>` as the secondary one, and the comments block must stay
+  outside the grid (full width). `{% assign post_tags = page.tags %}` gates the aside:
+  a post without tags stays single column.
+- Tag pages (#46): tag chips resolve to `/tags/<tag>/`, built from
+  `'/tags/' | append: tag | append: '/'`; one `tags/<tag>.md` per tag in use
+  (`layout: tag`, matching `tag:` + `permalink:`).
 - Do not use nonexistent config variables; Liquid renders `nil` as an empty string and
   this kind of bug is very hard to spot by eye.
 
