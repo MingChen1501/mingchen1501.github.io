@@ -458,6 +458,28 @@ Enforcement: `script/check-images` fails the build when any image exceeds
 500KB or `assets/img` exceeds 6MB. It runs in `script/cibuild` and as the
 "Check image sizes" step in `.github/workflows/ci.yaml`.
 
+## Clone size
+
+This repository's git history intentionally retains large binary blobs
+(~22MB of multi-MB assets, packed history ~33MB on-disk: a ~4.8MB screenshot
+PNG, a ~2.4MB JPG, the Unity `Build/` artifacts, the `fullmonth/` avatar, post
+images, and PDF resumes). Image compression work (#27) shrinks the working tree
+only; clone size is unchanged by design.
+
+Decision for #34: **keep history as-is** rather than run `git-filter-repo` /
+BFG. Rewriting would break commit hashes, invalidate open pull requests, and
+disrupt GitHub Pages deploys, while the real working-tree budget is already
+enforced by `script/check-images`. Large binaries are marked as `binary` in
+`.gitattributes` so Git never attempts text diffs or line-ending conversion.
+
+Need a smaller checkout? Use a shallow clone:
+
+```sh
+git clone --depth 1 https://github.com/MingChen1501/mingchen1501.github.io.git
+```
+
+Full history can be fetched later with `git fetch --unshallow`.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/jekyll/minima. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
