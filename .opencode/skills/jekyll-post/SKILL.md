@@ -11,7 +11,12 @@ description: Create a new post for the site (dated file name, standard front mat
 2. Create an ascii slug: lowercase, no diacritics, words joined with `-`. File name:
    `_posts/YYYY-MM-DD-<slug>.md`.
 3. Read `references/front-matter.md`, then write front matter + Vietnamese body content.
-4. Run `bundle exec jekyll build --trace` to make sure the post renders.
+   Front matter must include `tags: [one-of-4-pillars]` and `description`
+   (~120-155 chars) per the 4-pillar taxonomy.
+4. If the post adds images, place them under `assets/img/<post-slug>/` following
+   the naming/size rules in the README "Image conventions" section and run
+   `script/check-images` (each file <= 500KB, `assets/img/` total <= 6MB).
+5. Run `bundle exec jekyll build --trace` to make sure the post renders.
 5. Open the matching post file under `_site/` to check the title/date. Note the homepage
    has `show_excerpts: true`, so the opening paragraph appears on the homepage — keep
    the opening concise.

@@ -41,6 +41,7 @@ minima:
 # Keep AGENTS.md (agent guide) out of the public site.
 exclude:
   - AGENTS.md
+  - .opencode
 
 theme: minima
 

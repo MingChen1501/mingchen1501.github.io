@@ -26,4 +26,5 @@ heavy builds/tests, do not push.
 Follow the `jekyll-review` skill (read its SKILL.md and references, then review accordingly).
 Report concisely by severity, blocker → should-fix → suggestion, each item with `file:line`.
 Priority: broken Liquid layout, comments environment gate, wrong config (`url`,
-`nav_pages`, giscus IDs), post front matter — then style/spelling.
+`nav_pages`, giscus IDs), post front matter (4-pillar tags + description),
+  image convention violations (location/naming/size/budget) — then style/spelling.
