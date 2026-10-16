@@ -411,6 +411,47 @@ minima:
 ```
 
 
+## Image conventions
+
+Site images live under `assets/img/<post-slug>/` and are committed to git
+(decision for #19: **compress-local by default** — no CDN or Git LFS unless a
+future post proves a strong reason otherwise; this keeps the repo self-contained
+on GitHub Pages and is the prerequisite for the hotlink cleanup in #18).
+
+Rules for new posts:
+
+- Location: `assets/img/<post-slug>/` matching the post filename slug.
+- Naming: lowercase, hyphen-separated, no spaces, quotes, diacritics, or
+  special characters (e.g. `desktop-fedora.jpg`, not `Screenshot From ....png`).
+- Format: JPG (photos/screenshots) or WebP; PNG only for line-art needing
+  lossless. Flatten alpha to white when converting to JPG.
+- Size: resize so the long edge is at most **1600px**, JPEG quality ~75
+  (progressive, optimized). Each file must be **<= 500KB** and the whole
+  `assets/img/` folder must stay **<= 5MB**.
+- Reference images with absolute site paths, e.g.
+  `![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg)`.
+
+Compress locally before committing, for example with Pillow:
+
+```sh
+python3 - <<'PY'
+from PIL import Image, ImageOps
+im = ImageOps.exif_transpose(Image.open("input.jpg"))
+im.thumbnail((1600, 1600), Image.LANCZOS)
+if im.mode in ("RGBA", "LA"):
+    bg = Image.new("RGB", im.size, (255, 255, 255))
+    bg.paste(im, mask=im.split()[-1])
+    im = bg
+elif im.mode != "RGB":
+    im = im.convert("RGB")
+im.save("output.jpg", "JPEG", quality=75, optimize=True, progressive=True)
+PY
+```
+
+Enforcement: `script/check-images` fails the build when any image exceeds
+500KB or `assets/img` exceeds 5MB. It runs in `script/cibuild` and as the
+"Check image sizes" step in `.github/workflows/ci.yaml`.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/jekyll/minima. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.

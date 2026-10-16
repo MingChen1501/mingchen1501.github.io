@@ -2,6 +2,8 @@
 
 set -e
 
+script/check-images
+
 script/build
 
 if test -e "./_site/index.html";then
