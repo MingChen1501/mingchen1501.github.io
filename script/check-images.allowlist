@@ -1,0 +1,48 @@
+# Legacy image files grandfathered for the naming lint.
+# Generated for issue #32: existing (including uppercase-extension and
+# non-lowercase-hyphen) filenames are intentional legacy and stay as-is.
+# New files must follow lowercase-hyphen / lowercase extension naming.
+2022-10-27-cach-pha-ca-phe/b1.jpg
+2022-10-27-cach-pha-ca-phe/b2.jpg
+2022-10-27-cach-pha-ca-phe/b3.jpg
+2022-10-27-cach-pha-ca-phe/b4.jpg
+2022-10-27-cach-pha-ca-phe/b5.jpg
+2022-12-25-gioi-thieu-ve-internet/al-gore.jpg
+2022-12-25-gioi-thieu-ve-internet/cuoc-dua-trinh-duyet.jpg
+2022-12-25-gioi-thieu-ve-internet/data-center.jpg
+2022-12-25-gioi-thieu-ve-internet/dia-chi-ip.jpg
+2022-12-25-gioi-thieu-ve-internet/dien-toan-dam-may.jpg
+2022-12-25-gioi-thieu-ve-internet/dns.jpg
+2022-12-25-gioi-thieu-ve-internet/duong-truc-backbone.jpg
+2022-12-25-gioi-thieu-ve-internet/icann-ten-mien-ip.jpg
+2022-12-25-gioi-thieu-ve-internet/ietf-tieu-chuan.jpg
+2022-12-25-gioi-thieu-ve-internet/ipv6.jpg
+2022-12-25-gioi-thieu-ve-internet/last-mile.jpg
+2022-12-25-gioi-thieu-ve-internet/mang-di-dong.jpg
+2022-12-25-gioi-thieu-ve-internet/mosaic-minh-hoa.jpg
+2022-12-25-gioi-thieu-ve-internet/netscape-minh-hoa.jpg
+2022-12-25-gioi-thieu-ve-internet/ssl-https.jpg
+2022-12-25-gioi-thieu-ve-internet/ten-mien-cctld.jpg
+2022-12-25-gioi-thieu-ve-internet/ten-mien-gtld.jpg
+2022-12-25-gioi-thieu-ve-internet/tim-berners-lee.jpg
+2022-12-25-gioi-thieu-ve-internet/trinh-duyet-dau-tien.jpg
+2022-12-25-gioi-thieu-ve-internet/vint-cerf-bob-kahn.jpg
+2022-12-25-gioi-thieu-ve-internet/wifi-tai-nha.jpg
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/2nd_grade_metting.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/Dong_pagoda.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/come_to_mong_cai_city.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/cut_a_chicken.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/hair_cut.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/hair_dye.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/hoanh_mo_trade_boder_gate.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_year_greatings.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_year_greatings_2.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_years_eve.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_years_eve_2.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_years_eve_3.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/my_bea.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/paternal_relatives_cheer.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/tam_truc-pagoda.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/way_to_Dong_pagoda.JPG
+2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/way_to_Dong_pagoda_2.JPG
+2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg

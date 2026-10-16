@@ -1,38 +1,57 @@
 #!/bin/sh
-# CI guard for #19 / #33: fail when a new image is too large or assets/img exceeds budget.
-# Limits: single image <= 500KB, whole assets/img <= 6MB (budget bumped from 5MB per #33 policy).
-set -e
+# CI guard for #19 / #32 / #33:
+#   - single image <= 500KB (limit derived from MAX_FILE_BYTES)
+#   - whole assets/img <= 6MB (MAX_TOTAL_BYTES)
+#   - new image filenames follow lowercase-hyphen naming (legacy allowlisted)
+#   - long edge <= 1600px (MAX_DIMENSION)
+# Usage: script/check-images [ASSETS_DIR]
+set -u
 
 MAX_FILE_BYTES=512000
 MAX_TOTAL_BYTES=6291456
+MAX_DIMENSION=1600
+MAX_IMAGE_DIMENSION=1600
+
+ASSETS_DIR="${1:-${CHECK_IMAGES_DIR:-assets/img}}"
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 fail=0
 
-echo "Checking individual image sizes (limit 500KB)..."
+if [ ! -d "$ASSETS_DIR" ]; then
+  echo "ERROR: directory not found: $ASSETS_DIR"
+  exit 1
+fi
+
+echo "Checking individual image sizes (limit ${MAX_FILE_BYTES} bytes)..."
 # shellcheck disable=SC2086
-oversized="$(find assets/img -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.gif' \) -size +500k -print 2>/dev/null || true)"
-if test -n "$oversized"; then
-  echo "ERROR: images over 500KB (MAX_FILE_BYTES=$MAX_FILE_BYTES):"
+oversized="$(find "$ASSETS_DIR" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.gif' \) -size +${MAX_FILE_BYTES}c -print 2>/dev/null || true)"
+if [ -n "$oversized" ]; then
+  echo "ERROR: images over ${MAX_FILE_BYTES} bytes (MAX_FILE_BYTES=$MAX_FILE_BYTES):"
   echo "$oversized" | while IFS= read -r f; do
     ls -lh "$f"
   done
   fail=1
 else
-  echo "OK: all images <= 500KB."
+  echo "OK: all images <= ${MAX_FILE_BYTES} bytes."
 fi
 
-echo "Checking total assets/img size (limit 6MB)..."
-total_bytes="$(du -sb assets/img | cut -f1)"
-echo "assets/img total: $total_bytes bytes ($(du -sh assets/img | cut -f1))"
-if test "$total_bytes" -gt "$MAX_TOTAL_BYTES"; then
-  echo "ERROR: assets/img exceeds 6MB budget (MAX_TOTAL_BYTES=$MAX_TOTAL_BYTES, actual=$total_bytes)."
+echo "Checking total ${ASSETS_DIR} size (limit 6MB)..."
+total_bytes="$(du -sb "$ASSETS_DIR" | cut -f1)"
+echo "${ASSETS_DIR} total: $total_bytes bytes ($(du -sh "$ASSETS_DIR" | cut -f1))"
+if [ "$total_bytes" -gt "$MAX_TOTAL_BYTES" ]; then
+  echo "ERROR: ${ASSETS_DIR} exceeds 6MB budget (MAX_TOTAL_BYTES=$MAX_TOTAL_BYTES, actual=$total_bytes)."
   fail=1
 else
-  echo "OK: assets/img within 6MB budget."
+  echo "OK: ${ASSETS_DIR} within 6MB budget."
 fi
 
-if test "$fail" -ne 0; then
-  echo "Image size check FAILED."
+echo "Checking image naming (new files) and dimensions (limit ${MAX_DIMENSION}px)..."
+if ! "$SCRIPT_DIR/check-image-details.py" --root "$ASSETS_DIR" --max-dimension "$MAX_DIMENSION" --allowlist "$SCRIPT_DIR/check-images.allowlist"; then
+  fail=1
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "Image check FAILED."
   exit 1
 fi
-echo "Image size check passed."
+echo "Image check passed."

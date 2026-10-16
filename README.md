@@ -455,7 +455,9 @@ PY
 ```
 
 Enforcement: `script/check-images` fails the build when any image exceeds
-500KB or `assets/img` exceeds 6MB. It runs in `script/cibuild` and as the
+500KB, `assets/img` exceeds 6MB, a new image filename is not lowercase-hyphen
+with a lowercase extension (legacy names are allowlisted), or an image's
+long edge exceeds 1600px. It runs in `script/cibuild` and as the
 "Check image sizes" step in `.github/workflows/ci.yaml`.
 
 ## Clone size
