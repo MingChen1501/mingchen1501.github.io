@@ -17,7 +17,7 @@ description: Create a new post for the site (dated file name, standard front mat
    the naming/size rules in the README "Image conventions" section and run
    `script/check-images` (each file <= 500KB, `assets/img/` total <= 6MB).
 5. Run `bundle exec jekyll build --trace` to make sure the post renders.
-5. Open the matching post file under `_site/` to check the title/date. Note the homepage
+6. Open the matching post file under `_site/` to check the title/date. Note the homepage
    has `show_excerpts: true`, so the opening paragraph appears on the homepage — keep
    the opening concise.
 
