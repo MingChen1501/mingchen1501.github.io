@@ -37,6 +37,10 @@ minima:
       url: "https://www.youtube.com/channel/UCriw08sS1Jg4ftN8Wd3Wefg"
 
 # Build settings
+# Giữ AGENTS.md (hướng dẫn cho agent) ngoài site public.
+exclude:
+  - AGENTS.md
+
 theme: minima
 
 plugins:
