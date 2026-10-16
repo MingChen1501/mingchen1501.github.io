@@ -2,6 +2,8 @@
 layout: post
 author: Ming Chen
 title: "Cách pha cà phê"
+tags: [doi-song]
+description: "Cách pha cà phê phin nguyên chất tại nhà: cho cà phê vào phin, nén vừa phải, ủ nước sôi và chờ nhỏ giọt cho ly cà phê thơm ngon."
 ---
 
 >Một ly cà phê ngon là phải vừa ngọt vừa đắng ![buoc2](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg)

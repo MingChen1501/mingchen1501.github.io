@@ -424,3 +424,25 @@ To test your theme, run `script/server` (or `bundle exec jekyll serve`) and open
 ## License
 
 The theme is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+
+## Writing a new post (mingchen.id.vn taxonomy)
+
+> Site-specific section (not part of upstream Minima docs).
+
+New posts must pick tags from the 4 content pillars only
+(`backend-production`, `ai-agent`, `linux-tooling`, `doi-song`, max 4 tags/post)
+and always include a short `description` (~120–155 characters) so
+`jekyll-seo-tag` renders a proper meta description. Copy this template:
+
+```yaml
+---
+layout: post
+author: Ming Chen
+title: "Your post title"
+tags: [linux-tooling]
+description: "One short sentence (120-155 chars) summarising the post for SEO and social previews."
+---
+```
+
+The [`/tags/`](/tags/) page groups every post under these 4 pillars and is
+linked from the header navigation via `minima.nav_pages` in `_config.yml`.

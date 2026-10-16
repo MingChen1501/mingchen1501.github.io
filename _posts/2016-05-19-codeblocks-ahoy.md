@@ -1,6 +1,8 @@
 ---
 layout: post
 published: false
+tags: [backend-production]
+description: "Bài mẫu chưa xuất bản, demo các khối code của theme Minima."
 ---
 
 An article with various blocks of highlighted code snippets.
