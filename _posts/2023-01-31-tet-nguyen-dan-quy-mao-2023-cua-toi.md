@@ -18,13 +18,13 @@ Quá trình tẩy tóc thì xứng đáng được gọi là đau đớn luôn. 
 
 ## tất niên và chúc tết cùng anh em, bạn bè, gia đình (❁´◡`❁)
 
-![LunarNewYear'sEve](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_year's_eve.JPG)
+![LunarNewYear'sEve](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_years_eve.JPG)
 Ba thằng bạn tóc bạc nhất team làm một nháy làm kỉ niệm (～￣▽￣)～ nhìn ai cũng tươi mỗi mặt mình như đi đòi nợ vậy (╬▔皿▔)╯
 
-![LunarNewYear'sEve2](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_years'_eve_2.JPG)
+![LunarNewYear'sEve2](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_years_eve_2.JPG)
 Mấy anh em làm kiểu ảnh kỉ niệm cái o( ＾皿＾)っ Hehehe…
 
-![LunarNewYear'sEve3](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_year's_eve_3.JPG)
+![LunarNewYear'sEve3](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_years_eve_3.JPG)
 Ngày 29 tết mình có bữa tất niên cùng các xung ti
 
 ![PaternalRelativesCheer](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/paternal_relatives_cheer.JPG)
