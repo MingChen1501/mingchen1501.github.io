@@ -4,63 +4,63 @@ title: Resume
 permalink: /portfolio/
 ---
 
-# Minh Cong Tran
+# Tran Cong Minh
 
-Phone: +84389119966
-Email: [tminh400@gmail.com](mailto:tminh400@gmail.com)
-Address: Bac Tu Liem, Ha Noi
+Backend Engineer
 
-LinkedIn: linkedin.com/in/mingchen1501
-Github: github.com/MingChen1501
+- Email: [mingchen1501@gmail.com](mailto:mingchen1501@gmail.com)
+- Phone: [(+84) 389 119 966](tel:+84389119966)
+- LinkedIn: [linkedin.com/in/mingchen1501](https://linkedin.com/in/mingchen1501)
+- GitHub: [github.com/mingchen1501](https://github.com/MingChen1501)
+- Website: [mingchen.id.vn](https://mingchen.id.vn)
+
+## Summary
+
+Backend Engineer with 2+ years building high-throughput distributed systems and owning production reliability (SRE) at LINE/Yahoo Japan scale. Track record of architecting microservices handling thousands of TPS, executing zero-downtime cross-cloud data migrations at billion-record scale, and running Kubernetes/GitOps production operations. Strong technical autonomy in async-first, cross-country team environments.
 
 ## Skills
 
-- **Programming languages:** Java, SQL, JavaScript, HTML, CSS, C++, C, Kotlin.
-- **Frameworks:** Spring, Android SDK.
+- **Languages & Frameworks:** Java/Kotlin (Spring Boot), JavaScript/TypeScript (Node.js, Express, React Native), PHP (Laravel).
+- **Infrastructure & Data:** MySQL, Redis, Kafka, Kubernetes, ArgoCD, Ansible, Prometheus, Grafana, OpenSearch, Enterprise private cloud, AWS.
 - **Tools:** Git, JIRA, IntelliJ IDEA, Postman.
 
-## Experience
+## Work Experience
 
-**Java Backend Intern** at **GEM – Global Enterprise Mobility**
-Dec 2022 – Mar 2023
+### Backend Engineer — LY Corporation | LINE Technology Vietnam
+Jul 2024 – Jul 2026 · Hanoi, Vietnam (Hybrid)
 
-- Incorporated with a project team of 30 members to develop a system booking meeting room for 200+ GEM's employees.
-- Learned Java Spring Boot, Spring Security to help to build SSO module.
-- Set up environment development in Ubuntu Server.
-- Developed code behind in **JAVA** using **IntelliJ IDEA**.
+- Architected ShortURL LYMIX's API v3 (Java, Spring Boot) to unify LINE and Yahoo Japan platforms, achieving 8,000 TPS on Redirector and 500 TPS on URLMaker, outperforming legacy systems.
+- Implemented a Kafka-based Double-Write mechanism for ShortURL LYMIX, migrating 10 billion records across heterogeneous clouds with zero downtime during the cutover and 100% data integrity.
+- Managed ShortURL LYMIX deployments with Kubernetes & ArgoCD and maintained the Prometheus/Grafana monitoring stack, sustaining a 99.9% production uptime SLA.
+- Mentored 2 new engineers on ShortURL LYMIX onboarding, system architecture, and best practices, accelerating their ramp-up.
+- Evaluated and implemented an in-house DevSecOps replacement for LINE Healthcare's Deployment Service, centralized Logging system, and Secrets Manager, as part of an enterprise-wide security modernization initiative.
+- Integrated GenAI APIs into 4 internal POCs (AI Agent Taskforce) — including a tool that auto-updates technical documentation from code changes, winning the LTV Quarterly Excellence Award — demonstrating applied experience building production-facing GenAI features.
 
-## Personal Projects
+### Application Internship — Monkey Vietnam
+Aug 2023 – Oct 2023 · Hanoi, Vietnam
 
-**Developer** at **Fresh food**
-Jul 2022 – Aug 2022
+- Built a full-stack e-learning mobile app (React Native, PHP/Laravel) with relational DB design and REST APIs.
 
-- **Github:** <https://github.com/quang26071999/DuAn1_Nhom3>
-- **Descriptions:** An application allows customers to order food from a restaurant or market. flexible UI with activity, fragments, and navigation. Using Firebase real-time database to store data, Firebase storage to store resource images.
-- **Team size:** 4 person.
-- **Tech stack:** Java Android, Git.
+### Java Internship — GEM Corporation
+Dec 2022 – Mar 2023 · Hanoi, Vietnam
 
-**Developer** at **Library management**
-May 2022 – Jun 2022
-
-- **GitHub:** <https://github.com/MingChen1501/PH19127_MOB2041>
-- **Descriptions:** ﻿An application for management library for owner and librarian. Includes create, read, update, delete librarian, customer, kind of book, book and borrowing slip for Android device.
-- **Team size:** 1 person.
-- **Tech stack:** Java Android.
+- Built a meeting-room booking system: Spring Boot REST APIs integrated with Google Calendar API, MySQL schema design, manual VM deployment.
 
 ## Education
 
-**FPT Polytechnic**
-Computer Programming, May 2021 – present
+### Advanced Diploma in Computer Programming (Practical Bachelor) — FPT University
+May 2021 – May 2024 · Hanoi, Vietnam
 
-- **Coursework:** Data Structure & Algorithm, Computer Architecture, networking, Programming languages, Database, Android programming.
+- GPA: 3.4 / 4.0
+- Coursework: Data Structure & Algorithm, Computer Architecture, Networking, Programming languages, Database, Android programming.
 
 ## Resume (PDF)
 
-<object data="{{ '/assets/resume-26-5-23.pdf' | relative_url }}" type="application/pdf" width="100%" height="800px">
+<object data="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}" type="application/pdf" width="100%" height="800px">
   <p>
     Trình duyệt của bạn không xem được PDF trực tiếp.
-    <a href="{{ '/assets/resume-26-5-23.pdf' | relative_url }}">Tải resume (PDF)</a>
+    <a href="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}">Tải resume (PDF)</a>
   </p>
 </object>
 
-[Tải resume (PDF)]({{ '/assets/resume-26-5-23.pdf' | relative_url }})
+[Tải resume (PDF)]({{ '/assets/resume-tran-cong-minh.pdf' | relative_url }})
