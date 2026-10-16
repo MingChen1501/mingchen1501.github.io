@@ -23,6 +23,8 @@
 
     // This site's build + tests: allowed without asking.
     { "action": "shell", "resource": "bundle exec jekyll build *", "effect": "allow" },
+    // Local preview is the most common flow; allow it without prompting (kit friction fix for #36).
+    { "action": "shell", "resource": "bundle exec jekyll serve *", "effect": "allow" },
     { "action": "shell", "resource": "python -m pytest *", "effect": "allow" },
 
     // Pushing code always needs confirmation, even when a broader allow rule above matches.

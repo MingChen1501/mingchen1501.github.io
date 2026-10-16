@@ -10,6 +10,8 @@ description: Check changes before opening a PR (Jekyll build, comments E2E tests
 1. Determine the scope from `git status --short`:
    - Only added/edited posts in `_posts/` → step 2 is enough.
    - Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → run both steps 2 + 3.
+   - Touched `assets/` (images) → also run `script/check-images` (single file <= 500KB,
+     `assets/img/` total <= 6MB).
 2. Build: `bundle exec jekyll build --trace` (run `bundle install` first if gems are missing).
 3. Test: `python -m pytest tests/e2e -v` (first time: `pip install -r tests/e2e/requirements.txt`).
 4. Review the common breakages in `references/checklist.md`.

@@ -16,7 +16,9 @@
   canonical/feed or the comment thread.
 - The minima key is `minima.nav_pages` (since minima 3.0), not the legacy
   `site.header_pages` style.
-- `exclude` must keep `AGENTS.md` so the agent guide never leaks to the public site.
+- `exclude` must keep `AGENTS.md` and `.opencode/` so the agent guide and kit never leak to the public site.
+- `minima.nav_pages` must include `tags.md` alongside `about.md` and
+  `portfolio.md` (4-pillar `/tags/` page).
 
 ## Style / sass
 
@@ -35,4 +37,12 @@
 ## Post content
 
 - Front matter has enough `layout: post` + `title`; the date in the file name is valid.
+- Posts carry `tags: [one-of-4-pillars]` (max 4/post) and a `description`
+  (~120-155 chars); see `.opencode/skills/jekyll-post/references/front-matter.md`.
 - Keep the opening paragraph concise (it appears on the homepage via `show_excerpts: true`).
+
+## Images
+
+- New images live under `assets/img/<post-slug>/` with lowercase hyphenated names;
+  long edge <= 1600px, each file <= 500KB, `assets/img/` total <= 6MB.
+- `script/check-images` must pass; do not drift the 500KB/6MB limits.
