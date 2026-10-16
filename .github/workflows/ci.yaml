@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Check image sizes
+        run: script/check-images
       - name: Set Up Ruby 2.7
         uses: ruby/setup-ruby@v1
         with:
