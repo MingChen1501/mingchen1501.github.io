@@ -427,7 +427,13 @@ Rules for new posts:
   lossless. Flatten alpha to white when converting to JPG.
 - Size: resize so the long edge is at most **1600px**, JPEG quality ~75
   (progressive, optimized). Each file must be **<= 500KB** and the whole
-  `assets/img/` folder must stay **<= 5MB**.
+  `assets/img/` folder must stay **<= 6MB**.
+
+Budget policy (#33): the 6MB total is a hard CI gate. Per-post guidance:
+  aim for a post's images to total **<= 500KB** (and no single post should add
+  more than ~1MB without review). When the folder approaches 6MB, compress
+  existing images harder or remove obsolete assets before raising the budget
+  again; raising the cap requires a decision recorded in the tracking issue.
 - Reference images with absolute site paths, e.g.
   `![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg)`.
 
@@ -449,7 +455,7 @@ PY
 ```
 
 Enforcement: `script/check-images` fails the build when any image exceeds
-500KB or `assets/img` exceeds 5MB. It runs in `script/cibuild` and as the
+500KB or `assets/img` exceeds 6MB. It runs in `script/cibuild` and as the
 "Check image sizes" step in `.github/workflows/ci.yaml`.
 
 ## Contributing
