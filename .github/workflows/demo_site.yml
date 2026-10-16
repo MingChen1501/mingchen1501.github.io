@@ -1,3 +1,7 @@
+# NOTE (#35): this workflow deploys the upstream jekyll/minima demo site and is
+# intentionally left on legacy pins (checkout@v2, setup-ruby@v1, Ruby 2.7).
+# It is manual (workflow_dispatch) and outside the scope of #35; bump only if
+# re-deploying the demo site is needed.
 name: Build and Deploy Demo Site
 
 on:
