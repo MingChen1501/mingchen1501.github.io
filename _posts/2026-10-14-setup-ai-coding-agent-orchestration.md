@@ -2,6 +2,8 @@
 layout: post
 author: Ming Chen
 title: "Thử setup orchestration cho AI coding agent"
+tags: [ai-agent]
+description: "Thử setup hệ thống orchestration cho AI coding agent để điều phối nhiều session gọn gàng hơn và định hướng tối ưu luồng code tiếp theo."
 ---
 
 >Hôm nay mình dành thời gian thử setup một hệ thống orchestration cho AI coding agent, thấy khá hay, có lẽ thời gian tới sẽ còn nhiều cái để mò.

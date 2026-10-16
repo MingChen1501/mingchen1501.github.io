@@ -17,6 +17,7 @@ minima:
   nav_pages:
     - about.md
     - portfolio.md
+    - tags.md
 
   # Social Media Links.
   social_links:
