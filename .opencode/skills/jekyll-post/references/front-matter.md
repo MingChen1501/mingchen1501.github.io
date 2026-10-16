@@ -29,7 +29,9 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 
 - Tags must come from the 4 pillars only; free-form tags are not allowed.
 - At most 4 tags per post; in practice posts use exactly 1 pillar tag.
-- `description` is required (not optional) — missing it leaves SEO meta empty.
+- `description` is required (not optional) — missing it makes the meta description
+  fall back to the post excerpt or the site description instead of a post-specific
+  summary.
 - See README "Writing a new post (mingchen.id.vn taxonomy)" for the canonical template.
 
 ## Real example in this repo

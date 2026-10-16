@@ -33,7 +33,9 @@ Check by eye after build + tests are green, since some bugs only appear in produ
 ## Taxonomy and front matter
 
 - Posts use `tags: [one-of-4-pillars]` (max 4/post) and a `description`
-  (~120-155 chars); missing either breaks `/tags/` grouping and SEO meta.
+  (~120-155 chars); a missing `tags` keeps the post off `/tags/`, while a missing
+  `description` falls back to the post excerpt or the site description instead of a
+  post-specific summary.
 - The 4 pillars are `backend-production`, `ai-agent`, `linux-tooling`,
   `doi-song` — no free-form tags.
 - New posts follow the template in
