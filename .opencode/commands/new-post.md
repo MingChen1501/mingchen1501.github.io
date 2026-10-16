@@ -1,8 +1,8 @@
 ---
-description: Tạo bài viết mới theo chuẩn của site (tên file, front matter, build thử)
+description: Create a new post following the site standards (file name, front matter, trial build)
 ---
 
-Tạo bài viết mới với chủ đề: $ARGUMENTS.
+Create a new post about: $ARGUMENTS.
 
-Dùng skill `jekyll-post` (đọc SKILL.md và references của nó rồi làm theo từng bước).
-Nếu $ARGUMENTS trống, hỏi tiêu đề bài trước khi tạo file.
+Use the `jekyll-post` skill (read its SKILL.md and references, then follow each step).
+If $ARGUMENTS is empty, ask for the post title before creating the file.

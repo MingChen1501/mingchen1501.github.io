@@ -1,16 +1,16 @@
 ---
 name: Jekyll Verify
-description: Kiểm tra thay đổi trước khi mở PR (build Jekyll, test E2E comments). Dùng sau khi sửa layout, include, sass, config hoặc trước khi tạo PR.
+description: Check changes before opening a PR (Jekyll build, comments E2E tests). Use after editing layout, include, sass, config, or before creating a PR.
 ---
 
-# Verify trước PR
+# Verify before a PR
 
 ## Workflow
 
-1. Xác định phạm vi từ `git status --short`:
-   - Chỉ thêm/sửa bài trong `_posts/` → chỉ cần bước 2.
-   - Động vào `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → chạy đủ bước 2 + 3.
-2. Build: `bundle exec jekyll build --trace` (thiếu gem thì `bundle install` trước).
-3. Test: `python -m pytest tests/e2e -v` (lần đầu: `pip install -r tests/e2e/requirements.txt`).
-4. Soát các điểm hay vỡ trong `references/checklist.md`.
-5. Lỗi ở bước nào → sửa rồi chạy lại từ bước đó. Không mở PR khi còn đỏ.
+1. Determine the scope from `git status --short`:
+   - Only added/edited posts in `_posts/` → step 2 is enough.
+   - Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → run both steps 2 + 3.
+2. Build: `bundle exec jekyll build --trace` (run `bundle install` first if gems are missing).
+3. Test: `python -m pytest tests/e2e -v` (first time: `pip install -r tests/e2e/requirements.txt`).
+4. Review the common breakages in `references/checklist.md`.
+5. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.

@@ -1,6 +1,6 @@
 ---
-description: Review read-only diff hiện tại trong session con
+description: Review the current read-only diff in a child session
 agent: site-reviewer
 ---
 
-Review toàn bộ thay đổi chưa commit ($ARGUMENTS là gợi ý phạm vi, để trống thì review hết).
+Review all uncommitted changes ($ARGUMENTS is a scope hint; leave empty to review everything).

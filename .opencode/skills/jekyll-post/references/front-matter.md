@@ -1,33 +1,33 @@
-# Front matter cho bài viết
+# Front matter for posts
 
-Mẫu tối thiểu (copy rồi đổi `title`):
+Minimal template (copy, then change `title`):
 
 ```yaml
 ---
 layout: post
-title: "Tiêu đề bài viết"
+title: "Post title"
 author: Ming Chen
 ---
 ```
 
-## Field hay dùng
+## Common fields
 
-| Field | Ý nghĩa |
+| Field | Meaning |
 |---|---|
-| `layout: post` | Bắt buộc — dùng `_layouts/post.html` (có sẵn meta ngày, tác giả, comments). |
-| `title` | Bắt buộc — hiển thị `<h1>` (layout đã `escape` nên cứ viết tự nhiên). |
-| `author` | Tên tác giả. Bài của Ming ghi `author: Ming Chen`. |
-| `date` | Mặc định lấy từ tên file `YYYY-MM-DD`. Chỉ ghi thêm khi cần giờ cụ thể, ví dụ `2026-10-17 08:00:00 +0700`. |
-| `modified_date` | Ngày cập nhật — layout sẽ hiện thêm dòng "Updated:". |
-| `categories` / `tags` | Phân loại, ví dụ `categories: [doi-song]`. Không bắt buộc. |
-| `comments: false` | Tắt bình luận cho riêng bài này (mặc định bài nào cũng có Giscus). |
+| `layout: post` | Required — uses `_layouts/post.html` (includes date/author meta and comments). |
+| `title` | Required — rendered as `<h1>` (the layout already applies `escape`, so write naturally). |
+| `author` | Author name. Ming's posts use `author: Ming Chen`. |
+| `date` | Defaults to the `YYYY-MM-DD` in the file name. Only add it for a specific time, e.g. `2026-10-17 08:00:00 +0700`. |
+| `modified_date` | Updated date — the layout adds an "Updated:" line. |
+| `categories` / `tags` | Classification, e.g. `categories: [doi-song]`. Optional. |
+| `comments: false` | Disable comments for this post only (posts have Giscus by default). |
 
-## Ví dụ thực tế trong repo
+## Real example in this repo
 
-Xem `_posts/2026-10-14-setup-ai-coding-agent-orchestration.md`: front matter gọn
-3 dòng + nội dung Markdown tiếng Việt với heading `##`.
+See `_posts/2026-10-14-setup-ai-coding-agent-orchestration.md`: concise 3-line
+front matter + Vietnamese Markdown content with `##` headings.
 
-## Lưu ý excerpt
+## Excerpt note
 
-Trang chủ bật `show_excerpts: true` nên Jekyll lấy đoạn văn đầu tiên làm tóm tắt.
-Viết đoạn mở đầu ngắn gọn, đừng mở bài bằng blockquote dài hay code block.
+The homepage enables `show_excerpts: true`, so Jekyll uses the first paragraph as the summary.
+Keep the opening paragraph short; do not open with a long blockquote or code block.

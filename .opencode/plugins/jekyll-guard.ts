@@ -1,10 +1,10 @@
-// jekyll-guard: project hooks cho mingchen-site (site Jekyll cá nhân).
+// jekyll-guard: project hooks for mingchen-site (personal Jekyll site).
 //
-// - Chặn sửa nhầm các đường dẫn do build sinh ra (kèm lời nhắn rõ cách làm đúng).
-// - Giới hạn timeout của shell để `jekyll build/serve` bị treo không giữ agent.
+// - Block accidental edits to build-generated paths (with a clear message explaining the right fix).
+// - Cap shell timeouts so a hung `jekyll build/serve` cannot hold the agent.
 //
-// OpenCode tự load file dưới .opencode/plugins/ nên không cần đăng ký thêm.
-// Viết dạng object thuần (không import) giống plugin hệ thống để nhẹ và chắc chắn load.
+// OpenCode auto-loads files under .opencode/plugins/, so no extra registration is needed.
+// Written as a plain object (no imports), like the system plugin, to stay light and reliably loadable.
 
 const GENERATED_SEGMENTS = ["_site", ".jekyll-cache", ".sass-cache", "vendor", ".bundle"]
 const GENERATED_FILES = ["Gemfile.lock"]
@@ -20,19 +20,19 @@ function isGeneratedPath(resource) {
 export default {
   id: "jekyll-guard",
   async setup(ctx) {
-    // Chạy sau khi rule permissions trong config được tính, trước khi action chạy.
-    // Chỉ can thiệp quyết định allow/ask; deny có sẵn trong config thì giữ nguyên.
+    // Runs after the permission rules in the config are evaluated, before the action runs.
+    // Only narrows allow/ask decisions; keep any deny already present in the config.
     await ctx.permission.hook("evaluate", (event) => {
       if (event.action !== "edit") return
       const hit = (event.resources || []).filter(isGeneratedPath)
       if (hit.length === 0) return
       event.effect = "deny"
       event.message =
-        "Đường dẫn do build sinh ra, không sửa tay: " + hit.join(", ") + ". " +
-        "Chạy `bundle exec jekyll build` để tạo lại output, hoặc `bundle install`/`bundle update` thay vì sửa Gemfile.lock."
+        "Build-generated path, do not edit by hand: " + hit.join(", ") + ". " +
+        "Run `bundle exec jekyll build` to regenerate output, or `bundle install`/`bundle update` instead of editing Gemfile.lock."
     })
 
-    // Tránh shell treo (jekyll serve/build nặng) giữ agent quá lâu.
+    // Avoid hung shells (heavy jekyll serve/build) holding the agent too long.
     await ctx.shell.hook("create.before", (event) => {
       const MAX_TIMEOUT_MS = 300000
       if (typeof event.timeout === "number" && event.timeout > MAX_TIMEOUT_MS) {

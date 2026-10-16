@@ -1,48 +1,48 @@
-# mingchen-site — hướng dẫn cho agent
+# mingchen-site — agent guide
 
-Site cá nhân của Ming (https://mingchen.id.vn), fork từ theme Jekyll minima,
-deploy bằng GitHub Pages từ nhánh `master`.
+Ming's personal site (https://mingchen.id.vn), forked from the Jekyll minima theme,
+deployed with GitHub Pages from the `master` branch.
 
-## Chạy và build
+## Run and build
 
-- Preview nội dung thật: `bundle exec jekyll serve` (dùng `_config.yml`).
-- Build kiểm tra: `bundle exec jekyll build --trace`.
-- `script/server`, `script/build`, `script/cibuild` phục vụ phát triển theme
-  minima upstream (dùng `_config_theme-dev.yml` với nội dung mẫu) — không dùng
-  để preview bài viết cá nhân.
-- Thiếu gem thì chạy `bundle install` trước (cần mạng tới RubyGems).
+- Preview real content: `bundle exec jekyll serve` (uses `_config.yml`).
+- Check build: `bundle exec jekyll build --trace`.
+- `script/server`, `script/build`, `script/cibuild` support upstream minima theme
+  development (they use `_config_theme-dev.yml` with sample content) — do not use
+  them to preview personal posts.
+- If gems are missing, run `bundle install` first (needs network access to RubyGems).
 
-## Kiểm thử
+## Testing
 
-- E2E comments: `pip install -r tests/e2e/requirements.txt` rồi
-  `python -m pytest tests/e2e -v` (chi tiết xem `tests/e2e/README.md`).
-- `test_comments_markup.py` là static guard, chạy không cần browser.
+- E2E comments: `pip install -r tests/e2e/requirements.txt` then
+  `python -m pytest tests/e2e -v` (see `tests/e2e/README.md` for details).
+- `test_comments_markup.py` is a static guard, runs without a browser.
 
-## Quy ước nội dung
+## Content conventions
 
-- Bài viết nằm trong `_posts/`, tên file `YYYY-MM-DD-slug-ascii.md`, nội dung
-  tiếng Việt, slug chữ thường không dấu nối bằng `-`.
-- Front matter tối thiểu: `layout: post`, `title`; bài của Ming thêm
-  `author: Ming Chen`; muốn tắt bình luận cho bài đó thì `comments: false`.
-- Trang tĩnh: `layout: page` + `permalink`; muốn lên thanh nav thì thêm đường
-  dẫn vào `minima.nav_pages` trong `_config.yml`.
-- Bình luận dùng Giscus (`comments.provider: giscus`); chỉ render ở production
-  (`JEKYLL_ENV=production`), trừ khi `comments.dev: true`. Đừng phá logic trong
-  `_layouts/post.html` và `_includes/comments.html` — test E2E phụ thuộc vào đó.
-- `site.url` phải khớp `CNAME` (giữ canonical/SEO/feed đúng).
+- Posts live in `_posts/` with filenames like `YYYY-MM-DD-slug-ascii.md`, body
+  content in Vietnamese, slug in lowercase ASCII without diacritics joined with `-`.
+- Minimal front matter: `layout: post`, `title`; Ming's posts also add
+  `author: Ming Chen`; to disable comments on that post set `comments: false`.
+- Static pages: `layout: page` + `permalink`; to add a page to the top nav, add its
+  path to `minima.nav_pages` in `_config.yml`.
+- Comments use Giscus (`comments.provider: giscus`); only rendered in production
+  (`JEKYLL_ENV=production`), unless `comments.dev: true`. Do not break the logic in
+  `_layouts/post.html` and `_includes/comments.html` — the E2E tests depend on it.
+- `site.url` must match `CNAME` (keeps canonical/SEO/feed correct).
 
-## An toàn
+## Safety
 
-- Không sửa tay các đường dẫn do build sinh ra: `_site/`, `.jekyll-cache/`,
-  `.sass-cache/`, `vendor/`, `.bundle/`, `Gemfile.lock` (plugin `jekyll-guard`
-  sẽ chặn; muốn đổi dependency thì dùng `bundle install` / `bundle update`).
-- Đổi `CNAME`, `url`, `giscus.repo_id` / `giscus.category_id` phải xác nhận với
-  chủ site trước.
-- `AGENTS.md` đã được `exclude` khỏi build nên không lọt ra site public.
+- Do not hand-edit build-generated paths: `_site/`, `.jekyll-cache/`,
+  `.sass-cache/`, `vendor/`, `.bundle/`, `Gemfile.lock` (the `jekyll-guard`
+  plugin blocks this; to change dependencies use `bundle install` / `bundle update`).
+- Changes to `CNAME`, `url`, `giscus.repo_id` / `giscus.category_id` need owner
+  confirmation first.
+- `AGENTS.md` is already `exclude`d from the build so it never leaks to the public site.
 
-## Trước khi xong việc
+## Before finishing
 
-- Sửa `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → build
-  Jekyll + chạy `pytest tests/e2e -v`.
-- Chỉ thêm bài viết mới → build smoke là đủ.
-- Có skill riêng thì dùng: `jekyll-post`, `jekyll-verify`, `jekyll-review`.
+- Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → build
+  Jekyll + run `pytest tests/e2e -v`.
+- New post only → a build smoke test is enough.
+- Use the dedicated skills when available: `jekyll-post`, `jekyll-verify`, `jekyll-review`.

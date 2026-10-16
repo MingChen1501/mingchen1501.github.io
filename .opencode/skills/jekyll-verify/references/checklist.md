@@ -1,36 +1,36 @@
-# Checklist hay vỡ khi đổi site
+# Checklist of common site breakages
 
-Soát bằng mắt sau khi build + test xanh, vì có lỗi chỉ lòi ra ở production.
+Check by eye after build + tests are green, since some bugs only appear in production.
 
 ## Comments (Giscus)
 
-- `_config.yml` giữ nguyên `giscus.repo`, `repo_id`, `category_id` — đổi sai là
-  thread bình luận không load (backend Giscus trả 403).
-- Logic 3 nhánh trong `_includes/comments.html` phải còn nguyên: `giscus` khi đủ
-  IDs, fallback Disqus cũ, render nothing khi provider `none`.
-- Gate môi trường trong `_layouts/post.html` phải còn: chỉ render comments khi
-  `JEKYLL_ENV=production` hoặc `site.comments.dev == true`.
-- Bài có `comments: false` phải hiện `.comments-disabled-message`, không hiện
+- `_config.yml` keeps `giscus.repo`, `repo_id`, `category_id` intact — a wrong value means
+  comment threads fail to load (the Giscus backend returns 403).
+- The 3-branch logic in `_includes/comments.html` must stay intact: `giscus` when IDs
+  are present, legacy Disqus fallback, render nothing when the provider is `none`.
+- The environment gate in `_layouts/post.html` must stay: only render comments when
+  `JEKYLL_ENV=production` or `site.comments.dev == true`.
+- A post with `comments: false` must show `.comments-disabled-message`, not the
   thread.
 
-## Cấu hình và nav
+## Config and nav
 
-- `url` trong `_config.yml` phải khớp file `CNAME`, không hardcode domain khác.
-- `minima.nav_pages` chỉ liệt kê file trang có thật (hiện tại: `about.md`,
-  `portfolio.md`); sai tên là link nav 404.
-- Đừng đổi `minima.date_format` nếu không có yêu cầu — format hiện tại là tiếng
-  Việt (`Bài viết được đăng lúc: ...`).
+- `url` in `_config.yml` must match the `CNAME` file; do not hardcode another domain.
+- `minima.nav_pages` only lists real page files (currently: `about.md`,
+  `portfolio.md`); a wrong name yields a 404 nav link.
+- Do not change `minima.date_format` unless requested — the current format is
+  Vietnamese (`Bài viết được đăng lúc: ...`).
 
-## Bài viết và trang
+## Posts and pages
 
-- Tên file `_posts/` đúng `YYYY-MM-DD-slug.md`; Jekyll bỏ qua file ngày tương
-  lai (future posts) nên bài "chưa xuất bản" thực ra là bài đặt ngày sai.
-- `permalink` của trang tĩnh không trùng nhau, luôn bắt đầu bằng `/`.
-- Ảnh/file đính kèm bỏ vào `assets/`, link tương đối để chạy được cả local
-  lẫn production.
+- `_posts/` file names match `YYYY-MM-DD-slug.md`; Jekyll skips future-dated files
+  (future posts), so an "unpublished" post is really a misdated one.
+- Static page `permalink`s are unique and always start with `/`.
+- Put attached images/files in `assets/` with relative links so they work both locally
+  and in production.
 
-## Vệ sinh diff
+## Diff hygiene
 
-- `git status --short` không được chứa `_site/`, `.jekyll-cache/`, `vendor/`,
-  `Gemfile.lock` — đó là output của build/bundler, đã gitignore.
-- Không commit file `AGENTS.md` vào `_site` (đã khai `exclude` trong config).
+- `git status --short` must not contain `_site/`, `.jekyll-cache/`, `vendor/`,
+  `Gemfile.lock` — those are build/bundler outputs, already gitignored.
+- Do not commit `AGENTS.md` into `_site` (already declared in `exclude` in the config).

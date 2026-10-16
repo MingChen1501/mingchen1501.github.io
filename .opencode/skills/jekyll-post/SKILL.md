@@ -1,19 +1,19 @@
 ---
 name: Jekyll Post
-description: Tạo bài viết mới cho site (tên file theo ngày, front matter chuẩn, build thử). Dùng khi viết thêm bài blog.
+description: Create a new post for the site (dated file name, standard front matter, trial build). Use when adding a blog post.
 ---
 
-# Viết bài mới
+# Write a new post
 
 ## Workflow
 
-1. Lấy tiêu đề bài + ngày đăng (mặc định hôm nay).
-2. Tạo slug ascii: chữ thường, không dấu, từ nối bằng `-`. Tên file:
+1. Get the post title + publish date (default today).
+2. Create an ascii slug: lowercase, no diacritics, words joined with `-`. File name:
    `_posts/YYYY-MM-DD-<slug>.md`.
-3. Đọc `references/front-matter.md` rồi viết front matter + nội dung tiếng Việt.
-4. Chạy `bundle exec jekyll build --trace` để chắc chắn bài render được.
-5. Mở file bài tương ứng trong `_site/` kiểm tra tiêu đề/ngày. Lưu ý trang chủ
-   có `show_excerpts: true` nên đoạn mở đầu sẽ hiện ngoài homepage — viết đoạn
-   đầu cho gọn.
+3. Read `references/front-matter.md`, then write front matter + Vietnamese body content.
+4. Run `bundle exec jekyll build --trace` to make sure the post renders.
+5. Open the matching post file under `_site/` to check the title/date. Note the homepage
+   has `show_excerpts: true`, so the opening paragraph appears on the homepage — keep
+   the opening concise.
 
-Không commit thư mục `_site/` (đã có trong `.gitignore`).
+Do not commit the `_site/` directory (already in `.gitignore`).
