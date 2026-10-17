@@ -78,8 +78,17 @@
 // on its own. On phones — or on a short viewport, where it would be taller than
 // the screen — it stays a normal in-flow block, so scrolling the page reaches
 // every row.
-@media screen and (min-width: 960px) and (min-height: 720px) {
-  .post-sidebar,
+// Post pages keep their own sticky column (#45): pinned from desktop width
+// only, with no viewport-height gate, exactly as before #63/#65. The list
+// sidebar's height budget does not apply to the post sidebar.
+@media screen and (min-width: 960px) {
+  .post-sidebar {
+    position: sticky;
+    top: $spacing-unit;
+  }
+}
+
+@media screen and (min-width: 960px) and (min-height: 740px) {
   .site-sidebar {
     position: sticky;
     top: $spacing-unit;
@@ -197,9 +206,11 @@ ul.tag-index {
 // the two sidebars cannot drift apart.
 //
 // Height budget (#63): five highlight rows and four tag rows have to fit beside
-// the list, which is what keeps the sidebar free of a scrollbar of its own.
-// Hence the short rows below: a thumbnail capped to 96x60, a title clamped to
-// two lines, and a tag row collapsed until the reader opens it.
+// the list inside a 740px viewport, which is what keeps the sidebar free of a
+// scrollbar of its own (the media query above only pins the column from 740px
+// of viewport height). Hence the short rows below: a thumbnail capped to 96x60,
+// a title clamped to two lines, and a tag row collapsed until the reader opens
+// it.
 // ---------------------------------------------------------------------------
 
 ul.sidebar-posts,

@@ -64,7 +64,7 @@ DESKTOP_WIDTH = 1280
 SIDEBAR_WIDTH = 300
 # `_sass/minima/custom-styles.scss` pins the sidebar only from this viewport
 # height, at which the bounded column fits beside the list.
-STICKY_VIEWPORT_HEIGHT = 720
+STICKY_VIEWPORT_HEIGHT = 740
 # A desktop width that is too short for the pinned column: the sidebar must fall
 # back to a normal in-flow block, so page scrolling still reaches every row.
 SHORT_VIEWPORT_HEIGHT = 600
@@ -332,9 +332,15 @@ def test_custom_styles_define_the_sidebar_grid():
     )
     assert re.search(
         r"@media screen and \(min-width: 960px\) and \(min-height: "
-        r"[\d]+px\)\s*\{[^}]*\.post-sidebar,\s*\.site-sidebar\s*\{[^}]*position: sticky",
+        r"[\d]+px\)\s*\{[^}]*\.site-sidebar\s*\{[^}]*position: sticky",
         scss,
     ), "the site sidebar must be sticky only where it fits beside the list"
+    # Post pages keep their own sticky column (#45): pinned from desktop width
+    # only, without the viewport-height gate, so post-page behaviour is unchanged.
+    assert re.search(
+        r"@media screen and \(min-width: 960px\)\s*\{[^}]*\.post-sidebar\s*\{[^}]*position: sticky",
+        scss,
+    ), "the post sidebar must keep its own sticky rule at min-width: 960px"
     # The thumbnail keeps the source ratio (the #50 guard measures real rects):
     # capped in a box, never cropped and never upscaled.
     assert re.search(
