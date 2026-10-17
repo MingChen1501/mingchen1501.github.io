@@ -24,5 +24,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r tests/e2e/requirements.txt
           python -m playwright install --with-deps chromium
-      - name: Run comments E2E and markup tests
+      - name: Set Up Ruby 3.3
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Run browser E2E, layout guard and markup tests
         run: python -m pytest tests/e2e -v

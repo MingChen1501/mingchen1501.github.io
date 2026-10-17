@@ -17,6 +17,11 @@ deployed with GitHub Pages from the `master` branch.
 - E2E comments: `pip install -r tests/e2e/requirements.txt` then
   `python -m pytest tests/e2e -v` (see `tests/e2e/README.md` for details).
 - `test_comments_markup.py` is a static guard, runs without a browser.
+- Layout overflow guard (#50): `tests/e2e/test_layout_overflow.py` builds the
+  site with Jekyll and asserts no horizontal scroll at 375px on a post page,
+  the home list and the tag pages. It needs Ruby + `bundle install`; it skips
+  with an explicit reason without `bundle`. Run it whenever you touch image
+  sizing, layout wrappers or `_sass/`.
 
 ## Content conventions
 
