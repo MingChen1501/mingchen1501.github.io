@@ -1,16 +1,31 @@
 {%- comment -%}
-  Sidebar shared by the list pages (#58): the home list (`/`, `/page2/`…) in
-  `_layouts/home.html` and the tag pages (`/tags/<tag>/`) in
-  `_layouts/tag.html`. Both layouts render this same include, so the two blocks
-  exist once:
+  Sidebar shared by the list pages (#58, reworked in #63): the home list
+  (`/`, `/page2/`…) in `_layouts/home.html` and the tag pages (`/tags/<tag>/`)
+  in `_layouts/tag.html`. Both layouts render this same include, so the two
+  blocks exist once:
 
-  1. the three most recent posts of the whole site — thumbnail when the post
-     has one, plus a short description,
-  2. every tag with its posts (`<details>`, expanded by default, at most five
-     posts each, then a link to that tag's page).
+  1. the highlighted posts: the posts that opt in with `highlight: true` in
+     their own front matter (`_posts/*.md`), newest first, at most five, each
+     with its thumbnail (when it has one), its title and its publication date,
+  2. every tag as a collapsed row (`<details>` without `open`): the tag chip
+     and how many posts it has, and — once the reader opens it — at most three
+     post links plus a link to that tag's page.
 
-  `site.posts` — not `paginator.posts` — on purpose: the three posts are the
+  `site.posts` — not `paginator.posts` — on purpose: the highlights are the
   same on every page, so the sidebar does not change while paging.
+
+  No post marked yet (a fresh site, or every highlighted post removed): the
+  block falls back to the five newest posts and its heading says so, so the
+  sidebar is never an empty box.
+
+  Height budget (#63): the sidebar has to fit beside the list without a
+  scrollbar of its own, so every row here is deliberately short — a capped
+  thumbnail with a two-line title, and collapsed tag rows. The styles that
+  bound it are in `_sass/minima/custom-styles.scss`;
+  `tests/e2e/test_sidebar_layout.py` guards both this content and the absent
+  inner scroll, and the dates use the compact `%d-%m-%Y` because
+  `site.minima.date_format` (the verbose Vietnamese string used on the home
+  list and post pages) does not fit a 300px column.
 
   Thumbnail resolution: `post.image`, else the first image of the post body,
   else no thumbnail at all (no placeholder art). No `thumb-*` files are
@@ -22,12 +37,20 @@
   `sidebar_*`-prefixed so nothing this include assigns can collide with the
   caller's variables.
 {%- endcomment -%}
-{%- assign sidebar_date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+{%- assign sidebar_date_format = "%d-%m-%Y" -%}
+{%- assign sidebar_marked = site.posts | where: "highlight", true -%}
+{%- if sidebar_marked.size > 0 -%}
+  {%- assign sidebar_highlights = sidebar_marked -%}
+  {%- assign sidebar_highlights_heading = "Bài nổi bật" -%}
+{%- else -%}
+  {%- assign sidebar_highlights = site.posts -%}
+  {%- assign sidebar_highlights_heading = "Bài mới nhất" -%}
+{%- endif -%}
 
 <section class="sidebar__section">
-  <h2 class="sidebar__heading">Bài mới nhất</h2>
+  <h2 class="sidebar__heading">{{ sidebar_highlights_heading }}</h2>
   <ul class="sidebar-posts">
-    {%- for sidebar_post in site.posts limit: 3 -%}
+    {%- for sidebar_post in sidebar_highlights limit: 5 -%}
       {%- assign sidebar_thumb = sidebar_post.image | default: '' -%}
       {%- if sidebar_thumb == '' -%}
         {%- assign sidebar_body_parts = sidebar_post.content | split: '<img' -%}
@@ -35,7 +58,7 @@
           {%- assign sidebar_thumb = sidebar_body_parts[1] | split: 'src="' | last | split: '"' | first -%}
         {%- endif -%}
       {%- endif -%}
-      <li class="sidebar-post">
+      <li class="sidebar-post{% if sidebar_thumb != '' %} sidebar-post--with-thumb{% endif %}">
         {%- if sidebar_thumb != '' -%}
           {%- comment -%}
             An absolute URL (`post.image` pointing off-site) is used as-is; only
@@ -54,29 +77,35 @@
             <img src="{{ sidebar_thumb_url }}" alt="" loading="lazy" decoding="async">
           </a>
         {%- endif -%}
-        <a class="sidebar-post__title" href="{{ sidebar_post.url | relative_url }}">{{ sidebar_post.title | escape }}</a>
-        <span class="post-meta">{{ sidebar_post.date | date: sidebar_date_format }}</span>
-        <p class="sidebar-post__blurb">{{ sidebar_post.description | default: sidebar_post.excerpt | strip_html | truncate: 110 | escape }}</p>
+        <div class="sidebar-post__body">
+          <a class="sidebar-post__title" href="{{ sidebar_post.url | relative_url }}">{{ sidebar_post.title | escape }}</a>
+          <time class="sidebar-post__meta" datetime="{{ sidebar_post.date | date_to_xmlschema }}">{{ sidebar_post.date | date: sidebar_date_format }}</time>
+        </div>
       </li>
     {%- endfor -%}
   </ul>
 </section>
 
 <section class="sidebar__section">
-  <h2 class="sidebar__heading">Chủ đề</h2>
+  <h2 class="sidebar__heading">Chủ đề<a class="sidebar__heading-link" href="{{ '/tags/' | relative_url }}">Tất cả &rarr;</a></h2>
   <ul class="sidebar-tags">
-    {%- for sidebar_tag in site.tags -%}
+    {%- comment -%}
+      Alphabetical, so the column reads in a stable order (the `/tags/` index
+      lists the 4 pillars in their own order).
+    {%- endcomment -%}
+    {%- assign sidebar_tags = site.tags | sort -%}
+    {%- for sidebar_tag in sidebar_tags -%}
       {%- assign sidebar_tag_name = sidebar_tag[0] -%}
       {%- assign sidebar_tag_posts = sidebar_tag[1] | sort: "date" | reverse -%}
       {%- assign sidebar_chip_tags = sidebar_tag_name | split: "|" -%}
       <li class="sidebar-tag">
-        <details class="sidebar-tag__group" open>
+        <details class="sidebar-tag__group">
           <summary class="sidebar-tag__summary">
             {%- include post-tags.html tags=sidebar_chip_tags -%}
             <span class="tag-index__count">{{ sidebar_tag_posts | size }} bài</span>
           </summary>
           <ul class="sidebar-tag__posts">
-            {%- for sidebar_tag_post in sidebar_tag_posts limit: 5 -%}
+            {%- for sidebar_tag_post in sidebar_tag_posts limit: 3 -%}
             <li><a href="{{ sidebar_tag_post.url | relative_url }}">{{ sidebar_tag_post.title | escape }}</a></li>
             {%- endfor -%}
           </ul>

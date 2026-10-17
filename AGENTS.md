@@ -50,15 +50,21 @@ deployed with GitHub Pages from the `master` branch.
 - Comments use Giscus (`comments.provider: giscus`); only rendered in production
   (`JEKYLL_ENV=production`), unless `comments.dev: true`. Do not break the logic in
   `_layouts/post.html` and `_includes/comments.html` — the E2E tests depend on it.
-- List sidebar (#58): the home list (`/`, `/page2/`…) and the tag pages
-  (`/tags/<tag>/`) wrap their list in the same shell (`.site-layout` >
+- List sidebar (#58, reworked in #63): the home list (`/`, `/page2/`…) and the tag
+  pages (`/tags/<tag>/`) wrap their list in the same shell (`.site-layout` >
   `.site-main` + `aside.site-sidebar`) fed by ONE include,
-  `_includes/site-sidebar.html`: the 3 most recent posts (thumbnail when the post
-  has one + short `description`) and every tag with its newest posts. Keep the
-  aside AFTER `.site-main` in the DOM, keep the tag chips coming from
+  `_includes/site-sidebar.html`: the highlighted posts — the posts marked
+  `highlight: true` in their own front matter, newest first, at most 5, with
+  title + date + thumbnail (falling back to the 5 newest posts when nothing is
+  marked) — and every tag as a row collapsed by default (`<details>` without
+  `open`) that shows at most 3 posts once opened. Keep the aside AFTER
+  `.site-main` in the DOM, keep the tag chips coming from
   `_includes/post-tags.html` (no forked chip markup), never crop or upscale a
-  thumbnail (`width: 100%; height: auto`, no `object-fit`), and do not add
-  `thumb-*` files. Post pages keep their own secondary column (#45).
+  thumbnail (capped `max-width`/`max-height` box, no `object-fit`, `padding: 0`
+  — the `img` reset in `_base.scss` distorts a two-`max-*` box), do not add
+  `thumb-*` files, and keep the column inside its height budget (short rows,
+  no `max-height`/`overflow-y` inner scrollbar; it is pinned only where it
+  fits). Post pages keep their own secondary column (#45).
 - `site.url` must match `CNAME` (keeps canonical/SEO/feed correct).
 
 ## Image conventions
@@ -169,8 +175,9 @@ Merge policy:
   `tests/e2e/test_stylesheet_cache_version.py`.
 - Touched `_layouts/home.html`, `_layouts/tag.html`, `_includes/site-sidebar.html`
   or the list grid in `_sass/` → `tests/e2e/test_sidebar_layout.py` guards the
-  sidebar shell (aside after the list in the DOM), the 3 recent posts, the tag
-  block and the 375px overflow on `/` and a `/tags/<tag>/` page.
+  sidebar shell (aside after the list in the DOM), the highlights, the collapsed
+  tag block, the absent inner scrollbar and the 375px overflow on `/` and a
+  `/tags/<tag>/` page.
 - Touched `assets/` (images) → run `script/check-images` (single file <= 500KB,
   `assets/img/` total <= 6MB) before committing.
 - New post only → a build smoke test is enough; verify front matter matches the

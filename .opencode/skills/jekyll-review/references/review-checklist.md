@@ -14,6 +14,14 @@
 - Tag pages (#46): tag chips resolve to `/tags/<tag>/`, built from
   `'/tags/' | append: tag | append: '/'`; one `tags/<tag>.md` per tag in use
   (`layout: tag`, matching `tag:` + `permalink:`).
+- List sidebar (#58, reworked in #63): the home list and the tag pages share
+  `_includes/site-sidebar.html` — the posts marked `highlight: true` in their own
+  front matter (title + compact date + thumbnail, at most 5) plus every tag as a
+  row collapsed by default with at most 3 posts. Keep the aside after
+  `.site-main` in the DOM, keep the chips coming from `_includes/post-tags.html`,
+  and keep the column short: `max-height`/`overflow-y` on the sidebar or a
+  cropped/upscaled thumbnail are regressions (`tests/e2e/test_sidebar_layout.py`
+  and the #50 overflow guard fail on both).
 - Do not use nonexistent config variables; Liquid renders `nil` as an empty string and
   this kind of bug is very hard to spot by eye.
 

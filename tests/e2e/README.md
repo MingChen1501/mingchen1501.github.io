@@ -3,7 +3,7 @@
 Browser end-to-end coverage for the post comments feature
 (`_layouts/post.html` + `_includes/comments.html`), the site layout, the
 home-list tag chips (#47, `test_home_tag_chips.py`), the list-page sidebar
-(#58, `test_sidebar_layout.py`) and asset cache versioning
+(#58, reworked in #63, `test_sidebar_layout.py`) and asset cache versioning
 (#61, `test_stylesheet_cache_version.py`).
 
 ## Comments (`test_comments*.py`)
@@ -81,24 +81,28 @@ locally and in their own CI job.
 
 ## List-page sidebar (`test_sidebar_layout.py`)
 
-Guard for #58. The home list (`/`, `/page2/`…) and the tag pages
-(`/tags/<tag>/`) wrap their list in one shell (`.site-layout` > `.site-main` +
-`aside.site-sidebar`) fed by the shared `_includes/site-sidebar.html`.
+Guard for #58, reworked for #63. The home list (`/`, `/page2/`…) and the tag
+pages (`/tags/<tag>/`) wrap their list in one shell (`.site-layout` > `.site-main`
++ `aside.site-sidebar`) fed by the shared `_includes/site-sidebar.html`.
 
-- Static: both layouts render the shell with the include, the sidebar comes
-  after the list in the DOM, the include holds both blocks exactly once, the
-  recent-posts block comes from `site.posts` (not the paginator), the tag block
-  reuses `_includes/post-tags.html` (no forked chip markup) and the styles
-  define the `minmax(0, 1fr) [300px]` grid with a sticky sidebar only inside the
-  `>=960px` media query.
-- Browser (needs Ruby + a browser): exactly three recent posts on `/` and the
-  same three on `/page2/`; every tag group lists only real posts of that tag
-  (newest first, at most five, matching the tag page's own list and count) and
-  every link returns HTTP 200; two columns beside each other with a sticky
-  300px sidebar at 1280px, and one column with the sidebar under the list
-  (not sticky) at 375px; no horizontal overflow at 375px on `/` and on a
-  `/tags/<tag>/` page, with the sidebar thumbnail decoded, undistorted and
-  never upscaled.
+- Static: both layouts render the shell with the include, the sidebar comes after
+  the list in the DOM, the include holds both blocks exactly once, the highlight
+  block reads the posts' own front matter (`highlight: true`, at most five, with
+  the newest-posts fallback), the tag block reuses
+  `_includes/post-tags.html` (no forked chip markup) and is collapsed with at
+  most three posts, and the styles define the `minmax(0, 1fr) [300px]` grid, the
+  capped thumbnail and a sidebar pinned only where it fits (desktop width *and*
+  `>=720px` of viewport height), never a `max-height`/`overflow-y` cap of its
+  own.
+- Browser (needs Ruby + a browser): the same highlighted posts (title, compact
+  date, URL from the front matter) on `/`, `/page2/` and a tag page; every tag
+  row collapsed, bounded to at most three posts, matching the tag page's own list
+  and count, opening on one click with every link returning HTTP 200; two columns
+  beside each other with a sticky 300px sidebar at 1280px, not sticky at 1280x600
+  or 375px, and one column with the sidebar under the list at 375px; the sidebar
+  never scrolls inside itself (not even with a tag row open); no horizontal
+  overflow at 375px on `/` and on a `/tags/<tag>/` page, with the sidebar
+  thumbnail decoded, undistorted and never upscaled.
 
 ## Asset cache versioning (`test_stylesheet_cache_version.py`)
 
