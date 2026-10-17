@@ -7,7 +7,6 @@ without depending on the external disqus.com service.
 """
 
 import pytest
-from playwright.sync_api import sync_playwright
 
 E2E_SHORTNAME = "e2e-test-shortname"
 POST_PATH = "/2026/01/01/e2e-sample-post.html"
@@ -16,30 +15,14 @@ POST_IDENTIFIER = "/2026/01/01/e2e-sample-post"
 DISQUS_EMBED_STUB = "window.__disqusEmbedStubLoaded = true;"
 
 
-def _launch_browser(p):
-    """Launch headless Chromium, preferring the system Chrome install.
-
-    Falls back to Playwright's bundled Chromium (used in CI after
-    ``playwright install chromium``) when the channel launch fails.
-    """
-    launch_args = ["--no-sandbox", "--disable-dev-shm-usage"]
-    try:
-        return p.chromium.launch(channel="chrome", headless=True, args=launch_args)
-    except Exception:
-        return p.chromium.launch(headless=True, args=launch_args)
-
-
 @pytest.fixture()
-def page():
-    with sync_playwright() as p:
-        browser = _launch_browser(p)
-        context = browser.new_context()
-        browser_page = context.new_page()
-        try:
-            yield browser_page
-        finally:
-            context.close()
-            browser.close()
+def page(browser):
+    context = browser.new_context()
+    browser_page = context.new_page()
+    try:
+        yield browser_page
+    finally:
+        context.close()
 
 
 def _stub_disqus(browser_page, requests):
