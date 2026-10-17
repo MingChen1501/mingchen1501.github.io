@@ -2,8 +2,9 @@
 
 Browser end-to-end coverage for the post comments feature
 (`_layouts/post.html` + `_includes/comments.html`), the site layout, the
-home-list tag chips (#47, `test_home_tag_chips.py`) and the list-page sidebar
-(#58, `test_sidebar_layout.py`).
+home-list tag chips (#47, `test_home_tag_chips.py`), the list-page sidebar
+(#58, `test_sidebar_layout.py`) and asset cache versioning
+(#61, `test_stylesheet_cache_version.py`).
 
 ## Comments (`test_comments*.py`)
 
@@ -98,6 +99,44 @@ Guard for #58. The home list (`/`, `/page2/`…) and the tag pages
   (not sticky) at 375px; no horizontal overflow at 375px on `/` and on a
   `/tags/<tag>/` page, with the sidebar thumbnail decoded, undistorted and
   never upscaled.
+
+## Asset cache versioning (`test_stylesheet_cache_version.py`)
+
+Guard for #61, a live-site defect: GitHub Pages serves `assets/**` with
+`cache-control: max-age=14400` from a fixed URL, so a warm browser could render
+the post-#58 HTML with the pre-#58 stylesheet (no `.site-layout` grid) and the
+sidebar painted below the whole post list — "no sidebar on the index page",
+while the post page (whose #45 rules exist in both stylesheets) looked fine.
+
+Why the 13 sidebar guards and the 375/1280 overflow guards all passed: they load
+ONE build's own HTML + CSS pair from the same freshly served directory, so HTML
+and CSS always come from the same revision. Nothing asserted that the *deployed
+asset URL* is cache-safe, and a single-build test cannot observe a client that
+mixes new HTML with an old cached stylesheet.
+
+- Static (no Ruby, no browser): `_includes/head.html` links the stylesheet
+  through the build token (`?v=...`), every fixed-URL `/assets/` link in the
+  head (stylesheet, favicon) uses the same token, no template keeps an
+  unversioned `/assets/` link, and the matcher rejects the old unversioned
+  markup (so the guard is sensitive to the regression it guards).
+- Needs the real site: every page of one build (home, `/page2/`, `/tags/`, a
+  `/tags/<tag>/` page, a post) carries the same versioned URL, which resolves
+  over HTTP 200 and serves a stylesheet that really defines the #58 grid.
+- Rebuilds: a rebuild with a different build identity (`time:` in a config
+  override) publishes a different URL, and changing ONE CSS declaration in a copy
+  of the site emits a different URL too (the owner's proof that the token tracks
+  the CSS content).
+- Browser: a client that still holds the old stylesheet under the unversioned
+  URL (a cache keyed by URL) still gets the sidebar, because the HTML asks for a
+  different URL; the same harness provably sees the sidebar vanish when the
+  stale stylesheet *is* served.
+
+Trade-off pinned by the guard: the token follows the *build*, not the CSS bytes,
+so a deploy that does not touch the stylesheet re-fetches it once (~18KB). A real
+content hash of the compiled CSS needs a Jekyll plugin, which GitHub Pages does
+not run in its `--safe` build; a per-build token changes on a superset of the
+cases where the CSS changes, which is why it can never pair stale CSS with fresh
+HTML.
 
 ## Run locally
 
