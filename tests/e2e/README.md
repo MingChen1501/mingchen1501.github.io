@@ -1,9 +1,9 @@
-# Comments E2E tests
+# Browser E2E tests
 
 Browser end-to-end coverage for the post comments feature
-(`_layouts/post.html` + `_includes/comments.html`, Disqus-based).
+(`_layouts/post.html` + `_includes/comments.html`) and for the site layout.
 
-## What is covered
+## Comments (`test_comments*.py`)
 
 - Enabled post renders the `#disqus_thread` container.
 - Enabled post requests `https://<shortname>.disqus.com/embed.js` for the
@@ -19,6 +19,26 @@ Browser end-to-end coverage for the post comments feature
 `test_comments_markup.py` runs without a browser and guards the real Jekyll
 templates against drifting away from what the fixtures assume.
 
+## Layout overflow guard (`test_layout_overflow.py`)
+
+Regression guard for #50. `img { max-width: 100%; padding: 20px }` used the
+default content-box sizing, so a full-width image rendered `100% + 40px` wide
+and every page showing one scrolled ~40px sideways at phone widths.
+
+- Needs the real site, so the session builds it with `bundle exec jekyll build`
+  into a temp directory (dev environment: the external giscus embed is not
+  fetched) and serves the result over loopback HTTP. Third-party requests are
+  blocked; the local `style.css` fully defines the layout.
+- Asserts `document.documentElement.scrollWidth <= window.innerWidth` at 375px
+  for a post page, the home list, the `/tags/` index and every `/tags/<tag>/`
+  page, in the light and dark colour scheme, and that no image overhangs the
+  viewport or loses its aspect ratio.
+- The `/tags/<tag>/` case skips with an explicit reason while those pages are
+  absent from the build (PR #48 adds them); it starts measuring them as soon as
+  they exist.
+- `test_img_rule_keeps_padding_inside_max_width` is a static backstop for the
+  `_sass/minima/_base.scss` `img` rule that needs neither Ruby nor a browser.
+
 ## Run locally
 
 ```sh
@@ -31,7 +51,11 @@ The browser tests prefer the local system Chrome (`channel="chrome"`) and
 fall back to Playwright's bundled Chromium, so the `playwright install`
 step can be skipped on machines that already have Chrome.
 
+The layout guard additionally needs Ruby + `bundle install`; without a
+`bundle` executable it skips itself with an explicit reason.
+
 ## CI
 
-`.github/workflows/e2e.yml` installs Python, Playwright + Chromium, and runs
-`python -m pytest tests/e2e -v` on pushes and pull requests to `master`.
+`.github/workflows/e2e.yml` installs Python, Playwright + Chromium and Ruby
+(the layout guard builds the site), then runs `python -m pytest tests/e2e -v`
+on pushes and pull requests to `master`.

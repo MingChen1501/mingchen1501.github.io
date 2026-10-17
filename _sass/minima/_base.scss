@@ -62,8 +62,17 @@ main {
 
 /**
  * Images
+ *
+ * `box-sizing: border-box` is load-bearing (#50): the 20px padding above and
+ * below/left and right is part of the box that `max-width: 100%` measures, so
+ * the rendered image never exceeds its containing block. With the default
+ * `content-box` sizing the box was `100% + 40px`, which pushed every page with
+ * a full-width image ~40px past the viewport and gave phones a horizontal
+ * scrollbar. Applies to posts, the home page excerpts and tag pages alike,
+ * since those all render through this one rule.
  */
 img {
+  box-sizing: border-box;
   max-width: 100%;
   margin: 0 auto;
   padding: 20px;
