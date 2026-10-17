@@ -67,3 +67,8 @@ Check by eye after build + tests are green, since some bugs only appear in produ
 - `git status --short` must not contain `_site/`, `.jekyll-cache/`, `vendor/`,
   `Gemfile.lock` — those are build/bundler outputs, already gitignored.
 - Do not commit `AGENTS.md` or `.opencode/` into `_site` (both declared in `exclude` in _config.yml); verify with a build before finishing.
+
+## Risk label
+
+- Risk label present on the issue and the PR (`risk-low`, `risk-medium` or
+  `risk-high`); a missing label means owner approval is required before merge.

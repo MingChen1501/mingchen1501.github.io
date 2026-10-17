@@ -15,4 +15,5 @@ description: Check changes before opening a PR (Jekyll build, comments E2E tests
 2. Build: `bundle exec jekyll build --trace` (run `bundle install` first if gems are missing).
 3. Test: `python -m pytest tests/e2e -v` (first time: `pip install -r tests/e2e/requirements.txt`).
 4. Review the common breakages in `references/checklist.md`.
-5. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.
+5. Confirm the issue and PR carry a risk label (`risk-low`/`risk-medium`/`risk-high`).
+6. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.
