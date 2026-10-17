@@ -12,7 +12,9 @@ description: Create a new post for the site (dated file name, standard front mat
    `_posts/YYYY-MM-DD-<slug>.md`.
 3. Read `references/front-matter.md`, then write front matter + Vietnamese body content.
    Front matter must include `tags: [one-of-4-pillars]` and `description`
-   (~120-155 chars) per the 4-pillar taxonomy.
+   (~120-155 chars) per the 4-pillar taxonomy. If the tag has no page yet, add
+   `tags/<tag>.md` + its `tags.md` entry too (the post page's tag chips link to
+   `/tags/<tag>/`).
 4. If the post adds images, place them under `assets/img/<post-slug>/` following
    the naming/size rules in the README "Image conventions" section and run
    `script/check-images` (each file <= 500KB, `assets/img/` total <= 6MB).

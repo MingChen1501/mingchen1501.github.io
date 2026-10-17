@@ -1,0 +1,39 @@
+---
+layout: base
+---
+{%- assign tag_name = page.tag -%}
+{%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+{%- assign tag_posts = site.tags[tag_name] | sort: "date" | reverse -%}
+
+<div class="tag-page">
+  <h1 class="page-heading">{{ page.title | default: tag_name | escape }}</h1>
+
+  {{ content }}
+
+  <p class="tag-page__intro">
+    {{ tag_posts | size }} bài viết với tag
+    <a class="tag-chip" rel="tag" href="{{ '/tags/' | append: tag_name | append: '/' | relative_url }}">{{ tag_name | escape }}</a>
+  </p>
+
+  {%- if tag_posts.size > 0 -%}
+  <ul class="post-list">
+    {%- for post in tag_posts -%}
+    <li>
+      <span class="post-meta">{{ post.date | date: date_format }}</span>
+      <h3>
+        <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+      </h3>
+      {%- if post.description -%}
+      <p class="post-description">{{ post.description | escape }}</p>
+      {%- elsif site.minima.show_excerpts -%}
+      {{ post.excerpt }}
+      {%- endif -%}
+    </li>
+    {%- endfor -%}
+  </ul>
+  {%- endif -%}
+
+  <p class="tag-page__back">
+    <a href="{{ '/tags/' | relative_url }}">&larr; Tất cả chủ đề</a>
+  </p>
+</div>

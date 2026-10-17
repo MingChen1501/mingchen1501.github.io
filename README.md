@@ -501,8 +501,19 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 ---
 ```
 
-The [`/tags/`](/tags/) page groups every post under these 4 pillars and is
+The [`/tags/`](/tags/) page is the index of those 4 pillars and is
 linked from the header navigation via `minima.nav_pages` in `_config.yml`.
+Each pillar also has its own page — `/tags/<tag>/`, e.g.
+[`/tags/linux-tooling/`](/tags/linux-tooling/) — listing the posts with that
+tag. Those pages are front-matter only (`tags/<tag>.md` + `_layouts/tag.html`)
+because GitHub Pages builds with `--safe`, where no archive/tagging plugin can
+run. A new tag therefore needs **both** a `tags/<tag>.md` page and its entry in
+`tags.md`; `tests/e2e/test_post_layout_markup.py` fails if a published post uses
+a tag without a page.
+
+Post pages render a secondary column with the post's tags and the other posts
+sharing its first tag (`_layouts/post.html`, `_includes/post-tags.html`, styles
+in `_sass/minima/custom-styles.scss`).
 
 ## Contributing
 

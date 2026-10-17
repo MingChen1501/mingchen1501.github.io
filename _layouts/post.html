@@ -3,37 +3,78 @@ layout: base
 ---
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
-  <header class="post-header">
-    <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
-    <div class="post-meta">
-      {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-      {% assign pdate = page.date | date_to_xmlschema %}
-      {%- if page.modified_date %}<span class="meta-label">Published:</span>{% endif %}
-      <time class="dt-published" datetime="{{ pdate }}" itemprop="datePublished">
-        {{ pdate | date: date_format }}
-      </time>
-      {%- if page.modified_date -%}
-        <span class="bullet-divider">•</span>
-        <span class="meta-label">Updated:</span>
-        {%- assign mdate = page.modified_date | date_to_xmlschema %}
-        <time class="dt-modified" datetime="{{ mdate }}" itemprop="dateModified">
-          {{ mdate | date: date_format }}
-        </time>
-      {%- endif -%}
-      {%- if page.author %}
-      <div class="{% unless page.modified_date %}force-inline {% endunless %}post-authors">
-        {%- for author in page.author %}
-          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-            <span class="p-author h-card" itemprop="name">{{ author }}</span></span>
-          {%- if forloop.last == false %}, {% endif -%}
-        {% endfor %}
-      </div>
-      {%- endif %}
-    </div>
-  </header>
+  <div class="post-layout">
+    <div class="post-main">
 
-  <div class="post-content e-content" itemprop="articleBody">
-    {{ content }}
+      <header class="post-header">
+        <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
+        <div class="post-meta">
+          {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+          {% assign pdate = page.date | date_to_xmlschema %}
+          {%- if page.modified_date %}<span class="meta-label">Published:</span>{% endif %}
+          <time class="dt-published" datetime="{{ pdate }}" itemprop="datePublished">
+            {{ pdate | date: date_format }}
+          </time>
+          {%- if page.modified_date -%}
+            <span class="bullet-divider">•</span>
+            <span class="meta-label">Updated:</span>
+            {%- assign mdate = page.modified_date | date_to_xmlschema %}
+            <time class="dt-modified" datetime="{{ mdate }}" itemprop="dateModified">
+              {{ mdate | date: date_format }}
+            </time>
+          {%- endif -%}
+          {%- if page.author %}
+          <div class="{% unless page.modified_date %}force-inline {% endunless %}post-authors">
+            {%- for author in page.author %}
+              <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+                <span class="p-author h-card" itemprop="name">{{ author }}</span></span>
+              {%- if forloop.last == false %}, {% endif -%}
+            {% endfor %}
+          </div>
+          {%- endif %}
+        </div>
+      </header>
+
+      <div class="post-content e-content" itemprop="articleBody">
+        {{ content }}
+      </div>
+
+    </div>
+
+    {%- comment -%}
+      Secondary column (#45): the post's tags plus the other posts sharing
+      the first tag. Rendered only when the post declares tags.
+    {%- endcomment -%}
+    {%- assign post_tags = page.tags | default: empty -%}
+    {%- if post_tags.size > 0 -%}
+    <aside class="post-sidebar" aria-label="Chủ đề của bài viết">
+      <section class="post-sidebar__section">
+        <h2 class="post-sidebar__heading">Tags</h2>
+        {%- include post-tags.html tags=post_tags -%}
+      </section>
+
+      {%- assign primary_tag = post_tags.first -%}
+      {%- assign tag_posts = site.tags[primary_tag] | sort: "date" | reverse -%}
+      {%- if tag_posts.size > 1 -%}
+      <section class="post-sidebar__section">
+        <h2 class="post-sidebar__heading">Bài viết cùng chủ đề</h2>
+        <ul class="related-posts">
+          {%- assign shown = 0 -%}
+          {%- for other in tag_posts -%}
+            {%- if other.url != page.url and shown < 5 -%}
+              {%- assign shown = shown | plus: 1 -%}
+              <li>
+                <a href="{{ other.url | relative_url }}">{{ other.title | escape }}</a>
+                <span class="post-meta">{{ other.date | date: date_format }}</span>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </section>
+      {%- endif -%}
+    </aside>
+    {%- endif -%}
+
   </div>
 
   {%- assign comments_provider = site.comments.provider | default: '' -%}
