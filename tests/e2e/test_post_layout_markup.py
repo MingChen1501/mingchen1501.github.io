@@ -1,14 +1,19 @@
 """Static guard tests for the post-page layout and the tag pages.
 
 Epic #44 ("UX layout: post page with secondary tag column + tag pages"):
-#45 adds the two-column post page, #46 adds ``/tags/<tag>/``.
+#45 adds the two-column post page, #46 adds ``/tags/<tag>/``, #47 reuses the
+same chips on the home post list.
 
 These run without a browser and fail fast when the templates drift:
 
 - ``_layouts/post.html`` must keep the two-column structure (main = post,
   secondary = the post's tags) and the comments gating that
   ``tests/e2e`` browser tests rely on.
-- ``_includes/post-tags.html`` must link every chip to ``/tags/<tag>/``.
+- ``_includes/post-tags.html`` must link every chip to ``/tags/<tag>/`` and
+  stay the single source of the chip markup (the home list may only pass the
+  extra-class parameter added for #47).
+- ``_layouts/home.html`` must render those chips per list item, after the
+  date/title/excerpt, without forking the include.
 - Every tag used by a *published* post must have a ``tags/<tag>.md`` page
   whose front matter declares the same tag and permalink, so a tag chip can
   never 404.
@@ -21,6 +26,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
+HOME_LAYOUT = REPO_ROOT / "_layouts" / "home.html"
 BASE_LAYOUT = REPO_ROOT / "_layouts" / "base.html"
 TAG_LAYOUT = REPO_ROOT / "_layouts" / "tag.html"
 POST_TAGS_INCLUDE = REPO_ROOT / "_includes" / "post-tags.html"
@@ -203,3 +209,48 @@ def test_permalinks_of_generated_tag_pages_are_unique():
     for tag, front_matter in _tag_pages().items():
         permalinks.append(TAG_PERMALINK.format(tag=tag))
     assert len(permalinks) == len(set(permalinks)) == len(PILLARS)
+
+
+# --- home list chips (#47) -------------------------------------------------
+
+
+def test_post_tags_include_takes_an_optional_extra_class():
+    html = _read(POST_TAGS_INCLUDE)
+    # #47 varies the chips' spacing from the home list, so the include takes a
+    # class instead of the layout forking the chip markup.
+    assert "extra_class = include.class" in html
+    assert 'class="tag-chip-list{% if extra_class != ' in html
+    # The chips themselves stay identical for every caller.
+    assert '<a class="tag-chip" rel="tag"' in html
+
+
+def test_home_list_renders_the_shared_tag_chips():
+    html = _read(HOME_LAYOUT)
+    assert "include post-tags.html" in html
+    assert "tags=post.tags" in html
+    assert 'class="tag-chip-list--home"' in html
+    # No forked chip markup: the chips come from the shared include.
+    assert 'class="tag-chip"' not in html
+    assert "'/tags/' | append" not in html
+
+
+def test_home_list_chips_come_after_the_excerpt_inside_the_item():
+    html = _read(HOME_LAYOUT)
+    loop = html.index("{%- for post in posts -%}")
+    excerpt = html.index("{{ post.excerpt }}", loop)
+    chips = html.index("include post-tags.html", loop)
+    item_end = html.index("</li>", loop)
+    # Date/title/excerpt stay where they were; the chips are appended last.
+    assert excerpt < chips < item_end
+    # The include itself renders nothing without tags, so untagged posts keep
+    # the original spacing.
+    assert "chips.size > 0" in _read(POST_TAGS_INCLUDE)
+
+
+def test_custom_styles_keep_the_home_chip_variant_to_spacing():
+    scss = _read(CUSTOM_STYLES)
+    assert "ul.tag-chip-list--home" in scss
+    # The variant may only adjust spacing; the chip look is shared with the
+    # post sidebar (#45) and the tag pages (#46).
+    assert ".tag-chip--home" not in scss
+    assert "flex-wrap: wrap" in scss

@@ -1,7 +1,8 @@
 # Browser E2E tests
 
 Browser end-to-end coverage for the post comments feature
-(`_layouts/post.html` + `_includes/comments.html`) and for the site layout.
+(`_layouts/post.html` + `_includes/comments.html`), the site layout and the
+home-list tag chips (#47, `test_home_tag_chips.py`).
 
 ## Comments (`test_comments*.py`)
 
@@ -16,8 +17,28 @@ Browser end-to-end coverage for the post comments feature
 - A page built without `site.disqus.shortname` renders no comment markup
   and makes zero Disqus requests.
 
-`test_comments_markup.py` runs without a browser and guards the real Jekyll
-templates against drifting away from what the fixtures assume.
+`test_comments_markup.py` and `test_post_layout_markup.py` run without a
+browser and guard the real Jekyll templates against drifting away from what
+the fixtures and the rendered pages assume.
+
+## Home list tag chips (`test_home_tag_chips.py`)
+
+Guard for #47 (epic #44). The chips come from a Liquid include, so this guard
+needs the real site: it builds it with `bundle exec jekyll build` into a temp
+directory and serves the result over loopback HTTP (dev environment, so the
+external giscus embed is never fetched; third-party requests are aborted).
+
+- Every home list item shows its post's tags as chips linking to
+  `/tags/<tag>/`, in the same order and with the same labels as the post
+  page's sidebar chips (`_includes/post-tags.html` is the single source).
+- Every chip href resolves to a `tags/<tag>.md` page that exists in the build
+  (and returns HTTP 200 from the served build).
+- The home chip's computed style (size, padding, pill radius, colour) equals
+  the post sidebar chip's.
+- At 360px and 375px the chips stay inside the viewport and their list wraps.
+  The document-level `scrollWidth <= innerWidth` assertion allows exactly the
+  measured image overhang while the tracked #50 image regression is present
+  (PR #51 owns that fix) and becomes strict once images stop overhanging.
 
 ## Layout overflow guard (`test_layout_overflow.py`)
 

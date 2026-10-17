@@ -3,10 +3,19 @@
   (`/tags/<tag>/`, issue #46).
 
   Usage: {% include post-tags.html tags=page.tags %}
+         {% include post-tags.html tags=post.tags class="tag-chip-list--home" %}
+
+  `class` (issue #47) is an optional extra class for the wrapping list, for
+  callers that need different spacing only. The chips themselves are
+  identical wherever the include is used, so the home list (#47) and the post
+  sidebar (#45) cannot drift apart.
+
+  Renders nothing when there are no tags.
 {%- endcomment -%}
 {%- assign chips = include.tags | default: empty -%}
+{%- assign extra_class = include.class | default: '' -%}
 {%- if chips.size > 0 -%}
-<ul class="tag-chip-list">
+<ul class="tag-chip-list{% if extra_class != '' %} {{ extra_class }}{% endif %}">
   {%- for tag in chips -%}
   <li>
     <a class="tag-chip" rel="tag" href="{{ '/tags/' | append: tag | append: '/' | relative_url }}">{{ tag | escape }}</a>

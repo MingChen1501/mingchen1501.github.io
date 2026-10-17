@@ -43,8 +43,10 @@ deployed with GitHub Pages from the `master` branch.
   builds with `--safe` (no archive/tagging plugin). Post pages render a secondary
   column with the post's tags + posts sharing its first tag
   (`_layouts/post.html`, `_includes/post-tags.html`, styles in
-  `_sass/minima/custom-styles.scss`). A new tag needs both the page file and its
-  `tags.md` entry — `tests/e2e/test_post_layout_markup.py` guards this.
+  `_sass/minima/custom-styles.scss`). The home post list renders the same chips
+  per item (via the include's optional `class` parameter, #47). A new tag needs
+  both the page file and its `tags.md` entry —
+  `tests/e2e/test_post_layout_markup.py` guards this.
 - Comments use Giscus (`comments.provider: giscus`); only rendered in production
   (`JEKYLL_ENV=production`), unless `comments.dev: true`. Do not break the logic in
   `_layouts/post.html` and `_includes/comments.html` — the E2E tests depend on it.

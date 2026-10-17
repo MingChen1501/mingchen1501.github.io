@@ -34,6 +34,12 @@ layout: base
         {%- if site.minima.show_excerpts -%}
           {{ post.excerpt }}
         {%- endif -%}
+        {%- comment -%}
+          Tag chips (#47): the same chips the post page shows, linking to
+          `/tags/<tag>/`. The include renders nothing without tags, so the
+          date/title/excerpt order and spacing above stay untouched.
+        {%- endcomment -%}
+        {%- include post-tags.html tags=post.tags class="tag-chip-list--home" -%}
       </li>
       {%- endfor -%}
     </ul>
