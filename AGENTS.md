@@ -87,6 +87,30 @@ Site images live under `assets/img/<post-slug>/` and are committed to git
   "Image conventions" section for the Pillow compress snippet (single source of
   truth — do not drift the numbers here).
 
+## Asset cache versioning
+
+GitHub Pages serves `assets/**` (via Cloudflare) with `cache-control:
+max-age=14400` from a FIXED URL, while the HTML is `max-age=600`. A warm browser
+can thus pair NEW HTML with an OLD asset — that is how the #58 list sidebar went
+missing on the live index page for up to four hours after the deploy (#61).
+
+- Every fixed-URL asset linked from a template carries the build token assigned in
+  `_includes/head.html`: `/assets/css/style.css?v={{ asset_version }}` and
+  `/assets/img/favicon.ico?v={{ asset_version }}`. A new fixed-URL asset needs the
+  same `?v=` token.
+- The token is `site.time` (epoch seconds). No plugin, works with GitHub Pages
+  `--safe`, `bundle exec jekyll serve` and the E2E build; it changes on every
+  build — a superset of "the asset changed", so cached assets can never pair with
+  newer HTML. Cost: one re-fetch per deploy (~18KB stylesheet). A per-file content
+  hash needs a Jekyll plugin, which GitHub Pages does not run.
+- Images are NOT versioned (their URLs are content-addressed by
+  `assets/img/<post-slug>/<name>`), so to change an image's content publish it
+  under a NEW filename — never rewrite it in place.
+- Guards: `tests/e2e/test_stylesheet_cache_version.py` (token present on every
+  page, token changes with a new build and with a CSS change, a client holding the
+  old stylesheet under the unversioned URL still gets the sidebar). See the README
+  "Asset cache versioning (#61)" section for the full rationale.
+
 ## Safety
 
 - Do not hand-edit build-generated paths: `_site/`, `.jekyll-cache/`,
@@ -100,6 +124,9 @@ Site images live under `assets/img/<post-slug>/` and are committed to git
 
 - Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → build
   Jekyll + run `pytest tests/e2e -v`.
+- Touched `_includes/head.html` or added an asset under `assets/` → check the
+  "Asset cache versioning" rules above and run
+  `tests/e2e/test_stylesheet_cache_version.py`.
 - Touched `_layouts/home.html`, `_layouts/tag.html`, `_includes/site-sidebar.html`
   or the list grid in `_sass/` → `tests/e2e/test_sidebar_layout.py` guards the
   sidebar shell (aside after the list in the DOM), the 3 recent posts, the tag

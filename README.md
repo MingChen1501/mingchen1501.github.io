@@ -460,6 +460,41 @@ with a lowercase extension (legacy names are allowlisted), or an image's
 long edge exceeds 1600px. It runs in `script/cibuild` and as the
 "Check image sizes" step in `.github/workflows/ci.yaml`.
 
+## Asset cache versioning (#61)
+
+GitHub Pages (through Cloudflare) serves everything under `assets/**` with
+`cache-control: max-age=14400` (four hours) from a **fixed URL**, while the HTML
+is only `max-age=600`. A warm browser can therefore pair *new* HTML with an
+*old* asset. That is exactly how the #58 list-page sidebar "disappeared" on the
+live site: the pre-#58 stylesheet has no `.site-layout` grid, so the sidebar
+painted as a full-width block below the whole post list for up to four hours
+after the deploy.
+
+Rules:
+
+- Every fixed-URL asset linked from a template carries the build token that
+  `_includes/head.html` assigns: `/assets/css/style.css?v={{ asset_version }}`
+  and `/assets/img/favicon.ico?v={{ asset_version }}`. A new fixed-URL asset
+  must do the same.
+- The token is `site.time` (epoch seconds). It needs no plugin and works with
+  GitHub Pages `--safe`, `bundle exec jekyll serve` and the E2E build, and it
+  changes on every build — a superset of "the content changed", so a cached
+  asset can never be served against newer HTML. Cost: the stylesheet is fetched
+  once per deploy (~18KB) even when it did not change. A real content hash of
+  the compiled CSS would need a Jekyll plugin, which GitHub Pages does not run
+  in its `--safe` build.
+- Images are **not** versioned: their URLs are content-addressed by convention
+  (`assets/img/<post-slug>/<name>`). When an image's content changes, publish it
+  under a **new filename** instead of rewriting the file in place, because
+  `assets/img/**` carries the same four-hour `max-age`.
+- Guard: `tests/e2e/test_stylesheet_cache_version.py` fails when the stylesheet
+  link loses its token, when a template links an unversioned `/assets/` URL, or
+  when a rebuild after a CSS change emits the same stylesheet URL.
+
+Residual manual step for #61: after the fix is deployed, a visitor whose browser
+already cached the old stylesheet may need one hard refresh (Ctrl+Shift+R); the
+fix can only take effect from the next deploy onward.
+
 ## Clone size
 
 This repository's git history intentionally retains large binary blobs
