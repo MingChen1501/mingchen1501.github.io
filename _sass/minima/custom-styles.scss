@@ -68,22 +68,30 @@
 .site-sidebar {
   align-self: start;
   font-size: $small-font-size;
+}
 
-  // Sticky only from the breakpoint where the sidebar sits *beside* the list;
-  // on phones it is a normal block under the list.
-  @media screen and (min-width: 960px) {
+// Pinned only where the whole sidebar fits next to the list: desktop width
+// *and* a viewport tall enough for its bounded content (see the height budget
+// in the sidebar section below). #58 capped the sidebar with `max-height` +
+// `overflow-y: auto`, which put a scrollbar *inside* the sidebar; #63 drops
+// that: the content is bounded by design instead, so the sidebar never scrolls
+// on its own. On phones — or on a short viewport, where it would be taller than
+// the screen — it stays a normal in-flow block, so scrolling the page reaches
+// every row.
+// Post pages keep their own sticky column (#45): pinned from desktop width
+// only, with no viewport-height gate, exactly as before #63/#65. The list
+// sidebar's height budget does not apply to the post sidebar.
+@media screen and (min-width: 960px) {
+  .post-sidebar {
     position: sticky;
     top: $spacing-unit;
   }
 }
 
-// Once several tags are expanded the sticky sidebar can grow past the viewport,
-// which would make its last rows unreachable while scrolling; cap it and let it
-// scroll on its own (desktop only, where it is sticky).
-@media screen and (min-width: 960px) {
+@media screen and (min-width: 960px) and (min-height: 740px) {
   .site-sidebar {
-    max-height: calc(100vh - #{$spacing-unit * 2});
-    overflow-y: auto;
+    position: sticky;
+    top: $spacing-unit;
   }
 }
 
@@ -192,10 +200,17 @@ ul.tag-index {
 }
 
 // ---------------------------------------------------------------------------
-// List-page sidebar (#58): the two blocks of `_includes/site-sidebar.html` —
-// the three most recent posts and the tags with their posts. The block and
-// heading styles are shared with the post sidebar above, so the two sidebars
-// cannot drift apart.
+// List-page sidebar (#58, reworked in #63): the two blocks of
+// `_includes/site-sidebar.html` — the highlighted posts and the collapsed tag
+// rows. The block and heading styles are shared with the post sidebar above, so
+// the two sidebars cannot drift apart.
+//
+// Height budget (#63): five highlight rows and four tag rows have to fit beside
+// the list inside a 740px viewport, which is what keeps the sidebar free of a
+// scrollbar of its own (the media query above only pins the column from 740px
+// of viewport height). Hence the short rows below: a thumbnail capped to 96x60,
+// a title clamped to two lines, and a tag row collapsed until the reader opens
+// it.
 // ---------------------------------------------------------------------------
 
 ul.sidebar-posts,
@@ -206,42 +221,105 @@ ul.sidebar-tag__posts {
   list-style: none;
 }
 
+// The heading row: the tag block also carries a link to the tag index.
+.sidebar__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar__heading-link {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: $brand-color-dimmed;
+
+  &:hover,
+  &:focus {
+    color: $brand-color-dark;
+    text-decoration: none;
+  }
+}
+
+.sidebar-post {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .sidebar-post + .sidebar-post {
-  margin-top: $spacing-unit * 0.6;
+  margin-top: $spacing-unit * 0.5;
+}
+
+// Title over date in one block, so the thumbnail can centre against the whole
+// block instead of stretching the two lines apart.
+.sidebar-post__body {
+  display: grid;
+  gap: 2px;
+}
+
+// Thumbnail beside the text: a full-width image would blow the height budget.
+.sidebar-post--with-thumb {
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+
+  .sidebar-post__thumb {
+    justify-self: center;
+  }
 }
 
 .sidebar-post__thumb {
   display: block;
 }
 
-// Natural ratio, never cropped: the #50 overflow guard measures the real
-// `<img>` rects and fails a distorted or upscaled thumbnail, so the thumbnail
-// keeps the source ratio instead of being cropped to a fixed one. The source
-// image must stay at least as wide as the rendered thumbnail (about 300px at
-// the 375px breakpoint, where the sidebar is full width).
+// Fits inside a 96x60 box, so a row stays short whatever shape the source
+// image has. `max-width`/`max-height` keep the source ratio: the thumbnail is
+// never cropped and never upscaled — the #50 overflow guard measures the real
+// rectangles at 375px.
+//
+// `padding: 0` is load-bearing: `_sass/minima/_base.scss` gives every `img`
+// `box-sizing: border-box` + 20px of padding, and that padding inside the
+// border box is what makes two simultaneous `max-*` constraints squeeze a
+// replaced element into a *distorted* box (a 1600x902 source rendered 75x60,
+// measured). Without the padding the box shrinks along the source ratio.
 .sidebar-post__thumb img {
-  width: 100%;
-  height: auto;
-}
-
-.sidebar-post__title {
   display: block;
-  font-weight: 600;
+  width: auto;
+  height: auto;
+  max-width: 96px;
+  max-height: 60px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
 }
 
-.sidebar-post__blurb {
-  margin: 0.25em 0 0;
+// Two lines at most: a long Vietnamese title must not push the other rows out
+// of the sidebar's height budget.
+.sidebar-post__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.sidebar-post__meta {
+  font-size: 0.9em;
+  line-height: 1.4;
   color: $brand-color-dimmed;
 }
 
 .sidebar-tag + .sidebar-tag {
-  margin-top: $spacing-unit * 0.4;
+  margin-top: 2px;
 }
 
 .sidebar-tag__summary {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 3px 0;
   cursor: pointer;
 
   // `display: flex` drops the native `<summary>` marker, so the open/closed
@@ -250,14 +328,27 @@ ul.sidebar-tag__posts {
     content: "▸";
     color: $brand-color-dimmed;
   }
+
+  // The row toggles the group; the chip inside still links to the tag page.
+  &:hover .tag-index__count {
+    color: $brand-color-dark;
+  }
+}
+
+// The count sits at the far right, so the tag names line up down the column.
+.sidebar-tag__summary .tag-index__count {
+  margin-left: auto;
 }
 
 .sidebar-tag__group[open] > .sidebar-tag__summary::before {
   content: "▾";
 }
 
-.sidebar-tag__posts {
+// The posts are nested under their tag row: opening a group must stay readable
+// as a child of it, not as another row of the column.
+ul.sidebar-tag__posts {
   margin-top: $spacing-unit * 0.3;
+  padding-left: 14px;
 
   li + li {
     margin-top: 4px;
@@ -266,5 +357,5 @@ ul.sidebar-tag__posts {
 
 .sidebar-tag__more {
   display: inline-block;
-  margin-top: 4px;
+  margin: 6px 0 4px 14px;
 }
