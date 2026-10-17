@@ -20,6 +20,15 @@
   }
 }
 
+// The list pages with a sidebar (#58: home + tag pages) need the same room, so
+// the 300px sidebar fits beside the list instead of squeezing it.
+@media screen and (min-width: 960px) {
+  .layout-home main .wrapper,
+  .layout-tag main .wrapper {
+    max-width: 1080px;
+  }
+}
+
 .post-layout {
   display: grid;
   // `minmax(0, 1fr)` (not `1fr`) so the track can shrink below its items'
@@ -36,17 +45,50 @@
   }
 }
 
-.post-sidebar {
+// List pages with a sidebar (#58): `<div class="site-layout">` holds the list
+// (`.site-main`) and `<aside class="site-sidebar">` from the shared
+// `_includes/site-sidebar.html`. The aside is *after* `.site-main` in the DOM,
+// so the single-column phone layout stacks it under the list by itself.
+.site-layout {
+  display: grid;
+  // Same `minmax(0, 1fr)` guard as `.post-layout` above: plain `1fr` means
+  // `minmax(auto, 1fr)`, which a long unbreakable run can widen past 375px.
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-unit;
+}
+
+@media screen and (min-width: 960px) {
+  .site-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: $spacing-unit * 1.5;
+  }
+}
+
+.post-sidebar,
+.site-sidebar {
   align-self: start;
   font-size: $small-font-size;
 
+  // Sticky only from the breakpoint where the sidebar sits *beside* the list;
+  // on phones it is a normal block under the list.
   @media screen and (min-width: 960px) {
     position: sticky;
     top: $spacing-unit;
   }
 }
 
-.post-sidebar__section {
+// Once several tags are expanded the sticky sidebar can grow past the viewport,
+// which would make its last rows unreachable while scrolling; cap it and let it
+// scroll on its own (desktop only, where it is sticky).
+@media screen and (min-width: 960px) {
+  .site-sidebar {
+    max-height: calc(100vh - #{$spacing-unit * 2});
+    overflow-y: auto;
+  }
+}
+
+.post-sidebar__section,
+.sidebar__section {
   margin-bottom: $spacing-unit;
   padding-top: $spacing-unit * 0.5;
   border-top: 1px solid $border-color-01;
@@ -57,7 +99,8 @@
   }
 }
 
-.post-sidebar__heading {
+.post-sidebar__heading,
+.sidebar__heading {
   margin: 0 0 $spacing-unit * 0.4;
   @include relative-font-size(0.8125);
   font-weight: 600;
@@ -146,4 +189,82 @@ ul.tag-index {
 
 .post-description {
   margin-bottom: 0;
+}
+
+// ---------------------------------------------------------------------------
+// List-page sidebar (#58): the two blocks of `_includes/site-sidebar.html` —
+// the three most recent posts and the tags with their posts. The block and
+// heading styles are shared with the post sidebar above, so the two sidebars
+// cannot drift apart.
+// ---------------------------------------------------------------------------
+
+ul.sidebar-posts,
+ul.sidebar-tags,
+ul.sidebar-tag__posts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar-post + .sidebar-post {
+  margin-top: $spacing-unit * 0.6;
+}
+
+.sidebar-post__thumb {
+  display: block;
+}
+
+// Natural ratio, never cropped: the #50 overflow guard measures the real
+// `<img>` rects and fails a distorted or upscaled thumbnail, so the thumbnail
+// keeps the source ratio instead of being cropped to a fixed one. The source
+// image must stay at least as wide as the rendered thumbnail (about 300px at
+// the 375px breakpoint, where the sidebar is full width).
+.sidebar-post__thumb img {
+  width: 100%;
+  height: auto;
+}
+
+.sidebar-post__title {
+  display: block;
+  font-weight: 600;
+}
+
+.sidebar-post__blurb {
+  margin: 0.25em 0 0;
+  color: $brand-color-dimmed;
+}
+
+.sidebar-tag + .sidebar-tag {
+  margin-top: $spacing-unit * 0.4;
+}
+
+.sidebar-tag__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+
+  // `display: flex` drops the native `<summary>` marker, so the open/closed
+  // state is drawn as a caret instead. Focus outline stays untouched.
+  &::before {
+    content: "▸";
+    color: $brand-color-dimmed;
+  }
+}
+
+.sidebar-tag__group[open] > .sidebar-tag__summary::before {
+  content: "▾";
+}
+
+.sidebar-tag__posts {
+  margin-top: $spacing-unit * 0.3;
+
+  li + li {
+    margin-top: 4px;
+  }
+}
+
+.sidebar-tag__more {
+  display: inline-block;
+  margin-top: 4px;
 }
