@@ -524,7 +524,9 @@ Full history can be fetched later with `git fetch --unshallow`.
 New posts must pick tags from the 4 content pillars only
 (`backend-production`, `ai-agent`, `linux-tooling`, `doi-song`, max 4 tags/post)
 and always include a short `description` (~120–155 characters) so
-`jekyll-seo-tag` renders a proper meta description. Copy this template:
+`jekyll-seo-tag` renders a proper meta description. Add `highlight: true` to one
+of the posts you want the list sidebar's **Bài nổi bật** block to feature. Copy
+this template:
 
 ```yaml
 ---
@@ -552,13 +554,26 @@ in `_sass/minima/custom-styles.scss`).
 
 The list pages — the home list (`/`, `/page2/`…) and the tag pages
 (`/tags/<tag>/`) — render the same sidebar from one shared include,
-`_includes/site-sidebar.html`: the three most recent posts of the whole site
-(thumbnail when the post has one, plus its short `description`) and every tag
-with its newest posts (at most five, then a link to the tag's page). It is the
-second column from 960px up and moves under the list on phones;
-`tests/e2e/test_sidebar_layout.py` guards that. Thumbnails reuse `post.image` or
-the first image of the post body — no generated `thumb-*` files, because
-`assets/img/` runs close to its 6MB budget (`script/check-images`).
+`_includes/site-sidebar.html`:
+
+- **Bài nổi bật** — the *highlighted* posts: the posts that opt in with
+  `highlight: true` in their own front matter (`_posts/*.md`), newest first, at
+  most five, each with its title, its publication date and its thumbnail when it
+  has one. Highlighting a post is a one-line, static change — no data file and no
+  plugin. When no post is marked yet (a fresh site), the block falls back to the
+  five newest posts and its heading reads **Bài mới nhất**.
+- **Chủ đề** — every tag as a row collapsed by default (`<details>`): the chip
+  and its post count, and, once opened, at most three post links plus `Xem tất
+  cả` to that tag's page.
+
+The column is the second column from 960px up and moves under the list on
+phones. It is deliberately short (capped thumbnails, two-line titles, collapsed
+tag rows) so that it needs no scrollbar of its own, and it is pinned
+(`position: sticky`) only where it fits beside the list — desktop width *and* at
+least 720px of viewport height. `tests/e2e/test_sidebar_layout.py` guards all of
+that. Thumbnails reuse `post.image` or the first image of the post body — never
+cropped, never upscaled, and no generated `thumb-*` files, because `assets/img/`
+runs close to its 6MB budget (`script/check-images`).
 
 ## Contributing
 
