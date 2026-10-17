@@ -43,6 +43,7 @@ pair stale CSS with fresh HTML.
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -311,6 +312,7 @@ def test_a_rebuild_with_another_build_identity_publishes_another_url(built_site,
             str(destination),
         ],
         cwd=str(REPO_ROOT),
+        env=_bundler_env(REPO_ROOT),
         capture_output=True,
         text=True,
         timeout=conftest.BUILD_TIMEOUT_S,
@@ -332,6 +334,54 @@ def test_a_rebuild_with_another_build_identity_publishes_another_url(built_site,
         "a new build must publish a new stylesheet URL, otherwise a browser may "
         f"serve the stylesheet it cached at {STYLESHEET_PATH} (#61)"
     )
+
+
+def _installed_gem_path():
+    """Absolute gem path the session's bundler installs into, or None.
+
+    CI (`ruby/setup-ruby` with `bundler-cache`) vendors the gems into
+    `<repo>/vendor/bundle` and points bundler at the *relative* path
+    `vendor/bundle`, which a copied tree does not contain. Resolving it against
+    the real repository keeps the copied build able to find `jekyll`.
+    """
+    candidates = []
+    env_path = os.environ.get("BUNDLE_PATH")
+    if env_path:
+        candidates.append(env_path)
+    config = REPO_ROOT / ".bundle" / "config"
+    if config.is_file():
+        match = re.search(r"^BUNDLE_PATH:\s*\"?([^\"\n]+?)\"?\s*$", _read(config), re.M)
+        if match:
+            candidates.append(match.group(1))
+    candidates.append("vendor/bundle")
+    for candidate in candidates:
+        resolved = Path(candidate)
+        if not resolved.is_absolute():
+            resolved = REPO_ROOT / resolved
+        if resolved.is_dir():
+            return str(resolved.resolve())
+    return None
+
+
+def _bundler_env(source):
+    """Environment for a `bundle exec` in ``source`` (a copy of the repo).
+
+    ``BUNDLE_GEMFILE`` is pinned so a CI-exported value pointing at the original
+    repository cannot make the *theme* (and therefore the Sass) come from there
+    instead of the copy, and the vendored gem path is made absolute.
+    """
+    env = dict(os.environ)
+    bundle = conftest._bundle()
+    if bundle:
+        # `bundle` can live in a user gem dir that is not on PATH (#56).
+        env["PATH"] = os.pathsep.join(
+            [str(Path(bundle).parent), env.get("PATH", "")]
+        ).rstrip(os.pathsep)
+    env["BUNDLE_GEMFILE"] = str(source / "Gemfile")
+    gem_path = _installed_gem_path()
+    if gem_path:
+        env["BUNDLE_PATH"] = gem_path
+    return env
 
 
 def _build_repo_copy(tmp_path, patch_css_declaration=False):
@@ -371,6 +421,7 @@ def _build_repo_copy(tmp_path, patch_css_declaration=False):
     result = subprocess.run(
         [bundle, "exec", "jekyll", "build", "--destination", str(destination)],
         cwd=str(source),
+        env=_bundler_env(source),
         capture_output=True,
         text=True,
         timeout=conftest.BUILD_TIMEOUT_S,
