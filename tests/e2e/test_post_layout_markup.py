@@ -126,10 +126,16 @@ def test_base_layout_exposes_the_layout_name_for_styling():
 
 def test_custom_styles_define_the_two_column_grid():
     scss = _read(CUSTOM_STYLES)
-    assert "grid-template-columns: minmax(0, 1fr)" in scss
-    assert ".layout-post .wrapper" in scss
+    # Both grid declarations must guard the track with minmax(0, ...): plain
+    # `1fr` means minmax(auto, 1fr), so a long unbreakable run can widen the
+    # column (and the document) past a 375px viewport on phones.
+    assert "grid-template-columns: minmax(0, 1fr) 240px;" in scss
     # Single column below the desktop breakpoint.
-    assert "grid-template-columns: 1fr;" in scss
+    assert "grid-template-columns: minmax(0, 1fr);" in scss
+    assert "grid-template-columns: 1fr;" not in scss
+    # The extra width belongs to the post content wrapper only; a bare
+    # `.layout-post .wrapper` also matches the header/footer wrappers.
+    assert ".layout-post main .wrapper" in scss
     assert "min-width: 960px" in scss
 
 

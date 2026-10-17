@@ -11,16 +11,21 @@
 // ---------------------------------------------------------------------------
 
 // The two-column post page needs more room than Minima's 800px content width.
-// Keyed on the layout class set in `_layouts/base.html`.
+// Keyed on the layout class set in `_layouts/base.html`. Scoped to the content
+// wrapper only: a bare `.layout-post .wrapper` also matches the site header and
+// footer wrappers, which would widen the chrome on post pages only.
 @media screen and (min-width: 960px) {
-  .layout-post .wrapper {
+  .layout-post main .wrapper {
     max-width: 1080px;
   }
 }
 
 .post-layout {
   display: grid;
-  grid-template-columns: 1fr;
+  // `minmax(0, 1fr)` (not `1fr`) so the track can shrink below its items'
+  // min-content width; plain `1fr` means `minmax(auto, 1fr)` and lets a long
+  // unbreakable run push the single column past the viewport on phones.
+  grid-template-columns: minmax(0, 1fr);
   gap: $spacing-unit;
 }
 
