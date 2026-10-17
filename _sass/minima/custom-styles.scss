@@ -66,7 +66,8 @@
   color: $brand-color-dimmed;
 }
 
-// Tag chips: post sidebar (#45) and the tag index / tag pages (#46).
+// Tag chips: post sidebar (#45), home post list (#47) and the tag index /
+// tag pages (#46) — one chip style everywhere.
 ul.tag-chip-list {
   display: flex;
   flex-wrap: wrap;
@@ -78,6 +79,13 @@ ul.tag-chip-list {
   li {
     margin: 0;
   }
+}
+
+// Home list keeps the same chips, one row under the excerpt. The selector
+// names the element (`ul.tag-chip-list--home`) so it outranks the `margin: 0`
+// reset above, which has the same specificity but sits earlier in the file.
+ul.tag-chip-list--home {
+  margin-top: $spacing-unit * 0.5;
 }
 
 .tag-chip {
