@@ -10,10 +10,11 @@ Acceptance for #47 (epic #44):
   innerWidth``).
 
 The chips are produced by a Liquid include, so this guard needs the real site:
-it builds it with ``bundle exec jekyll build`` into a temp directory and serves
-the result over loopback HTTP. The dev environment is used on purpose (no
-external giscus embed) and third-party requests are aborted, keeping the run
-hermetic - the local ``style.css`` fully defines the layout.
+it uses the session-wide `built_site`/`built_site_url` fixtures from
+`conftest.py` (one `bundle exec jekyll build` for the whole suite, served over
+loopback HTTP). The dev environment is used on purpose (no external giscus
+embed) and third-party requests are aborted, keeping the run hermetic - the
+local `style.css` fully defines the layout.
 
 Known, separately tracked overflow: this base (#48's branch, so master) still
 has the `#50` image regression - `img { max-width: 100%; padding: 20px }` uses
@@ -26,18 +27,11 @@ as the images stop overhanging. Chip overflow itself is asserted exactly, per
 chip, with no allowance.
 """
 
-import functools
-import os
 import re
-import shutil
-import subprocess
-import threading
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
-from playwright.sync_api import sync_playwright
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TAG_PAGES_DIR = REPO_ROOT / "tags"
@@ -45,7 +39,6 @@ HOME_LAYOUT = REPO_ROOT / "_layouts" / "home.html"
 
 PHONE_WIDTH = 375
 TAG_HREF_RE = re.compile(r"^/tags/([a-z0-9-]+)/$")
-BUILD_TIMEOUT_S = 300
 
 # `document.documentElement` must not be wider than the viewport, and every
 # chip must sit inside it (a chip that overflows horizontally is the phone
@@ -104,101 +97,33 @@ _CHIP_STYLE_JS = """
 """
 
 
-class _QuietHandler(SimpleHTTPRequestHandler):
-    def log_message(self, *args):
-        pass
-
-
-def _bundle():
-    """Return the `bundle` executable, or None when Ruby is unavailable."""
-    found = shutil.which("bundle")
-    if found:
-        return found
-    for candidate in sorted(Path.home().glob(".gem/ruby/*/bin/bundle")):
-        return str(candidate)
-    return None
-
-
-def _launch_browser(playwright):
-    """Launch headless Chromium, preferring a system Chrome install."""
-    args = ["--no-sandbox", "--disable-dev-shm-usage"]
-    try:
-        return playwright.chromium.launch(channel="chrome", headless=True, args=args)
-    except Exception:
-        return playwright.chromium.launch(headless=True, args=args)
-
-
 @pytest.fixture(scope="session")
-def built_site(tmp_path_factory):
-    """Build the real site once and return the build destination."""
-    bundle = _bundle()
-    if bundle is None:
-        pytest.skip(
-            "`bundle` not found: the home chip guard needs Ruby + "
-            "`bundle install` (CI installs both in .github/workflows/e2e.yml)"
-        )
-    destination = tmp_path_factory.mktemp("site-build")
-    env = {k: v for k, v in os.environ.items() if k != "JEKYLL_ENV"}
-    # `bundle` may have been found in a user gem directory that is not on PATH
-    # (common for non-login shells); `bundle exec` needs it to resolve `jekyll`.
-    env["PATH"] = os.pathsep.join([str(Path(bundle).parent), env.get("PATH", "")]).rstrip(
-        os.pathsep
-    )
-    result = subprocess.run(
-        [bundle, "exec", "jekyll", "build", "--destination", str(destination)],
-        cwd=str(REPO_ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=BUILD_TIMEOUT_S,
-    )
-    assert result.returncode == 0, (
-        "`bundle exec jekyll build` failed:\n"
-        f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
-    )
-    return destination
-
-
-@pytest.fixture(scope="session")
-def home_url(built_site):
-    """Serve the built site over loopback and point at the home list."""
-    handler = functools.partial(_QuietHandler, directory=str(built_site))
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        host, port = server.server_address
-        yield f"http://{host}:{port}/"
-    finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=5)
+def home_url(built_site_url):
+    """Point at the home list of the session's one served build."""
+    return built_site_url.rstrip("/") + "/"
 
 
 @pytest.fixture()
-def page():
-    with sync_playwright() as playwright:
-        browser = _launch_browser(playwright)
-        context = browser.new_context(
-            viewport={"width": PHONE_WIDTH, "height": 800},
-            device_scale_factor=1,
-        )
-        browser_page = context.new_page()
-        # Only the site's own styles decide the layout here; aborting
-        # third-party requests keeps the run offline-safe.
-        browser_page.route(
-            "**/*",
-            lambda route: (
-                route.continue_()
-                if urlparse(route.request.url).hostname in ("127.0.0.1", "localhost")
-                else route.abort()
-            ),
-        )
-        try:
-            yield browser_page
-        finally:
-            context.close()
-            browser.close()
+def page(browser):
+    context = browser.new_context(
+        viewport={"width": PHONE_WIDTH, "height": 800},
+        device_scale_factor=1,
+    )
+    browser_page = context.new_page()
+    # Only the site's own styles decide the layout here; aborting
+    # third-party requests keeps the run offline-safe.
+    browser_page.route(
+        "**/*",
+        lambda route: (
+            route.continue_()
+            if urlparse(route.request.url).hostname in ("127.0.0.1", "localhost")
+            else route.abort()
+        ),
+    )
+    try:
+        yield browser_page
+    finally:
+        context.close()
 
 
 def _measure(page, home_url):
@@ -308,6 +233,7 @@ def test_home_list_does_not_scroll_sideways_at_phone_widths(page, home_url, widt
     )
 
 
+@pytest.mark.static
 def test_home_layout_renders_the_chips_from_the_shared_include():
     """Static backstop: no forked chip markup in the home layout."""
     html = HOME_LAYOUT.read_text(encoding="utf-8")

@@ -5,12 +5,13 @@ so a full-width image rendered `100% + 40px` wide and pushed every page that
 shows one ~40px past the viewport. The fix is the site-wide `img` rule in
 `_sass/minima/_base.scss` (padding now lives inside `max-width: 100%`).
 
-Unlike the comments suite, this guard needs the *real* site, so the session
-builds it with `bundle exec jekyll build` into a temp directory and serves the
-result over loopback HTTP. The dev environment is used deliberately: it skips
-the external giscus embed, keeping the run hermetic. Requests to third-party
-origins (only the Font Awesome CDN stylesheet) are aborted for the same reason
-- they cannot affect layout, which is fully defined by the local `style.css`.
+Unlike the comments suite, this guard needs the *real* site, so it uses the
+session-wide `built_site`/`built_site_url` fixtures from `conftest.py` (one
+`bundle exec jekyll build`, served once over loopback HTTP). The dev
+environment is used deliberately: it skips the external giscus embed, keeping
+the run hermetic. Requests to third-party origins (only the Font Awesome CDN
+stylesheet) are aborted for the same reason - they cannot affect layout, which
+is fully defined by the local `style.css`.
 
 Covered page kinds (acceptance from #50): a post page, the home list, the
 `/tags/` index, and every `/tags/<tag>/` page present in the build. The
@@ -19,18 +20,11 @@ corresponding case skips with an explicit reason instead of passing silently.
 """
 
 import contextlib
-import functools
-import os
 import re
-import shutil
-import subprocess
-import threading
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
-from playwright.sync_api import sync_playwright
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BASE_SCSS = REPO_ROOT / "_sass" / "minima" / "_base.scss"
@@ -38,8 +32,6 @@ BASE_SCSS = REPO_ROOT / "_sass" / "minima" / "_base.scss"
 PHONE_WIDTH = 375
 SCHEMES = ("light", "dark")
 PAGE_KINDS = ("post", "home-list", "tags-index", "tag-page")
-
-BUILD_TIMEOUT_S = 300
 
 # Interactive elements of the layout: `document.documentElement` must not be
 # wider than the viewport, and no image may overhang it or lose its ratio.
@@ -70,64 +62,6 @@ _MEASURE_JS = """
 """
 
 
-class _QuietHandler(SimpleHTTPRequestHandler):
-    def log_message(self, *args):
-        pass
-
-
-def _bundle():
-    """Return the `bundle` executable, or None when Ruby is unavailable."""
-    found = shutil.which("bundle")
-    if found:
-        return found
-    for candidate in sorted(Path.home().glob(".gem/ruby/*/bin/bundle")):
-        return str(candidate)
-    return None
-
-
-def _launch_browser(playwright):
-    """Launch headless Chromium, preferring a system Chrome install."""
-    args = ["--no-sandbox", "--disable-dev-shm-usage"]
-    try:
-        return playwright.chromium.launch(channel="chrome", headless=True, args=args)
-    except Exception:
-        return playwright.chromium.launch(headless=True, args=args)
-
-
-@pytest.fixture(scope="session")
-def built_site(tmp_path_factory):
-    """Build the real site once and return the build destination."""
-    bundle = _bundle()
-    if bundle is None:
-        pytest.skip(
-            "`bundle` not found: the layout guard needs Ruby + `bundle install` "
-            "(CI installs both in .github/workflows/e2e.yml)"
-        )
-    destination = tmp_path_factory.mktemp("site-build")
-    env = {k: v for k, v in os.environ.items() if k != "JEKYLL_ENV"}
-    # `bundle` may have been found in a user gem directory that is not on PATH
-    # (common for non-login shells); `bundle exec` needs it to resolve `jekyll`.
-    env["PATH"] = os.pathsep.join(
-        [str(Path(bundle).parent), env.get("PATH", "")]
-    ).rstrip(os.pathsep)
-    result = subprocess.run(
-        [bundle, "exec", "jekyll", "build", "--destination", str(destination)],
-        cwd=str(REPO_ROOT),
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=BUILD_TIMEOUT_S,
-    )
-    if result.returncode != 0:
-        pytest.fail(
-            f"`jekyll build` failed with exit code {result.returncode}\n"
-            f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
-        )
-    if not (destination / "index.html").is_file():
-        pytest.fail(f"`jekyll build` produced no index.html in {destination}")
-    return destination
-
-
 @pytest.fixture(scope="session")
 def site_pages(built_site):
     """Map each #50 page kind to the built paths that should be checked."""
@@ -150,31 +84,6 @@ def site_pages(built_site):
         elif rel == "/index.html" or re.fullmatch(r"/page\d+/index.html", rel):
             pages["home-list"].append(rel)
     return pages
-
-
-@pytest.fixture(scope="session")
-def browser():
-    with sync_playwright() as playwright:
-        browser = _launch_browser(playwright)
-        try:
-            yield browser
-        finally:
-            browser.close()
-
-
-@pytest.fixture(scope="session")
-def site_url(built_site):
-    handler = functools.partial(_QuietHandler, directory=str(built_site))
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        host, port = server.server_address
-        yield f"http://{host}:{port}"
-    finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=5)
 
 
 @contextlib.contextmanager
@@ -229,7 +138,7 @@ def _check_page(page, site_url, path, scheme):
 
 @pytest.mark.parametrize("scheme", SCHEMES)
 @pytest.mark.parametrize("kind", PAGE_KINDS)
-def test_no_horizontal_scroll_at_375px(kind, scheme, site_pages, site_url, browser):
+def test_no_horizontal_scroll_at_375px(kind, scheme, site_pages, built_site_url, browser):
     paths = site_pages[kind]
     if not paths:
         if kind == "tag-page":
@@ -240,8 +149,8 @@ def test_no_horizontal_scroll_at_375px(kind, scheme, site_pages, site_url, brows
         pytest.fail(f"no built page found for the {kind!r} #50 acceptance case")
 
     for path in paths:
-        with _phone_page(browser, site_url, scheme) as page:
-            _check_page(page, site_url, path, scheme)
+        with _phone_page(browser, built_site_url, scheme) as page:
+            _check_page(page, built_site_url, path, scheme)
 
 
 def test_guard_measures_post_pages_that_contain_images(built_site, site_pages):
@@ -259,6 +168,7 @@ def test_guard_measures_post_pages_that_contain_images(built_site, site_pages):
     )
 
 
+@pytest.mark.static
 def test_img_rule_keeps_padding_inside_max_width():
     """Static backstop for the #50 fix, runnable without Ruby or a browser."""
     scss = BASE_SCSS.read_text(encoding="utf-8")

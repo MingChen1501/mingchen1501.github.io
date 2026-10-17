@@ -24,6 +24,10 @@ These run without a browser and fail fast when the templates drift:
 import re
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.static
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 HOME_LAYOUT = REPO_ROOT / "_layouts" / "home.html"

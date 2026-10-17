@@ -15,6 +15,10 @@ drift away from what the browser fixtures (and E2E tests) assume:
 
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.static
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMMENTS_INCLUDE = REPO_ROOT / "_includes" / "comments.html"
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
