@@ -120,6 +120,46 @@ missing on the live index page for up to four hours after the deploy (#61).
   confirmation first.
 - `AGENTS.md` and `.opencode/` are `exclude`d from the build (see `_config.yml`), so the agent guide and kit never leak to the public site. Leak check: a build must leave neither `AGENTS.md` nor `.opencode/` in `_site/`.
 
+## Risk labels and merge policy
+
+Every issue and PR carries exactly one risk label: `risk-low`, `risk-medium` or
+`risk-high`. It is a planning-time estimate confirmed at review time, and the
+orchestrator uses it to decide whether a merge needs the owner.
+
+Labels:
+- `risk-low` (green): no reader-visible behaviour change and nothing irreversible.
+- `risk-medium` (amber): reader-visible change that is reversible and guarded.
+- `risk-high` (red): can break published URLs/SEO/content, weaken existing
+  guards, change how assets are served/cached, or needs manual owner action.
+
+Who sets it, and when:
+1. Planning: the issue writer assigns one risk label to the issue and states the
+   justification (what can break, blast radius, reversibility) in the issue body.
+2. Review: the reviewer confirms or updates the PR's risk label and justifies it
+   in the review body. The PR carries the same label as its issue unless the
+   reviewer changes it. If the reviewer raises the risk above the planned label,
+   the orchestrator escalates to the owner instead of merging.
+3. Merge: the orchestrator records the resulting label and the merge decision.
+
+Estimation guide:
+- low: docs/README/agent-skill text; comments and typo fixes; test-only additions
+  that do not delete or relax an assertion; CI structure that cannot change the
+  built site.
+- medium: CSS/markup changes to real pages that keep every existing guard green;
+  new guards; new reader-visible UI behaviour that is reversible; image-budget
+  changes.
+- high: changes to published post content, front matter conventions, permalinks
+  or URLs; deleting or relaxing an existing guard; anything about how assets, the
+  cache or the CDN serve content; `_config.yml`, plugins, dependencies,
+  SEO/sitemap/feed; anything irreversible or requiring manual owner action (e.g.
+  a hard refresh or a Cloudflare purge).
+
+Merge policy:
+- CI green + adversarial review APPROVE + `risk-low` => the orchestrator merges
+  autonomously (merge commit, delete branch) and reports afterwards.
+- `risk-medium`, `risk-high`, or a missing risk label => explicit owner approval
+  is required before merging.
+
 ## Before finishing
 
 - Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → build
@@ -136,3 +176,5 @@ missing on the live index page for up to four hours after the deploy (#61).
 - New post only → a build smoke test is enough; verify front matter matches the
   4-pillar taxonomy template (`tags`, `description`).
 - Use the dedicated skills when available: `jekyll-post`, `jekyll-verify`, `jekyll-review`.
+- Risk label: confirm the issue and the PR each carry exactly one of `risk-low`,
+  `risk-medium`, `risk-high` before finishing (see "Risk labels and merge policy").

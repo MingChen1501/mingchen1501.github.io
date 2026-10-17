@@ -53,3 +53,11 @@
 - New images live under `assets/img/<post-slug>/` with lowercase hyphenated names;
   long edge <= 1600px, each file <= 500KB, `assets/img/` total <= 6MB.
 - `script/check-images` must pass; do not drift the 500KB/6MB limits.
+
+## Risk label
+
+- Confirm or update the PR's risk label (`risk-low`, `risk-medium`, `risk-high`)
+  and justify it in the review body. The PR carries the same label as its issue
+  unless the reviewer changes it; raising the risk above the planned label must
+  be called out so the orchestrator escalates instead of merging.
+- A missing risk label blocks autonomous merge (`risk-medium` policy applies).
