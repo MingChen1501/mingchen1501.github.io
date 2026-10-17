@@ -50,6 +50,15 @@ deployed with GitHub Pages from the `master` branch.
 - Comments use Giscus (`comments.provider: giscus`); only rendered in production
   (`JEKYLL_ENV=production`), unless `comments.dev: true`. Do not break the logic in
   `_layouts/post.html` and `_includes/comments.html` — the E2E tests depend on it.
+- List sidebar (#58): the home list (`/`, `/page2/`…) and the tag pages
+  (`/tags/<tag>/`) wrap their list in the same shell (`.site-layout` >
+  `.site-main` + `aside.site-sidebar`) fed by ONE include,
+  `_includes/site-sidebar.html`: the 3 most recent posts (thumbnail when the post
+  has one + short `description`) and every tag with its newest posts. Keep the
+  aside AFTER `.site-main` in the DOM, keep the tag chips coming from
+  `_includes/post-tags.html` (no forked chip markup), never crop or upscale a
+  thumbnail (`width: 100%; height: auto`, no `object-fit`), and do not add
+  `thumb-*` files. Post pages keep their own secondary column (#45).
 - `site.url` must match `CNAME` (keeps canonical/SEO/feed correct).
 
 ## Image conventions
@@ -91,6 +100,10 @@ Site images live under `assets/img/<post-slug>/` and are committed to git
 
 - Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → build
   Jekyll + run `pytest tests/e2e -v`.
+- Touched `_layouts/home.html`, `_layouts/tag.html`, `_includes/site-sidebar.html`
+  or the list grid in `_sass/` → `tests/e2e/test_sidebar_layout.py` guards the
+  sidebar shell (aside after the list in the DOM), the 3 recent posts, the tag
+  block and the 375px overflow on `/` and a `/tags/<tag>/` page.
 - Touched `assets/` (images) → run `script/check-images` (single file <= 500KB,
   `assets/img/` total <= 6MB) before committing.
 - New post only → a build smoke test is enough; verify front matter matches the

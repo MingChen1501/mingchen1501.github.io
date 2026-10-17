@@ -515,6 +515,16 @@ Post pages render a secondary column with the post's tags and the other posts
 sharing its first tag (`_layouts/post.html`, `_includes/post-tags.html`, styles
 in `_sass/minima/custom-styles.scss`).
 
+The list pages — the home list (`/`, `/page2/`…) and the tag pages
+(`/tags/<tag>/`) — render the same sidebar from one shared include,
+`_includes/site-sidebar.html`: the three most recent posts of the whole site
+(thumbnail when the post has one, plus its short `description`) and every tag
+with its newest posts (at most five, then a link to the tag's page). It is the
+second column from 960px up and moves under the list on phones;
+`tests/e2e/test_sidebar_layout.py` guards that. Thumbnails reuse `post.image` or
+the first image of the post body — no generated `thumb-*` files, because
+`assets/img/` runs close to its 6MB budget (`script/check-images`).
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/jekyll/minima. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
