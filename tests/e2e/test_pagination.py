@@ -8,11 +8,11 @@ by jekyll-seo-tag) so crawlers get the prev/next signal.
 
 The Vietnamese home (`/vi/`, `vi/page2/`, ...) is paginated by hand
 (Pages-safe: Liquid ``slice`` + explicit ``vi/pageN/index.html`` files with
-``vi_page_num`` front matter, 5 posts per page — jekyll-paginate supports a
-single stream). It reuses the same pager markup/classes with localized
-labels ("Bài mới hơn" / "Bài cũ hơn") and explicit head prev/next links
-(emitted in `_includes/head.html`, since jekyll-seo-tag only knows the
-English paginator stream).
+``vi_page_num`` front matter, ``site.paginate`` posts per page (#176) —
+jekyll-paginate supports a single stream). It reuses the same pager
+markup/classes with localized labels ("Bài mới hơn" / "Bài cũ hơn") and
+explicit head prev/next links (emitted in `_includes/head.html`, since
+jekyll-seo-tag only knows the English paginator stream).
 """
 
 import re
@@ -171,19 +171,56 @@ def test_vietnamese_head_carries_prev_next(built_site):
 
 
 def test_vietnamese_pager_hidden_when_collection_fits_on_one_page():
-    """No pager markup renders when the VI collection is <= 5 posts (#155).
+    """No pager markup renders when the VI collection fits on one page (#155).
 
-    Static guard over the layout source: the VI pager block is wrapped in a
-    total-pages guard, so a 5-post collection renders no ``nav.pager`` at all
+    Static guard over the layout source: the unified pager block renders
+    only when its ``pager_show`` flag is set, which the VI branch sets
+    exactly when the page count derived from ``site.paginate`` exceeds 1
     (same single-page behavior as EN).
     """
     layout = (REPO_ROOT / "_layouts" / "home.html").read_text(encoding="utf-8")
     assert "vi_total_pages" in layout, "the VI pager must be gated on a page count"
     assert re.search(
-        r"vi_total_pages\s*>\s*1.{0,400}class=\"pager\"",
+        r"vi_total_pages\s*>\s*1",
+        layout,
+    ), "the VI pager must render only when the collection spans 2+ pages"
+    assert re.search(
+        r"if\s+pager_show.{0,3000}class=\"pager\"",
         layout,
         re.S,
-    ), "the VI pager must render only when the collection spans 2+ pages"
+    ), "the unified pager must render only when its show flag is set"
+
+
+@pytest.mark.static
+def test_per_page_count_has_a_single_source():
+    """The per-page count lives only in ``paginate:`` (#176).
+
+    ``_layouts/home.html`` (VI slice + unified pager) and
+    ``_includes/head.html`` (VI head prev/next) must derive the count from
+    ``site.paginate``; a bare ``= 5`` per-page assignment in either file
+    would silently desync VI/EN pagination and head metadata again. The
+    only allowed literal is the ``default: 5`` fallback for configs
+    without ``paginate:`` (e.g. upstream theme-dev).
+    """
+    config = (REPO_ROOT / "_config.yml").read_text(encoding="utf-8")
+    assert re.search(r"^paginate:\s*\d+\s*$", config, re.M), (
+        "`_config.yml` must keep `paginate:` as the single source of truth"
+    )
+    for template in ("_layouts/home.html", "_includes/head.html"):
+        source = (REPO_ROOT / template).read_text(encoding="utf-8")
+        assert "site.paginate" in source, (
+            f"`{template}` must derive the per-page count from `site.paginate`"
+        )
+        for match in re.finditer(r"=\s*5\b", source):
+            window = source[max(0, match.start() - 20):match.start()]
+            assert re.search(r"default:\s*$", window), (
+                f"`{template}` reintroduces a hard-coded per-page count: "
+                f"...{window}{match.group(0)}... (only `default: 5` is allowed)"
+            )
+    layout = (REPO_ROOT / "_layouts" / "home.html").read_text(encoding="utf-8")
+    assert layout.count('<nav class="pager"') == 1, (
+        "the home layout must keep a single parameterized pager block (#176)"
+    )
 
 
 @pytest.mark.static
