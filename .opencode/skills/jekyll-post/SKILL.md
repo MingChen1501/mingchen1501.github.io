@@ -65,7 +65,8 @@ Do not commit the `_site/` directory (already in `.gitignore`).
 - Post pages render a secondary column with the post's tags + posts sharing
   its first tag in the page's language (`_layouts/post.html`,
   `_includes/post-tags.html`, styles in
-  `_sass/minima/custom-styles.scss`). The home post list renders the same chips
+  `_sass/minima/custom-styles.scss`, the index over the `_sass/minima/custom/`
+  partials). The home post list renders the same chips
   per item (via the include's optional `class` parameter, #47), linking inside
   the page's language (`/tags/` vs `/vi/tags/`).
 

@@ -1,0 +1,44 @@
+// #174: skip link and visible focus (#87). Cascade slot 5 of 10.
+// ---------------------------------------------------------------------------
+// Accessibility (#87): skip link + visible focus styles.
+//
+// "Skip to main content" is the first focusable element in the DOM
+// (`_layouts/base.html`). It stays off-screen until it receives focus, then
+// becomes a plain, clearly visible link so keyboard users can bypass the
+// header/nav on every page.
+// ---------------------------------------------------------------------------
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+
+  &:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: $spacing-unit;
+    padding: $spacing-unit * 0.5;
+    background: $background-color;
+    color: $text-color;
+    border: 2px solid $brand-color-dark;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 0 0 2px $background-color;
+  }
+}
+
+// Visible focus outline for every interactive element (links, buttons, form
+// inputs). `:focus-visible` avoids showing the outline for pure mouse users.
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid $brand-color-dark;
+  outline-offset: 3px;
+}

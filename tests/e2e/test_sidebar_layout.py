@@ -65,7 +65,6 @@ TAG_LAYOUT = REPO_ROOT / "_layouts" / "tag.html"
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 SIDEBAR_INCLUDE = REPO_ROOT / "_includes" / "site-sidebar.html"
 POST_TAGS_INCLUDE = REPO_ROOT / "_includes" / "post-tags.html"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
 POSTS_DIR = REPO_ROOT / "_posts"
 VI_POSTS_DIR = REPO_ROOT / "_vi_posts"
@@ -77,7 +76,7 @@ TAG_POSTS_LIMIT = 3
 PHONE_WIDTH = 375
 DESKTOP_WIDTH = 1280
 SIDEBAR_WIDTH = 300
-# `_sass/minima/custom-styles.scss` pins the sidebar only from this viewport
+# `_sass/minima/custom/_layout.scss` pins the sidebar only from this viewport
 # height, at which the bounded column fits beside the list.
 STICKY_VIEWPORT_HEIGHT = 740
 # A desktop width that is too short for the pinned column: the sidebar must fall
@@ -484,33 +483,39 @@ def test_sidebar_tag_summary_holds_no_links():
 
 @pytest.mark.static
 def test_custom_styles_define_the_sidebar_grid():
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     assert ".site-layout {" in scss
-    # Two columns from 960px, one below it; `minmax(0, 1fr)` instead of a bare
-    # `1fr` so a long unbreakable run cannot widen the phone layout (#50).
-    assert "grid-template-columns: minmax(0, 1fr) 300px;" in scss
+    # Two columns from the breakpoint, one below it; `minmax(0, 1fr)` instead of
+    # a bare `1fr` so a long unbreakable run cannot widen the phone layout (#50).
+    assert "grid-template-columns: minmax(0, 1fr) $site-sidebar-width;" in scss
+    assert f"$site-sidebar-width: {SIDEBAR_WIDTH}px;" in scss
     assert "grid-template-columns: minmax(0, 1fr);" in scss
     assert "grid-template-columns: 1fr;" not in scss
     # The wider wrapper belongs to the list pages' content column only.
     assert ".layout-home main .wrapper," in scss
     assert ".layout-tag main .wrapper {" in scss
     # Pinned only where the sidebar fits beside the list: the desktop breakpoint
-    # *and* a viewport tall enough for its bounded content (#63).
+    # *and* a viewport tall enough for its bounded content (#63). The pixel
+    # values live in the hoisted variables (#174); the browser viewports below
+    # reuse the same constants so the two can never drift apart.
+    assert "$two-column-breakpoint: 960px;" in scss
+    assert f"$pinned-sidebar-min-height: {STICKY_VIEWPORT_HEIGHT}px;" in scss
     assert (
-        f"@media screen and (min-width: 960px) and (min-height: "
-        f"{STICKY_VIEWPORT_HEIGHT}px)" in scss
+        "@media screen and (min-width: $two-column-breakpoint) and "
+        "(min-height: $pinned-sidebar-min-height)" in scss
     )
     assert re.search(
-        r"@media screen and \(min-width: 960px\) and \(min-height: "
-        r"[\d]+px\)\s*\{[^}]*\.site-sidebar\s*\{[^}]*position: sticky",
+        r"@media screen and \(min-width: \$two-column-breakpoint\) and "
+        r"\(min-height: \$pinned-sidebar-min-height\)\s*\{[^}]*\.site-sidebar\s*\{[^}]*position: sticky",
         scss,
     ), "the site sidebar must be sticky only where it fits beside the list"
-    # Post pages keep their own sticky column (#45): pinned from desktop width
-    # only, without the viewport-height gate, so post-page behaviour is unchanged.
+    # Post pages keep their own sticky column (#45): pinned from the desktop
+    # breakpoint only, without the viewport-height gate, so post-page behaviour
+    # is unchanged.
     assert re.search(
-        r"@media screen and \(min-width: 960px\)\s*\{[^}]*\.post-sidebar\s*\{[^}]*position: sticky",
+        r"@media screen and \(min-width: \$two-column-breakpoint\)\s*\{[^}]*\.post-sidebar\s*\{[^}]*position: sticky",
         scss,
-    ), "the post sidebar must keep its own sticky rule at min-width: 960px"
+    ), "the post sidebar must keep its own sticky rule at the two-column breakpoint"
     # The thumbnail keeps the source ratio (the #50 guard measures real rects):
     # capped in a box, never cropped and never upscaled.
     assert re.search(
@@ -527,7 +532,7 @@ def test_custom_styles_define_the_sidebar_grid():
 def test_sidebar_height_is_bounded_instead_of_an_inner_scrollbar():
     """#63: the height budget replaces #58's `max-height` + `overflow-y` cap."""
     # Comments mention the removed cap, so only the declarations count.
-    scss = re.sub(r"//[^\n]*", "", _read(CUSTOM_STYLES))
+    scss = re.sub(r"//[^\n]*", "", conftest.custom_styles_text())
     assert "overflow-y" not in scss, "the sidebar must not scroll inside itself"
     assert "100vh" not in scss, "no viewport-height cap on the sidebar either"
     # The budget itself: a title that cannot spill, and a capped thumbnail.

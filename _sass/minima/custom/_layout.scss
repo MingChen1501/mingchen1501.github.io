@@ -1,0 +1,107 @@
+// #174: page grids, content widths and sticky columns. Cascade slot 1 of 10.
+// The two-column post page needs more room than Minima's 800px content width.
+// Keyed on the layout class set in `_layouts/base.html`. Scoped to the content
+// wrapper only: a bare `.layout-post .wrapper` also matches the site header and
+// footer wrappers, which would widen the chrome on post pages only.
+@media screen and (min-width: $two-column-breakpoint) {
+  .layout-post main .wrapper {
+    max-width: $wide-content-width;
+  }
+}
+
+// The list pages with a sidebar (#58: home + tag pages) need the same room, so
+// the 300px sidebar fits beside the list instead of squeezing it.
+@media screen and (min-width: $two-column-breakpoint) {
+  .layout-home main .wrapper,
+  .layout-tag main .wrapper {
+    max-width: $wide-content-width;
+  }
+}
+
+.post-layout {
+  display: grid;
+  // `minmax(0, 1fr)` (not `1fr`) so the track can shrink below its items'
+  // min-content width; plain `1fr` means `minmax(auto, 1fr)` and lets a long
+  // unbreakable run push the single column past the viewport on phones.
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-unit;
+}
+
+@media screen and (min-width: $two-column-breakpoint) {
+  .post-layout {
+    grid-template-columns: minmax(0, 1fr) $post-sidebar-width;
+    gap: $spacing-unit * 1.5;
+  }
+}
+
+// List pages with a sidebar (#58): `<div class="site-layout">` holds the list
+// (`.site-main`) and `<aside class="site-sidebar">` from the shared
+// `_includes/site-sidebar.html`. The aside is *after* `.site-main` in the DOM,
+// so the single-column phone layout stacks it under the list by itself.
+.site-layout {
+  display: grid;
+  // Same `minmax(0, 1fr)` guard as `.post-layout` above: plain `1fr` means
+  // `minmax(auto, 1fr)`, which a long unbreakable run can widen past 375px.
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-unit;
+}
+
+@media screen and (min-width: $two-column-breakpoint) {
+  .site-layout {
+    grid-template-columns: minmax(0, 1fr) $site-sidebar-width;
+    gap: $spacing-unit * 1.5;
+  }
+}
+
+.post-sidebar,
+.site-sidebar {
+  align-self: start;
+  font-size: $small-font-size;
+}
+
+// Pinned only where the whole sidebar fits next to the list: desktop width
+// *and* a viewport tall enough for its bounded content (see the height budget
+// in the sidebar section below). #58 capped the sidebar with `max-height` +
+// `overflow-y: auto`, which put a scrollbar *inside* the sidebar; #63 drops
+// that: the content is bounded by design instead, so the sidebar never scrolls
+// on its own. On phones — or on a short viewport, where it would be taller than
+// the screen — it stays a normal in-flow block, so scrolling the page reaches
+// every row.
+// Post pages keep their own sticky column (#45): pinned from desktop width
+// only, with no viewport-height gate, exactly as before #63/#65. The list
+// sidebar's height budget does not apply to the post sidebar.
+@media screen and (min-width: $two-column-breakpoint) {
+  .post-sidebar {
+    position: sticky;
+    top: $spacing-unit;
+  }
+}
+
+@media screen and (min-width: $two-column-breakpoint) and (min-height: $pinned-sidebar-min-height) {
+  .site-sidebar {
+    position: sticky;
+    top: $spacing-unit;
+  }
+}
+
+.post-sidebar__section,
+.sidebar__section {
+  margin-bottom: $spacing-unit;
+  padding-top: $spacing-unit * 0.5;
+  border-top: 1px solid $border-color-01;
+
+  &:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.post-sidebar__heading,
+.sidebar__heading {
+  margin: 0 0 $spacing-unit * 0.4;
+  @include relative-font-size(0.8125);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $brand-color-dimmed;
+}

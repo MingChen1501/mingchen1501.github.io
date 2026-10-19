@@ -18,6 +18,7 @@ list).
 import re
 from pathlib import Path
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -25,7 +26,6 @@ READING_TIME_INCLUDE = REPO_ROOT / "_includes" / "reading-time.html"
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 HOME_LAYOUT = REPO_ROOT / "_layouts" / "home.html"
 TAG_LAYOUT = REPO_ROOT / "_layouts" / "tag.html"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 # A short and a long post per language, each listed on its tag page (tag
 # pages list every post with the tag; the home list is paginated, so the
@@ -124,7 +124,7 @@ def test_list_layouts_keep_the_page_language_for_the_label():
 
 @pytest.mark.static
 def test_custom_styles_keep_the_reading_time_label_unsplit():
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     assert ".reading-time" in scss
     block = scss.split(".reading-time {", 1)[1].split("}", 1)[0]
     assert "white-space: nowrap" in block

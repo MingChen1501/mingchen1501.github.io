@@ -1,0 +1,92 @@
+// #174: tag chips, related posts and tag index/page styles. Cascade slot 2 of 10.
+// Tag chips: post sidebar (#45), home post list (#47) and the tag index /
+// tag pages (#46) — one chip style everywhere.
+ul.tag-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin: 0;
+  }
+}
+
+// Home list keeps the same chips, one row under the excerpt. The selector
+// names the element (`ul.tag-chip-list--home`) so it outranks the `margin: 0`
+// reset above, which has the same specificity but sits earlier in the file.
+ul.tag-chip-list--home {
+  margin-top: $spacing-unit * 0.5;
+}
+
+.tag-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid $border-color-01;
+  border-radius: 999px;
+  font-size: $small-font-size;
+  line-height: 1.6;
+  color: $text-color;
+
+  &:hover,
+  &:focus {
+    border-color: $brand-color-dark;
+    color: $brand-color-dark;
+    text-decoration: none;
+  }
+}
+
+ul.related-posts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin-bottom: $spacing-unit * 0.4;
+
+    .post-meta {
+      display: block;
+    }
+  }
+}
+
+// Tag index (`/tags/`) and tag pages (`/tags/<tag>/`).
+ul.tag-index {
+  margin: 0 0 $spacing-unit;
+  padding: 0;
+  list-style: none;
+
+  li {
+    margin-bottom: $spacing-unit * 0.4;
+  }
+}
+
+.tag-index__count {
+  margin-left: 8px;
+  font-size: $small-font-size;
+  color: $brand-color-dimmed;
+}
+
+// One-line topic summary on the tag indexes (#140): same dimmed meta tone
+// as the count, wrapped onto its own visual line so the 4 long summaries
+// stay readable on 375px phones instead of squeezing beside the chip.
+.tag-index__desc {
+  display: block;
+  margin-top: 2px;
+  font-size: $small-font-size;
+  color: $brand-color-dimmed;
+}
+
+.tag-page__intro {
+  color: $brand-color-dimmed;
+}
+
+.tag-page__back {
+  margin-top: $spacing-unit * 1.5;
+}
+
+.post-description {
+  margin-bottom: 0;
+}

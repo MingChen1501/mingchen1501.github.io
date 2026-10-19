@@ -1,0 +1,83 @@
+// #174: header row and language switcher (#93/#122). Cascade slot 6 of 10.
+// Header row (#122): the title leads, the nav and the language pill share
+// the right end, vertically centered. Flex replaces the old floats, so the
+// clearfix stub is dropped on this wrapper.
+.site-header .wrapper {
+  display: flex;
+  align-items: center;
+
+  &::after {
+    display: none;
+  }
+}
+
+.site-title {
+  float: none;
+  margin-right: auto;
+}
+
+.site-nav {
+  float: none;
+}
+
+// Language switcher pill (#93, redesigned #122): globe icon + short target
+// code (`EN` / `VI`) in a 44px-tall pill. The full language name stays
+// available as `aria-label`/`title`, with `lang` on the code and
+// `hreflang` on the link. It lives in the header row, never in the
+// sidebar, so it cannot break the sidebar's 5-row budget (#65).
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 14px;
+  margin-left: $spacing-unit * 0.5;
+  border: 1px solid $border-color-01;
+  border-radius: 999px;
+  color: $text-color;
+  font-size: $small-font-size;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+
+  &:visited {
+    color: $text-color;
+  }
+
+  &:hover {
+    text-decoration: none;
+    border-color: $brand-color;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $brand-color-dark;
+    outline-offset: 3px;
+  }
+
+  &__icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+}
+
+// Phones (#122): `.site-nav` is absolutely positioned (out of the flex
+// row), so the row holds the title + the pill. The pill clears the hamburger
+// box (36px toggle, 18px from the edge) with its own right margin, which
+// also replaces the title's old 45px clearance padding — the two must not
+// stack, or the row would crowd at 320px.
+@include media-query($on-medium) {
+  .site-title {
+    padding-right: 0;
+  }
+
+  .lang-switcher {
+    margin-left: auto;
+    margin-right: 48px;
+  }
+}

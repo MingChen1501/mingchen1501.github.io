@@ -1,0 +1,58 @@
+// #174: reading time, translation notice and copy-code button. Cascade slot 8 of 10.
+// ---------------------------------------------------------------------------
+// Reading time (#124): `_includes/reading-time.html` renders the estimate
+// as one `nowrap` unit ("• 5 min read"), so the label wraps as a whole
+// after the date instead of splitting mid-line on 375px phones. No font or
+// color override: inside `.post-meta` it inherits the meta style, keeping
+// the list rows and the post header untouched (sidebar budget unaffected).
+// ---------------------------------------------------------------------------
+.reading-time {
+  white-space: nowrap;
+}
+
+// Translation fallback notice (#93, phase 1): shown at the top of English
+// pages whose translation is still pending (`fallback_vi: true`). Short,
+// neutral, impossible to mistake for content.
+.translation-notice {
+  margin: 0 0 $spacing-unit;
+  padding: $spacing-unit * 0.5 $spacing-unit;
+  border: 1px solid $border-color-01;
+  border-left: 4px solid $brand-color;
+  border-radius: 4px;
+  background-color: $background-color;
+  font-size: $small-font-size;
+}
+
+// ---------------------------------------------------------------------------
+// Copy-code button (#126): `assets/js/copy-code.js` wraps each `pre > code`
+// in `.copy-code` and adds a localized button (without JS the markup is
+// unchanged, so there is no button to style). The wrapper — not the `pre` —
+// is the positioning context, so the button stays put while a long line
+// scrolls horizontally underneath it. The button keeps the 44px minimum
+// touch target; keyboard focus stays visible through the global
+// `button:focus-visible` rule above.
+// ---------------------------------------------------------------------------
+.copy-code {
+  position: relative;
+}
+
+.copy-code__button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid $border-color-01;
+  border-radius: 6px;
+  background-color: $background-color;
+  color: $text-color;
+  font-size: $small-font-size;
+  line-height: 1.4;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $brand-color-dark;
+    color: $brand-color-dark;
+  }
+}

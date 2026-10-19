@@ -22,6 +22,7 @@ guards; CI additionally splits the two groups into two jobs (``-m static`` /
 import contextlib
 import functools
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,29 @@ from playwright.sync_api import sync_playwright
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+
+CUSTOM_SCSS_INDEX = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
+CUSTOM_SCSS_DIR = REPO_ROOT / "_sass" / "minima" / "custom"
+
+
+def custom_styles_text():
+    """Concatenated site-specific SCSS in cascade order (#174).
+
+    ``custom-styles.scss`` is an index over ``_sass/minima/custom/_*.scss``;
+    static guards read this concatenation so they see the same rules in the
+    same order as the Sass compiler does.
+    """
+    index = CUSTOM_SCSS_INDEX.read_text(encoding="utf-8")
+    parts = []
+    for block in re.finditer(r"@import\s+(.*?);", index, re.S):
+        for item in block.group(1).split(","):
+            name = item.strip().strip("\"'")
+            if not name.startswith("minima/custom/"):
+                continue
+            partial = CUSTOM_SCSS_DIR / ("_" + name[len("minima/custom/"):] + ".scss")
+            parts.append(partial.read_text(encoding="utf-8"))
+    assert parts, "custom-styles.scss imports no custom partials"
+    return "\n".join(parts)
 
 BUILD_TIMEOUT_S = 300
 

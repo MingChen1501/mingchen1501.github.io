@@ -424,7 +424,9 @@ def _build_repo_copy(tmp_path, patch_css_declaration=False):
     shutil.copy2(lockfile, source / "Gemfile.lock")
 
     if patch_css_declaration:
-        scss = source / "_sass" / "minima" / "custom-styles.scss"
+        # The declaration lives in the layout partial since #174 split
+        # `custom-styles.scss` into an index over `minima/custom/`.
+        scss = source / "_sass" / "minima" / "custom" / "_layout.scss"
         text = _read(scss)
         assert CSS_DECLARATION in text, f"{CSS_DECLARATION!r} not found in the Sass"
         scss.write_text(text.replace(CSS_DECLARATION, PATCHED_DECLARATION, 1), encoding="utf-8")

@@ -35,6 +35,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -43,7 +44,6 @@ NAV_ITEMS_INCLUDE = REPO_ROOT / "_includes" / "nav-items.html"
 SUB_FOOTER_INCLUDE = REPO_ROOT / "_includes" / "sub-footer.html"
 NAV_SCRIPT = REPO_ROOT / "assets" / "js" / "nav-toggle.js"
 NAV_LAYOUT = REPO_ROOT / "_sass" / "minima" / "_layout.scss"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 SIDEBAR_INCLUDE = REPO_ROOT / "_includes" / "site-sidebar.html"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
 VI_TAG_PAGES_DIR = REPO_ROOT / "vi" / "tags"
@@ -162,7 +162,7 @@ def test_the_nav_script_is_linked_with_the_cache_version_token():
 @pytest.mark.static
 def test_focus_stays_visible_on_the_toggle():
     """#87's focus rule covers buttons, so the disclosure never goes dark."""
-    assert "button:focus-visible" in _read(CUSTOM_STYLES)
+    assert "button:focus-visible" in conftest.custom_styles_text()
 
 
 def test_the_rendered_nav_script_url_carries_a_non_empty_token(built_site):

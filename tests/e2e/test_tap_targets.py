@@ -4,7 +4,7 @@ A 360px audit measured the tag chips, pager links, social icons, language
 pill and the opened mobile menu already at or above the minimum, so they are
 pinned here without touching their styles. The sidebar links, TOC entries,
 tag back-link, footer email link and desktop nav items fell short and were
-lifted with `min-height` in `_sass/minima/custom-styles.scss` — CSS-only, no
+lifted with `min-height` in `_sass/minima/custom/_tap-targets.scss` (#174) — CSS-only, no
 markup restructuring, font sizes/margins/columns untouched.
 
 Guarded here:
@@ -30,10 +30,10 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 LAYOUT_SCSS = REPO_ROOT / "_sass" / "minima" / "_layout.scss"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
 VI_TAG_PAGES_DIR = REPO_ROOT / "vi" / "tags"
@@ -83,7 +83,7 @@ ALREADY_COMPLIANT = {
         r"\.social-media-list\s*\{[^}]*li\s*\{[^}]*min-width:\s*45px;[^}]*min-height:\s*45px;",
     ),
     "the language pill keeps its 44px minimum": (
-        CUSTOM_STYLES,
+        conftest.custom_styles_text(),
         r"\.lang-switcher\s*\{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px;",
     ),
     "the mobile toggle keeps its 36px box": (
@@ -91,7 +91,7 @@ ALREADY_COMPLIANT = {
         r"\.nav-toggle\s*\{[^}]*width:\s*36px;[^}]*height:\s*36px;",
     ),
     "the chips keep the padding and line-height that clear 24px": (
-        CUSTOM_STYLES,
+        conftest.custom_styles_text(),
         r"\.tag-chip\s*\{[^}]*padding:\s*2px 10px;[^}]*line-height:\s*1\.6;",
     ),
 }
@@ -104,13 +104,13 @@ def _read(path):
 def _blocks(scss, selector):
     """All declaration blocks for `selector` (flat rules, no nesting).
 
-    The #141 minima live in one section at the end of `custom-styles.scss`,
+    The #141 minima live together in the tap-targets partial (#174),
     while some selectors keep an earlier base rule — every block counts, since
     the cascade merges them.
     """
     matches = re.finditer(re.escape(selector) + r"\s*\{([^}]*)\}", scss)
     found = [match.group(1) for match in matches]
-    assert found, f"{selector} has no rule in custom-styles.scss"
+    assert found, f"{selector} has no rule in the custom styles"
     return found
 
 
@@ -120,17 +120,17 @@ def _blocks(scss, selector):
 @pytest.mark.static
 @pytest.mark.parametrize("selector", FIXED_SELECTORS, ids=lambda s: s)
 def test_small_controls_carry_a_24px_minimum(selector):
-    blocks = _blocks(_read(CUSTOM_STYLES), selector)
-    assert any("min-height: 24px;" in block for block in blocks), (
-        f"{selector} must keep `min-height: 24px` (#141)"
+    blocks = _blocks(conftest.custom_styles_text(), selector)
+    assert any("min-height: $tap-target-minimum;" in block for block in blocks), (
+        f"{selector} must keep `min-height: $tap-target-minimum` (24px, #141)"
     )
     if selector in INLINE_FIXED_SELECTORS:
         assert any("display: inline-block;" in block for block in blocks), (
             f"{selector} is an inline box: it needs `inline-block` for the "
             "minimum height to apply (#141)"
         )
-        assert any("min-width: 24px;" in block for block in blocks), (
-            f"{selector} must also keep `min-width: 24px` so a short label "
+        assert any("min-width: $tap-target-minimum;" in block for block in blocks), (
+            f"{selector} must also keep `min-width: $tap-target-minimum` so a short label "
             "cannot shrink the other axis (#141)"
         )
 
@@ -144,7 +144,7 @@ def test_desktop_nav_items_meet_the_minimum_without_touching_the_mobile_panel():
     above the mobile breakpoint so the panel keeps its block rows and
     `5px 10px` padding.
     """
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     match = re.search(
         r"@media screen and \(min-width:[^)]*\)\s*\{\s*"
         r"\.site-nav \.nav-item\s*\{([^}]*)\}",
@@ -155,9 +155,9 @@ def test_desktop_nav_items_meet_the_minimum_without_touching_the_mobile_panel():
     )
     block = match.group(1)
     assert "display: inline-block;" in block
-    assert "line-height: 24px;" in block
-    assert "min-width: 24px;" in block
-    assert "min-height: 24px;" in block
+    assert "line-height: $tap-target-minimum;" in block
+    assert "min-width: $tap-target-minimum;" in block
+    assert "min-height: $tap-target-minimum;" in block
     # Above the mobile breakpoint: the collapsible panel (max-width) can
     # never meet this rule, so its block rows are untouched.
     assert "$on-medium + 1px" in scss
@@ -168,9 +168,12 @@ def test_desktop_nav_items_meet_the_minimum_without_touching_the_mobile_panel():
 @pytest.mark.static
 @pytest.mark.parametrize("note", sorted(ALREADY_COMPLIANT), ids=lambda s: s)
 def test_already_compliant_controls_keep_their_sizing(note):
-    path, pattern = ALREADY_COMPLIANT[note]
-    assert re.search(pattern, _read(path), re.S), (
-        f"{note} ({path.name})"
+    source, pattern = ALREADY_COMPLIANT[note]
+    # Entries are either a file to read or the concatenated custom styles (#174).
+    text = _read(source) if isinstance(source, Path) else source
+    label = source.name if isinstance(source, Path) else "custom styles"
+    assert re.search(pattern, text, re.S), (
+        f"{note} ({label})"
     )
 
 

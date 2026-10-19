@@ -1,0 +1,72 @@
+// #174: table of contents (#125/#134). Cascade slot 7 of 10.
+// ---------------------------------------------------------------------------
+// Table of contents (#125, automatic since #134): posts with at least
+// `toc_min_h2` h2 headings (constant in `_layouts/post.html`) get a
+// `<details>` TOC from `_includes/post-toc.html` — pure Liquid over the
+// rendered headings, so it stays Pages-safe. Mounted twice from the same
+// include: inline at the top of `.post-content` for phones (inside the
+// reading measure, never wider than the main column) and as the first
+// `.post-sidebar` section for desktop. Exactly one copy is visible per
+// viewport; `toc: false` suppresses both. No JS, no plugin.
+// ---------------------------------------------------------------------------
+.post-toc {
+  margin: 0 0 $spacing-unit;
+  border: 1px solid $border-color-01;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: $small-font-size;
+  line-height: 1.5;
+}
+
+.post-toc__summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.post-toc__nav {
+  margin-top: 8px;
+}
+
+ul.post-toc__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.post-toc__item {
+  margin: 2px 0;
+  overflow-wrap: break-word;
+}
+
+.post-toc__item a {
+  color: $text-color;
+
+  &:hover,
+  &:focus {
+    color: $brand-color-dark;
+  }
+}
+
+// `h3` entries hang under their `h2`: flat list, so no nested-list bookkeeping
+// in the Liquid include.
+.post-toc__item--h3 {
+  padding-left: 16px;
+}
+
+// Dual mount (#134): the sidebar copy stays hidden on phones (the sidebar
+// stacks under the content there, so it would duplicate the inline copy at
+// the bottom), and the inline copy stays hidden on desktop (the sidebar copy
+// is sticky beside the content). Same 960px breakpoint as `.post-layout`.
+.post-toc-mount--sidebar {
+  display: none;
+}
+
+@media screen and (min-width: $two-column-breakpoint) {
+  .post-toc-mount--inline {
+    display: none;
+  }
+
+  .post-toc-mount--sidebar {
+    display: block;
+  }
+}
