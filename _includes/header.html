@@ -35,8 +35,13 @@
         </button>
 
         {% include nav-items.html paths = page_paths %}
-        {% include lang-switcher.html %}
       </nav>
+      {%- comment -%}
+        Language switcher (#122): a header-row pill sitting AFTER the nav,
+        never inside it — the mobile menu collapses `#nav-menu` only, so
+        the switcher stays reachable in the header row on phones.
+      {%- endcomment -%}
+      {% include lang-switcher.html %}
     {%- endunless %}
   </div>
 </header>
