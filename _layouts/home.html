@@ -24,8 +24,9 @@ layout: base
         jekyll-paginate over the English-only `site.posts`) shows
         `paginator.posts`; the Vietnamese home (`/vi/`, `vi/page2/`, … — plain
         pages with `vi_page_num` front matter, since jekyll-paginate supports
-        a single stream) slices the newest-first Vietnamese list to 5 posts
-        per page (#155). `date_format` follows the page language.
+        a single stream) slices the newest-first Vietnamese list to
+        `site.paginate` posts per page (#155, #176). `date_format` follows
+        the page language.
       {%- endcomment -%}
       {%- assign home_lang = page.lang | default: site.lang | default: 'en' -%}
       {%- comment -%}
@@ -37,14 +38,22 @@ layout: base
       {%- if home_vi_source == nil -%}
         {%- assign home_vi_source = "" | split: "" -%}
       {%- endif -%}
-      {%- assign vi_per_page = 5 -%}
+      {%- comment -%}
+        Single source for the per-page count (#176): `paginate:` in
+        `_config.yml` is the only value. The VI slice below, the VI pager
+        further down, and the VI head prev/next links in
+        `_includes/head.html` all derive from `site.paginate`. The
+        `default: 5` fallback only covers configs without `paginate:`
+        (e.g. upstream theme-dev) — do not add another literal here.
+      {%- endcomment -%}
+      {%- assign home_per_page = site.paginate | default: 5 -%}
       {%- assign vi_page_num = page.vi_page_num | default: 1 -%}
       {%- if home_lang == 'vi' -%}
         {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
         {% assign vi_sorted = home_vi_source | sort: "date" | reverse %}
         {%- assign vi_total = home_vi_source | size -%}
-        {%- assign vi_offset = vi_page_num | minus: 1 | times: vi_per_page -%}
-        {% assign posts = vi_sorted | slice: vi_offset, vi_per_page %}
+        {%- assign vi_offset = vi_page_num | minus: 1 | times: home_per_page -%}
+        {% assign posts = vi_sorted | slice: vi_offset, home_per_page %}
       {% else %}
         {%- assign date_format = "%b %-d, %Y" -%}
         {% if paginator %}
@@ -60,7 +69,7 @@ layout: base
           Per-language total (#149): the English home counts the English-only
           `site.posts` while the Vietnamese home counts `site.vi_posts`, so
           the two archives can legitimately differ (translations lag the
-          originals). Both homes paginate 5 per page (#155), and each home
+          originals). Both homes paginate `site.paginate` per page (#155, #176), and each home
           states its own total, so the EN/VI sizes are never silently
           compared. English inflects ("1 post" / "N posts"); Vietnamese
           nouns do not ("1 bài" / "N bài" share one form).
@@ -129,33 +138,70 @@ layout: base
           The pager renders only when the collection spans more than one
           page, in either language.
         {%- endcomment -%}
-        {% if home_lang == 'vi' %}
-          {%- assign vi_total_pages = vi_total | plus: vi_per_page | minus: 1 | divided_by: vi_per_page -%}
+        {%- comment -%}
+          Unified pager (#176, was two near-identical EN/VI blocks): a single
+          `<nav>` parameterized by prev/next URLs plus localized labels.
+          The VI inputs derive from `home_per_page` (i.e. `site.paginate`,
+          see above); the EN inputs come from the jekyll-paginate
+          `paginator`. Show rules are unchanged: the VI pager renders only
+          when the collection spans 2+ pages, the EN pager whenever the
+          paginator stream exists. Rendered links, labels, and titles match
+          the pre-#176 per-language blocks.
+        {%- endcomment -%}
+        {%- assign pager_show = false -%}
+        {%- if home_lang == 'vi' -%}
+          {%- assign vi_total_pages = vi_total | plus: home_per_page | minus: 1 | divided_by: home_per_page -%}
           {%- if vi_total_pages > 1 -%}
+            {%- assign pager_show = true -%}
+          {%- endif -%}
+          {%- assign pager_current = vi_page_num -%}
+          {%- if vi_page_num > 1 -%}
+            {%- assign vi_prev = vi_page_num | minus: 1 -%}
+            {%- if vi_prev == 1 -%}
+              {%- assign pager_prev_url = '/vi/' | relative_url -%}
+            {%- else -%}
+              {%- assign pager_prev_url = '/vi/page' | append: vi_prev | append: '/' | relative_url -%}
+            {%- endif -%}
+            {%- assign pager_prev_title = 'Đi tới trang ' | append: vi_prev -%}
+          {%- endif -%}
+          {%- assign vi_next = vi_page_num | plus: 1 -%}
+          {%- if vi_next <= vi_total_pages -%}
+            {%- assign pager_next_url = '/vi/page' | append: vi_next | append: '/' | relative_url -%}
+            {%- assign pager_next_title = 'Đi tới trang ' | append: vi_next -%}
+          {%- endif -%}
+          {%- assign pager_newer_label = 'Bài mới hơn' -%}
+          {%- assign pager_older_label = 'Bài cũ hơn' -%}
+        {%- elsif paginator -%}
+          {%- assign pager_show = true -%}
+          {%- assign pager_current = paginator.page -%}
+          {%- if paginator.previous_page -%}
+            {%- assign pager_prev_url = paginator.previous_page_path | relative_url -%}
+            {%- assign pager_prev_title = 'Go to Page ' | append: paginator.previous_page -%}
+          {%- endif -%}
+          {%- if paginator.next_page -%}
+            {%- assign pager_next_url = paginator.next_page_path | relative_url -%}
+            {%- assign pager_next_title = 'Go to Page ' | append: paginator.next_page -%}
+          {%- endif -%}
+          {%- assign pager_newer_label = 'Newer posts' -%}
+          {%- assign pager_older_label = 'Older posts' -%}
+        {%- endif -%}
+        {%- if pager_show -%}
           <nav class="pager" aria-label="Pagination">
             <ul class="pagination">
-            {%- if vi_page_num > 1 -%}
-              {%- assign vi_prev = vi_page_num | minus: 1 -%}
+            {%- if pager_prev_url -%}
               <li>
-                {% if vi_prev == 1 %}
-                <a href="{{ '/vi/' | relative_url }}" class="previous-page" rel="prev" title="Đi tới trang 1">
-                  &larr; Bài mới hơn
+                <a href="{{ pager_prev_url }}" class="previous-page" rel="prev" title="{{ pager_prev_title }}">
+                  &larr; {{ pager_newer_label }}
                 </a>
-                {% else %}
-                <a href="{{ '/vi/page' | append: vi_prev | append: '/' | relative_url }}" class="previous-page" rel="prev" title="Đi tới trang {{ vi_prev }}">
-                  &larr; Bài mới hơn
-                </a>
-                {% endif %}
               </li>
             {%- else -%}
               <li><div class="pager-edge">•</div></li>
             {%- endif %}
-              <li><div class="current-page">{{ vi_page_num }}</div></li>
-            {%- assign vi_next = vi_page_num | plus: 1 -%}
-            {%- if vi_next <= vi_total_pages %}
+              <li><div class="current-page">{{ pager_current }}</div></li>
+            {%- if pager_next_url %}
               <li>
-                <a href="{{ '/vi/page' | append: vi_next | append: '/' | relative_url }}" class="next-page" rel="next" title="Đi tới trang {{ vi_next }}">
-                  Bài cũ hơn &rarr;
+                <a href="{{ pager_next_url }}" class="next-page" rel="next" title="{{ pager_next_title }}">
+                  {{ pager_older_label }} &rarr;
                 </a>
               </li>
             {%- else -%}
@@ -163,32 +209,7 @@ layout: base
             {%- endif %}
             </ul>
           </nav>
-          {%- endif %}
-        {% elsif paginator %}
-          <nav class="pager" aria-label="Pagination">
-            <ul class="pagination">
-            {%- if paginator.previous_page %}
-              <li>
-                <a href="{{ paginator.previous_page_path | relative_url }}" class="previous-page" rel="prev" title="Go to Page {{ paginator.previous_page }}">
-                  &larr; Newer posts
-                </a>
-              </li>
-            {%- else %}
-              <li><div class="pager-edge">•</div></li>
-            {%- endif %}
-              <li><div class="current-page">{{ paginator.page }}</div></li>
-            {%- if paginator.next_page %}
-              <li>
-                <a href="{{ paginator.next_page_path | relative_url }}" class="next-page" rel="next" title="Go to Page {{ paginator.next_page }}">
-                  Older posts &rarr;
-                </a>
-              </li>
-            {%- else %}
-              <li><div class="pager-edge">•</div></li>
-            {%- endif %}
-            </ul>
-          </nav>
-        {%- endif %}
+        {%- endif -%}
       {%- endif -%}
     </div>
 
