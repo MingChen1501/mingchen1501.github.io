@@ -673,9 +673,14 @@ ul.post-toc__list {
 // height applies), each paired with `min-width` where the box could shrink
 // under a short label:
 //
-// - desktop nav items (22px tall): 1px of padding each side; the header keeps
-//   its height (`.site-header` min-height dominates) and the opened mobile
-//   panel keeps its own `5px 10px` padding — that rule outranks this one —
+// - desktop nav items: their inline height follows the available fonts (22px
+//   with local fonts, 19px on CI runners), so neither padding nor inheritance
+//   can guarantee the minimum — and plain `inline-block` would take the 54px
+//   header strut instead. A 24px line box of their own plus `min-height` (and
+//   `min-width`, so a short label cannot shrink the other axis) pins both axes
+//   whatever the fonts do. Scoped above the mobile breakpoint, so the
+//   collapsible panel keeps its block rows, `5px 10px` padding and own
+//   line-height untouched —
 // - sidebar highlight titles, tag-row post links, TOC entries, the tag
 //   back-link, the footer email link, the sidebar heading link and the
 //   tag-row "view all" links: the shortfall only, so multi-line targets keep
@@ -684,9 +689,13 @@ ul.post-toc__list {
 // Font sizes, margins and column widths are untouched, and the sidebar's #63
 // height budget keeps wide headroom at the 740px pin threshold.
 // ---------------------------------------------------------------------------
-.site-nav .nav-item {
-  padding-top: 1px;
-  padding-bottom: 1px;
+@media screen and (min-width: $on-medium + 1px) {
+  .site-nav .nav-item {
+    display: inline-block;
+    line-height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+  }
 }
 
 .sidebar-post__title {

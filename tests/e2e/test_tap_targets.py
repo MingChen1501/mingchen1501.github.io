@@ -45,8 +45,9 @@ TAG_PAGE = f"/tags/{sorted(path.stem for path in TAG_PAGES_DIR.glob('*.md'))[0]}
 VI_TAG_PAGE = f"/vi/tags/{sorted(path.stem for path in VI_TAG_PAGES_DIR.glob('*.md'))[0]}/"
 
 # Controls the #141 audit found below 24px, each lifted with `min-height`.
-# (The desktop nav items are the exception: 1px of padding each side takes
-# them from 22px to 24px, pinned by `test_desktop_nav_padding_...` below.)
+# (The desktop nav items are the exception: font-dependent inline height, so
+# `inline-block` + `min-height` scoped to desktop widths, pinned by
+# `test_desktop_nav_items_meet_the_minimum_...` below.)
 FIXED_SELECTORS = [
     ".sidebar-post__title",
     ".sidebar-tag__posts a",
@@ -135,12 +136,32 @@ def test_small_controls_carry_a_24px_minimum(selector):
 
 
 @pytest.mark.static
-def test_desktop_nav_padding_does_not_collapse_the_mobile_panel():
-    """The 1px nav-item padding meets the minimum without touching the menu."""
-    blocks = _blocks(_read(CUSTOM_STYLES), ".site-nav .nav-item")
-    assert any("padding-top: 1px;" in block for block in blocks)
-    assert any("padding-bottom: 1px;" in block for block in blocks)
-    # The opened mobile panel outranks it, so the menu keeps its roomy rows.
+def test_desktop_nav_items_meet_the_minimum_without_touching_the_mobile_panel():
+    """Inline nav height follows the available fonts (22px with local fonts,
+    19px on CI runners), so neither padding nor inheritance can guarantee the
+    minimum — and plain `inline-block` would take the 54px header strut.
+    Desktop items pin a 24px line box of their own plus `min-height`, scoped
+    above the mobile breakpoint so the panel keeps its block rows and
+    `5px 10px` padding.
+    """
+    scss = _read(CUSTOM_STYLES)
+    match = re.search(
+        r"@media screen and \(min-width:[^)]*\)\s*\{\s*"
+        r"\.site-nav \.nav-item\s*\{([^}]*)\}",
+        scss,
+    )
+    assert match, (
+        "desktop nav items must carry the minimum inside a min-width query"
+    )
+    block = match.group(1)
+    assert "display: inline-block;" in block
+    assert "line-height: 24px;" in block
+    assert "min-width: 24px;" in block
+    assert "min-height: 24px;" in block
+    # Above the mobile breakpoint: the collapsible panel (max-width) can
+    # never meet this rule, so its block rows are untouched.
+    assert "$on-medium + 1px" in scss
+    # The opened mobile panel keeps its roomy rows.
     assert "padding: 5px 10px;" in _read(LAYOUT_SCSS)
 
 
