@@ -1,0 +1,5 @@
+# robots.txt for mingchen.id.vn
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+Sitemap: https://mingchen.id.vn/sitemap.xml
