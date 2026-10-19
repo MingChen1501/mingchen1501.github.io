@@ -9,103 +9,72 @@ sitemap: false
   <!-- Homepage -->
   <url>
     <loc>{{ site_url }}/</loc>
-    {% if site.time %}
     <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-    {% endif %}
   </url>
 
-  {% comment %} Find paginated pages (GitHub Pages uses jekyll-paginate: /page2/, /page3/, ...) {% endcomment %}
-  {% assign max_pages = 1000 %}
-  {% for i in (2..max_pages) %}
-    {% assign page_path = "/page" | append: i | append: "/" %}
-    {% comment %} Check if page exists in paginator.pages would be ideal, but in build paginator is available? For static rendering, check site.paginate_path structure is fixed. Also look for actual generated paths: better to enumerate by trying to see if corresponding index page conceptually exists - but easier to detect from paginator if present {% endcomment %}
-    {% break if i > 10 %}{% comment %} safe upper bound since paginate is 5 and only 7 posts total {% endcomment %}
-  {% endfor %}
-  {% if paginator and paginator.total_pages > 1 %}
-    {% for i in (2..paginator.total_pages) %}
-      <url>
-        <loc>{{ site_url }}/page{{ i }}/</loc>
-        {% if site.time %}
-        <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-        {% endif %}
-      </url>
-    {% endfor %}
+  {% comment %} Paginated list pages (/page2/ ... /pageN/). `paginator` is bound
+    only on the paginated index.html, never on this standalone page, so derive
+    the page count from site.posts.size and site.paginate with ceil division and
+    enumerate the pages explicitly (emitted only when the count is >= 2).
+  {% endcomment %}
+  {% assign paginate_per_page = site.paginate | default: 0 | plus: 0 %}
+  {% if paginate_per_page > 0 %}
+    {% assign post_count = site.posts | size %}
+    {% assign total_pages = post_count | plus: paginate_per_page | minus: 1 | divided_by: paginate_per_page %}
+    {% if total_pages > 1 %}
+      {% for page_num in (2..total_pages) %}
+  <url>
+    <loc>{{ site_url }}/page{{ page_num }}/</loc>
+    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+  </url>
+      {% endfor %}
+    {% endif %}
   {% endif %}
 
-  <!-- Tags index -->
-  <url>
-    <loc>{{ site_url }}/tags/</loc>
-    {% if site.time %}
-    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-    {% endif %}
-  </url>
-
-  <!-- Pillar tag pages -->
-  {% for tag in site.tags %}
-    {% assign tag_name = tag[0] %}
-    <url>
-      <loc>{{ site_url }}/tags/{{ tag_name | slugify: "pretty" }}/</loc>
-      {% if site.time %}
-      <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-      {% endif %}
-    </url>
-  {% endfor %}
-  {% for tag_page in site.pages %}
-    {% if tag_page.layout == "tag" and tag_page.permalink %}
-      {% unless tag_page.permalink contains "/404" %}
-        <url>
-          <loc>{{ site_url }}{{ tag_page.permalink }}</loc>
-          {% if site.time %}
-          <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-          {% endif %}
-        </url>
-      {% endunless %}
-    {% endif %}
-  {% endfor %}
-
-  <!-- Static pages -->
+  {% comment %} Static pages: single emission path for /tags/, /about-me/,
+    /portfolio/ (layout: page with a permalink); 404/feed/sitemap/llms are
+    never emitted. {% endcomment %}
   {% for page in site.pages %}
     {% if page.layout == "page" and page.permalink %}
       {% unless page.url contains "404" or page.url contains "feed.xml" or page.url contains "sitemap.xml" or page.url contains "llms.txt" %}
-        <url>
-          <loc>{{ site_url }}{{ page.permalink }}</loc>
-          {% if page.date %}
-            <lastmod>{{ page.date | date_to_xmlschema }}</lastmod>
-          {% elsif page.last_modified_at %}
-            <lastmod>{{ page.last_modified_at | date_to_xmlschema }}</lastmod>
-          {% elsif site.time %}
-            <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-          {% endif %}
-        </url>
-      {% endunless %}
+  <url>
+    <loc>{{ site_url }}{{ page.permalink }}</loc>
+    {% if page.date %}
+    <lastmod>{{ page.date | date_to_xmlschema }}</lastmod>
+    {% elsif page.last_modified_at %}
+    <lastmod>{{ page.last_modified_at | date_to_xmlschema }}</lastmod>
+    {% elsif site.time %}
+    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
     {% endif %}
-  {% endfor %}
-  {% for page in site.html_pages %}
-    {% if page.layout == "page" and page.permalink %}
-      {% unless page.url contains "404" or page.url contains "feed.xml" or page.url contains "sitemap.xml" or page.url contains "llms.txt" %}
-        <url>
-          <loc>{{ site_url }}{{ page.permalink }}</loc>
-          {% if site.time %}
-            <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-          {% endif %}
-        </url>
+  </url>
       {% endunless %}
     {% endif %}
   {% endfor %}
 
-  <!-- Posts -->
+  {% comment %} Pillar tag pages: single emission path over the tags/<tag>.md
+    pages (layout: tag), one <loc> per page. {% endcomment %}
+  {% for tag_page in site.pages %}
+    {% if tag_page.layout == "tag" and tag_page.permalink %}
+  <url>
+    <loc>{{ site_url }}{{ tag_page.permalink }}</loc>
+    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+  </url>
+    {% endif %}
+  {% endfor %}
+
+  {% comment %} Posts: single emission path over site.posts (published only). {% endcomment %}
   {% for post in site.posts %}
     {% if post.url %}
-      <url>
-        <loc>{{ site_url }}{{ post.url }}</loc>
-        {% if post.date %}
-          <lastmod>{{ post.date | date_to_xmlschema }}</lastmod>
-        {% elsif post.last_modified_at %}
-          <lastmod>{{ post.last_modified_at | date_to_xmlschema }}</lastmod>
-        {% elsif site.time %}
-          <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
-        {% endif %}
-      </url>
+  <url>
+    <loc>{{ site_url }}{{ post.url }}</loc>
+    {% if post.date %}
+    <lastmod>{{ post.date | date_to_xmlschema }}</lastmod>
+    {% elsif post.last_modified_at %}
+    <lastmod>{{ post.last_modified_at | date_to_xmlschema }}</lastmod>
+    {% elsif site.time %}
+    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+    {% endif %}
+  </url>
     {% endif %}
   {% endfor %}
 </urlset>
