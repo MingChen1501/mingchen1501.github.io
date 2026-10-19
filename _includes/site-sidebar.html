@@ -16,7 +16,10 @@
 
   Language (#93): English pages read `site.posts` + `site.tags` and render
   English labels; Vietnamese pages read `site.vi_posts` (tags derived from
-  the docs) and render Vietnamese labels. Chips still come from
+  the docs) and render Vietnamese labels. Tag display labels and URL slugs
+  come from `_data/tag_labels.yml` (#129), so the lifestyle pillar reads
+  "Life" at `/tags/life/` on English pages and "Đời sống" at
+  `/vi/tags/doi-song/` on Vietnamese ones. Chips still come from
   `_includes/post-tags.html`, which links inside the page's language, so the
   sidebar can never leak a cross-language URL.
 
@@ -205,10 +208,25 @@
       {%- else -%}
         {%- assign sidebar_tag_posts = site.tags[sidebar_tag_name] | sort: "date" | reverse -%}
       {%- endif -%}
+      {%- comment -%}
+        Display label and URL slug from `_data/tag_labels.yml` (#129): the
+        row reads "Life" and links `/tags/life/` on English pages, "Đời sống"
+        and `/vi/tags/doi-song/` on Vietnamese ones; technical tags keep
+        their English label and slug in both. Unknown keys degrade to the
+        canonical tag key.
+      {%- endcomment -%}
+      {%- assign sidebar_tag_entry = site.data.tag_labels[sidebar_tag_name] -%}
+      {%- if sidebar_lang == 'vi' -%}
+        {%- assign sidebar_tag_label = sidebar_tag_entry.vi | default: sidebar_tag_name -%}
+        {%- assign sidebar_tag_slug = sidebar_tag_entry.slug_vi | default: sidebar_tag_name -%}
+      {%- else -%}
+        {%- assign sidebar_tag_label = sidebar_tag_entry.en | default: sidebar_tag_name -%}
+        {%- assign sidebar_tag_slug = sidebar_tag_entry.slug_en | default: sidebar_tag_name -%}
+      {%- endif -%}
       <li class="sidebar-tag">
         <details class="sidebar-tag__group">
           <summary class="sidebar-tag__summary">
-            <span class="tag-chip">{{ sidebar_tag_name | escape }}</span>
+            <span class="tag-chip">{{ sidebar_tag_label | escape }}</span>
             <span class="tag-index__count">{{ sidebar_tag_posts | size }} {{ sidebar_count_unit }}</span>
           </summary>
           <ul class="sidebar-tag__posts">
@@ -216,7 +234,7 @@
             <li><a href="{{ sidebar_tag_post.url | relative_url }}">{{ sidebar_tag_post.title | escape }}</a></li>
             {%- endfor -%}
           </ul>
-          <a class="sidebar-tag__more" href="{{ sidebar_tag_base | append: sidebar_tag_name | append: '/' | relative_url }}">
+          <a class="sidebar-tag__more" href="{{ sidebar_tag_base | append: sidebar_tag_slug | append: '/' | relative_url }}">
             {{ sidebar_more_link }} ({{ sidebar_tag_posts | size }})
           </a>
         </details>

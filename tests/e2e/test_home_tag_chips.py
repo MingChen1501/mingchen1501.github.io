@@ -32,6 +32,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TAG_PAGES_DIR = REPO_ROOT / "tags"
@@ -163,23 +164,35 @@ def test_home_chips_link_to_tag_pages_that_exist_in_the_build(page, home_url, bu
     chips = [chip for item in result["items"] for chip in item["chips"]]
     assert chips, "no chips measured on the home list"
 
+    labels = yaml.safe_load(
+        (REPO_ROOT / "_data" / "tag_labels.yml").read_text(encoding="utf-8")
+    )
+    # Localized slug -> (canonical key, English label) (#129).
+    by_slug = {entry["slug_en"]: (key, entry["en"]) for key, entry in labels.items()}
+
     for chip in chips:
         match = TAG_HREF_RE.match(chip["href"] or "")
         assert match, f"unexpected chip href: {chip['href']}"
-        tag = match.group(1)
-        # The chip label is the tag itself, as on the post sidebar (#45).
-        assert chip["text"] == tag, f"chip label {chip['text']!r} does not match {tag}"
+        slug = match.group(1)
+        assert slug in by_slug, f"chip links to /tags/{slug}/ with no tag_labels.yml entry"
+        key, label = by_slug[slug]
+        # The chip label is the localized label, as on the post sidebar (#45, #129).
+        assert chip["text"] == label, f"chip label {chip['text']!r} does not match {label!r}"
 
-        # The source page (#46) still declares that tag...
-        assert (TAG_PAGES_DIR / f"{tag}.md").is_file(), (
-            f"chip links to /tags/{tag}/ but tags/{tag}.md does not exist"
+        # A tag source page (#46) still declares that canonical key...
+        sources = [
+            path for path in TAG_PAGES_DIR.glob("*.md")
+            if re.search(rf"^tag:\s*{re.escape(key)}\s*$", path.read_text(encoding="utf-8"), re.M)
+        ]
+        assert sources, (
+            f"chip links to /tags/{slug}/ but no page under tags/ declares `tag: {key}`"
         )
         # ...and the built tag page is really there and served.
-        assert (built_site / "tags" / tag / "index.html").is_file(), (
-            f"/tags/{tag}/ is missing from the build"
+        assert (built_site / "tags" / slug / "index.html").is_file(), (
+            f"/tags/{slug}/ is missing from the build"
         )
-        response = page.request.get(f"{home_url}tags/{tag}/")
-        assert response.status == 200, f"/tags/{tag}/ returned {response.status}"
+        response = page.request.get(f"{home_url}tags/{slug}/")
+        assert response.status == 200, f"/tags/{slug}/ returned {response.status}"
 
 
 def test_home_chips_reuse_the_post_sidebar_chip_style(page, home_url):

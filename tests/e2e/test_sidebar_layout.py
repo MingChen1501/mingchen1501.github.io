@@ -460,10 +460,13 @@ def test_sidebar_tag_summary_holds_no_links():
         )
     # The summary label reuses the chip look on a plain span (visuals
     # unchanged), and the tag-page link lives in the opened panel.
+    # Labels and slugs resolve per language from `_data/tag_labels.yml`
+    # (#129), so the row links the tag page of the current language.
     assert '<span class="tag-chip">' in html
-    assert "sidebar_tag_name | escape" in html
+    assert "site.data.tag_labels[sidebar_tag_name]" in html
+    assert "sidebar_tag_label | escape" in html
     assert re.search(
-        r"sidebar_tag_base\s*\|\s*append: sidebar_tag_name\s*\|\s*append: '/' \| relative_url", html
+        r"sidebar_tag_base\s*\|\s*append: sidebar_tag_slug\s*\|\s*append: '/' \| relative_url", html
     )
     # The tag links stay inside the page's language (#93).
     assert 'sidebar_tag_base = "/tags/"' in html
@@ -632,6 +635,18 @@ def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
 ):
     intro_re = r"(\d+) bài viết" if tag_base.startswith("/vi/") else r"(\d+) posts tagged"
     count_unit = "bài" if tag_base.startswith("/vi/") else "posts"
+    # Localized slug -> label for this sidebar's language (#129).
+    tag_labels = yaml.safe_load(
+        (REPO_ROOT / "_data" / "tag_labels.yml").read_text(encoding="utf-8")
+    )
+    if tag_base.startswith("/vi/"):
+        expected_labels = {
+            entry["slug_vi"]: entry["vi"] for entry in tag_labels.values()
+        }
+    else:
+        expected_labels = {
+            entry["slug_en"]: entry["en"] for entry in tag_labels.values()
+        }
     with _viewport(browser, built_site_url, DESKTOP_WIDTH) as page:
         _open(page, built_site_url, home_path)
         groups = page.evaluate(_SIDEBAR_JS)["tags"]
@@ -643,7 +658,10 @@ def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
             )
             assert match, f"unexpected tag chip href: {group['tag']}"
             tag = match.group(1)
-            assert group["chipLabel"] == tag, "the chip label is the tag itself"
+            assert group["chipLabel"] == expected_labels[tag], (
+                f"the chip label {group['chipLabel']!r} is not the localized "
+                f"label for `{tag}`"
+            )
             assert group["more"] == group["tag"]
             assert group["open"] is False, (
                 f"tag `{tag}` must be collapsed by default (#63), so the column "

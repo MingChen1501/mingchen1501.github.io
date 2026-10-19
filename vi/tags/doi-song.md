@@ -2,7 +2,7 @@
 layout: tag
 lang: vi
 ref: tag-doi-song
-title: "Tag: doi-song"
+title: "Tag: Đời sống"
 tag: doi-song
 permalink: /vi/tags/doi-song/
 ---

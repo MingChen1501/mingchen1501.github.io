@@ -2,7 +2,7 @@
 layout: tag
 lang: vi
 ref: tag-linux-tooling
-title: "Tag: linux-tooling"
+title: "Tag: Linux Tooling"
 tag: linux-tooling
 permalink: /vi/tags/linux-tooling/
 ---
