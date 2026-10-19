@@ -14,4 +14,9 @@ else
   exit 1
 fi
 
+# NOTE (#173): `gem build minima.gemspec` below is upstream minima legacy —
+# it validates the theme-gem path (theme-dev sample site). KEPT as-is:
+# removing it (and the gemspec/theme-dev helpers) is the #169 divergence
+# decision, which is out of scope here. No personal-site behavior depends
+# on it; `script/build` + `bundle exec jekyll build` are the real checks.
 gem build minima.gemspec
