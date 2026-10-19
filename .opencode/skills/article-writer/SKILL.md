@@ -34,8 +34,10 @@ A chat draft (idea, rough draft, or notes pasted in chat) is NOT
 drafted directly. First turn it into a well-formed `article` issue
 (per #192: title, slug, language, tags, description, body/outline,
 images, publish date, instructions), then follow the normal flow from
-"Step 1 — read inputs" with that issue as the source. The issue is the
-single source of truth for both paths.
+"Step 1 — read inputs" with that issue as the source. The full
+chat-draft flow (chat input, assessment checklist, issue filing, image
+handoff, sample issue) is documented in `docs/chat-draft-192.md`. The
+issue is the single source of truth for both paths.
 
 ## Step 1 — read inputs
 
