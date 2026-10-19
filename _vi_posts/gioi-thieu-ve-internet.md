@@ -6,6 +6,7 @@ date: 2022-12-25
 author: Ming Chen
 title: "Giải thích về Internet"
 tags: [backend-production]
+toc: true
 description: "Giải thích Internet là gì và cách nó vận hành qua last mile, trung tâm dữ liệu và đường trục, cùng các ứng dụng như web và email."
 redirect_from:
   - /2022/12/25/gioi-thieu-ve-internet.html

@@ -48,6 +48,15 @@ layout: base
         {%- if page.fallback_vi -%}
           {%- include vi-fallback-notice.html -%}
         {%- endif -%}
+        {%- comment -%}
+          Opt-in table of contents (#125): `toc: true` renders the
+          `<details>` TOC from `_includes/post-toc.html` (pure Liquid over
+          the rendered headings, so it stays Pages-safe). Short posts carry
+          no flag and render nothing here.
+        {%- endcomment -%}
+        {%- if page.toc == true -%}
+          {%- include post-toc.html html=content lang=post_lang -%}
+        {%- endif -%}
         {{ content }}
       </div>
 
