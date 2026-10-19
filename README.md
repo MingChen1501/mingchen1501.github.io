@@ -456,8 +456,10 @@ PY
 
 Enforcement: `script/check-images` fails the build when any image exceeds
 500KB, `assets/img` exceeds 6MB, a new image filename is not lowercase-hyphen
-with a lowercase extension (legacy names are allowlisted), or an image's
-long edge exceeds 1600px. It runs in `script/cibuild` and as the
+with a lowercase extension (legacy names were allowlisted; the allowlist is
+empty since #171 converted the last of them), or an image's
+long edge exceeds 1600px. Budget limits live in `script/image-budget.sh`
+(single source of truth). It runs in `script/cibuild` and as the
 "Check image sizes" step in `.github/workflows/ci.yaml`.
 
 ## Asset cache versioning (#61)

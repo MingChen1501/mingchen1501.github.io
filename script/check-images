@@ -5,15 +5,14 @@
 #   - new image filenames follow lowercase-hyphen naming (legacy allowlisted)
 #   - long edge <= 1600px (MAX_DIMENSION)
 # Usage: script/check-images [ASSETS_DIR]
+# Budget limits live in script/image-budget.sh (single source of truth, #171).
 set -u
-
-MAX_FILE_BYTES=512000
-MAX_TOTAL_BYTES=6291456
-MAX_DIMENSION=1600
-MAX_IMAGE_DIMENSION=1600
 
 ASSETS_DIR="${1:-${CHECK_IMAGES_DIR:-assets/img}}"
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+# shellcheck source=image-budget.sh
+. "$SCRIPT_DIR/image-budget.sh"
 
 fail=0
 
