@@ -243,7 +243,8 @@ def test_the_matcher_rejects_an_unversioned_stylesheet_url():
 
 
 def _page_urls(built_site):
-    """A representative page per template: home, page 2, tag index, tag, post."""
+    """A representative page per template: home, page 2, tag index, tag, post —
+    in both languages (#93)."""
     pages = ["index.html", "page2/index.html", "tags/index.html"]
     tag_pages = sorted(built_site.glob("tags/*/index.html"))
     assert tag_pages, "no tag pages in the build"
@@ -252,6 +253,17 @@ def _page_urls(built_site):
     post = re.search(r'class="post-link" href="([^"]+)"', home)
     assert post, "the home list links no post"
     pages.append(post.group(1).lstrip("/"))
+    # Vietnamese representatives: the `/vi/` home, its tag index, its first
+    # tag page and the first post it lists.
+    pages.append("vi/index.html")
+    pages.append("vi/tags/index.html")
+    vi_tag_pages = sorted(built_site.glob("vi/tags/*/index.html"))
+    assert vi_tag_pages, "no Vietnamese tag pages in the build"
+    pages.append(vi_tag_pages[0].relative_to(built_site).as_posix())
+    vi_home = _read(built_site / "vi" / "index.html")
+    vi_post = re.search(r'class="post-link" href="([^"]+)"', vi_home)
+    assert vi_post, "the Vietnamese home list links no post"
+    pages.append(vi_post.group(1).lstrip("/"))
     for page in pages:
         assert (built_site / page).is_file(), f"{page} is missing from the build"
     return pages

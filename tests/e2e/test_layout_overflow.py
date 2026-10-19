@@ -14,7 +14,8 @@ stylesheet) are aborted for the same reason - they cannot affect layout, which
 is fully defined by the local `style.css`.
 
 Covered page kinds (acceptance from #50): a post page, the home list, the
-`/tags/` index, and every `/tags/<tag>/` page present in the build. The
+`/tags/` index, and every `/tags/<tag>/` page present in the build — each in
+both languages since #93 (`/`, `/vi/`, `/tags/`, `/vi/tags/`, …). The
 per-tag pages are added by PR #48; until they exist in the build the
 corresponding case skips with an explicit reason instead of passing silently.
 """
@@ -77,11 +78,15 @@ def site_pages(built_site):
             continue
         if 'class="post h-entry"' in text:
             pages["post"].append(rel)
-        elif rel == "/tags/index.html":
+        elif rel in ("/tags/index.html", "/vi/tags/index.html"):
             pages["tags-index"].append(rel)
-        elif rel.startswith("/tags/"):
+        elif rel.startswith("/tags/") or re.fullmatch(r"/vi/tags/[^/]+/index.html", rel):
             pages["tag-page"].append(rel)
-        elif rel == "/index.html" or re.fullmatch(r"/page\d+/index.html", rel):
+        elif (
+            rel == "/index.html"
+            or re.fullmatch(r"/page\d+/index.html", rel)
+            or rel == "/vi/index.html"
+        ):
             pages["home-list"].append(rel)
     return pages
 
