@@ -1,10 +1,15 @@
 ---
 layout: post
+lang: vi
+ref: migrate-windows-11-to-fedora
+date: 2026-01-01
 author: Ming Chen
 title: "Chuyển từ Windows 11 sang Fedora"
 tags: [linux-tooling]
 description: "Trải nghiệm chuyển laptop cũ từ Windows 11 hay lỗi driver sang Fedora Linux: cài đặt, chỉnh touchpad và gõ tiếng Việt với Bamboo."
-redirect_from: /2026/01/01/migate-windows-11-to-fedora.html
+redirect_from:
+  - /2026/01/01/migrate-windows-11-to-fedora.html
+  - /2026/01/01/migate-windows-11-to-fedora.html
 ---
 
 >Windows 11 lỗi quá, chuyển sang Linux cho con máy ở nhà thôi ![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg)

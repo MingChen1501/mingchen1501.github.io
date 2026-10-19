@@ -1,9 +1,10 @@
 ---
 layout: tag
+lang: en
+ref: tag-backend-production
 title: "Tag: backend-production"
 tag: backend-production
 permalink: /tags/backend-production/
 ---
 
-Backend production: vận hành hệ thống thật — hạ tầng, mạng, dữ liệu và những bài
-học khi chạy sản phẩm cho người dùng thật.
+Backend production: running real systems — infrastructure, networking, data and lessons from serving real users.

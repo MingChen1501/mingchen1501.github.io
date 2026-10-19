@@ -1,9 +1,10 @@
 ---
 layout: tag
+lang: en
+ref: tag-ai-agent
 title: "Tag: ai-agent"
 tag: ai-agent
 permalink: /tags/ai-agent/
 ---
 
-AI agent: dùng và tự dựng coding agent, orchestration, prompt và công cụ để đưa AI
-vào luồng làm việc hằng ngày.
+AI agents: using and building coding agents, orchestration, prompts and tooling to bring AI into the everyday workflow.

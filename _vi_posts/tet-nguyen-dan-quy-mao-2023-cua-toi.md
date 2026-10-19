@@ -1,9 +1,14 @@
 ---
 layout: post
+lang: vi
+ref: tet-nguyen-dan-quy-mao-2023-cua-toi
+date: 2023-01-31
 author: Ming Chen
 title: "Tết Quý Mão 2023"
 tags: [doi-song]
 description: "Nhật ký Tết Quý Mão 2023: làm tóc đón Tết, tất niên và chúc Tết cùng bạn bè, gia đình — những khoảnh khắc sum vầy đầu xuân."
+redirect_from:
+  - /2023/01/31/tet-nguyen-dan-quy-mao-2023-cua-toi.html
 ---
 
 >Nhân dịp đầu xuân năm mới Quý Mão 2023, chúc mọi người một năm mới an lành, may mắn. ![Greeting](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar_new_year_greatings_2.JPG)

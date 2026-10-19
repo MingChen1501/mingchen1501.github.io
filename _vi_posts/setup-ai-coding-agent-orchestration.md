@@ -1,9 +1,14 @@
 ---
 layout: post
+lang: vi
+ref: setup-ai-coding-agent-orchestration
+date: 2026-10-14
 author: Ming Chen
 title: "Thử setup orchestration cho AI coding agent"
 tags: [ai-agent]
 description: "Thử setup hệ thống orchestration cho AI coding agent để điều phối nhiều session gọn gàng hơn và định hướng tối ưu luồng code tiếp theo."
+redirect_from:
+  - /2026/10/14/setup-ai-coding-agent-orchestration.html
 ---
 
 >Hôm nay mình dành thời gian thử setup một hệ thống orchestration cho AI coding agent, thấy khá hay, có lẽ thời gian tới sẽ còn nhiều cái để mò.
