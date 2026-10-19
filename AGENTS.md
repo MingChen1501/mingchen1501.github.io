@@ -22,6 +22,10 @@ deployed with GitHub Pages from the `master` branch.
   the home list and the tag pages. It needs Ruby + `bundle install`; it skips
   with an explicit reason without `bundle`. Run it whenever you touch image
   sizing, layout wrappers or `_sass/`.
+- Lighthouse CI: `.github/workflows/lighthouse.yml` runs on PRs to `master` and
+  fails on Performance / Accessibility / Best Practices / SEO regressions;
+  thresholds live in `lighthouserc.json` (Performance is `warn`, the rest
+  `error`).
 
 ## Content conventions
 
