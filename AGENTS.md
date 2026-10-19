@@ -41,6 +41,7 @@ theme, deployed with GitHub Pages from the `master` branch.
 | Coordinate AO sessions: wake cues, pool, roles, review flow, publishing scope, periodic upstream minima review | `orchestrator` skill |
 | Article `article`-label issue waiting on a cron wake: detect, dedupe, spawn | `orchestrator` skill ("Article-intake scan") |
 | Owner describes a task/bug/enhancement: buffer worker files the issue(s) first, implementation follows under the normal pool | `orchestrator` skill ("Owner-task buffer-worker workflow") |
+| Draft a site article from a chat draft or an `article` issue: EN+VI pair, attachment images, one PR | `article-writer` skill |
 | Pinned upstream minima baseline, sync policy, upstream-change check | `docs/upstream-baseline-184.md` |
 
 Each skill's frontmatter (`description` + `trigger`) says when to load it;
