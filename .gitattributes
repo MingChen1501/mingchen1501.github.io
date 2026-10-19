@@ -8,6 +8,5 @@
 *.webp binary
 *.pdf binary
 *.data binary
-Build/** binary
 fullmonth/** binary
 assets/img/** binary

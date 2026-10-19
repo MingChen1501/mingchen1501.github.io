@@ -503,9 +503,10 @@ fix can only take effect from the next deploy onward.
 
 This repository's git history intentionally retains large binary blobs
 (~22MB of multi-MB assets, packed history ~33MB on-disk: a ~4.8MB screenshot
-PNG, a ~2.4MB JPG, the Unity `Build/` artifacts, the `fullmonth/` avatar, post
-images, and PDF resumes). Image compression work (#27) shrinks the working tree
-only; clone size is unchanged by design.
+PNG, a ~2.4MB JPG, the removed Unity `Build/` artifacts (#186, still in
+history), the `fullmonth/` avatar, post images, and PDF resumes). Image
+compression work (#27) shrinks the working tree only; clone size is unchanged
+by design.
 
 Decision for #34: **keep history as-is** rather than run `git-filter-repo` /
 BFG. Rewriting would break commit hashes, invalidate open pull requests, and

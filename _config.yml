@@ -44,7 +44,9 @@ minima:
 # Build settings
 # Keep the repository internals out of the public site (#82): the agent guide
 # and kit, the E2E test suite, the CI helper scripts, the gem metadata, the
-# project docs and the retired Unity WebGL demo payload.
+# project docs and the retired Unity WebGL demo payload. The demo files were
+# removed from the working tree (#186) but stay listed here as belt-and-braces
+# so a re-added file can never be published again.
 exclude:
   - AGENTS.md
   - .opencode
