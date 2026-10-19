@@ -1,0 +1,62 @@
+{%- comment -%}
+  Shared ref resolution (#170). Given a shared `ref` (include parameter),
+  resolve the English and Vietnamese URLs — over `site.posts`, the
+  `site.vi_posts` collection and `site.pages` — and expose them to the caller
+  as `ref_en` / `ref_vi` (empty when that side has no match). Callers:
+  `lang-alternates.html`, `sitemap-alternates.html`, `lang-switcher.html`,
+  `vi-fallback-notice.html`.
+
+  Plain `for` loops only (no `sort`/`where` filters): `site.vi_posts` is nil
+  when the collection is undefined (the upstream `_config_theme-dev.yml` CI
+  build in `script/cibuild`), and `for` over nil degrades to nothing while a
+  filter would crash.
+
+  First match wins in site.pages: jekyll-paginate appends its page-2..N
+  duplicates of the paginated index (carrying the same `ref: home`) AFTER
+  the source pages, so taking the last match would point the English
+  alternate of `/` at `/page2/` instead of `/` (#104). Hand-paginated
+  Vietnamese pages (`vi/pageN/index.html`, #155) carry `vi_page_num: N` and
+  sort *before* `vi/index.html`, so they are skipped outright — resolved
+  URLs point at the first pages, never at a page-N URL.
+{%- endcomment -%}
+{%- assign ref_en = '' -%}
+{%- assign ref_vi = '' -%}
+{%- assign ref_key = include.ref | default: '' -%}
+{%- if ref_key != '' -%}
+  {%- for ref_doc in site.posts -%}
+    {%- if ref_doc.ref == ref_key -%}
+      {%- assign ref_doc_lang = ref_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if ref_doc_lang == 'vi' -%}
+        {%- assign ref_vi = ref_doc.url -%}
+      {%- else -%}
+        {%- assign ref_en = ref_doc.url -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for ref_doc in site.vi_posts -%}
+    {%- if ref_doc.ref == ref_key -%}
+      {%- assign ref_doc_lang = ref_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if ref_doc_lang == 'vi' -%}
+        {%- assign ref_vi = ref_doc.url -%}
+      {%- else -%}
+        {%- assign ref_en = ref_doc.url -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for ref_doc in site.pages -%}
+    {%- if ref_doc.ref == ref_key -%}
+      {%- unless ref_doc.vi_page_num > 1 -%}
+      {%- assign ref_doc_lang = ref_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if ref_doc_lang == 'vi' -%}
+        {%- if ref_vi == '' -%}
+          {%- assign ref_vi = ref_doc.url -%}
+        {%- endif -%}
+      {%- else -%}
+        {%- if ref_en == '' -%}
+          {%- assign ref_en = ref_doc.url -%}
+        {%- endif -%}
+      {%- endif -%}
+      {%- endunless -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}

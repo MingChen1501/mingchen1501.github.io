@@ -1,8 +1,8 @@
 <div class="nav-items" id="nav-menu">
   {%- for path in include.paths -%}
-  {%- assign hyperpage = site.pages | where: "path", path | first -%}
-  {%- if hyperpage.title %}
-  <a class="nav-item" href="{{ hyperpage.url | relative_url }}">{{ hyperpage.title | escape }}</a>
+  {%- assign nav_page = site.pages | where: "path", path | first -%}
+  {%- if nav_page.title %}
+  <a class="nav-item" href="{{ nav_page.url | relative_url }}">{{ nav_page.title | escape }}</a>
   {%- endif -%}
   {%- endfor %}
 </div>
