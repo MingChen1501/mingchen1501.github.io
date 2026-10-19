@@ -189,12 +189,16 @@ def test_post_tags_include_links_every_chip_to_its_tag_page():
     assert "tag-chip" in html
     # One base per language (#93): English chips to `/tags/<slug>/`,
     # Vietnamese chips to `/vi/tags/<slug>/`, via a single variable.
-    # Labels and slugs resolve per language from `_data/tag_labels.yml`
-    # (#129), so the chip links the tag page of the current language.
+    # Labels and slugs resolve per language through the shared
+    # `_includes/tag-label.html` partial (#129, #175), so the chip links the
+    # tag page of the current language.
     assert "chips_base | append: chip_slug | append: '/'" in html
     assert "chips_base = '/tags/'" in html
     assert "chips_base = '/vi/tags/'" in html
-    assert "site.data.tag_labels" in html
+    assert "include tag-label.html" in html
+    assert "key=tag" in html
+    assert "lang=chips_lang" in html
+    assert "site.data.tag_labels" not in html
     assert "chip_label" in html
     assert "relative_url" in html
 
@@ -210,8 +214,12 @@ def test_tag_layout_lists_posts_for_page_tag():
     assert "tag_base = '/vi/tags/'" in html
     assert "tag_base | relative_url" in html
     # The heading and the intro chip read the label/slug for the page's
-    # language from `_data/tag_labels.yml` (#129).
-    assert "site.data.tag_labels[tag_name]" in html
+    # language through the shared `_includes/tag-label.html` partial
+    # (#129, #175).
+    assert "include tag-label.html" in html
+    assert "key=tag_name" in html
+    assert "lang=tag_lang" in html
+    assert "site.data.tag_labels" not in html
     assert "tag_base | append: tag_slug" in html
 
 

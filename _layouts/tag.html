@@ -27,19 +27,12 @@ layout: base
   {%- assign tag_base = '/tags/' -%}
 {%- endif -%}
 {%- comment -%}
-  Display label and URL slug from `_data/tag_labels.yml` (#129): "Life" /
-  `/tags/life/` on English pages, "Đời sống" / `/vi/tags/doi-song/` on
-  Vietnamese ones; technical tags keep their English label and slug in both.
-  Unknown keys degrade to the canonical tag key.
+  Display label and URL slug via the shared `_includes/tag-label.html`
+  (#129, #175): "Life" / `/tags/life/` on English pages, "Đời sống" /
+  `/vi/tags/doi-song/` on Vietnamese ones; technical tags keep their English
+  label and slug in both. Unknown keys degrade to the canonical tag key.
 {%- endcomment -%}
-{%- assign tag_entry = site.data.tag_labels[tag_name] -%}
-{%- if tag_lang == 'vi' -%}
-  {%- assign tag_label = tag_entry.vi | default: tag_name -%}
-  {%- assign tag_slug = tag_entry.slug_vi | default: tag_name -%}
-{%- else -%}
-  {%- assign tag_label = tag_entry.en | default: tag_name -%}
-  {%- assign tag_slug = tag_entry.slug_en | default: tag_name -%}
-{%- endif -%}
+{%- include tag-label.html key=tag_name lang=tag_lang -%}
 
 {%- comment -%}
   Same two-column shell as the home list (#58): `.site-main` keeps this tag's

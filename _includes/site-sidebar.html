@@ -207,20 +207,15 @@
         {%- assign sidebar_tag_posts = site.tags[sidebar_tag_name] | sort: "date" | reverse -%}
       {%- endif -%}
       {%- comment -%}
-        Display label and URL slug from `_data/tag_labels.yml` (#129): the
-        row reads "Life" and links `/tags/life/` on English pages, "Đời sống"
-        and `/vi/tags/doi-song/` on Vietnamese ones; technical tags keep
-        their English label and slug in both. Unknown keys degrade to the
-        canonical tag key.
+        Display label and URL slug via the shared `_includes/tag-label.html`
+        (#129, #175): the row reads "Life" and links `/tags/life/` on English
+        pages, "Đời sống" and `/vi/tags/doi-song/` on Vietnamese ones;
+        technical tags keep their English label and slug in both. Unknown
+        keys degrade to the canonical tag key.
       {%- endcomment -%}
-      {%- assign sidebar_tag_entry = site.data.tag_labels[sidebar_tag_name] -%}
-      {%- if sidebar_lang == 'vi' -%}
-        {%- assign sidebar_tag_label = sidebar_tag_entry.vi | default: sidebar_tag_name -%}
-        {%- assign sidebar_tag_slug = sidebar_tag_entry.slug_vi | default: sidebar_tag_name -%}
-      {%- else -%}
-        {%- assign sidebar_tag_label = sidebar_tag_entry.en | default: sidebar_tag_name -%}
-        {%- assign sidebar_tag_slug = sidebar_tag_entry.slug_en | default: sidebar_tag_name -%}
-      {%- endif -%}
+      {%- include tag-label.html key=sidebar_tag_name lang=sidebar_lang -%}
+      {%- assign sidebar_tag_label = tag_label -%}
+      {%- assign sidebar_tag_slug = tag_slug -%}
       <li class="sidebar-tag">
         <details class="sidebar-tag__group">
           <summary class="sidebar-tag__summary">
