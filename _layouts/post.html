@@ -41,6 +41,12 @@ layout: base
             {% endfor %}
           </div>
           {%- endif %}
+          {%- comment -%}
+            Estimated reading time (#124): same word-count estimate as the
+            home/tag lists, so both agree. Sits inside `.post-meta`, hence
+            inherits the meta font and the `.bullet-divider` spacing.
+          {%- endcomment -%}
+          {%- include reading-time.html content=content lang=post_lang -%}
         </div>
       </header>
 

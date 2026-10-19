@@ -57,7 +57,12 @@ layout: base
         <ul class="post-list">
           {%- for post in posts -%}
           <li>
-            <span class="post-meta">{{ post.date | date: date_format }}</span>
+            {%- comment -%}
+              Reading time (#124): estimated from the full post content, so
+              the list figure always agrees with the post page. Inside
+              `.post-meta`, so it inherits the meta font and divider style.
+            {%- endcomment -%}
+            <span class="post-meta">{{ post.date | date: date_format }}{%- include reading-time.html content=post.content lang=home_lang -%}</span>
             <h2>
               <a class="post-link" href="{{ post.url | relative_url }}">
                 {{ post.title | escape }}

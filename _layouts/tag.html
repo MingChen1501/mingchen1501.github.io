@@ -62,7 +62,11 @@ layout: base
       <ul class="post-list">
         {%- for post in tag_posts -%}
         <li>
-          <span class="post-meta">{{ post.date | date: date_format }}</span>
+          {%- comment -%}
+            Reading time (#124): same estimate as the post page and the
+            home list (see `_layouts/home.html`).
+          {%- endcomment -%}
+          <span class="post-meta">{{ post.date | date: date_format }}{%- include reading-time.html content=post.content lang=tag_lang -%}</span>
           <h2>
             <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
           </h2>
