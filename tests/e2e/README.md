@@ -87,8 +87,10 @@ pages (`/tags/<tag>/`) wrap their list in one shell (`.site-layout` > `.site-mai
 
 - Static: both layouts render the shell with the include, the sidebar comes after
   the list in the DOM, the include holds both blocks exactly once, the highlight
-  block reads the posts' own front matter (`highlight: true`, at most five, with
-  the newest-posts fallback), the tag block reuses
+  block reads `_data/highlights.yml` (an ordered list of post slugs, rendered in
+  file order; unknown and unpublished slugs are skipped silently; at most five
+  rows; an empty or missing file falls back to the five newest posts under
+  "Bài mới nhất"), the tag block reuses
   `_includes/post-tags.html` (no forked chip markup) and is collapsed with at
   most three posts, and the styles define the `minmax(0, 1fr) [300px]` grid, the
   capped thumbnail and a sidebar pinned only where it fits (desktop width *and*
