@@ -23,3 +23,10 @@
   an older copy of it.
 {%- endcomment -%}
 <script src="/assets/js/copy-code.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  Language-switch reading position (#145). Progressive enhancement only: it
+  appends the current section to the switcher href at runtime and scrolls to
+  the matching section after landing, so like every other fixed-URL asset it
+  carries the same build token.
+{%- endcomment -%}
+<script src="/assets/js/lang-switch.js?v={{ asset_version }}" defer></script>
