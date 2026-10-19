@@ -103,6 +103,13 @@
   review worker (create follow-up issues if any). Do not let one session both
   implement and review its own PR.
 - Verdicts are posted as a GitHub **COMMENT** (GitHub blocks self-approval).
+- Model separation (#76): the reviewer session must run on a model different
+  from the orchestrator's (an explicit `--model` override must not equal it).
+  A reviewer stuck on a rate limit (`provider.quota` / 429 /
+  `FreeUsageLimitError`) is killed and re-spawned on a different model by the
+  orchestrator — the reviewer cannot swap its own model. See
+  `.opencode/skills/orchestrator/SKILL.md` "Model separation and rate-limit
+  rotation".
 - Merge method: **merge commits only** — `gh pr merge --merge --delete-branch`.
   Never squash-merge or rebase-merge. Merge only when CI is green.
 - Stacked PRs keep their base branch alive until the child merges.

@@ -117,6 +117,11 @@ Check by eye after build + tests are green, since some bugs only appear in produ
   blocked); role separation issue-writer/dev/reviewer/fixer.
 - CI/review routing: send failing output and review findings to the responsible
   worker; do not resolve conflicts or make code changes in the orchestrator.
+- Model separation (#76): workers and reviewers run on a model different from
+  the orchestrator's; a rate-limited worker (`provider.quota` / 429 /
+  `FreeUsageLimitError`, or idle with uncommitted work and no PR) is killed and
+  re-spawned on a different model by the orchestrator — its worktree survives.
+  See `.opencode/skills/orchestrator/SKILL.md`.
 - Publishing scope: freeform work publishes only when the owner requests it or
   project rules require it; explicit restrictions (local-only, review-only,
   do-not-publish) take precedence.
