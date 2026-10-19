@@ -42,12 +42,12 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
    `master` and fails on Performance / Accessibility / Best Practices / SEO
    regressions; thresholds live in `lighthouserc.json` (Performance is `warn`,
    the rest `error`).
-5. Confirm the issue and PR carry a risk label (`risk-low`/`risk-medium`/`risk-high`/`risk-very-high`).
-6. Merge/CI: merge only when CI is green; squash merge only
+8. Confirm the issue and PR carry a risk label (`risk-low`/`risk-medium`/`risk-high`/`risk-very-high`).
+9. Merge/CI: merge only when CI is green; squash merge only
    (`gh pr merge <n> --squash --delete-branch`); stacked PRs keep their base branch
    alive until the child merges. See `references/checklist.md` "Merge and
    orchestration".
-7. Concurrency: a verify session is part of task-worker work — do not run it
-   alongside another task worker; queue it (see `references/checklist.md`
-   "Concurrency").
-8. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.
+10. Concurrency: a verify session is part of task-worker work — do not run it
+    alongside another task worker; queue it (see `references/checklist.md`
+    "Concurrency").
+11. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.

@@ -476,8 +476,10 @@ Rules:
 
 - Every fixed-URL asset linked from a template carries the build token that
   `_includes/head.html` assigns: `/assets/css/style.css?v={{ asset_version }}`
-  and `/assets/img/favicon.ico?v={{ asset_version }}`. A new fixed-URL asset
-  must do the same.
+  and `/assets/img/favicon.ico?v={{ asset_version }}` (head), plus the
+  deferred scripts in `_includes/sub-footer.html`
+  (`lazy-load.js`, `nav-toggle.js`, `copy-code.js`, `lang-switch.js`). A new
+  fixed-URL asset must do the same.
 - The token is `site.time` (epoch seconds). It needs no plugin and works with
   GitHub Pages `--safe`, `bundle exec jekyll serve` and the E2E build, and it
   changes on every build — a superset of "the content changed", so a cached
@@ -581,9 +583,18 @@ partials).
 
 The list pages — the English home list (`/`, `/page2/…`, paginated by
 `jekyll-paginate` over the English-only `site.posts`), the Vietnamese home
-(`/vi/`, every Vietnamese post, no pagination — `jekyll-paginate` supports a
-single stream), and the tag pages (`/tags/<tag>/`, `/vi/tags/<tag>/`) — render
+(`vi/index.html`, `vi/page2/index.html`, …) and the tag pages
+(`/tags/<tag>/`, `/vi/tags/<tag>/`) — render
 the same sidebar from one shared include, `_includes/site-sidebar.html`:
+
+Pagination sources (#155, #176): `paginate:` in `_config.yml` is the single
+value — `jekyll-paginate` reads it for the English stream, while the
+Vietnamese home (explicit `vi/pageN/index.html` files with `vi_page_num`
+front matter, because `jekyll-paginate` v1 supports a single stream only)
+slices `site.vi_posts` and renders its pager in `_layouts/home.html` and its
+`prev`/`next` links in `_includes/head.html` from the same `site.paginate`
+(the `default: 5` fallback only covers configs without it, e.g. upstream
+theme-dev).
 
 - **Featured** / **Bài nổi bật** — the *highlighted* posts: the slugs listed in
   that language's list (`en:` / `vi:`) in `_data/highlights.yml` (single source
@@ -607,13 +618,29 @@ runs close to its 6MB budget (`script/check-images`).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/jekyll/minima. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at
+https://github.com/MingChen1501/mingchen1501.github.io. This project is
+intended to be a safe, welcoming space for collaboration, and contributors are
+expected to adhere to the [Contributor Covenant](http://contributor-covenant.org)
+code of conduct.
 
 ## Development
 
-To set up your environment to develop this theme, run `script/bootstrap`.
+Preview real content with `bundle exec jekyll serve` (uses `_config.yml`;
+`bundle install` first if gems are missing) and open your browser at
+`http://localhost:4000`. As you make modifications, your site will regenerate
+and you should see the changes in the browser after a refresh. Other checks:
 
-To test your theme, run `script/server` (or `bundle exec jekyll serve`) and open your browser at `http://localhost:4000`. This starts a Jekyll server using your theme and the contents. As you make modifications, your site will regenerate and you should see the changes in the browser after a refresh.
+- `bundle exec jekyll build --trace` — verify the site builds.
+- `python -m pytest tests/e2e -v` — end-to-end guards (first time:
+  `pip install -r tests/e2e/requirements.txt`).
+- `script/check-images` — image budget gate (each file <= 500KB,
+  `assets/img/` total <= 6MB).
+
+The `script/bootstrap`, `script/server`, `script/build`, and `script/cibuild`
+helpers are upstream minima leftovers: they target the theme-dev sample site
+(`_config_theme-dev.yml`, minima placeholder content), not the personal posts.
+Never use `script/server` to preview personal posts (see `AGENTS.md`).
 
 ## License
 
