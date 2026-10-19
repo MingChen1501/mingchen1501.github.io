@@ -1,0 +1,62 @@
+{%- comment -%}
+  hreflang alternates (#93). Every content page/post carries a shared `ref`
+  across its English and Vietnamese versions; this include resolves both sides
+  (over `site.posts`, the `site.vi_posts` collection and `site.pages`) and
+  emits absolute `en` / `vi` alternates plus `x-default` pointing at English,
+  the default language. Pages without a `ref` (404, feeds, sitemap, standalone
+  demo pages) get no alternates. Canonicals stay with jekyll-seo-tag.
+{%- endcomment -%}
+{%- assign alt_ref = page.ref | default: '' -%}
+{%- if alt_ref != '' -%}
+  {%- assign alt_en = '' -%}
+  {%- assign alt_vi = '' -%}
+  {%- comment -%}
+    Paginated list pages (`/page2/`…) carry the home page's `ref`; their
+    translation relationship is home <-> home, so point both sides (and the
+    x-default) at the first pages, never at a page-N URL.
+  {%- endcomment -%}
+  {%- if paginator and paginator.page and paginator.page > 1 -%}
+    {%- assign alt_en = '/' -%}
+    {%- assign alt_vi = '/vi/' -%}
+  {%- else -%}
+  {%- for alt_doc in site.posts -%}
+    {%- if alt_doc.ref == alt_ref -%}
+      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if alt_doc_lang == 'vi' -%}
+        {%- assign alt_vi = alt_doc.url -%}
+      {%- else -%}
+        {%- assign alt_en = alt_doc.url -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for alt_doc in site.vi_posts -%}
+    {%- if alt_doc.ref == alt_ref -%}
+      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if alt_doc_lang == 'vi' -%}
+        {%- assign alt_vi = alt_doc.url -%}
+      {%- else -%}
+        {%- assign alt_en = alt_doc.url -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for alt_doc in site.pages -%}
+    {%- if alt_doc.ref == alt_ref -%}
+      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if alt_doc_lang == 'vi' -%}
+        {%- assign alt_vi = alt_doc.url -%}
+      {%- else -%}
+        {%- assign alt_en = alt_doc.url -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- endif -%}
+  {%- if alt_en != '' -%}
+  <link rel="alternate" hreflang="en" href="{{ site.url }}{{ alt_en }}">
+  {%- endif -%}
+  {%- if alt_vi != '' -%}
+  <link rel="alternate" hreflang="vi" href="{{ site.url }}{{ alt_vi }}">
+  {%- endif -%}
+  {%- if alt_en != '' -%}
+  <link rel="alternate" hreflang="x-default" href="{{ site.url }}{{ alt_en }}">
+  {%- endif -%}
+{%- endif -%}

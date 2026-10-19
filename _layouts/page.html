@@ -8,6 +8,9 @@ layout: base
   </header>
 
   <div class="post-content">
+    {%- if page.fallback_vi -%}
+      {%- include vi-fallback-notice.html -%}
+    {%- endif -%}
     {{ content }}
   </div>
 

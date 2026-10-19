@@ -1,0 +1,22 @@
+{%- comment -%}
+  Fallback notice (#93, phase 1): rendered at the top of English pages whose
+  translation is still pending (`fallback_vi: true` — the body below is the
+  Vietnamese version). Links to the full Vietnamese counterpart resolved
+  through the shared `ref`, same lookup as the language switcher.
+{%- endcomment -%}
+{%- assign notice_ref = page.ref | default: '' -%}
+{%- assign notice_url = '/vi/' -%}
+{%- if notice_ref != '' -%}
+  {%- for notice_doc in site.vi_posts -%}
+    {%- if notice_doc.ref == notice_ref -%}
+      {%- assign notice_url = notice_doc.url -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for notice_doc in site.pages -%}
+    {%- assign notice_doc_lang = notice_doc.lang | default: site.lang | default: 'en' -%}
+    {%- if notice_doc.ref == notice_ref and notice_doc_lang == 'vi' -%}
+      {%- assign notice_url = notice_doc.url -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+<p class="translation-notice" role="note">English translation in progress — showing the Vietnamese version meanwhile. <a href="{{ notice_url | relative_url }}">Read in Vietnamese</a></p>

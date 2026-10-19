@@ -1,7 +1,11 @@
 ---
 layout: page
-title: Giới thiệu
-permalink: /about-me/
+lang: en
+ref: about
+fallback_vi: true
+title: About
+permalink: /about/
+description: "About Ming Chen: a software engineer blogging about Linux, AI agents, tooling and everyday life."
 ---
 
 Xin chào, mình là **Trần Công Minh** (hay gọi là **Ming Chen**) — tác giả của blog nhỏ này.

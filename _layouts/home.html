@@ -19,10 +19,34 @@ layout: base
       {{ content }}
 
 
-      {% if site.paginate %}
-        {% assign posts = paginator.posts %}
+      {%- comment -%}
+        Language-aware list (#93): the English home (`/`, paginated by
+        jekyll-paginate over the English-only `site.posts`) shows
+        `paginator.posts`; the Vietnamese home (`/vi/`, a plain page with no
+        paginator — jekyll-paginate supports a single stream) lists every
+        Vietnamese post, newest first, with no pager. `date_format` follows
+        the page language.
+      {%- endcomment -%}
+      {%- assign home_lang = page.lang | default: site.lang | default: 'en' -%}
+      {%- comment -%}
+        `site.vi_posts` is nil when the collection is undefined (e.g. the
+        upstream `_config_theme-dev.yml` CI build, which must keep passing);
+        degrade to an empty list instead of crashing `sort` on nil.
+      {%- endcomment -%}
+      {%- assign home_vi_source = site.vi_posts -%}
+      {%- if home_vi_source == nil -%}
+        {%- assign home_vi_source = "" | split: "" -%}
+      {%- endif -%}
+      {%- if home_lang == 'vi' -%}
+        {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+        {% assign posts = home_vi_source | sort: "date" | reverse %}
       {% else %}
-        {% assign posts = site.posts %}
+        {%- assign date_format = "%b %-d, %Y" -%}
+        {% if paginator %}
+          {% assign posts = paginator.posts %}
+        {% else %}
+          {% assign posts = site.posts %}
+        {% endif %}
       {% endif %}
 
 
@@ -31,7 +55,6 @@ layout: base
           <h2 class="post-list-heading">{{ page.list_title }}</h2>
         {%- endif -%}
         <ul class="post-list">
-          {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
           {%- for post in posts -%}
           <li>
             <span class="post-meta">{{ post.date | date: date_format }}</span>
@@ -53,7 +76,7 @@ layout: base
           {%- endfor -%}
         </ul>
 
-        {% if site.paginate %}
+        {% if paginator and home_lang != 'vi' %}
           <div class="pager">
             <ul class="pagination">
             {%- if paginator.previous_page %}
@@ -81,7 +104,7 @@ layout: base
       {%- endif -%}
     </div>
 
-    <aside class="site-sidebar" aria-label="Bài nổi bật và chủ đề">
+    <aside class="site-sidebar" aria-label="{% if home_lang == 'vi' %}Bài nổi bật và chủ đề{% else %}Featured posts and topics{% endif %}">
       {%- include site-sidebar.html -%}
     </aside>
   </div>

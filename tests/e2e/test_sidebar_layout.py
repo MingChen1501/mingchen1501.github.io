@@ -23,9 +23,10 @@ Acceptance guarded here (issues #58, #63 and #64):
 - the highlight block is fed by `_data/highlights.yml` — the rendered order
   follows the file exactly (not date order), an unknown slug is skipped
   without breaking the build, a listed-but-unpublished slug never leaks, the
-  cap of five binds, and the newest-posts fallback (`Bài mới nhất`) renders
-  for an empty/missing/unmatched file — and never by `paginator.posts` (the
-  same list on every page),
+  cap of five binds, and the newest-posts fallback renders for an
+  empty/missing/unmatched file — and never by `paginator.posts` (the same
+  list on every page); English pages show `Featured`/`Latest posts`, the
+  Vietnamese home (`/vi/`) shows `Bài nổi bật`/`Bài mới nhất`,
 - the tag rows are collapsed and bounded, and they link to the tag's own newest
   posts,
 - the sidebar never scrolls inside itself (#63): no `max-height`/`overflow-y`
@@ -66,6 +67,8 @@ POST_TAGS_INCLUDE = REPO_ROOT / "_includes" / "post-tags.html"
 CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
 POSTS_DIR = REPO_ROOT / "_posts"
+VI_POSTS_DIR = REPO_ROOT / "_vi_posts"
+VI_TAG_PAGES_DIR = REPO_ROOT / "vi" / "tags"
 
 HIGHLIGHT_LIMIT = 5
 TAG_POSTS_LIMIT = 3
@@ -80,8 +83,10 @@ STICKY_VIEWPORT_HEIGHT = 740
 # back to a normal in-flow block, so page scrolling still reaches every row.
 SHORT_VIEWPORT_HEIGHT = 600
 
-# One tag page to measure (all four pillars are covered by the same shell).
+# One tag page per language to measure (all four pillars are covered by the
+# same shell in each language).
 TAG_PAGE = f"/tags/{sorted(path.stem for path in TAG_PAGES_DIR.glob('*.md'))[0]}/"
+VI_TAG_PAGE = f"/vi/tags/{sorted(path.stem for path in VI_TAG_PAGES_DIR.glob('*.md'))[0]}/"
 
 _MEASURE_JS = """
 () => {
@@ -200,25 +205,32 @@ def _slug_matches(stem, slug):
     return stem == slug or _DATE_PREFIX_RE.sub("", stem) == slug
 
 
-def _data_highlights():
+def _data_highlights(lang="en"):
     """`(date, title, path)` of the posts listed in `_data/highlights.yml`,
-    in file order, resolved against `site.posts` (unknown or unpublished
-    entries resolve to nothing and are skipped, like the include skips them)."""
+    in file order, resolved against that language's post source (`_posts` for
+    English, `_vi_posts` for Vietnamese — unknown or unpublished entries
+    resolve to nothing and are skipped, like the include skips them)."""
+    posts_dir = VI_POSTS_DIR if lang == "vi" else POSTS_DIR
     data_file = REPO_ROOT / "_data" / "highlights.yml"
     if not data_file.is_file():
         return []
     data = yaml.safe_load(data_file.read_text(encoding="utf-8")) or {}
-    slugs = (data or {}).get("highlights", []) or []
+    slugs = (data or {}).get(lang, []) or []
     result = []
     for slug in slugs:
-        for path in POSTS_DIR.glob("*.md"):
+        for path in sorted(posts_dir.glob("*.md")):
             if not _slug_matches(path.stem, str(slug)):
                 continue
             front_matter = _front_matter(path)
             if _front_matter_value(front_matter, "published") == "false":
                 continue
+            # `_posts` names carry the date; `_vi_posts` names do not, so the
+            # collection docs declare `date:` in front matter instead.
+            date = path.name[:10]
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+                date = (_front_matter_value(front_matter, "date") or "")[:10]
             result.append(
-                (path.name[:10], _front_matter_value(front_matter, "title"), path)
+                (date, _front_matter_value(front_matter, "title"), path)
             )
             break
     return result
@@ -389,24 +401,28 @@ def test_sidebar_include_holds_both_blocks_once():
 def test_sidebar_highlights_come_from_the_data_file():
     html = _read(SIDEBAR_INCLUDE)
     # Highlight selection lives in `_data/highlights.yml` (#64), resolved
-    # against `site.posts` (no `highlight: true` front matter flag anymore).
+    # against the page's language post source (no `highlight: true` front
+    # matter flag anymore).
     assert "site.data.highlights" in html
     assert "sidebar_highlight_slugs" in html
     # Each entry resolves by file name first, then by bare slug, via `where` —
-    # never via a nested Liquid loop over `site.posts` (that was the inherited
-    # O(entries x posts) double loop, re-rendered on every list page).
-    assert html.count('site.posts | where: "path"') >= 2
-    assert html.count('site.posts | where: "slug"') >= 2
-    assert html.count("for sidebar_post in site.posts") == 1, (
-        "the only loop over site.posts left is the 5-newest fallback"
+    # never via a nested Liquid loop over the post source (that was the
+    # inherited O(entries x posts) double loop, re-rendered on every list page).
+    assert html.count('sidebar_source | where: "path"') >= 2
+    assert html.count('sidebar_source | where: "slug"') >= 2
+    assert "for sidebar_post in sidebar_source" not in html, (
+        "the post source must only be scanned via `where`, except the fallback"
     )
-    assert "for sidebar_post in site.posts limit: 5" in html
+    assert "for sidebar_post in sidebar_newest limit: 5" in html
     # The cap binds in the render loop itself (#58/#63/#64).
     assert "sidebar_rendered < 5" in html
     # Nothing resolvable: fall back to the newest posts, and let the heading say
-    # which of the two the reader is looking at (never an empty block).
+    # which of the two the reader is looking at (never an empty block) — in
+    # both languages (#93).
     assert "Bài nổi bật" in html
     assert "Bài mới nhất" in html
+    assert "Featured" in html
+    assert "Latest posts" in html
     # Not the paginator's page: the block must not change while paging.
     markup = re.sub(r"\{%-?\s*comment.*?endcomment\s*-?%\}", "", html, flags=re.S)
     assert "paginator" not in markup
@@ -432,8 +448,11 @@ def test_sidebar_tag_block_reuses_the_shared_chip_include():
     # (#45/#47).
     assert 'class="tag-chip"' not in html
     assert re.search(
-        r"'/tags/'\s*\|\s*append: sidebar_tag_name\s*\|\s*append: '/' \| relative_url", html
+        r"sidebar_tag_base\s*\|\s*append: sidebar_tag_name\s*\|\s*append: '/' \| relative_url", html
     )
+    # The tag links stay inside the page's language (#93).
+    assert 'sidebar_tag_base = "/tags/"' in html
+    assert 'sidebar_tag_base = "/vi/tags/"' in html
     # Collapsed by default (#63) and bounded per tag: the tag's own page is one
     # click away (`Xem tất cả`), so the column stays short.
     assert '<details class="sidebar-tag__group">' in html
@@ -507,24 +526,33 @@ def test_post_page_and_comments_are_untouched_by_the_sidebar():
 # --- browser guards (need Ruby + a browser) ---------------------------------
 
 
+@pytest.mark.parametrize(
+    "home_path, lang, extra_paths, hit_heading, miss_heading",
+    [
+        ("/", "en", ("/page2/", TAG_PAGE), "Featured", "Latest posts"),
+        ("/vi/", "vi", (VI_TAG_PAGE,), "Bài nổi bật", "Bài mới nhất"),
+    ],
+)
 def test_sidebar_shows_the_same_highlights_on_every_page(
-    built_site, built_site_url, browser
+    home_path, lang, extra_paths, hit_heading, miss_heading,
+    built_site, built_site_url, browser,
 ):
     """The highlights are the posts listed in `_data/highlights.yml`, in file order."""
-    expected = _data_highlights()[:HIGHLIGHT_LIMIT]
+    expected = _data_highlights(lang)[:HIGHLIGHT_LIMIT]
 
     with _viewport(browser, built_site_url, DESKTOP_WIDTH) as page:
-        _open(page, built_site_url, "/")
+        _open(page, built_site_url, home_path)
         sidebar = page.evaluate(_SIDEBAR_JS)
 
         if expected:
-            assert sidebar["highlightsHeading"] == "Bài nổi bật", (
-                "with posts listed in `_data/highlights.yml` the block is `Bài nổi bật`"
+            assert sidebar["highlightsHeading"] == hit_heading, (
+                f"with posts listed in `_data/highlights.yml` the {lang} block "
+                f"is `{hit_heading}`"
             )
         else:
             # Nothing resolvable in the data file: the block falls back to the
             # newest posts and says so, instead of rendering an empty box.
-            assert sidebar["highlightsHeading"] == "Bài mới nhất"
+            assert sidebar["highlightsHeading"] == miss_heading
             expected = [
                 (None, title, None)
                 for title in page.evaluate(
@@ -545,15 +573,14 @@ def test_sidebar_shows_the_same_highlights_on_every_page(
         for (date, title, path), entry in zip(expected, sidebar["highlights"]):
             assert entry["title"], f"sidebar entry without a title: {entry}"
             if path is not None:
-                # `site.posts` order, thumbnail resolution and date all come
+                # Post-source order, thumbnail resolution and date all come
                 # from the post's own file.
                 assert entry["datetime"][:10] == date, (
                     f"{path.name} is dated {date} but the sidebar shows "
                     f"{entry['datetime']}"
                 )
             # The compact `dd-mm-yyyy` label renders that same instant, because
-            # `site.minima.date_format` ("Bài viết được đăng lúc: …") does not
-            # fit a 300px column.
+            # the verbose date format does not fit a 300px column.
             assert re.fullmatch(r"\d{2}-\d{2}-\d{4}", entry["date"] or ""), (
                 f"unexpected highlight date label: {entry['date']!r}"
             )
@@ -569,25 +596,36 @@ def test_sidebar_shows_the_same_highlights_on_every_page(
             response = page.request.get(f"{built_site_url}{entry['url']}")
             assert response.status == 200, f"{entry['url']} returned {response.status}"
 
-        # The same list on every list page: it comes from `site.posts`, not from
-        # the paginator's page.
-        for path in ("/page2/", TAG_PAGE):
+        # The same list on every list page of that language: it comes from the
+        # language's post source, not from the paginator's page.
+        for path in extra_paths:
             _open(page, built_site_url, path)
             assert page.evaluate(_SIDEBAR_JS)["highlights"] == sidebar["highlights"], (
-                f"{path} shows a different sidebar than the home list"
+                f"{path} shows a different sidebar than the {lang} home list"
             )
 
 
+@pytest.mark.parametrize(
+        "home_path, tag_base",
+        [
+            ("/", "/tags/"),
+            ("/vi/", "/vi/tags/"),
+        ],
+    )
 def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
-    built_site, built_site_url, browser
+    home_path, tag_base, built_site, built_site_url, browser
 ):
+    intro_re = r"(\d+) bài viết" if tag_base.startswith("/vi/") else r"(\d+) posts tagged"
+    count_unit = "bài" if tag_base.startswith("/vi/") else "posts"
     with _viewport(browser, built_site_url, DESKTOP_WIDTH) as page:
-        _open(page, built_site_url, "/")
+        _open(page, built_site_url, home_path)
         groups = page.evaluate(_SIDEBAR_JS)["tags"]
         assert groups, "the sidebar must render the tag block"
 
         for index, group in enumerate(groups):
-            match = re.fullmatch(r"/tags/([a-z0-9-]+)/", group["tag"] or "")
+            match = re.fullmatch(
+                re.escape(tag_base) + r"([a-z0-9-]+)/", group["tag"] or ""
+            )
             assert match, f"unexpected tag chip href: {group['tag']}"
             tag = match.group(1)
             assert group["chipLabel"] == tag, "the chip label is the tag itself"
@@ -601,24 +639,27 @@ def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
             )
 
             # The tag's own page is the reference for which posts carry the tag.
-            assert (built_site / "tags" / tag / "index.html").is_file(), (
-                f"/tags/{tag}/ is missing from the build"
+            tag_dir = built_site / tag_base.strip("/") / tag / "index.html"
+            assert tag_dir.is_file(), (
+                f"{tag_base}{tag}/ is missing from the build"
             )
-            response = page.request.get(f"{built_site_url}/tags/{tag}/")
-            assert response.status == 200, f"/tags/{tag}/ returned {response.status}"
+            response = page.request.get(f"{built_site_url}{tag_base}{tag}/")
+            assert response.status == 200, (
+                f"{tag_base}{tag}/ returned {response.status}"
+            )
 
-            _open(page, built_site_url, f"/tags/{tag}/")
+            _open(page, built_site_url, f"{tag_base}{tag}/")
             expected = page.evaluate(_POST_LIST_JS)
             tag_page_text = page.inner_text(".tag-page__intro")
-            total = int(re.search(r"(\d+) bài viết", tag_page_text).group(1))
+            total = int(re.search(intro_re, tag_page_text).group(1))
             assert total == len(expected), (
-                f"/tags/{tag}/ says {total} posts but lists {len(expected)}"
+                f"{tag_base}{tag}/ says {total} posts but lists {len(expected)}"
             )
             assert [post["url"] for post in group["posts"]] == expected[:TAG_POSTS_LIMIT], (
                 f"the sidebar block for `{tag}` must list the tag's newest posts: "
                 f"{group['posts']} != {expected[:TAG_POSTS_LIMIT]}"
             )
-            assert group["count"] == f"{total} bài", (
+            assert group["count"] == f"{total} {count_unit}", (
                 f"the sidebar count for `{tag}` must match the tag page: "
                 f"{group['count']!r} vs {total}"
             )
@@ -633,7 +674,7 @@ def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
             # click on the row opens it. The click lands on the count: the chip
             # next to it links to the tag page (asserted above), so the row's own
             # toggle area is the rest of the summary.
-            _open(page, built_site_url, "/")
+            _open(page, built_site_url, home_path)
             row = page.locator(".sidebar-tag").nth(index)
             assert not row.locator(".sidebar-tag__posts a").first.is_visible(), (
                 f"the posts of `{tag}` must stay hidden until the row is opened"
@@ -648,7 +689,7 @@ def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
                     f"opening `{tag}` must reveal {post['url']}"
                 )
             assert row.locator("a.sidebar-tag__more").is_visible(), (
-                f"opening `{tag}` must offer the link to /tags/{tag}/"
+                f"opening `{tag}` must offer the link to {tag_base}{tag}/"
             )
 
 
@@ -823,9 +864,9 @@ def _write_highlights(source, text):
 
 
 def _mutate_list_all_published(source):
-    """List every published post in `_data/highlights.yml` (6 today): the cap
-    must bind at 5, in the file's (sorted) order."""
-    _write_highlights(source, "highlights: [" + ", ".join(_published_stems(source)) + "]\n")
+    """List every published English post in `_data/highlights.yml` (6 today):
+    the cap must bind at 5, in the file's (sorted) order."""
+    _write_highlights(source, "en: [" + ", ".join(_published_stems(source)) + "]\n")
 
 
 def _mutate_delete_highlights(source):
@@ -837,17 +878,17 @@ def _mutate_delete_highlights(source):
 
 def _mutate_empty_highlights(source):
     """The empty-file fallback case."""
-    _write_highlights(source, "highlights: []\n")
+    _write_highlights(source, "en: []\n")
 
 
 def _mutate_unknown_only_highlights(source):
     """A file whose entries all resolve to nothing must also fall back."""
-    _write_highlights(source, "highlights: [no-such-post-xyzzy]\n")
+    _write_highlights(source, "en: [no-such-post-xyzzy]\n")
 
 
 # A listed slug that is real today but unpublished at build time, and a bare
 # (dateless) slug, mixed into a deliberately non-chronological order.
-_ORDER_DRAFT_POST = "2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi"
+_ORDER_DRAFT_POST = "2023-01-31-my-tet-holiday-2023"
 
 
 def _mutate_order_skip_draft(source):
@@ -859,12 +900,12 @@ def _mutate_order_skip_draft(source):
     _mutate_front_matter(source / "_posts" / f"{_ORDER_DRAFT_POST}.md", _unpublish)
     _write_highlights(
         source,
-        "highlights:\n"
+        "en:\n"
         "  - no-such-post-xyzzy\n"
-        "  - 2022-10-27-cach-pha-ca-phe\n"
+        "  - 2022-10-27-brewing-vietnamese-coffee\n"
         f"  - {_ORDER_DRAFT_POST}\n"
-        "  - Migrate-windows-11-to-fedora\n"
-        "  - 2022-12-25-gioi-thieu-ve-internet\n",
+        "  - switching-from-windows-11-to-fedora\n"
+        "  - 2022-12-25-explaining-the-internet\n",
     )
 
 
@@ -909,8 +950,8 @@ def test_sidebar_highlight_cap_holds_with_six_listed_posts(tmp_path, browser):
         with _viewport(browser, url, DESKTOP_WIDTH) as page:
             _open(page, url, "/")
             sidebar = page.evaluate(_SIDEBAR_JS)
-            assert sidebar["highlightsHeading"] == "Bài nổi bật", (
-                "with posts listed in the data file the block is `Bài nổi bật`"
+            assert sidebar["highlightsHeading"] == "Featured", (
+                "with posts listed in the data file the block is `Featured`"
             )
             assert len(sidebar["highlights"]) == HIGHLIGHT_LIMIT, (
                 f"expected the highlight cap of {HIGHLIGHT_LIMIT} rows with 6 "
@@ -957,8 +998,8 @@ def test_sidebar_highlight_fallback_shows_five_newest(tmp_path, browser, mutate,
         with _viewport(browser, url, DESKTOP_WIDTH) as page:
             _open(page, url, "/")
             sidebar = page.evaluate(_SIDEBAR_JS)
-            assert sidebar["highlightsHeading"] == "Bài mới nhất", (
-                f"with a {kind} data file the block falls back to `Bài mới nhất`"
+            assert sidebar["highlightsHeading"] == "Latest posts", (
+                f"with a {kind} data file the block falls back to `Latest posts`"
             )
             assert len(sidebar["highlights"]) == HIGHLIGHT_LIMIT, (
                 f"expected {HIGHLIGHT_LIMIT} fallback highlights, got "
@@ -989,16 +1030,16 @@ def test_sidebar_highlights_follow_file_order_and_skip_unknown_and_draft(tmp_pat
 
     draft_title = _post_title(POSTS_DIR / f"{_ORDER_DRAFT_POST}.md")
     expected_titles = [
-        _post_title(POSTS_DIR / "2022-10-27-cach-pha-ca-phe.md"),      # oldest, first
-        _post_title(POSTS_DIR / "2026-01-01-Migrate-windows-11-to-fedora.md"),  # bare slug
-        _post_title(POSTS_DIR / "2022-12-25-gioi-thieu-ve-internet.md"),
+        _post_title(POSTS_DIR / "2022-10-27-brewing-vietnamese-coffee.md"),  # oldest, first
+        _post_title(POSTS_DIR / "2026-01-01-switching-from-windows-11-to-fedora.md"),  # bare slug
+        _post_title(POSTS_DIR / "2022-12-25-explaining-the-internet.md"),
     ]
     expected_dates = [
         path.stem[:10]
         for path in (
-            POSTS_DIR / "2022-10-27-cach-pha-ca-phe.md",
-            POSTS_DIR / "2026-01-01-Migrate-windows-11-to-fedora.md",
-            POSTS_DIR / "2022-12-25-gioi-thieu-ve-internet.md",
+            POSTS_DIR / "2022-10-27-brewing-vietnamese-coffee.md",
+            POSTS_DIR / "2026-01-01-switching-from-windows-11-to-fedora.md",
+            POSTS_DIR / "2022-12-25-explaining-the-internet.md",
         )
     ]
     # The guard only proves "order follows the file" if file order differs
@@ -1012,8 +1053,8 @@ def test_sidebar_highlights_follow_file_order_and_skip_unknown_and_draft(tmp_pat
             _open(page, url, "/")
             sidebar = page.evaluate(_SIDEBAR_JS)
 
-            assert sidebar["highlightsHeading"] == "Bài nổi bật", (
-                "with resolvable entries the block is `Bài nổi bật` (the build "
+            assert sidebar["highlightsHeading"] == "Featured", (
+                "with resolvable entries the block is `Featured` (the build "
                 "did not fail — the unknown entry was skipped)"
             )
             assert [entry["title"] for entry in sidebar["highlights"]] == expected_titles, (

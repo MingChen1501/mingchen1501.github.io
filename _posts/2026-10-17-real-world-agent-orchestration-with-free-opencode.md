@@ -1,9 +1,12 @@
 ---
 layout: post
+lang: en
+ref: agent-orchestration-opencode-free
+fallback_vi: true
 author: Ming Chen
-title: "Áp dụng orchestration thật: viết bài từ bãi biển với OpenCode bản free"
+title: "Orchestration in Production: Blogging from the Beach with Free OpenCode"
 tags: [ai-agent]
-description: "Đem orchestration cho AI coding agent ra xài thật với OpenCode bản free: orchestrator tự nhặt việc, mình chỉ bấm merge nên viết bài được cả từ bãi biển."
+description: "Putting AI coding-agent orchestration to real use with free OpenCode: the orchestrator picks up the work, I just press merge — even from the beach."
 ---
 
 >Đợt trước mình mới thử setup orchestration cho AI coding agent. Đợt này mình đem ra dùng thật, và có một chuyện mình không nghĩ tới: mình đang viết bài này từ bãi biển, chỉ bấm merge là xong.

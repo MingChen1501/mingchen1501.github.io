@@ -1,6 +1,6 @@
 {%- comment -%}
   Tag chips for a post (issue #45). Each chip links to that tag's page
-  (`/tags/<tag>/`, issue #46).
+  (`/tags/<tag>/`, issue #46) — or `/vi/tags/<tag>/` on Vietnamese pages (#93).
 
   Usage: {% include post-tags.html tags=page.tags %}
          {% include post-tags.html tags=post.tags class="tag-chip-list--home" %}
@@ -14,11 +14,16 @@
 {%- endcomment -%}
 {%- assign chips = include.tags | default: empty -%}
 {%- assign extra_class = include.class | default: '' -%}
+{%- assign chips_lang = page.lang | default: site.lang | default: 'en' -%}
+{%- assign chips_base = '/tags/' -%}
+{%- if chips_lang == 'vi' -%}
+  {%- assign chips_base = '/vi/tags/' -%}
+{%- endif -%}
 {%- if chips.size > 0 -%}
 <ul class="tag-chip-list{% if extra_class != '' %} {{ extra_class }}{% endif %}">
   {%- for tag in chips -%}
   <li>
-    <a class="tag-chip" rel="tag" href="{{ '/tags/' | append: tag | append: '/' | relative_url }}">{{ tag | escape }}</a>
+    <a class="tag-chip" rel="tag" href="{{ chips_base | append: tag | append: '/' | relative_url }}">{{ tag | escape }}</a>
   </li>
   {%- endfor -%}
 </ul>

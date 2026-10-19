@@ -4,21 +4,26 @@ Epic #44 ("UX layout: post page with secondary tag column + tag pages"):
 #45 adds the two-column post page, #46 adds ``/tags/<tag>/``, #47 reuses the
 same chips on the home post list.
 
+Bilingual (#93): English lives in ``_posts``/``tags``/``tags.md`` (``/``,
+``/tags/``), Vietnamese in ``_vi_posts``/``vi/tags``/``vi/tags.md``
+(``/vi/``, ``/vi/tags/``). Every guard below covers both languages.
+
 These run without a browser and fail fast when the templates drift:
 
 - ``_layouts/post.html`` must keep the two-column structure (main = post,
   secondary = the post's tags) and the comments gating that
   ``tests/e2e`` browser tests rely on.
-- ``_includes/post-tags.html`` must link every chip to ``/tags/<tag>/`` and
-  stay the single source of the chip markup (the home list may only pass the
+- ``_includes/post-tags.html`` must link every chip to ``/tags/<tag>/`` on
+  English pages and ``/vi/tags/<tag>/`` on Vietnamese ones, and stay the
+  single source of the chip markup (the home list may only pass the
   extra-class parameter added for #47).
 - ``_layouts/home.html`` must render those chips per list item, after the
   date/title/excerpt, without forking the include.
-- Every tag used by a *published* post must have a ``tags/<tag>.md`` page
-  whose front matter declares the same tag and permalink, so a tag chip can
-  never 404.
-- ``tags.md`` (the ``/tags/`` index) and ``_layouts/tag.html`` must stay in
-  sync with those tag pages.
+- Every tag used by a *published* post must have a tag page in its own
+  language (``tags/<tag>.md`` / ``vi/tags/<tag>.md``) whose front matter
+  declares the same tag and permalink, so a tag chip can never 404.
+- ``tags.md`` / ``vi/tags.md`` (the ``/tags/`` / ``/vi/tags/`` indexes) and
+  ``_layouts/tag.html`` must stay in sync with those tag pages.
 """
 
 import re
@@ -36,13 +41,17 @@ TAG_LAYOUT = REPO_ROOT / "_layouts" / "tag.html"
 POST_TAGS_INCLUDE = REPO_ROOT / "_includes" / "post-tags.html"
 TAGS_INDEX = REPO_ROOT / "tags.md"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
+VI_TAGS_INDEX = REPO_ROOT / "vi" / "tags.md"
+VI_TAG_PAGES_DIR = REPO_ROOT / "vi" / "tags"
 CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 POSTS_DIR = REPO_ROOT / "_posts"
+VI_POSTS_DIR = REPO_ROOT / "_vi_posts"
 
 PILLARS = ["backend-production", "ai-agent", "linux-tooling", "doi-song"]
 
 FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
 TAG_PERMALINK = "/tags/{tag}/"
+VI_TAG_PERMALINK = "/vi/tags/{tag}/"
 
 
 def _read(path):
@@ -69,10 +78,10 @@ def _front_matter_tags(front_matter):
     return []
 
 
-def _published_post_tags():
-    """Tag list per published post, as ``(post_name, tags)``."""
+def _published_post_tags(posts_dir):
+    """Tag list per published post in ``posts_dir``, as ``(post_name, tags)``."""
     posts = []
-    for path in sorted(POSTS_DIR.glob("*.md")):
+    for path in sorted(posts_dir.glob("*.md")):
         front_matter = _front_matter(path)
         if re.search(r"^published:\s*false\s*$", front_matter, re.M):
             continue
@@ -82,9 +91,9 @@ def _published_post_tags():
     return posts
 
 
-def _tag_pages():
+def _tag_pages(tag_pages_dir):
     return {
-        path.stem: _front_matter(path) for path in sorted(TAG_PAGES_DIR.glob("*.md"))
+        path.stem: _front_matter(path) for path in sorted(tag_pages_dir.glob("*.md"))
     }
 
 
@@ -156,7 +165,11 @@ def test_post_tags_include_links_every_chip_to_its_tag_page():
     html = _read(POST_TAGS_INCLUDE)
     assert "include.tags" in html
     assert "tag-chip" in html
-    assert "'/tags/' | append: tag | append: '/'" in html
+    # One base per language (#93): English chips to `/tags/<tag>/`,
+    # Vietnamese chips to `/vi/tags/<tag>/`, via a single variable.
+    assert "chips_base | append: tag | append: '/'" in html
+    assert "chips_base = '/tags/'" in html
+    assert "chips_base = '/vi/tags/'" in html
     assert "relative_url" in html
 
 
@@ -164,55 +177,81 @@ def test_tag_layout_lists_posts_for_page_tag():
     html = _read(TAG_LAYOUT)
     assert "tag_name = page.tag" in html
     assert "site.tags[tag_name]" in html
+    assert "site.vi_posts" in html
     assert 'class="post-list"' in html
-    assert "'/tags/' | relative_url" in html
+    # The chips and the back link stay inside the page's language (#93).
+    assert "tag_base = '/tags/'" in html
+    assert "tag_base = '/vi/tags/'" in html
+    assert "tag_base | relative_url" in html
 
 
 def test_every_published_post_tag_has_a_tag_page():
-    tag_pages = _tag_pages()
-    for post_name, tags in _published_post_tags():
-        for tag in tags:
-            assert tag in tag_pages, f"{post_name} uses tag '{tag}' with no tags/{tag}.md"
+    for posts_dir, tag_pages_dir in (
+        (POSTS_DIR, TAG_PAGES_DIR),
+        (VI_POSTS_DIR, VI_TAG_PAGES_DIR),
+    ):
+        tag_pages = _tag_pages(tag_pages_dir)
+        for post_name, tags in _published_post_tags(posts_dir):
+            for tag in tags:
+                assert tag in tag_pages, (
+                    f"{post_name} uses tag '{tag}' with no "
+                    f"{tag_pages_dir.relative_to(REPO_ROOT)}/{tag}.md"
+                )
 
 
 def test_published_posts_only_use_the_four_pillars():
-    for post_name, tags in _published_post_tags():
-        assert set(tags) <= set(PILLARS), f"{post_name} uses tags outside the pillars: {tags}"
+    for posts_dir in (POSTS_DIR, VI_POSTS_DIR):
+        for post_name, tags in _published_post_tags(posts_dir):
+            assert set(tags) <= set(PILLARS), f"{post_name} uses tags outside the pillars: {tags}"
 
 
 def test_tag_pages_declare_the_matching_tag_and_permalink():
-    for tag, front_matter in _tag_pages().items():
-        assert re.search(rf"^tag:\s*{re.escape(tag)}\s*$", front_matter, re.M), (
-            f"tags/{tag}.md must declare `tag: {tag}`"
-        )
-        assert re.search(
-            rf"^permalink:\s*{re.escape(TAG_PERMALINK.format(tag=tag))}\s*$",
-            front_matter,
-            re.M,
-        ), f"tags/{tag}.md must declare `permalink: {TAG_PERMALINK.format(tag=tag)}`"
-        assert re.search(r"^layout:\s*tag\s*$", front_matter, re.M)
+    for tag_pages_dir, permalink_template in (
+        (TAG_PAGES_DIR, TAG_PERMALINK),
+        (VI_TAG_PAGES_DIR, VI_TAG_PERMALINK),
+    ):
+        for tag, front_matter in _tag_pages(tag_pages_dir).items():
+            rel = f"{tag_pages_dir.relative_to(REPO_ROOT)}/{tag}.md"
+            assert re.search(rf"^tag:\s*{re.escape(tag)}\s*$", front_matter, re.M), (
+                f"{rel} must declare `tag: {tag}`"
+            )
+            assert re.search(
+                rf"^permalink:\s*{re.escape(permalink_template.format(tag=tag))}\s*$",
+                front_matter,
+                re.M,
+            ), f"{rel} must declare `permalink: {permalink_template.format(tag=tag)}`"
+            assert re.search(r"^layout:\s*tag\s*$", front_matter, re.M)
 
 
 def test_tags_index_links_every_tag_page():
-    index = _read(TAGS_INDEX)
-    tag_pages = _tag_pages()
+    for tags_index, tag_pages_dir, base in (
+        (TAGS_INDEX, TAG_PAGES_DIR, "/tags/"),
+        (VI_TAGS_INDEX, VI_TAG_PAGES_DIR, "/vi/tags/"),
+    ):
+        index = _read(tags_index)
+        tag_pages = _tag_pages(tag_pages_dir)
+        rel_index = tags_index.relative_to(REPO_ROOT)
 
-    listed = re.search(r'assign pillars = "([^"]+)"', index)
-    assert listed, "tags.md must list the pillars to build the index"
-    assert listed.group(1).split(",") == PILLARS
+        listed = re.search(r'assign pillars = "([^"]+)"', index)
+        assert listed, f"{rel_index} must list the pillars to build the index"
+        assert listed.group(1).split(",") == PILLARS
 
-    # The index builds the chip URL from the loop variable, so the pillar list
-    # plus the permalink shape are what has to stay in sync.
-    assert "'/tags/' | append: pillar | append: '/'" in index
-    for tag in tag_pages:
-        assert tag in listed.group(1), f"tags.md does not link tags/{tag}.md"
+        # The index builds the chip URL from the loop variable, so the pillar
+        # list plus the permalink shape are what has to stay in sync.
+        assert f"'{base}' | append: pillar | append: '/'" in index
+        for tag in tag_pages:
+            assert tag in listed.group(1), f"{rel_index} does not link {tag}"
 
 
 def test_permalinks_of_generated_tag_pages_are_unique():
     permalinks = []
-    for tag, front_matter in _tag_pages().items():
-        permalinks.append(TAG_PERMALINK.format(tag=tag))
-    assert len(permalinks) == len(set(permalinks)) == len(PILLARS)
+    for tag_pages_dir, permalink_template in (
+        (TAG_PAGES_DIR, TAG_PERMALINK),
+        (VI_TAG_PAGES_DIR, VI_TAG_PERMALINK),
+    ):
+        for tag in _tag_pages(tag_pages_dir):
+            permalinks.append(permalink_template.format(tag=tag))
+    assert len(permalinks) == len(set(permalinks)) == 2 * len(PILLARS)
 
 
 # --- home list chips (#47) -------------------------------------------------

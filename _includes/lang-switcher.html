@@ -1,0 +1,40 @@
+{%- comment -%}
+  Language switcher (#93). Rendered in the header on every page/post that
+  carries a `ref`: links to the counterpart in the other language when one
+  exists, otherwise falls back to the other language's home (both always
+  exist, so the switcher never 404s). Pages without a `ref` (404, feeds,
+  standalone demos) render no switcher.
+{%- endcomment -%}
+{%- assign switch_ref = page.ref | default: '' -%}
+{%- if switch_ref != '' -%}
+  {%- assign switch_cur = page.lang | default: site.lang | default: 'en' -%}
+  {%- if switch_cur == 'vi' -%}
+    {%- assign switch_other = 'en' -%}
+    {%- assign switch_label = 'English' -%}
+    {%- assign switch_home = '/' -%}
+  {%- else -%}
+    {%- assign switch_other = 'vi' -%}
+    {%- assign switch_label = 'Tiếng Việt' -%}
+    {%- assign switch_home = '/vi/' -%}
+  {%- endif -%}
+  {%- assign switch_url = switch_home -%}
+  {%- for switch_doc in site.posts -%}
+    {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
+    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other -%}
+      {%- assign switch_url = switch_doc.url -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for switch_doc in site.vi_posts -%}
+    {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
+    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other -%}
+      {%- assign switch_url = switch_doc.url -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for switch_doc in site.pages -%}
+    {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
+    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other -%}
+      {%- assign switch_url = switch_doc.url -%}
+    {%- endif -%}
+  {%- endfor -%}
+  <a class="lang-switcher" hreflang="{{ switch_other }}" href="{{ switch_url | relative_url }}" title="{{ switch_label }}">{{ switch_label }}</a>
+{%- endif -%}

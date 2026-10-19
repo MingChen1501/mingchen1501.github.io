@@ -1,19 +1,33 @@
 <header class="site-header">
 
   <div class="wrapper">
-    {%- assign default_paths = site.pages | map: "path" -%}
-    {%- assign page_paths = site.minima.nav_pages | default: default_paths -%}
+    {%- comment -%}
+      Language-aware nav (#93): English pages keep the `minima.nav_pages`
+      list from `_config.yml`; Vietnamese pages navigate the `vi/` pages so
+      the nav never jumps languages mid-read. The counterpart of this page
+      in the other language is one click away via the switcher.
+    {%- endcomment -%}
+    {%- assign header_lang = page.lang | default: site.lang | default: 'en' -%}
+    {%- if header_lang == 'vi' -%}
+      {%- assign header_home = '/vi/' -%}
+      {%- assign page_paths = "vi/about.md,vi/portfolio.md,vi/tags.md" | split: "," -%}
+    {%- else -%}
+      {%- assign header_home = '/' -%}
+      {%- assign default_paths = site.pages | map: "path" -%}
+      {%- assign page_paths = site.minima.nav_pages | default: default_paths -%}
+    {%- endif -%}
     {%- assign page_titles = site.pages | map: 'title' | compact %}
-    <a class="site-title" rel="author" href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
+    <a class="site-title" rel="author" href="{{ header_home | relative_url }}">{{ site.title | escape }}</a>
 
     {%- unless page_titles == empty %}
-      <nav class="site-nav" aria-label="Điều hướng chính">
+      <nav class="site-nav" aria-label="{% if header_lang == 'vi' %}Điều hướng chính{% else %}Main navigation{% endif %}">
         <input type="checkbox" id="nav-trigger" />
         <label for="nav-trigger">
           <span class="menu-icon"></span>
         </label>
 
         {% include nav-items.html paths = page_paths %}
+        {% include lang-switcher.html %}
       </nav>
     {%- endunless %}
   </div>

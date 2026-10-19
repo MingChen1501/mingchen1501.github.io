@@ -7,12 +7,14 @@
 
     {%- comment -%}
       #87: skip link — first focusable element, hidden until focused.
+      Label follows the page language (#93).
     {%- endcomment -%}
-    <a class="skip-link" href="#main-content">Skip to main content</a>
+    {%- assign base_lang = page.lang | default: site.lang | default: 'en' -%}
+    <a class="skip-link" href="#main-content">{% if base_lang == 'vi' %}Bỏ qua tới nội dung chính{% else %}Skip to main content{% endif %}</a>
 
     {%- include header.html -%}
 
-    <main class="page-content" aria-label="Content" id="main-content">
+    <main class="page-content" aria-label="{% if base_lang == 'vi' %}Nội dung{% else %}Content{% endif %}" id="main-content">
       <div class="wrapper">
         {{ content }}
       </div>

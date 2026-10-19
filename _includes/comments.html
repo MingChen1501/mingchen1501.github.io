@@ -21,7 +21,7 @@
         data-emit-metadata="{{ site.giscus.emit_metadata | default: '0' }}"
         data-input-position="{{ site.giscus.input_position | default: 'bottom' }}"
         data-theme="{{ site.giscus.theme | default: 'preferred_color_scheme' }}"
-        data-lang="{{ site.giscus.lang | default: page.lang | default: site.lang | default: 'en' }}"
+        data-lang="{{ page.lang | default: site.giscus.lang | default: 'en' }}"
         data-loading="{{ site.giscus.loading | default: 'lazy' }}"
         crossorigin="anonymous"
         async>

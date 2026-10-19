@@ -1,5 +1,6 @@
 title: Chen Ming
 url: "https://mingchen.id.vn" # prod domain (must match CNAME); keeps canonical/SEO/feed URLs correct
+lang: en # default language; every Vietnamese page sets `lang: vi` (#93)
 author:
   name: Trần Công Minh
   email: tminh400@gmail.com
@@ -66,6 +67,16 @@ plugins:
 
 paginate: 5
 paginate_path: "/page:num/"
+
+# Bilingual structure (#93): English posts live in `_posts/` (so `site.posts`,
+# jekyll-paginate and jekyll-feed stay English-only with no plugin), Vietnamese
+# translations live in this collection and render under `/vi/...`.
+# Hard constraint: GitHub Pages builds with `--safe`, so no polyglot plugin;
+# i18n is Liquid + directory structure only.
+collections:
+  vi_posts:
+    output: true
+    permalink: /vi/:year/:month/:day/:title.html
 
 # Comments
 comments:

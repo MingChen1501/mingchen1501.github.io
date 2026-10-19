@@ -4,6 +4,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {%- seo -%}
   {%- comment -%}
+    Bilingual alternates (#93): hreflang en/vi + x-default (English, the
+    default language) for every page/post with a `ref`; nothing for pages
+    without one. Canonicals stay with jekyll-seo-tag (self-referencing).
+  {%- endcomment -%}
+  {%- include lang-alternates.html -%}
+  {%- comment -%}
     Asset cache versioning (#61, follow-up to #58) - see AGENTS.md
     "Asset cache versioning". GitHub Pages serves `/assets/**` with
     `cache-control: max-age=14400` from a fixed URL, so a returning visitor can
