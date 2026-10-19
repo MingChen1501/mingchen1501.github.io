@@ -25,46 +25,67 @@ deployed with GitHub Pages from the `master` branch.
 
 ## Content conventions
 
-- Posts live in `_posts/` with filenames like `YYYY-MM-DD-slug-ascii.md`, body
-  content in Vietnamese, slug in lowercase ASCII without diacritics joined with `-`.
-- Minimal front matter: `layout: post`, `title`; Ming's posts also add
-  `author: Ming Chen`; to disable comments on that post set `comments: false`.
+- Posts are bilingual since #93: **English default** in `_posts/` (served at
+  `/`), **Vietnamese** in the `site.vi_posts` collection (`_vi_posts/`, served
+  at `/vi/...`). Every post carries `lang:` (`en`/`vi`) and a shared `ref:`
+  linking the two translations (drives the header switcher + hreflang); a post
+  with no translation yet sets `fallback_vi: true` and reuses the Vietnamese
+  body under a banner (no `translation_pending` marker). English slugs must
+  never reuse old Vietnamese slugs (redirect stubs would collide).
+- Posts live in `_posts/` (EN) / `_vi_posts/` (VI) with filenames like
+  `YYYY-MM-DD-slug-ascii.md`, body content in that file's language, slug in
+  lowercase ASCII without diacritics joined with `-`. Vietnamese collection
+  docs also declare `date: YYYY-MM-DD` (their names carry no date) and
+  `redirect_from:` the pre-#93 URL(s) so old links keep working.
+- Minimal front matter: `layout: post`, `lang`, `ref`, `title`; Ming's posts
+  also add `author: Ming Chen`; to disable comments on that post set
+  `comments: false`.
 - Taxonomy (#26): every post picks tags from the 4 content pillars only
   (`backend-production`, `ai-agent`, `linux-tooling`, `doi-song`), 1 tag per post
-  and at most 4 tags/post; always include a short `description` (~120-155 chars)
-  so `jekyll-seo-tag` renders a proper meta description. Copy-paste template lives
-  in the README "Writing a new post (mingchen.id.vn taxonomy)" section and
+  and at most 4 tags/post; always include a short translated `description`
+  (~120-155 chars) so `jekyll-seo-tag` renders a proper meta description.
+  Copy-paste template lives in the README "Writing a new post (mingchen.id.vn
+  taxonomy)" section and
   `.opencode/skills/jekyll-post/references/front-matter.md`.
 - Static pages: `layout: page` + `permalink`; to add a page to the top nav, add its
   path to `minima.nav_pages` in `_config.yml`. The `/tags/` page (`tags.md`) is
   already listed there and is the index of the 4 pillars.
-- Taxonomy pages (#44): each pillar has a front-matter-only page `tags/<tag>.md`
-  (`layout: tag`, `tag: <pillar>`, `permalink: /tags/<tag>/`) because GitHub Pages
-  builds with `--safe` (no archive/tagging plugin). Post pages render a secondary
-  column with the post's tags + posts sharing its first tag
-  (`_layouts/post.html`, `_includes/post-tags.html`, styles in
+- Taxonomy pages (#44): each pillar has a front-matter-only page in both
+  languages — `tags/<tag>.md` (`layout: tag`, `tag: <pillar>`,
+  `permalink: /tags/<tag>/`, `lang: en`, `ref: tag-<pillar>`) and
+  `vi/tags/<tag>.md` (`permalink: /vi/tags/<tag>/`, `lang: vi`, same `ref`) —
+  because GitHub Pages builds with `--safe` (no archive/tagging plugin). Post
+  pages render a secondary column with the post's tags + posts sharing its
+  first tag in the page's language (`_layouts/post.html`,
+  `_includes/post-tags.html`, styles in
   `_sass/minima/custom-styles.scss`). The home post list renders the same chips
-  per item (via the include's optional `class` parameter, #47). A new tag needs
-  both the page file and its `tags.md` entry —
+  per item (via the include's optional `class` parameter, #47), linking inside
+  the page's language (`/tags/` vs `/vi/tags/`). A new tag needs both pages
+  plus both `tags.md` entries —
   `tests/e2e/test_post_layout_markup.py` guards this.
 - Comments use Giscus (`comments.provider: giscus`); only rendered in production
   (`JEKYLL_ENV=production`), unless `comments.dev: true`. Do not break the logic in
   `_layouts/post.html` and `_includes/comments.html` — the E2E tests depend on it.
-- List sidebar (#58, reworked in #63): the home list (`/`, `/page2/`…) and the tag
-  pages (`/tags/<tag>/`) wrap their list in the same shell (`.site-layout` >
-  `.site-main` + `aside.site-sidebar`) fed by ONE include,
-  `_includes/site-sidebar.html`: the highlighted posts — the slugs listed
-  in `_data/highlights.yml` (#64), in file order, at most 5, with title + date +
-  thumbnail (falling back to the 5 newest posts when the file is empty/missing)
-  — and every tag as a row collapsed by default (`<details>` without `open`)
-  that shows at most 3 posts once opened. Keep the aside AFTER
-  `.site-main` in the DOM, keep the tag chips coming from
-  `_includes/post-tags.html` (no forked chip markup), never crop or upscale a
-  thumbnail (capped `max-width`/`max-height` box, no `object-fit`, `padding: 0`
-  — the `img` reset in `_base.scss` distorts a two-`max-*` box), do not add
-  `thumb-*` files, and keep the column inside its height budget (short rows,
-  no `max-height`/`overflow-y` inner scrollbar; it is pinned only where it
-  fits). Post pages keep their own secondary column (#45).
+- List sidebar (#58, reworked in #63): the home list (`/`, `/page2/…`) and the
+  Vietnamese home (`/vi/`) plus the tag pages (`/tags/<tag>/`, `/vi/tags/<tag>/`)
+  wrap their list in the same shell (`.site-layout` > `.site-main` +
+  `aside.site-sidebar`) fed by ONE include, `_includes/site-sidebar.html`: the
+  highlighted posts — the slugs listed per language (`en:` / `vi:`) in
+  `_data/highlights.yml` (#64), in file order, at most 5, with title + date +
+  thumbnail (falling back to the 5 newest posts of that language when the list
+  is empty/missing) — and every tag as a row collapsed by default
+  (`<details>` without `open`) that shows at most 3 posts of that language
+  once opened. Headings are English on English pages (`Featured`,
+  `Latest posts`, `Topics`) and Vietnamese on Vietnamese pages (`Bài nổi bật`,
+  `Bài mới nhất`, `Chủ đề`). Keep the aside AFTER `.site-main` in the DOM,
+  keep the tag chips coming from `_includes/post-tags.html` (no forked chip
+  markup), never crop or upscale a thumbnail (capped `max-width`/`max-height`
+  box, no `object-fit`, `padding: 0` — the `img` reset in `_base.scss` distorts
+  a two-`max-*` box), do not add `thumb-*` files, and keep the column inside
+  its height budget (short rows, no `max-height`/`overflow-y` inner scrollbar;
+  it is pinned only where it fits). Post pages keep their own secondary column
+  (#45). The header language switcher lives in the header, never in the
+  sidebar, so it cannot break the sidebar budget.
 - `site.url` must match `CNAME` (keeps canonical/SEO/feed correct).
 
 ## Image conventions

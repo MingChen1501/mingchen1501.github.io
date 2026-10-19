@@ -521,17 +521,31 @@ Full history can be fetched later with `git fetch --unshallow`.
 
 > Site-specific section (not part of upstream Minima docs).
 
+The blog is bilingual since #93: **English is the default** (`/`, `_posts/`),
+**Vietnamese is the second option** (`/vi/`, the `site.vi_posts` collection).
+Every post ships in both languages, linked by a shared `ref` in front matter
+(the switcher and the hreflang alternates resolve through it); a post with no
+translation yet sets `fallback_vi: true` and reuses the Vietnamese body under a
+banner (`tests/e2e/test_i18n.py` fails otherwise). English-only going forward
+is acceptable; Vietnamese-only is not. Old Vietnamese URLs keep working via
+`redirect_from` stubs to `/vi/...`, so a new English slug must never reuse an
+old Vietnamese slug. Phasing: PR A ships the infrastructure with English stubs,
+PR B the full translations, PR C the per-language SEO surface (sitemap/llms/feed).
+
 New posts must pick tags from the 4 content pillars only
 (`backend-production`, `ai-agent`, `linux-tooling`, `doi-song`, max 4 tags/post)
-and always include a short `description` (~120–155 characters) so
-`jekyll-seo-tag` renders a proper meta description. To feature posts in the list
-sidebar's **Bài nổi bật** block, add their slugs (file name without `.md`) to
-`_data/highlights.yml` (single source of truth, #64) in the order you want them
-to appear. Copy this template:
+and always include a short translated `description` (~120–155 characters) so
+`jekyll-seo-tag` renders a proper meta description. To feature posts in the
+list sidebar's highlight block, add their slugs (file name without `.md`) to
+that language's list (`en:` / `vi:`) in `_data/highlights.yml` (single source
+of truth, #64) in the order you want them to appear. Copy this template
+(`lang: vi` + `_vi_posts/` for the Vietnamese file):
 
 ```yaml
 ---
 layout: post
+lang: en
+ref: my-post-key
 author: Ming Chen
 title: "Your post title"
 tags: [linux-tooling]
@@ -543,29 +557,33 @@ The [`/tags/`](/tags/) page is the index of those 4 pillars and is
 linked from the header navigation via `minima.nav_pages` in `_config.yml`.
 Each pillar also has its own page — `/tags/<tag>/`, e.g.
 [`/tags/linux-tooling/`](/tags/linux-tooling/) — listing the posts with that
-tag. Those pages are front-matter only (`tags/<tag>.md` + `_layouts/tag.html`)
-because GitHub Pages builds with `--safe`, where no archive/tagging plugin can
-run. A new tag therefore needs **both** a `tags/<tag>.md` page and its entry in
-`tags.md`; `tests/e2e/test_post_layout_markup.py` fails if a published post uses
-a tag without a page.
+tag, plus its Vietnamese mirror `/vi/tags/<tag>/`. Those pages are front-matter
+only (`tags/<tag>.md` + `vi/tags/<tag>.md` + `_layouts/tag.html`) because
+GitHub Pages builds with `--safe`, where no archive/tagging plugin can run.
+A new tag therefore needs **both** a `tags/<tag>.md` page and its entry in
+`tags.md` (and the same pair under `vi/`); `tests/e2e/test_post_layout_markup.py`
+fails if a published post uses a tag without a page in its language.
 
 Post pages render a secondary column with the post's tags and the other posts
 sharing its first tag (`_layouts/post.html`, `_includes/post-tags.html`, styles
 in `_sass/minima/custom-styles.scss`).
 
-The list pages — the home list (`/`, `/page2/`…) and the tag pages
-(`/tags/<tag>/`) — render the same sidebar from one shared include,
-`_includes/site-sidebar.html`:
+The list pages — the English home list (`/`, `/page2/…`, paginated by
+`jekyll-paginate` over the English-only `site.posts`), the Vietnamese home
+(`/vi/`, every Vietnamese post, no pagination — `jekyll-paginate` supports a
+single stream), and the tag pages (`/tags/<tag>/`, `/vi/tags/<tag>/`) — render
+the same sidebar from one shared include, `_includes/site-sidebar.html`:
 
-- **Bài nổi bật** — the *highlighted* posts: the slugs listed in
-  `_data/highlights.yml` (single source of truth, #64), resolved against
-  `site.posts` in the file's order, at most five, each with its title, its
-  publication date and its thumbnail when it has one. Unknown or unpublished
-  slugs are skipped. When the file is empty or missing, the block falls back to
-  the five newest posts and its heading reads **Bài mới nhất**.
-- **Chủ đề** — every tag as a row collapsed by default (`<details>`): the chip
-  and its post count, and, once opened, at most three post links plus `Xem tất
-  cả` to that tag's page.
+- **Featured** / **Bài nổi bật** — the *highlighted* posts: the slugs listed in
+  that language's list (`en:` / `vi:`) in `_data/highlights.yml` (single source
+  of truth, #64), resolved against that language's post source in the file's
+  order, at most five, each with its title, its publication date and its
+  thumbnail when it has one. Unknown or unpublished slugs are skipped. When the
+  list is empty or missing, the block falls back to the five newest posts of
+  that language and its heading reads **Latest posts** / **Bài mới nhất**.
+- **Topics** / **Chủ đề** — every tag as a row collapsed by default (`<details>`):
+  the chip and its post count, and, once opened, at most three post links plus
+  `View all` / `Xem tất cả` to that tag's page.
 
 The column is the second column from 960px up and moves under the list on
 phones. It is deliberately short (capped thumbnails, two-line titles, collapsed
