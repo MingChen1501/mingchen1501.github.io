@@ -228,3 +228,4 @@ for site-specific review/verify):
   "Risk labels and merge policy").
 - Concurrency: never spawn a second task worker; queue work instead (see
   "Concurrency (task workers)").
+- `robots.txt`, `sitemap.xml`, and `llms.txt` are generated at build time and must not be hand-edited.
