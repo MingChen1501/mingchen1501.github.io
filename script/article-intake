@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""Article-intake scan for the orchestrator cron wake (#190).
+
+Lists the ``article``-labelled issues that are eligible for a new article
+worker: open, still carrying the ``article`` label, not covered by an open
+PR, and not already claimed by a live worker session.
+
+Read-only: this script never spawns sessions, edits issues, or opens PRs.
+The orchestrator spawns at most one article worker per free pool slot from
+the eligible list (see the ``orchestrator`` skill, "Article-intake scan").
+
+Live usage (copy-pasteable detection)::
+
+    script/article-intake
+    script/article-intake --format json
+    script/article-intake --claimed 193,195   # issue(s) a live session owns
+
+The ``--claimed`` set comes from ``ao session ls --project mingchen-site``:
+any issue number cited in a live worker's prompt counts as claimed.
+
+Offline usage (tests, dry runs against saved ``gh`` output)::
+
+    gh issue list --label article --state open \
+        --json number,title,url,labels,state > issues.json
+    gh pr list --state open \
+        --json number,title,body,headRefName > prs.json
+    script/article-intake --issues-file issues.json --prs-file prs.json
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+
+REPO = "MingChen1501/mingchen1501.github.io"
+
+# An open PR covers issue N when its title/body uses a closing keyword with
+# "#N" (GitHub auto-closes the issue on merge), e.g. "Closes #193".
+CLOSING_KEYWORDS_RE = re.compile(
+    r"(?:clos(?:e|es|ing)|fix(?:|es|ing)|resolv(?:e|es|ing))\s+#(\d+)\b",
+    re.IGNORECASE,
+)
+
+
+def _issue_number_token_re(number):
+    """Match ``number`` as a standalone token (``193`` in ``x-193-y``)."""
+    return re.compile(r"(?<![0-9])%d(?![0-9])" % number)
+
+
+def pr_covers_issue(pr, number):
+    """Return True when the open PR already covers (will close) ``number``."""
+    text = " ".join(
+        str(pr.get(field) or "") for field in ("title", "body")
+    )
+    for match in CLOSING_KEYWORDS_RE.finditer(text):
+        if int(match.group(1)) == number:
+            return True
+    branch = str(pr.get("headRefName") or "")
+    if "article" in branch.lower() and _issue_number_token_re(number).search(
+        branch
+    ):
+        return True
+    return False
+
+
+def is_candidate(issue):
+    """Return True for an open issue still carrying the ``article`` label."""
+    if str(issue.get("state", "open")).lower() != "open":
+        return False
+    labels = issue.get("labels") or []
+    names = [
+        (entry.get("name") if isinstance(entry, dict) else entry)
+        for entry in labels
+    ]
+    return any(
+        str(name).lower() == "article" for name in names if name is not None
+    )
+
+
+def eligible_issues(issues, prs, claimed):
+    """Filter ``issues`` down to the ones needing a new article worker.
+
+    - keeps open ``article``-labelled issues only (``is_candidate``);
+    - drops issues covered by an open PR (``pr_covers_issue``);
+    - drops issues already claimed by a live session (``claimed``);
+    - dedupes by issue number so one issue is never listed twice.
+    """
+    open_prs = prs or []
+    seen = set()
+    eligible = []
+    for issue in issues or []:
+        try:
+            number = int(issue.get("number"))
+        except (TypeError, ValueError):
+            continue
+        if number in seen or number in claimed:
+            continue
+        seen.add(number)
+        if not is_candidate(issue):
+            continue
+        if any(pr_covers_issue(pr, number) for pr in open_prs):
+            continue
+        eligible.append(issue)
+    eligible.sort(key=lambda entry: int(entry.get("number")))
+    return eligible
+
+
+def _run_gh(args):
+    proc = subprocess.run(
+        ["gh"] + args, capture_output=True, text=True, check=False
+    )
+    if proc.returncode != 0:
+        raise RuntimeError("gh %s failed: %s" % (" ".join(args), proc.stderr))
+    return json.loads(proc.stdout or "[]")
+
+
+def _parse_claimed(values, files):
+    claimed = set()
+    for value in values or []:
+        for chunk in str(value).split(","):
+            chunk = chunk.strip().lstrip("#")
+            if chunk.isdigit():
+                claimed.add(int(chunk))
+    for path in files or []:
+        with open(path, encoding="utf-8") as handle:
+            for chunk in re.split(r"[,\s]+", handle.read()):
+                chunk = chunk.strip().lstrip("#")
+                if chunk.isdigit():
+                    claimed.add(int(chunk))
+    return claimed
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="List eligible article issues for the cron-wake scan."
+    )
+    parser.add_argument(
+        "--format", choices=("lines", "json"), default="lines"
+    )
+    parser.add_argument(
+        "--claimed",
+        action="append",
+        default=[],
+        help="Issue number(s) owned by a live session; repeatable.",
+    )
+    parser.add_argument(
+        "--claimed-file",
+        action="append",
+        default=[],
+        help="File listing claimed issue numbers (comma/whitespace separated).",
+    )
+    parser.add_argument("--issues-file", default=None)
+    parser.add_argument("--prs-file", default=None)
+    parser.add_argument("--repo", default=REPO)
+    args = parser.parse_args(argv)
+
+    if args.issues_file:
+        with open(args.issues_file, encoding="utf-8") as handle:
+            issues = json.load(handle)
+    else:
+        issues = _run_gh(
+            [
+                "issue",
+                "list",
+                "--repo",
+                args.repo,
+                "--label",
+                "article",
+                "--state",
+                "open",
+                "--limit",
+                "100",
+                "--json",
+                "number,title,url,labels,state",
+            ]
+        )
+    if args.prs_file:
+        with open(args.prs_file, encoding="utf-8") as handle:
+            prs = json.load(handle)
+    else:
+        prs = _run_gh(
+            [
+                "pr",
+                "list",
+                "--repo",
+                args.repo,
+                "--state",
+                "open",
+                "--limit",
+                "100",
+                "--json",
+                "number,title,body,headRefName",
+            ]
+        )
+
+    claimed = _parse_claimed(args.claimed, args.claimed_file)
+    eligible = eligible_issues(issues, prs, claimed)
+
+    if args.format == "json":
+        print(
+            json.dumps(
+                [
+                    {
+                        "number": int(entry.get("number")),
+                        "title": entry.get("title"),
+                        "url": entry.get("url"),
+                    }
+                    for entry in eligible
+                ],
+                indent=2,
+            )
+        )
+    else:
+        for entry in eligible:
+            print(
+                "#%s %s %s"
+                % (
+                    entry.get("number"),
+                    entry.get("url") or "",
+                    (entry.get("title") or "").strip(),
+                )
+            )
+    print(
+        "%d eligible article issue(s) (%d open article, %d open PRs, %d claimed)"
+        % (len(eligible), len(issues or []), len(prs or []), len(claimed)),
+        file=sys.stderr,
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -39,6 +39,7 @@ theme, deployed with GitHub Pages from the `master` branch.
 | Verify before a PR: build, which guard test for which touch, leak check, CI | `jekyll-verify` skill |
 | Review a diff/PR: checklist, risk label, merge policy, English artifacts | `jekyll-review` skill |
 | Coordinate AO sessions: wake cues, pool, roles, review flow, publishing scope, periodic upstream minima review | `orchestrator` skill |
+| Article `article`-label issue waiting on a cron wake: detect, dedupe, spawn | `orchestrator` skill ("Article-intake scan") |
 | Owner describes a task/bug/enhancement: buffer worker files the issue(s) first, implementation follows under the normal pool | `orchestrator` skill ("Owner-task buffer-worker workflow") |
 | Pinned upstream minima baseline, sync policy, upstream-change check | `docs/upstream-baseline-184.md` |
 

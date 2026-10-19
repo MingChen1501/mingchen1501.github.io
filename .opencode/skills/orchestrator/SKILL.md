@@ -27,14 +27,61 @@ and verification live in the `jekyll-review` and `jekyll-verify` skills.
 
 1. Inspect state: `ao status`, `ao session ls --project mingchen-site`, open PRs,
    and open issues.
-2. Kill sessions that are done (merged/closed PR, completed task) with
+2. Run the article-intake scan (see Article-intake scan); it is read-only and
+   never uses AO tracker intake.
+3. Kill sessions that are done (merged/closed PR, completed task) with
    `ao session kill`.
-3. Spawn the next queued task **only when a slot is free** (see Pool). Never
+4. Spawn the next queued task **only when a slot is free** (see Pool). Never
    batch-spawn.
-4. Update issues (close done, comment progress, create follow-ups).
-5. Escalate only decisions (risk-high/very-high merges, missing labels,
+5. Update issues (close done, comment progress, create follow-ups).
+6. Escalate only decisions (risk-high/very-high merges, missing labels,
    conflicts requiring owner input).
-6. Stay terse. Report only state changes, blockers, and decisions needed.
+7. Stay terse. Report only state changes, blockers, and decisions needed.
+
+## Article-intake scan (every cron wake, #190)
+
+Detect `article`-labelled issues and spawn one article worker per eligible
+issue. Detection uses `gh` only — never AO tracker intake.
+
+Detection command (copy-pasteable; read-only dry run):
+
+```sh
+script/article-intake
+script/article-intake --format json
+```
+
+Manual equivalent when the script cannot run:
+
+```sh
+gh issue list --label article --state open \
+  --json number,title,url,labels,state
+gh pr list --state open --json number,title,body,headRefName
+ao session ls --project mingchen-site
+```
+
+Deduplication rules (an issue is eligible only if all hold):
+
+- Open and still carrying the `article` label.
+- No open PR covers it: the PR title/body uses a closing keyword
+  (`Closes`/`Fixes`/`Resolves #N`), or its branch is an `article-…<N>…`
+  branch. A bare `#N` mention without a closing keyword is not coverage.
+- Not claimed: the issue number appears in no live worker session's prompt
+  (check `ao session ls --project mingchen-site`; pass such numbers via
+  `script/article-intake --claimed <n>`). Claimed issues are never
+  double-spawned, and each eligible issue is spawned at most once per wake.
+
+Spawning:
+
+- Article workers are task workers under Pool: spawn at most one per wake
+  and only when a slot is free; queue the remaining eligible issues
+  (lowest number first) for later wakes. Never batch-spawn.
+- One worker, one issue, one PR. The per-issue spawn prompt must name the
+  issue number/title/URL, point at the article-writer procedure (#191),
+  require EN+VI posts in a single PR with `Closes #<n>`, and require issue
+  images to be embedded by direct attachment URL
+  (`https://github.com/user-attachments/assets/...`) — never downloaded,
+  converted, or committed under `assets/img` (explicit workaround: no
+  dedicated image host until the owner approves one).
 
 ## Pool
 
