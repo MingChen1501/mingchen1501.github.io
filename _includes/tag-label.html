@@ -1,0 +1,29 @@
+{%- comment -%}
+  Shared tag display label + URL slug from `_data/tag_labels.yml` (#129,
+  extracted in #175): the single copy of the label/slug resolution used by
+  `_layouts/tag.html`, `_includes/post-tags.html` and
+  `_includes/site-sidebar.html`, so adding a tag field means editing one
+  place.
+
+  Params: `key` (the canonical tag key from post front matter, e.g.
+  `doi-song`) and `lang` (`en`/`vi`; defaults to the page language chain
+  `page.lang`/`site.lang`/`en`, like every call site already resolved it).
+
+  Returns: `tag_label` + `tag_slug` assigns for the caller to use right after
+  the include. The lifestyle pillar reads "Life"/`life` on English pages and
+  "Đời sống"/`doi-song` on Vietnamese ones; technical tags keep their English
+  label and slug in both. Unknown keys degrade to the canonical key. This
+  include emits no markup itself.
+
+  Locals are `taglabel_*`-prefixed so nothing assigned here can collide with
+  the caller; `tag_label`/`tag_slug` are the return contract.
+{%- endcomment -%}
+{%- assign taglabel_lang = include.lang | default: page.lang | default: site.lang | default: 'en' -%}
+{%- assign taglabel_entry = site.data.tag_labels[include.key] -%}
+{%- if taglabel_lang == 'vi' -%}
+  {%- assign tag_label = taglabel_entry.vi | default: include.key -%}
+  {%- assign tag_slug = taglabel_entry.slug_vi | default: include.key -%}
+{%- else -%}
+  {%- assign tag_label = taglabel_entry.en | default: include.key -%}
+  {%- assign tag_slug = taglabel_entry.slug_en | default: include.key -%}
+{%- endif -%}

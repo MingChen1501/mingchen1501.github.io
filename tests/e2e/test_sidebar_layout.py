@@ -460,10 +460,14 @@ def test_sidebar_tag_summary_holds_no_links():
         )
     # The summary label reuses the chip look on a plain span (visuals
     # unchanged), and the tag-page link lives in the opened panel.
-    # Labels and slugs resolve per language from `_data/tag_labels.yml`
-    # (#129), so the row links the tag page of the current language.
+    # Labels and slugs resolve per language through the shared
+    # `_includes/tag-label.html` partial (#129, #175), so the row links the
+    # tag page of the current language.
     assert '<span class="tag-chip">' in html
-    assert "site.data.tag_labels[sidebar_tag_name]" in html
+    assert "include tag-label.html" in html
+    assert "key=sidebar_tag_name" in html
+    assert "lang=sidebar_lang" in html
+    assert "site.data.tag_labels" not in html
     assert "sidebar_tag_label | escape" in html
     assert re.search(
         r"sidebar_tag_base\s*\|\s*append: sidebar_tag_slug\s*\|\s*append: '/' \| relative_url", html

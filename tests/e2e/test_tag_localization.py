@@ -14,7 +14,11 @@ no browser) cover the emitted site.
 
 from __future__ import annotations
 
+import json
+import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -177,11 +181,44 @@ def test_post_taxonomy_keeps_the_canonical_doi_song_key():
 
 
 @pytest.mark.static
-def test_templates_resolve_labels_from_tag_labels_yml():
+def test_tag_label_partial_is_the_single_source_of_truth():
+    """The label/slug resolution lives once in `_includes/tag-label.html`
+    (#175); the three chip/pillar/sidebar call sites go through it instead
+    of re-resolving `site.data.tag_labels` themselves."""
+    partial = REPO_ROOT / "_includes" / "tag-label.html"
+    assert partial.is_file(), "_includes/tag-label.html is missing"
+    source = _read(partial)
+    assert "site.data.tag_labels" in source, (
+        "_includes/tag-label.html must read labels from _data/tag_labels.yml"
+    )
+    for field in ("en", "vi", "slug_en", "slug_vi"):
+        assert field in source, f"_includes/tag-label.html must resolve `{field}`"
+    # Unknown keys degrade to the canonical key in both languages.
+    assert source.count("default: include.key") >= 4, (
+        "_includes/tag-label.html must fall back to the canonical key for "
+        "label and slug in both languages"
+    )
     for path in (
         REPO_ROOT / "_includes" / "post-tags.html",
         REPO_ROOT / "_layouts" / "tag.html",
         REPO_ROOT / "_includes" / "site-sidebar.html",
+    ):
+        html = _read(path)
+        assert "include tag-label.html" in html, (
+            f"{path.relative_to(REPO_ROOT)} must use the shared tag-label partial"
+        )
+        assert "site.data.tag_labels" not in html, (
+            f"{path.relative_to(REPO_ROOT)} must not resolve tag labels itself; "
+            "use the shared tag-label partial"
+        )
+
+
+@pytest.mark.static
+def test_tag_index_pages_keep_their_direct_label_read():
+    """`tags.md`/`vi/tags.md` still read `_data/tag_labels.yml` directly:
+    they also need `description_*`, which the shared partial does not return
+    (out of scope for #175)."""
+    for path in (
         REPO_ROOT / "tags.md",
         REPO_ROOT / "vi" / "tags.md",
     ):
@@ -193,6 +230,104 @@ def test_templates_resolve_labels_from_tag_labels_yml():
 
 
 # --- build guards (need Ruby; no browser) -----------------------------------
+
+
+def _bundle():
+    """Return the `bundle` executable, or None when Ruby is unavailable."""
+    found = shutil.which("bundle")
+    if found:
+        return found
+    for candidate in sorted(Path.home().glob(".gem/ruby/*/bin/bundle")):
+        return str(candidate)
+    return None
+
+
+_RENDER_TAG_LABELS_RUBY = r"""
+require 'json'
+require 'liquid'
+require 'yaml'
+labels = YAML.load_file('_data/tag_labels.yml')
+src = File.read('_includes/tag-label.html', encoding: 'utf-8')
+tpl = Liquid::Template.parse(src + "\n{{ tag_label }}|{{ tag_slug }}")
+results = JSON.parse(STDIN.read).map do |c|
+  inc = { 'key' => c['key'] }
+  inc['lang'] = c['lang'] if c.key?('lang')
+  ctx = {
+    'site' => { 'data' => { 'tag_labels' => labels }, 'lang' => c.fetch('site_lang', 'en') },
+    'page' => c.key?('page_lang') ? { 'lang' => c['page_lang'] } : {},
+    'include' => inc,
+  }
+  tpl.render!(ctx).lines.last.strip.split('|', 2)
+end
+puts JSON.generate(results)
+"""
+
+
+def _render_tag_labels(cases):
+    """Render the real `_includes/tag-label.html` through Liquid (no full
+    build) and return one `(label, slug)` pair per case."""
+    bundle = _bundle()
+    if bundle is None:
+        pytest.skip(
+            "`bundle` not found: the guards that need the real site need Ruby + "
+            "`bundle install` (CI installs both in .github/workflows/e2e.yml)"
+        )
+    env = dict(os.environ)
+    # `bundle` may have been found in a user gem directory that is not on PATH
+    # (common for non-login shells); `bundle exec` needs it to resolve `ruby`.
+    env["PATH"] = os.pathsep.join(
+        [str(Path(bundle).parent), env.get("PATH", "")]
+    ).rstrip(os.pathsep)
+    proc = subprocess.run(
+        [bundle, "exec", "ruby", "-e", _RENDER_TAG_LABELS_RUBY],
+        input=json.dumps(cases),
+        cwd=str(REPO_ROOT),
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert proc.returncode == 0, (
+        "rendering _includes/tag-label.html through Liquid failed\n"
+        f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
+    )
+    try:
+        return [tuple(pair) for pair in json.loads(proc.stdout.strip().splitlines()[-1])]
+    except (ValueError, IndexError, TypeError) as exc:
+        raise AssertionError(
+            "could not parse the Liquid render output as JSON\n"
+            f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
+        ) from exc
+
+
+def test_tag_label_partial_renders_labels_and_falls_back_to_the_key():
+    """The shared partial resolves every pillar in both languages and degrades
+    unknown keys to the canonical key — the fallback the chips, tag pages and
+    sidebar relied on before #175."""
+    cases = [
+        {"key": "doi-song", "lang": "en"},
+        {"key": "doi-song", "lang": "vi"},
+        {"key": "backend-production", "lang": "en"},
+        {"key": "backend-production", "lang": "vi"},
+        {"key": "ai-agent", "lang": "vi"},
+        {"key": "linux-tooling", "lang": "en"},
+        {"key": "mystery-tag", "lang": "en"},
+        {"key": "mystery-tag", "lang": "vi"},
+        {"key": "doi-song", "page_lang": "vi"},
+        {"key": "doi-song"},
+    ]
+    assert _render_tag_labels(cases) == [
+        ("Life", "life"),
+        ("Đời sống", "doi-song"),
+        ("Backend Production", "backend-production"),
+        ("Backend Production", "backend-production"),
+        ("AI Agent", "ai-agent"),
+        ("Linux Tooling", "linux-tooling"),
+        ("mystery-tag", "mystery-tag"),
+        ("mystery-tag", "mystery-tag"),
+        ("Đời sống", "doi-song"),
+        ("Life", "life"),
+    ]
 
 
 def test_english_life_page_renders_and_old_url_redirects(built_site):
