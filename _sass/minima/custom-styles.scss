@@ -403,3 +403,40 @@ textarea:focus-visible {
   outline: 3px solid $brand-color-dark;
   outline-offset: 3px;
 }
+
+// Language switcher (#93): sits after the nav items on desktop and stays
+// visible next to the hamburger on mobile (it lives outside `.nav-items`,
+// which the mobile menu hides). Text-only and short ("English" /
+// "Tiếng Việt"); it lives in the header, never in the sidebar, so it cannot
+// break the sidebar's 5-row budget (#65) or the sticky rules.
+.lang-switcher {
+  margin-left: $spacing-unit * 0.5;
+  padding: 2px 8px;
+  border: 1px solid $border-color-01;
+  border-radius: 4px;
+  color: $text-color;
+  font-size: $small-font-size;
+  white-space: nowrap;
+
+  &:visited {
+    color: $text-color;
+  }
+
+  &:hover {
+    text-decoration: none;
+    border-color: $brand-color;
+  }
+}
+
+// Translation fallback notice (#93, phase 1): shown at the top of English
+// pages whose translation is still pending (`fallback_vi: true`). Short,
+// neutral, impossible to mistake for content.
+.translation-notice {
+  margin: 0 0 $spacing-unit;
+  padding: $spacing-unit * 0.5 $spacing-unit;
+  border: 1px solid $border-color-01;
+  border-left: 4px solid $brand-color;
+  border-radius: 4px;
+  background-color: $background-color;
+  font-size: $small-font-size;
+}

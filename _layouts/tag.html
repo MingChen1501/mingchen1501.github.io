@@ -2,8 +2,21 @@
 layout: base
 ---
 {%- assign tag_name = page.tag -%}
-{%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-{%- assign tag_posts = site.tags[tag_name] | sort: "date" | reverse -%}
+{%- comment -%}
+  Language-aware tag page (#93): English pillars list the English-only
+  `site.tags`; Vietnamese pillars (`/vi/tags/<tag>/`) filter `site.vi_posts`.
+  `tag_base` keeps the chips and the back link inside the page's language.
+{%- endcomment -%}
+{%- assign tag_lang = page.lang | default: site.lang | default: 'en' -%}
+{%- if tag_lang == 'vi' -%}
+  {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+  {%- assign tag_posts = site.vi_posts | where_exp: "tag_post", "tag_post.tags contains tag_name" | sort: "date" | reverse -%}
+  {%- assign tag_base = '/vi/tags/' -%}
+{%- else -%}
+  {%- assign date_format = "%b %-d, %Y" -%}
+  {%- assign tag_posts = site.tags[tag_name] | sort: "date" | reverse -%}
+  {%- assign tag_base = '/tags/' -%}
+{%- endif -%}
 
 {%- comment -%}
   Same two-column shell as the home list (#58): `.site-main` keeps this tag's
@@ -18,8 +31,8 @@ layout: base
       {{ content }}
 
       <p class="tag-page__intro">
-        {{ tag_posts | size }} bài viết với tag
-        <a class="tag-chip" rel="tag" href="{{ '/tags/' | append: tag_name | append: '/' | relative_url }}">{{ tag_name | escape }}</a>
+        {% if tag_lang == 'vi' %}{{ tag_posts | size }} bài viết với tag{% else %}{{ tag_posts | size }} posts tagged with{% endif %}
+        <a class="tag-chip" rel="tag" href="{{ tag_base | append: tag_name | append: '/' | relative_url }}">{{ tag_name | escape }}</a>
       </p>
 
       {%- if tag_posts.size > 0 -%}
@@ -41,11 +54,11 @@ layout: base
       {%- endif -%}
 
       <p class="tag-page__back">
-        <a href="{{ '/tags/' | relative_url }}">&larr; Tất cả chủ đề</a>
+        <a href="{{ tag_base | relative_url }}">&larr; {% if tag_lang == 'vi' %}Tất cả chủ đề{% else %}All topics{% endif %}</a>
       </p>
     </div>
 
-    <aside class="site-sidebar" aria-label="Bài nổi bật và chủ đề">
+    <aside class="site-sidebar" aria-label="{% if tag_lang == 'vi' %}Bài nổi bật và chủ đề{% else %}Featured posts and topics{% endif %}">
       {%- include site-sidebar.html -%}
     </aside>
   </div>

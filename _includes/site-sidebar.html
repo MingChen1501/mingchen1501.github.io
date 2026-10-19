@@ -1,22 +1,31 @@
 {%- comment -%}
   Sidebar shared by the list pages (#58, reworked in #63): the home list
-  (`/`, `/page2/`…) in `_layouts/home.html` and the tag pages (`/tags/<tag>/`)
-  in `_layouts/tag.html`. Both layouts render this same include, so the two
-  blocks exist once:
+  (`/`, `/page2/`…) in `_layouts/home.html`, the Vietnamese home (`/vi/`) and
+  the tag pages (`/tags/<tag>/`, `/vi/tags/<tag>/`) in `_layouts/tag.html`.
+  All layouts render this same include, so the two blocks exist once:
 
   1. the highlighted posts: the slugs listed in `_data/highlights.yml`
-     (#64), resolved against `site.posts` in file order, at most five, each
-     with its thumbnail (when it has one), its title and its publication date,
+     (#64, reworked in #93 into per-language `en:` / `vi:` lists), resolved
+     against the page's language post source in file order, at most five,
+     each with its thumbnail (when it has one), its title and its publication
+     date,
   2. every tag as a collapsed row (`<details>` without `open`): the tag chip
      and how many posts it has, and — once the reader opens it — at most three
      post links plus a link to that tag's page.
 
+  Language (#93): English pages read `site.posts` + `site.tags` and render
+  English labels; Vietnamese pages read `site.vi_posts` (tags derived from
+  the docs) and render Vietnamese labels. Chips still come from
+  `_includes/post-tags.html`, which links inside the page's language, so the
+  sidebar can never leak a cross-language URL.
+
   `site.posts` — not `paginator.posts` — on purpose: the highlights are the
   same on every page, so the sidebar does not change while paging.
 
-  Nothing in the file resolves (a fresh site, an empty or missing file, or
-  every listed slug unknown/unpublished): the block falls back to the five
-  newest posts and its heading says so, so the sidebar is never an empty box.
+  Nothing in the file resolves (an empty or missing list, or every listed slug
+  unknown/unpublished): the block falls back to the five newest posts of the
+  page's language and its heading says so, so the sidebar is never an empty
+  box.
 
   Height budget (#63): the sidebar has to fit beside the list without a
   scrollbar of its own, so every row here is deliberately short — a capped
@@ -37,32 +46,54 @@
   `sidebar_*`-prefixed so nothing this include assigns can collide with the
   caller's variables.
 {%- endcomment -%}
+{%- assign sidebar_lang = page.lang | default: site.lang | default: 'en' -%}
+{%- if sidebar_lang == 'vi' -%}
+  {%- assign sidebar_source = site.vi_posts -%}
+  {%- assign sidebar_dir = "_vi_posts/" -%}
+  {%- assign sidebar_tag_base = "/vi/tags/" -%}
+  {%- assign sidebar_count_unit = "bài" -%}
+  {%- assign sidebar_topics_heading = "Chủ đề" -%}
+  {%- assign sidebar_all_link = "Tất cả &rarr;" -%}
+  {%- assign sidebar_more_link = "Xem tất cả" -%}
+  {%- assign sidebar_highlights_hit = "Bài nổi bật" -%}
+  {%- assign sidebar_highlights_miss = "Bài mới nhất" -%}
+{%- else -%}
+  {%- assign sidebar_source = site.posts -%}
+  {%- assign sidebar_dir = "_posts/" -%}
+  {%- assign sidebar_tag_base = "/tags/" -%}
+  {%- assign sidebar_count_unit = "posts" -%}
+  {%- assign sidebar_topics_heading = "Topics" -%}
+  {%- assign sidebar_all_link = "All &rarr;" -%}
+  {%- assign sidebar_more_link = "View all" -%}
+  {%- assign sidebar_highlights_hit = "Featured" -%}
+  {%- assign sidebar_highlights_miss = "Latest posts" -%}
+{%- endif -%}
 {%- assign sidebar_date_format = "%d-%m-%Y" -%}
 {%- comment -%}
   Highlight selection lives in `_data/highlights.yml` (single source of truth,
-  #64): an ordered list of post file names, with or without the `YYYY-MM-DD-`
-  prefix and always without `.md`. Each entry resolves against `site.posts`
-  with `where` — by file name first, then by bare slug — so unknown or
-  unpublished slugs are skipped silently (unpublished posts never enter
-  `site.posts` at all) and the block keeps the file's order. An empty or
-  missing file, or a file whose entries all resolve to nothing, falls back to
-  the five newest posts.
+  #64): per language (#93) an ordered list of post file names, with or without
+  the `YYYY-MM-DD-` prefix and always without `.md`. Each entry resolves
+  against the page's language post source with `where` — by file name first,
+  then by bare slug — so unknown or unpublished slugs are skipped silently
+  (unpublished posts never enter `site.posts` at all) and the block keeps the
+  file's order. An empty or missing list, or a list whose entries all resolve
+  to nothing, falls back to the five newest posts of that language.
 
-  The slug pass and the render loop below never nest a Liquid loop over
-  `site.posts`: `where`+`first` does the lookup, so cost stays one small pass
+  The slug pass and the render loop below never nest a Liquid loop over the
+  post source: `where`+`first` does the lookup, so cost stays one small pass
   per entry however many posts the site grows to.
 {%- endcomment -%}
-{%- assign sidebar_highlight_slugs = site.data.highlights.highlights -%}
+{%- assign sidebar_highlight_slugs = site.data.highlights[sidebar_lang] | default: empty -%}
 {%- comment -%}
   One cheap pass over the (handful of) slugs decides the heading before any
   row renders; `break` on the first hit.
 {%- endcomment -%}
 {%- assign sidebar_has_highlights = false -%}
 {%- for sidebar_slug in sidebar_highlight_slugs -%}
-  {%- assign sidebar_candidate = sidebar_slug | prepend: "_posts/" | append: ".md" -%}
-  {%- assign sidebar_post = site.posts | where: "path", sidebar_candidate | first -%}
+  {%- assign sidebar_candidate = sidebar_slug | prepend: sidebar_dir | append: ".md" -%}
+  {%- assign sidebar_post = sidebar_source | where: "path", sidebar_candidate | first -%}
   {%- unless sidebar_post -%}
-    {%- assign sidebar_post = site.posts | where: "slug", sidebar_slug | first -%}
+    {%- assign sidebar_post = sidebar_source | where: "slug", sidebar_slug | first -%}
   {%- endunless -%}
   {%- if sidebar_post -%}
     {%- assign sidebar_has_highlights = true -%}
@@ -72,19 +103,20 @@
 
 {%- if sidebar_has_highlights -%}
   {%- assign sidebar_keys = sidebar_highlight_slugs -%}
-  {%- assign sidebar_highlights_heading = "Bài nổi bật" -%}
+  {%- assign sidebar_highlights_heading = sidebar_highlights_hit -%}
 {%- else -%}
   {%- comment -%}
-    Fallback: the five newest posts, keyed by file name so they resolve
-    through the same loop below.
+    Fallback: the five newest posts of the page's language, keyed by file
+    name so they resolve through the same loop below.
   {%- endcomment -%}
   {%- assign sidebar_keys = "" -%}
-  {%- for sidebar_post in site.posts limit: 5 -%}
+  {%- assign sidebar_newest = sidebar_source | sort: "date" | reverse -%}
+  {%- for sidebar_post in sidebar_newest limit: 5 -%}
     {%- assign sidebar_key = sidebar_post.path | split: "/" | last | remove: ".md" -%}
     {%- assign sidebar_keys = sidebar_keys | append: sidebar_key | append: " " -%}
   {%- endfor -%}
   {%- assign sidebar_keys = sidebar_keys | strip | split: " " -%}
-  {%- assign sidebar_highlights_heading = "Bài mới nhất" -%}
+  {%- assign sidebar_highlights_heading = sidebar_highlights_miss -%}
 {%- endif -%}
 
 <section class="sidebar__section">
@@ -92,10 +124,10 @@
   <ul class="sidebar-posts">
     {%- assign sidebar_rendered = 0 -%}
     {%- for sidebar_slug in sidebar_keys -%}
-      {%- assign sidebar_candidate = sidebar_slug | prepend: "_posts/" | append: ".md" -%}
-      {%- assign sidebar_post = site.posts | where: "path", sidebar_candidate | first -%}
+      {%- assign sidebar_candidate = sidebar_slug | prepend: sidebar_dir | append: ".md" -%}
+      {%- assign sidebar_post = sidebar_source | where: "path", sidebar_candidate | first -%}
       {%- unless sidebar_post -%}
-        {%- assign sidebar_post = site.posts | where: "slug", sidebar_slug | first -%}
+        {%- assign sidebar_post = sidebar_source | where: "slug", sidebar_slug | first -%}
       {%- endunless -%}
       {%- if sidebar_post and sidebar_rendered < 5 -%}
             {%- assign sidebar_rendered = sidebar_rendered | plus: 1 -%}
@@ -136,30 +168,44 @@
 </section>
 
 <section class="sidebar__section">
-  <h2 class="sidebar__heading">Chủ đề<a class="sidebar__heading-link" href="{{ '/tags/' | relative_url }}">Tất cả &rarr;</a></h2>
+  <h2 class="sidebar__heading">{{ sidebar_topics_heading }}<a class="sidebar__heading-link" href="{{ sidebar_tag_base | relative_url }}">{{ sidebar_all_link }}</a></h2>
   <ul class="sidebar-tags">
     {%- comment -%}
-      Alphabetical, so the column reads in a stable order (the `/tags/` index
-      lists the 4 pillars in their own order).
+      Alphabetical, so the column reads in a stable order (the `/tags/`
+      index lists the 4 pillars in their own order). English names come from
+      `site.tags` keys; Vietnamese names are derived from the `site.vi_posts`
+      docs (collections never populate `site.tags`).
     {%- endcomment -%}
-    {%- assign sidebar_tags = site.tags | sort -%}
-    {%- for sidebar_tag in sidebar_tags -%}
-      {%- assign sidebar_tag_name = sidebar_tag[0] -%}
-      {%- assign sidebar_tag_posts = sidebar_tag[1] | sort: "date" | reverse -%}
+    {%- if sidebar_lang == 'vi' -%}
+      {%- assign sidebar_tag_names = site.vi_posts | map: "tags" | join: "," | split: "," | uniq | sort -%}
+    {%- else -%}
+      {%- assign sidebar_tag_pairs = site.tags | sort -%}
+      {%- assign sidebar_tag_names_str = "" -%}
+      {%- for sidebar_pair in sidebar_tag_pairs -%}
+        {%- assign sidebar_tag_names_str = sidebar_tag_names_str | append: sidebar_pair[0] | append: "," -%}
+      {%- endfor -%}
+      {%- assign sidebar_tag_names = sidebar_tag_names_str | split: "," -%}
+    {%- endif -%}
+    {%- for sidebar_tag_name in sidebar_tag_names -%}
+      {%- if sidebar_lang == 'vi' -%}
+        {%- assign sidebar_tag_posts = sidebar_source | where_exp: "sidebar_tag_post", "sidebar_tag_post.tags contains sidebar_tag_name" | sort: "date" | reverse -%}
+      {%- else -%}
+        {%- assign sidebar_tag_posts = site.tags[sidebar_tag_name] | sort: "date" | reverse -%}
+      {%- endif -%}
       {%- assign sidebar_chip_tags = sidebar_tag_name | split: "|" -%}
       <li class="sidebar-tag">
         <details class="sidebar-tag__group">
           <summary class="sidebar-tag__summary">
             {%- include post-tags.html tags=sidebar_chip_tags -%}
-            <span class="tag-index__count">{{ sidebar_tag_posts | size }} bài</span>
+            <span class="tag-index__count">{{ sidebar_tag_posts | size }} {{ sidebar_count_unit }}</span>
           </summary>
           <ul class="sidebar-tag__posts">
             {%- for sidebar_tag_post in sidebar_tag_posts limit: 3 -%}
             <li><a href="{{ sidebar_tag_post.url | relative_url }}">{{ sidebar_tag_post.title | escape }}</a></li>
             {%- endfor -%}
           </ul>
-          <a class="sidebar-tag__more" href="{{ '/tags/' | append: sidebar_tag_name | append: '/' | relative_url }}">
-            Xem tất cả ({{ sidebar_tag_posts | size }})
+          <a class="sidebar-tag__more" href="{{ sidebar_tag_base | append: sidebar_tag_name | append: '/' | relative_url }}">
+            {{ sidebar_more_link }} ({{ sidebar_tag_posts | size }})
           </a>
         </details>
       </li>

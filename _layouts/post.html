@@ -9,7 +9,16 @@ layout: base
       <header class="post-header">
         <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
         <div class="post-meta">
-          {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+          {%- comment -%}
+            Language-aware date (#93): English pages use a compact English
+            format; Vietnamese pages keep `site.minima.date_format`.
+          {%- endcomment -%}
+          {%- assign post_lang = page.lang | default: site.lang | default: 'en' -%}
+          {%- if post_lang == 'vi' -%}
+            {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+          {%- else -%}
+            {%- assign date_format = "%b %-d, %Y" -%}
+          {%- endif -%}
           {% assign pdate = page.date | date_to_xmlschema %}
           {%- if page.modified_date %}<span class="meta-label">Published:</span>{% endif %}
           <time class="dt-published" datetime="{{ pdate }}" itemprop="datePublished">
@@ -36,6 +45,9 @@ layout: base
       </header>
 
       <div class="post-content e-content" itemprop="articleBody">
+        {%- if page.fallback_vi -%}
+          {%- include vi-fallback-notice.html -%}
+        {%- endif -%}
         {{ content }}
       </div>
 
@@ -43,21 +55,28 @@ layout: base
 
     {%- comment -%}
       Secondary column (#45): the post's tags plus the other posts sharing
-      the first tag. Rendered only when the post declares tags.
+      the first tag. Rendered only when the post declares tags. Related posts
+      stay inside the page's language (#93): English from `site.tags`
+      (English-only since the Vietnamese posts moved to `site.vi_posts`),
+      Vietnamese filtered out of `site.vi_posts`.
     {%- endcomment -%}
     {%- assign post_tags = page.tags | default: empty -%}
     {%- if post_tags.size > 0 -%}
-    <aside class="post-sidebar" aria-label="Chủ đề của bài viết">
+    <aside class="post-sidebar" aria-label="{% if post_lang == 'vi' %}Chủ đề của bài viết{% else %}Post topics{% endif %}">
       <section class="post-sidebar__section">
         <h2 class="post-sidebar__heading">Tags</h2>
         {%- include post-tags.html tags=post_tags -%}
       </section>
 
       {%- assign primary_tag = post_tags.first -%}
-      {%- assign tag_posts = site.tags[primary_tag] | sort: "date" | reverse -%}
+      {%- if post_lang == 'vi' -%}
+        {%- assign tag_posts = site.vi_posts | where_exp: "rel_post", "rel_post.tags contains primary_tag" | sort: "date" | reverse -%}
+      {%- else -%}
+        {%- assign tag_posts = site.tags[primary_tag] | sort: "date" | reverse -%}
+      {%- endif -%}
       {%- if tag_posts.size > 1 -%}
       <section class="post-sidebar__section">
-        <h2 class="post-sidebar__heading">Bài viết cùng chủ đề</h2>
+        <h2 class="post-sidebar__heading">{% if post_lang == 'vi' %}Bài viết cùng chủ đề{% else %}Related posts{% endif %}</h2>
         <ul class="related-posts">
           {%- assign shown = 0 -%}
           {%- for other in tag_posts -%}
@@ -96,7 +115,7 @@ layout: base
     {%- if page.comments == false -%}
       {%- if comments_provider != 'none' -%}
       <div class="comments-disabled-message" role="status">
-        Comments have been disabled for this post.
+        {% if post_lang == 'vi' %}Đã tắt bình luận cho bài này.{% else %}Comments have been disabled for this post.{% endif %}
       </div>
       {%- endif -%}
     {%- else -%}
