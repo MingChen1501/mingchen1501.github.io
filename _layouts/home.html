@@ -76,13 +76,21 @@ layout: base
           {%- endfor -%}
         </ul>
 
+        {%- comment -%}
+          Pagination controls (#89): semantic `<nav>` landmark with
+          `rel="prev"` / `rel="next"` so readers get visible "Newer posts" /
+          "Older posts" links and crawlers get the prev/next signal. The
+          matching `<link rel="next|prev">` head tags come from
+          jekyll-seo-tag (verified in the built `/` and `/page2/`), so no
+          head change is needed here.
+        {%- endcomment -%}
         {% if paginator and home_lang != 'vi' %}
-          <div class="pager">
+          <nav class="pager" aria-label="Pagination">
             <ul class="pagination">
             {%- if paginator.previous_page %}
               <li>
-                <a href="{{ paginator.previous_page_path | relative_url }}" class="previous-page" title="Go to Page {{ paginator.previous_page }}">
-                  {{ paginator.previous_page }}
+                <a href="{{ paginator.previous_page_path | relative_url }}" class="previous-page" rel="prev" title="Go to Page {{ paginator.previous_page }}">
+                  &larr; Newer posts
                 </a>
               </li>
             {%- else %}
@@ -91,15 +99,15 @@ layout: base
               <li><div class="current-page">{{ paginator.page }}</div></li>
             {%- if paginator.next_page %}
               <li>
-                <a href="{{ paginator.next_page_path | relative_url }}" class="next-page" title="Go to Page {{ paginator.next_page }}">
-                  {{ paginator.next_page }}
+                <a href="{{ paginator.next_page_path | relative_url }}" class="next-page" rel="next" title="Go to Page {{ paginator.next_page }}">
+                  Older posts &rarr;
                 </a>
               </li>
             {%- else %}
               <li><div class="pager-edge">•</div></li>
             {%- endif %}
             </ul>
-          </div>
+          </nav>
         {%- endif %}
       {%- endif -%}
     </div>
