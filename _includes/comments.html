@@ -5,10 +5,11 @@
 {%- if comments_provider == '' -%}
   {%- assign comments_provider = 'none' -%}
 {%- endif -%}
+{%- assign comments_lang = page.lang | default: site.lang | default: 'en' -%}
 
 {%- if comments_provider == 'giscus' -%}
   <section class="comments" id="comments" aria-labelledby="comments-title">
-    <h2 class="comments__title" id="comments-title">Comments</h2>
+    <h2 class="comments__title" id="comments-title">{% if comments_lang == 'vi' %}Bình luận{% else %}Comments{% endif %}</h2>
     {%- if site.giscus.repo != blank and site.giscus.repo_id != blank and site.giscus.category_id != blank -%}
       <script src="https://giscus.app/client.js"
         data-repo="{{ site.giscus.repo }}"
@@ -33,7 +34,7 @@
   </section>
 {%- elsif comments_provider == 'disqus' and site.disqus.shortname -%}
   <section class="comments" id="comments" aria-labelledby="comments-title">
-    <h2 class="comments__title" id="comments-title">Comments</h2>
+    <h2 class="comments__title" id="comments-title">{% if comments_lang == 'vi' %}Bình luận{% else %}Comments{% endif %}</h2>
     <div id="disqus_thread"></div>
     <script>
       var disqus_config = function () {

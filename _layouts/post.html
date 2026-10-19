@@ -106,7 +106,7 @@ layout: base
       {%- endif -%}
       {%- if post_tags.size > 0 -%}
       <section class="post-sidebar__section">
-        <h2 class="post-sidebar__heading">Tags</h2>
+        <h2 class="post-sidebar__heading">{% if post_lang == 'vi' %}Chủ đề{% else %}Tags{% endif %}</h2>
         {%- include post-tags.html tags=post_tags -%}
       </section>
 

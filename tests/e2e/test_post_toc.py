@@ -91,7 +91,10 @@ def test_sidebar_renders_on_toc_alone_with_toc_first():
     html = _read(POST_LAYOUT)
     assert "post_tags.size > 0 or show_toc" in html
     toc_section = html.index("post-sidebar__section--toc")
-    tags_heading = html.index('class="post-sidebar__heading">Tags')
+    # The tags heading is the first `.post-sidebar__heading` below the ToC
+    # section (localized in #142: `Chủ đề` on VI pages, `Tags` on EN ones,
+    # so the template no longer carries a literal `>Tags` heading).
+    tags_heading = html.index("post-sidebar__heading", toc_section)
     related = html.index("related-posts")
     assert toc_section < tags_heading < related
 
