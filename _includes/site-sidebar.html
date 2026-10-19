@@ -67,7 +67,6 @@
   {%- endif -%}
   {%- assign sidebar_dir = "_vi_posts/" -%}
   {%- assign sidebar_tag_base = "/vi/tags/" -%}
-  {%- assign sidebar_count_unit = "bài" -%}
   {%- assign sidebar_topics_heading = "Chủ đề" -%}
   {%- assign sidebar_all_link = "Tất cả &rarr;" -%}
   {%- assign sidebar_more_link = "Xem tất cả" -%}
@@ -77,7 +76,6 @@
   {%- assign sidebar_source = site.posts -%}
   {%- assign sidebar_dir = "_posts/" -%}
   {%- assign sidebar_tag_base = "/tags/" -%}
-  {%- assign sidebar_count_unit = "posts" -%}
   {%- assign sidebar_topics_heading = "Topics" -%}
   {%- assign sidebar_all_link = "All &rarr;" -%}
   {%- assign sidebar_more_link = "View all" -%}
@@ -227,7 +225,12 @@
         <details class="sidebar-tag__group">
           <summary class="sidebar-tag__summary">
             <span class="tag-chip">{{ sidebar_tag_label | escape }}</span>
-            <span class="tag-index__count">{{ sidebar_tag_posts | size }} {{ sidebar_count_unit }}</span>
+            {%- comment -%}
+              Localized singular/plural (#149): English inflects ("1 post" /
+              "N posts"); Vietnamese nouns do not inflect, so "N bài" is
+              already correct for N = 1.
+            {%- endcomment -%}
+            <span class="tag-index__count">{{ sidebar_tag_posts | size }} {% if sidebar_lang == 'vi' %}bài{% else %}post{% if sidebar_tag_posts.size != 1 %}s{% endif %}{% endif %}</span>
           </summary>
           <ul class="sidebar-tag__posts">
             {%- for sidebar_tag_post in sidebar_tag_posts limit: 3 -%}

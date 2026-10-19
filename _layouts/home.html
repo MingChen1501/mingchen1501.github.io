@@ -56,6 +56,23 @@ layout: base
 
 
       {%- if posts.size > 0 -%}
+        {%- comment -%}
+          Per-language total (#149): the English home counts the English-only
+          `site.posts` while the Vietnamese home counts `site.vi_posts`, so
+          the two archives can legitimately differ (translations lag the
+          originals). Both homes paginate 5 per page (#155), and each home
+          states its own total, so the EN/VI sizes are never silently
+          compared. English inflects ("1 post" / "N posts"); Vietnamese
+          nouns do not ("1 bài" / "N bài" share one form).
+        {%- endcomment -%}
+        {%- if home_lang == 'vi' -%}
+          {%- assign home_total = vi_total -%}
+        {%- elsif paginator -%}
+          {%- assign home_total = paginator.total_posts -%}
+        {%- else -%}
+          {%- assign home_total = site.posts | size -%}
+        {%- endif -%}
+        <p class="home-count">{% if home_lang == 'vi' %}Hiển thị {{ posts.size }} trong {{ home_total }} bài{% else %}Showing {{ posts.size }} of {{ home_total }} post{% if home_total != 1 %}s{% endif %}{% endif %}</p>
         {%- if page.list_title -%}
           <h2 class="post-list-heading">{{ page.list_title }}</h2>
         {%- endif -%}

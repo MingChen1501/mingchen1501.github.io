@@ -54,7 +54,12 @@ layout: base
       {{ content }}
 
       <p class="tag-page__intro">
-        {% if tag_lang == 'vi' %}{{ tag_posts | size }} bài viết với tag{% else %}{{ tag_posts | size }} posts tagged with{% endif %}
+        {%- comment -%}
+          Localized singular/plural (#149): English inflects ("1 post" /
+          "N posts"); Vietnamese nouns do not inflect, so "N bài viết"
+          already reads correctly for N = 1.
+        {%- endcomment -%}
+        {% if tag_lang == 'vi' %}{{ tag_posts | size }} bài viết với tag{% else %}{{ tag_posts | size }} post{% if tag_posts.size != 1 %}s{% endif %} tagged with{% endif %}
         <a class="tag-chip" rel="tag" href="{{ tag_base | append: tag_slug | append: '/' | relative_url }}">{{ tag_label | escape }}</a>
       </p>
 

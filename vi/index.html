@@ -1,8 +1,10 @@
 ---
 #
-# Trang chủ tiếng Việt: liệt kê mọi bài tiếng Việt, không phân trang
-# (jekyll-paginate chỉ paginate được một luồng — luồng tiếng Anh ở `/`).
-# Xem `_layouts/home.html`.
+# Vietnamese home: the newest Vietnamese posts, 5 per page (#155).
+# jekyll-paginate only paginates one stream (the English `/`), so later
+# pages are explicit `vi/pageN/index.html` files with `vi_page_num`.
+# Totals are language-specific (#149): this home counts `site.vi_posts`
+# while `/` counts `site.posts` — each home states its own total.
 #
 layout: home
 lang: vi

@@ -22,6 +22,10 @@ viết cùng tag.
 <ul class="tag-index">
 {% for pillar in pillars %}
 {% assign pillar_posts = vi_tags_source | where_exp: "post", "post.tags contains pillar" | sort: "date" | reverse %}
+{%- comment -%}
+  No singular/plural branch needed (#149): Vietnamese nouns do not
+  inflect, so "1 bài" and "N bài" below are both correct.
+{%- endcomment -%}
 {%- assign pillar_entry = site.data.tag_labels[pillar] -%}
 {%- assign pillar_label = pillar_entry.vi | default: pillar -%}
 {%- assign pillar_slug = pillar_entry.slug_vi | default: pillar -%}
