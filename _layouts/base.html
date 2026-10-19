@@ -5,7 +5,9 @@
 
   <body class="layout-{{ page.layout | default: 'page' }}">
 
-    {#87: skip link — first focusable element, hidden until focused.#}
+    {%- comment -%}
+      #87: skip link — first focusable element, hidden until focused.
+    {%- endcomment -%}
     <a class="skip-link" href="#main-content">Skip to main content</a>
 
     {%- include header.html -%}

@@ -21,7 +21,11 @@ jobs:
       - name: Check image sizes
         run: script/check-images
       - name: Check image alt texts (#87)
-        run: ! grep -rq '!\[\]' _posts/
+        run: |
+          if grep -rn '!\[\]' _posts/; then
+            echo "::error::Empty image alt text found in _posts!"
+            exit 1
+          fi
       - name: Set Up Ruby 3.3
         uses: ruby/setup-ruby@v1
         with:
