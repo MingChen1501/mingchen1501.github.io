@@ -20,6 +20,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Check image sizes
         run: script/check-images
+      - name: Check image alt texts (#87)
+        run: ! grep -rq '!\[\]' _posts/
       - name: Set Up Ruby 3.3
         uses: ruby/setup-ruby@v1
         with:

@@ -27,9 +27,9 @@ layout: base
         {%- for post in tag_posts -%}
         <li>
           <span class="post-meta">{{ post.date | date: date_format }}</span>
-          <h3>
+          <h2>
             <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
-          </h3>
+          </h2>
           {%- if post.description -%}
           <p class="post-description">{{ post.description | escape }}</p>
           {%- elsif site.minima.show_excerpts -%}

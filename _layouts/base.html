@@ -5,9 +5,12 @@
 
   <body class="layout-{{ page.layout | default: 'page' }}">
 
+    {#87: skip link — first focusable element, hidden until focused.#}
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
     {%- include header.html -%}
 
-    <main class="page-content" aria-label="Content">
+    <main class="page-content" aria-label="Content" id="main-content">
       <div class="wrapper">
         {{ content }}
       </div>
