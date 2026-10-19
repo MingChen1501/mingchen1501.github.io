@@ -28,35 +28,21 @@
   {%- endif -%}
   {%- assign switch_url = switch_home -%}
   {%- comment -%}
-    First match wins (#104): jekyll-paginate appends its page-2..N
-    duplicates of the paginated index (carrying the same `ref: home`)
-    AFTER the source pages, so taking the last match would point the
-    switcher of `/vi/` at `/page2/` instead of `/`. Paginated URLs are
-    additionally skipped outright, so no switcher ever targets `/pageN/`.
+    Counterpart lookup (#104) is shared with the hreflang alternates via
+    `ref-urls.html`: first match wins, so the jekyll-paginate page-2..N
+    duplicates of the index (carrying the same `ref: home`) never overwrite
+    the canonical homes, and hand-paginated `vi/pageN/` URLs are skipped
+    outright — no switcher ever targets `/pageN/`.
   {%- endcomment -%}
-  {%- assign switch_found = false -%}
-  {%- for switch_doc in site.posts -%}
-    {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
-    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other and switch_found == false -%}
-      {%- assign switch_url = switch_doc.url -%}
-      {%- assign switch_found = true -%}
+  {%- include ref-urls.html ref=switch_ref -%}
+  {%- if switch_other == 'vi' -%}
+    {%- if ref_vi != '' -%}
+      {%- assign switch_url = ref_vi -%}
     {%- endif -%}
-  {%- endfor -%}
-  {%- for switch_doc in site.vi_posts -%}
-    {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
-    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other and switch_found == false -%}
-      {%- assign switch_url = switch_doc.url -%}
-      {%- assign switch_found = true -%}
+  {%- else -%}
+    {%- if ref_en != '' -%}
+      {%- assign switch_url = ref_en -%}
     {%- endif -%}
-  {%- endfor -%}
-  {%- for switch_doc in site.pages -%}
-    {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
-    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other and switch_found == false -%}
-      {%- unless switch_doc.url contains '/page' -%}
-        {%- assign switch_url = switch_doc.url -%}
-        {%- assign switch_found = true -%}
-      {%- endunless -%}
-    {%- endif -%}
-  {%- endfor -%}
+  {%- endif -%}
   <a class="lang-switcher" hreflang="{{ switch_other }}" href="{{ switch_url | relative_url }}" aria-label="{{ switch_name }}" title="{{ switch_name }}"><svg class="lang-switcher__icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 8h13M8 1.5c-5 5-5 8 0 13M8 1.5c5 5 5 8 0 13" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span class="lang-switcher__code" lang="{{ switch_other }}">{{ switch_code }}</span></a>
 {%- endif -%}

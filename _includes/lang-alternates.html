@@ -1,8 +1,9 @@
 {%- comment -%}
   hreflang alternates (#93). Every content page/post carries a shared `ref`
-  across its English and Vietnamese versions; this include resolves both sides
-  (over `site.posts`, the `site.vi_posts` collection and `site.pages`) and
-  emits absolute `en` / `vi` alternates plus `x-default` pointing at English,
+  across its English and Vietnamese versions; both sides are resolved by
+  the shared `ref-urls.html` partial (over `site.posts`, the `site.vi_posts`
+  collection and `site.pages`) and this include emits absolute `en` / `vi`
+  alternates plus `x-default` pointing at English,
   the default language. Pages without a `ref` (404, feeds, sitemap, standalone
   demo pages) get no alternates. Canonicals stay with jekyll-seo-tag.
 {%- endcomment -%}
@@ -19,52 +20,9 @@
     {%- assign alt_en = '/' -%}
     {%- assign alt_vi = '/vi/' -%}
   {%- else -%}
-  {%- for alt_doc in site.posts -%}
-    {%- if alt_doc.ref == alt_ref -%}
-      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
-      {%- if alt_doc_lang == 'vi' -%}
-        {%- assign alt_vi = alt_doc.url -%}
-      {%- else -%}
-        {%- assign alt_en = alt_doc.url -%}
-      {%- endif -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {%- for alt_doc in site.vi_posts -%}
-    {%- if alt_doc.ref == alt_ref -%}
-      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
-      {%- if alt_doc_lang == 'vi' -%}
-        {%- assign alt_vi = alt_doc.url -%}
-      {%- else -%}
-        {%- assign alt_en = alt_doc.url -%}
-      {%- endif -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {%- comment -%}
-    First match wins in site.pages: jekyll-paginate appends its page-2..N
-    duplicates of the paginated index (carrying the same `ref: home`) AFTER
-    the source pages, so taking the last match would point the English
-    alternate of `/` at `/page2/` instead of `/`.
-    Hand-paginated Vietnamese pages (`vi/pageN/index.html`, #155) carry
-    `vi_page_num: N` and sort *before* `vi/index.html`, so they are skipped
-    outright — alternates must point at the first pages, never at a page-N
-    URL (same convention as the paginator branch above).
-  {%- endcomment -%}
-  {%- for alt_doc in site.pages -%}
-    {%- if alt_doc.ref == alt_ref -%}
-      {%- unless alt_doc.vi_page_num > 1 -%}
-      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
-      {%- if alt_doc_lang == 'vi' -%}
-        {%- if alt_vi == '' -%}
-          {%- assign alt_vi = alt_doc.url -%}
-        {%- endif -%}
-      {%- else -%}
-        {%- if alt_en == '' -%}
-          {%- assign alt_en = alt_doc.url -%}
-        {%- endif -%}
-      {%- endif -%}
-      {%- endunless -%}
-    {%- endif -%}
-  {%- endfor -%}
+  {%- include ref-urls.html ref=alt_ref -%}
+  {%- assign alt_en = ref_en -%}
+  {%- assign alt_vi = ref_vi -%}
   {%- endif -%}
   {%- if alt_en != '' -%}
   <link rel="alternate" hreflang="en" href="{{ site.url }}{{ alt_en }}">

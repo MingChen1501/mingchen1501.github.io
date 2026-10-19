@@ -71,9 +71,11 @@ def test_switcher_markup_is_a_pill_with_an_accessible_name():
     assert 'lang="{{ switch_other }}"' in html
     assert 'hreflang="{{ switch_other }}"' in html
     # The ref/fallback behaviour is untouched: counterpart lookup by `ref`
-    # with the other-language home as fallback (#93, #104).
+    # with the other-language home as fallback (#93, #104), shared with the
+    # hreflang alternates through `ref-urls.html` (#170).
     assert "switch_ref" in html and "switch_home" in html
-    assert "switch_found" in html
+    assert "include ref-urls.html" in html
+    assert "switch_found" not in html
     assert "/vi/" in html
 
 

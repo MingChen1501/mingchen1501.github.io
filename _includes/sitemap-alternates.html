@@ -1,8 +1,8 @@
 {%- comment -%}
   Sitemap hreflang alternates (#98). Given a shared `ref` (include parameter),
-  resolve the English and Vietnamese URLs — over `site.posts`, the
-  `site.vi_posts` collection and `site.pages`, the same sources as
-  `lang-alternates.html` — and emit absolute `xhtml:link` alternates (`en` /
+  the English and Vietnamese URLs are resolved by the shared
+  `ref-urls.html` partial (the same sources as `lang-alternates.html`) and
+  this include emits absolute `xhtml:link` alternates (`en` /
   `vi` plus `x-default` pointing at English, the default language). Docs
   without a `ref` get no alternates.
 
@@ -13,53 +13,9 @@
 {%- endcomment -%}
 {%- assign sitemap_ref = include.ref | default: '' -%}
 {%- if sitemap_ref != '' -%}
-  {%- assign sitemap_en = '' -%}
-  {%- assign sitemap_vi = '' -%}
-  {%- for alt_doc in site.posts -%}
-    {%- if alt_doc.ref == sitemap_ref -%}
-      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
-      {%- if alt_doc_lang == 'vi' -%}
-        {%- assign sitemap_vi = alt_doc.url -%}
-      {%- else -%}
-        {%- assign sitemap_en = alt_doc.url -%}
-      {%- endif -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {%- for alt_doc in site.vi_posts -%}
-    {%- if alt_doc.ref == sitemap_ref -%}
-      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
-      {%- if alt_doc_lang == 'vi' -%}
-        {%- assign sitemap_vi = alt_doc.url -%}
-      {%- else -%}
-        {%- assign sitemap_en = alt_doc.url -%}
-      {%- endif -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {%- comment -%}
-    First match wins in site.pages: jekyll-paginate appends its page-2..N
-    duplicates of the paginated index (carrying the same `ref: home`) AFTER
-    the source pages, so taking the last match would point the English
-    alternate of `/` at `/page2/` instead of `/`. Hand-paginated Vietnamese
-    pages (`vi/pageN/index.html`, #155) carry `vi_page_num: N` and sort
-    *before* `vi/index.html`, so they are skipped outright — alternates must
-    point at the first pages, never at a page-N URL.
-  {%- endcomment -%}
-  {%- for alt_doc in site.pages -%}
-    {%- if alt_doc.ref == sitemap_ref -%}
-      {%- unless alt_doc.vi_page_num > 1 -%}
-      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
-      {%- if alt_doc_lang == 'vi' -%}
-        {%- if sitemap_vi == '' -%}
-          {%- assign sitemap_vi = alt_doc.url -%}
-        {%- endif -%}
-      {%- else -%}
-        {%- if sitemap_en == '' -%}
-          {%- assign sitemap_en = alt_doc.url -%}
-        {%- endif -%}
-      {%- endif -%}
-      {%- endunless -%}
-    {%- endif -%}
-  {%- endfor -%}
+  {%- include ref-urls.html ref=sitemap_ref -%}
+  {%- assign sitemap_en = ref_en -%}
+  {%- assign sitemap_vi = ref_vi -%}
   {%- assign site_url_stripped = site.url | strip -%}
   {%- if sitemap_en != '' -%}
     <xhtml:link rel="alternate" hreflang="en" href="{{ site_url_stripped }}{{ sitemap_en }}"/>

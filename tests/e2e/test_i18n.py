@@ -440,6 +440,42 @@ def test_templates_wire_the_switcher_alternates_and_fallback_notice():
         )
 
 
+@pytest.mark.static
+def test_ref_resolution_is_shared_through_one_partial():
+    """#170: the ref -> EN/VI lookup lives in `ref-urls.html` only — the four
+    call sites delegate to it instead of copy-pasting the three-source scan,
+    so a fix to ref resolution is applied once (the pattern behind #104)."""
+    partial = REPO_ROOT / "_includes" / "ref-urls.html"
+    assert partial.is_file(), "the shared ref-resolution partial is missing"
+    body = _read(partial)
+    assert "include.ref" in body
+    assert "ref_en" in body and "ref_vi" in body
+    for name in (
+        "lang-alternates.html",
+        "sitemap-alternates.html",
+        "lang-switcher.html",
+        "vi-fallback-notice.html",
+    ):
+        html = _read(REPO_ROOT / "_includes" / name)
+        assert "include ref-urls.html" in html, (
+            f"_includes/{name} must resolve its ref through ref-urls.html"
+        )
+    # The pre-#170 duplicated loop variables must not come back.
+    for name in (
+        "ref-urls.html",
+        "lang-alternates.html",
+        "sitemap-alternates.html",
+        "lang-switcher.html",
+        "vi-fallback-notice.html",
+        "nav-items.html",
+    ):
+        html = _read(REPO_ROOT / "_includes" / name)
+        for stale in ("hyperpage", "alt_doc", "switch_doc", "notice_doc"):
+            assert stale not in html, (
+                f"_includes/{name} still uses `{stale}`"
+            )
+
+
 # --- build guards (need Ruby; no browser) -----------------------------------
 
 
