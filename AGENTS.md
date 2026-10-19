@@ -38,7 +38,7 @@ theme, deployed with GitHub Pages from the `master` branch.
 | Add images, touch `assets/`, change asset caching/serving or lazy-load | `jekyll-assets` skill |
 | Verify before a PR: build, which guard test for which touch, leak check, CI | `jekyll-verify` skill |
 | Review a diff/PR: checklist, risk label, merge policy, English artifacts | `jekyll-review` skill |
-| Coordinate AO sessions: wake cues, pool, roles, review flow, publishing scope | `orchestrator` skill |
+| Coordinate AO sessions: wake cues, pool, roles, review flow, publishing scope, periodic upstream minima review | `orchestrator` skill |
 | Owner describes a task/bug/enhancement: buffer worker files the issue(s) first, implementation follows under the normal pool | `orchestrator` skill ("Owner-task buffer-worker workflow") |
 
 Each skill's frontmatter (`description` + `trigger`) says when to load it;
