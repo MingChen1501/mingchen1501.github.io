@@ -671,3 +671,88 @@ ul.post-toc__list {
     color: $brand-color-dark;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Minimum tap-target size (#141, WCAG 2.2 SC 2.5.8: 24x24 CSS px).
+//
+// A 360px audit found the tag chips, pager links, social icons, language
+// pill and the opened mobile menu already at or above 24px in both
+// dimensions, so the browser guard pins them without touching their styles.
+// The rules below lift the remaining undersized controls to the minimum with
+// `min-height` (plus `inline-block` where the target is an inline box, so the
+// height applies), each paired with `min-width` where the box could shrink
+// under a short label:
+//
+// - desktop nav items: their inline height follows the available fonts (22px
+//   with local fonts, 19px on CI runners), so neither padding nor inheritance
+//   can guarantee the minimum — and plain `inline-block` would take the 54px
+//   header strut instead. A 24px line box of their own plus `min-height` (and
+//   `min-width`, so a short label cannot shrink the other axis) pins both axes
+//   whatever the fonts do. Scoped above the mobile breakpoint, so the
+//   collapsible panel keeps its block rows, `5px 10px` padding and own
+//   line-height untouched —
+// - sidebar highlight titles, tag-row post links, TOC entries, the tag
+//   back-link, the footer email link, the sidebar heading link and the
+//   tag-row "view all" links: the shortfall only, so multi-line targets keep
+//   their exact size.
+//
+// Font sizes, margins and column widths are untouched, and the sidebar's #63
+// height budget keeps wide headroom at the 740px pin threshold.
+// ---------------------------------------------------------------------------
+@media screen and (min-width: $on-medium + 1px) {
+  .site-nav .nav-item {
+    display: inline-block;
+    line-height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+  }
+}
+
+.sidebar-post__title {
+  min-height: 24px;
+}
+
+.sidebar-tag__posts a {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.sidebar-tag__more {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.sidebar__heading-link {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.post-toc__summary {
+  min-height: 24px;
+}
+
+.post-toc__item a {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.tag-page__back a {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.contact-list .u-email {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+// The icon links collapse to their 22px padding box when the icon font fails
+// to load (offline reader, blocked CDN): the target must not depend on it.
+.social-media-list a {
+  min-height: 24px;
+}
