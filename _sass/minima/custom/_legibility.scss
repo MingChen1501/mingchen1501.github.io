@@ -1,0 +1,45 @@
+// #174: small-screen legibility pass (#148). Cascade slot 10 of 10.
+// ---------------------------------------------------------------------------
+// Small-screen legibility (#148): secondary UI text renders at 14px
+// (`$small-font-size`) on desktop, which is hard to read as grey-on-white on
+// phones. On small screens both sidebars stack under the content as normal
+// in-flow blocks, so the #63 height budget (five highlight rows + four tag
+// rows beside the list inside a 740px viewport) does not apply here — and
+// this block is scoped to `max-width: $on-medium`, so desktop (601px and up)
+// renders exactly as before with its hierarchy intact.
+//
+// - sidebar bases carry body-like text (titles, post links): full
+//   `$base-font-size` (16px) with the base line-height;
+// - the dimmed sidebar meta and count rows stay compact: 15px with a 1.5
+//   line-height;
+// - tag chips stay compact (wrapping pills): 15px, keeping their 1.6
+//   line-height;
+// - the language pill is a two-letter code in a 44px pill: 15px keeps it
+//   clear of the 320px header row while staying readable.
+// ---------------------------------------------------------------------------
+@include media-query($on-medium) {
+  .post-sidebar,
+  .site-sidebar {
+    font-size: $base-font-size;
+    line-height: $base-line-height;
+  }
+
+  .sidebar-post__meta {
+    font-size: 0.9375em; // 15px on the 16px sidebar base.
+    line-height: 1.5;
+  }
+
+  .tag-index__count {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .tag-chip {
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .lang-switcher {
+    font-size: 15px;
+  }
+}

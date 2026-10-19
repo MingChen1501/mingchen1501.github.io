@@ -29,6 +29,7 @@ These run without a browser and fail fast when the templates drift:
 import re
 from pathlib import Path
 
+import conftest
 import pytest
 import yaml
 
@@ -44,7 +45,6 @@ TAGS_INDEX = REPO_ROOT / "tags.md"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
 VI_TAGS_INDEX = REPO_ROOT / "vi" / "tags.md"
 VI_TAG_PAGES_DIR = REPO_ROOT / "vi" / "tags"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 POSTS_DIR = REPO_ROOT / "_posts"
 VI_POSTS_DIR = REPO_ROOT / "_vi_posts"
 
@@ -166,18 +166,20 @@ def test_base_layout_exposes_the_layout_name_for_styling():
 
 
 def test_custom_styles_define_the_two_column_grid():
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     # Both grid declarations must guard the track with minmax(0, ...): plain
     # `1fr` means minmax(auto, 1fr), so a long unbreakable run can widen the
     # column (and the document) past a 375px viewport on phones.
-    assert "grid-template-columns: minmax(0, 1fr) 240px;" in scss
+    assert "grid-template-columns: minmax(0, 1fr) $post-sidebar-width;" in scss
+    assert "$post-sidebar-width: 240px;" in scss
     # Single column below the desktop breakpoint.
     assert "grid-template-columns: minmax(0, 1fr);" in scss
     assert "grid-template-columns: 1fr;" not in scss
     # The extra width belongs to the post content wrapper only; a bare
     # `.layout-post .wrapper` also matches the header/footer wrappers.
     assert ".layout-post main .wrapper" in scss
-    assert "min-width: 960px" in scss
+    assert "$two-column-breakpoint: 960px;" in scss
+    assert "min-width: $two-column-breakpoint" in scss
 
 
 # --- tag chips + tag pages (#46) ------------------------------------------
@@ -345,7 +347,7 @@ def test_home_list_chips_come_after_the_excerpt_inside_the_item():
 
 
 def test_custom_styles_keep_the_home_chip_variant_to_spacing():
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     assert "ul.tag-chip-list--home" in scss
     # The variant may only adjust spacing; the chip look is shared with the
     # post sidebar (#45) and the tag pages (#46).

@@ -50,12 +50,12 @@ import re
 import struct
 from pathlib import Path
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 POSTS_DIRS = [REPO_ROOT / "_posts", REPO_ROOT / "_vi_posts"]
 HOME_LAYOUT = REPO_ROOT / "_layouts" / "home.html"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 MD_IMG_RE = re.compile(r'!\[([^\]]*)\]\((/assets/[^\s)]+)(?:\s+"([^"]*)")?\)')
 IAL_RE = re.compile(r'\{\:\s*width="(\d+)"\s+height="(\d+)"[^}]*\}')
@@ -187,7 +187,7 @@ def test_home_list_prefers_description_over_raw_excerpt():
 
 @pytest.mark.static
 def test_stylesheet_reserves_the_image_aspect_ratio_box():
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     assert "img[width][height]" in scss, (
         "the CLS reservation rule for dimensioned content images is missing"
     )

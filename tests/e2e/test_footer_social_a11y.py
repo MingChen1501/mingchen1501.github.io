@@ -17,11 +17,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOCIAL_INCLUDE = REPO_ROOT / "_includes" / "social.html"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 
 def _social_list(page_html, url):
@@ -72,7 +72,7 @@ def test_feed_label_matches_the_page_language():
 @pytest.mark.static
 def test_focus_stays_visible_on_social_links():
     """#87's focus rule covers links, so the icon links never go dark."""
-    assert "a:focus-visible" in CUSTOM_STYLES.read_text(encoding="utf-8")
+    assert "a:focus-visible" in conftest.custom_styles_text()
 
 
 # --- build guards (need Ruby; no browser) -----------------------------------

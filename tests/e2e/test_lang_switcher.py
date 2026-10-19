@@ -27,6 +27,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -34,7 +35,6 @@ HEADER_INCLUDE = REPO_ROOT / "_includes" / "header.html"
 SWITCHER_INCLUDE = REPO_ROOT / "_includes" / "lang-switcher.html"
 NAV_ITEMS_INCLUDE = REPO_ROOT / "_includes" / "nav-items.html"
 SIDEBAR_INCLUDE = REPO_ROOT / "_includes" / "site-sidebar.html"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 PHONE_WIDTHS = (320, 375)
 DESKTOP_WIDTH = 1280
@@ -95,7 +95,7 @@ def test_switcher_lives_in_the_header_row_not_the_nav_panel():
 
 @pytest.mark.static
 def test_switcher_styles_hit_the_tap_target_and_states():
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     assert "min-width: 44px" in scss
     assert "min-height: 44px" in scss
     assert "border-radius: 999px" in scss

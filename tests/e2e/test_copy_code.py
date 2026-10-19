@@ -24,12 +24,12 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "assets" / "js" / "copy-code.js"
 SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 SCRIPT_PATH = "/assets/js/copy-code.js"
 
@@ -127,9 +127,9 @@ def test_the_copy_script_is_linked_with_the_cache_version_token():
 @pytest.mark.static
 def test_the_button_style_meets_the_touch_target_and_focus():
     """44px minimum target, floating over the block, focus stays visible."""
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     assert ".copy-code__button" in scss, (
-        "the copy button needs its own style block in custom-styles.scss"
+        "the copy button needs its own style block in the custom styles"
     )
     assert "min-width: 44px" in scss and "min-height: 44px" in scss, (
         "the copy button must keep a 44px minimum touch target"

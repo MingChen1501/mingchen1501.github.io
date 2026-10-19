@@ -574,7 +574,8 @@ and English label in both languages.
 
 Post pages render a secondary column with the post's tags and the other posts
 sharing its first tag (`_layouts/post.html`, `_includes/post-tags.html`, styles
-in `_sass/minima/custom-styles.scss`).
+in `_sass/minima/custom-styles.scss`, an index over the `_sass/minima/custom/`
+partials).
 
 The list pages — the English home list (`/`, `/page2/…`, paginated by
 `jekyll-paginate` over the English-only `site.posts`), the Vietnamese home

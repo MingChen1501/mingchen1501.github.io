@@ -1,0 +1,16 @@
+// Site-specific dimensions (#174), hoisted from `custom-styles.scss`.
+//
+// Every value below was a repeated magic dimension in the old single-file
+// partial (evidence in #174); naming them keeps the scoped partials honest
+// and makes the next audit a one-line diff. The compiled CSS is unchanged:
+// Sass substitutes each variable with the same literal it replaced.
+//
+// Micro-spacing (`8px` chip gaps, `2px` hairlines, `44px` touch targets) is
+// deliberately *not* hoisted: those literals coincide across unrelated roles
+// (gap vs. margin vs. offset), so one shared name would lie about them.
+$two-column-breakpoint: 960px;
+$wide-content-width: 1080px;
+$post-sidebar-width: 240px;
+$site-sidebar-width: 300px;
+$pinned-sidebar-min-height: 740px;
+$tap-target-minimum: 24px;

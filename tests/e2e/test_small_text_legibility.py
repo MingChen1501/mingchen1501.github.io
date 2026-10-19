@@ -11,7 +11,7 @@ Acceptance guarded here (risk-low, SCSS-only, no markup changes):
 - at desktop width the hierarchy is unchanged: the sidebar base, the chips
   and the language pill still render at 14px (browser);
 - the lift lives in a single `max-width: $on-medium` block in
-  `_sass/minima/custom-styles.scss` (static): the desktop base rules still use
+  `_sass/minima/custom/_legibility.scss` (#174) (static): the desktop base rules still use
   `$small-font-size`, the compact rows keep an adequate line-height, and the
   block introduces no inner scrollbar (`overflow-y`/`max-height`) or height
   budget of its own — on phones both sidebars stack under the content as
@@ -28,10 +28,10 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 PHONE_WIDTH = 360
 DESKTOP_WIDTH = 1280
@@ -88,7 +88,7 @@ def _px(value):
 @pytest.mark.static
 def test_desktop_bases_still_use_the_small_font_size():
     """The lift is mobile-only: desktop keeps its 14px hierarchy."""
-    head, _ = _split_legibility_block(_read(CUSTOM_STYLES))
+    head, _ = _split_legibility_block(conftest.custom_styles_text())
     for selector in (".post-sidebar", ".tag-chip", ".lang-switcher"):
         # The first `}` after the opening brace may close a nested `&:hover`
         # block, but the base declarations (including the font size) always
@@ -103,7 +103,7 @@ def test_desktop_bases_still_use_the_small_font_size():
 @pytest.mark.static
 def test_mobile_block_raises_the_secondary_text():
     """One `max-width` block lifts the sidebar, chips and pill to >= 15px."""
-    _, tail = _split_legibility_block(_read(CUSTOM_STYLES))
+    _, tail = _split_legibility_block(conftest.custom_styles_text())
     assert "@include media-query($on-medium)" in tail, (
         "the #148 lift must be scoped to small screens via "
         "`@include media-query($on-medium)`"
@@ -136,7 +136,7 @@ def test_mobile_block_raises_the_secondary_text():
 @pytest.mark.static
 def test_mobile_block_adds_no_scroll_or_height_budget():
     """The lift changes sizes only: no inner scrollbar, no layout structure."""
-    _, tail = _split_legibility_block(_read(CUSTOM_STYLES))
+    _, tail = _split_legibility_block(conftest.custom_styles_text())
     for banned in ("overflow-y", "max-height", "100vh", "position: sticky"):
         assert banned not in tail, (
             f"the #148 block must not introduce `{banned}`"

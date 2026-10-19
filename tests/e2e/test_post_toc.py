@@ -21,12 +21,12 @@ mobile/desktop split.
 import re
 from pathlib import Path
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 TOC_INCLUDE = REPO_ROOT / "_includes" / "post-toc.html"
-CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 LONG_EN_POST = REPO_ROOT / "_posts" / "2022-12-25-explaining-the-internet.md"
 LONG_VI_POST = REPO_ROOT / "_vi_posts" / "gioi-thieu-ve-internet.md"
@@ -145,14 +145,14 @@ def test_only_the_post_layout_references_the_toc():
 
 @pytest.mark.static
 def test_custom_styles_show_exactly_one_toc_mount_per_viewport():
-    scss = _read(CUSTOM_STYLES)
+    scss = conftest.custom_styles_text()
     assert ".post-toc-mount--sidebar" in scss
     assert ".post-toc-mount--inline" in scss
     # Phones: sidebar copy hidden (it would duplicate the inline copy at the
     # bottom of the stacked layout); desktop: inline copy hidden.
     sidebar_block = scss.split(".post-toc-mount--sidebar {", 1)[1].split("}", 1)[0]
     assert "display: none;" in sidebar_block
-    assert "min-width: 960px" in scss
+    assert "min-width: $two-column-breakpoint" in scss
 
 
 @pytest.mark.static
