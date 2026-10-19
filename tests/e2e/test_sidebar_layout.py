@@ -40,9 +40,14 @@ the local `style.css` fully defines the layout.
 
 import contextlib
 import datetime
+import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
+
+import conftest
 
 import pytest
 
@@ -231,6 +236,104 @@ def _load_images(page):
     page.wait_for_timeout(300)
     page.evaluate("window.scrollTo(0, 0)")
     page.wait_for_timeout(150)
+
+
+# --- throwaway content-state builds (#71) -----------------------------------
+#
+# The shared `built_site` fixture carries today's content (3 marked posts, no tag
+# with more than 2 posts), so the highlight cap and the per-tag bound are never
+# exercised at their documented maxima. These helpers build a *copy* of the
+# repository with mutated front matter, so a guard can render the maximum content
+# state without changing the committed site (or its build output).
+
+
+def _bundler_env(source):
+    import test_stylesheet_cache_version as _csv
+
+    return _csv._bundler_env(source)
+
+
+def _mutate_front_matter(path, mutator):
+    text = path.read_text(encoding="utf-8")
+    match = re.match(r"\A---\s*\n(.*?)\n---\s*\n", text, re.S)
+    if not match:
+        return
+    front_matter = match.group(1)
+    new_front_matter = mutator(front_matter)
+    if new_front_matter == front_matter:
+        return
+    new_text = text.replace(match.group(0), "---\n" + new_front_matter + "\n---\n", 1)
+    path.write_text(new_text, encoding="utf-8")
+
+
+def _build_mutated_site(tmp_path, name, mutate):
+    """Copy the repo, apply ``mutate(source)``, build it, return (source, dest)."""
+    bundle = conftest._bundle()
+    if bundle is None:
+        pytest.skip("`bundle` not found: this guard rebuilds the site with Ruby")
+    lockfile = REPO_ROOT / "Gemfile.lock"
+    if not lockfile.is_file():
+        pytest.skip("no Gemfile.lock to reuse for the copied build (`bundle install`)")
+
+    source = tmp_path / f"{name}-src"
+    destination = tmp_path / f"{name}-site"
+    if source.exists():
+        shutil.rmtree(source)
+    if destination.exists():
+        shutil.rmtree(destination)
+
+    shutil.copytree(
+        REPO_ROOT,
+        source,
+        ignore=shutil.ignore_patterns(
+            ".git", "_site", ".jekyll-cache", ".sass-cache", ".bundle", "vendor",
+            "tests", ".ao", ".opencode", "__pycache__", ".pytest_cache",
+        ),
+    )
+    shutil.copy2(lockfile, source / "Gemfile.lock")
+
+    mutate(source)
+
+    result = subprocess.run(
+        [bundle, "exec", "jekyll", "build", "--destination", str(destination)],
+        cwd=str(source),
+        env=_bundler_env(source),
+        capture_output=True,
+        text=True,
+        timeout=conftest.BUILD_TIMEOUT_S,
+    )
+    assert result.returncode == 0, (
+        f"{name} build failed ({result.returncode})\n"
+        f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
+    )
+    assert (destination / "index.html").is_file(), f"{name} build produced no index.html"
+    return source, destination
+
+
+def _mark_all_published_highlight(front_matter):
+    if "published: false" in front_matter:
+        return front_matter
+    if "highlight:" in front_matter:
+        return front_matter
+    return front_matter.rstrip() + "\nhighlight: true"
+
+
+def _unmark_all_highlight(front_matter):
+    lines = [line for line in front_matter.splitlines() if not re.match(r"\s*highlight\s*:", line)]
+    return "\n".join(lines)
+
+
+def _tag_all_published(front_matter, tag):
+    if "published: false" in front_matter:
+        return front_matter
+    # Replace the tags line with a single tag so one pillar accumulates 4+ posts.
+    lines = []
+    for line in front_matter.splitlines():
+        if re.match(r"\s*tags\s*:", line):
+            lines.append(f"tags: [{tag}]")
+        else:
+            lines.append(line)
+    return "\n".join(lines)
 
 
 # --- static guards (no Ruby, no browser) -----------------------------------
@@ -662,4 +765,104 @@ def test_no_horizontal_overflow_from_the_sidebar_at_375px(path, built_site_url, 
             assert image["naturalWidth"], (
                 f"{path}: the sidebar thumbnail {image['src']} never decoded, so it "
                 "was not measured"
+            )
+
+
+# --- content-state guards (#71): exercise the documented maxima ---------------
+
+
+def _mutate_mark_six(source):
+    for path in (source / "_posts").glob("*.md"):
+        _mutate_front_matter(path, _mark_all_published_highlight)
+
+
+def _mutate_unmark_all(source):
+    for path in (source / "_posts").glob("*.md"):
+        _mutate_front_matter(path, _unmark_all_highlight)
+
+
+def _mutate_tag_all_ai_agent(source):
+    for path in (source / "_posts").glob("*.md"):
+        _mutate_front_matter(path, lambda fm: _tag_all_published(fm, "ai-agent"))
+    # Drop tag pages for pillars that no longer have any published post, so the
+    # build does not try to sort a null `site.tags[...]` collection.
+    tags_dir = source / "tags"
+    if tags_dir.is_dir():
+        for path in tags_dir.glob("*.md"):
+            if path.stem != "ai-agent":
+                path.unlink()
+    # The tags index sorts every pillar; pillars with no posts become null.
+    tags_index = source / "tags.md"
+    if tags_index.is_file():
+        tags_index.unlink()
+
+
+def test_sidebar_highlight_cap_holds_with_six_marked_posts(tmp_path, browser):
+    """Content-state guard (#71): with 6 posts marked, only 5 highlights render.
+
+    Today's content has 3 marked posts, so a wrong limit of 3/4 is invisible to
+    the browser tier. Marking 6 posts forces the cap to bind: the 4th and 5th
+    rows must be present and the 6th must not.
+    """
+    _source, destination = _build_mutated_site(tmp_path, "hl-six", _mutate_mark_six)
+
+    with conftest._served(destination) as url:
+        with _viewport(browser, url, DESKTOP_WIDTH) as page:
+            _open(page, url, "/")
+            sidebar = page.evaluate(_SIDEBAR_JS)
+            assert sidebar["highlightsHeading"] == "Bài nổi bật", (
+                "with posts marked in their front matter the block is `Bài nổi bật`"
+            )
+            assert len(sidebar["highlights"]) == HIGHLIGHT_LIMIT, (
+                f"expected the highlight cap of {HIGHLIGHT_LIMIT} rows with 6 "
+                f"marked posts, got {len(sidebar['highlights'])}: "
+                f"{sidebar['highlights']}"
+            )
+            # The cap must actually bind: a 6th marked post must not appear.
+            assert len(sidebar["highlights"]) < 6, (
+                "the highlight limit did not cap the block at 5 rows"
+            )
+
+
+def test_sidebar_highlight_fallback_shows_five_newest_with_none_marked(tmp_path, browser):
+    """Content-state guard (#71): with nothing marked, the fallback shows 5.
+
+    Exercises the D2 fallback path (`Bài mới nhất`) at its documented maximum
+    instead of relying on the 3-mark state.
+    """
+    _source, destination = _build_mutated_site(tmp_path, "hl-none", _mutate_unmark_all)
+
+    with conftest._served(destination) as url:
+        with _viewport(browser, url, DESKTOP_WIDTH) as page:
+            _open(page, url, "/")
+            sidebar = page.evaluate(_SIDEBAR_JS)
+            assert sidebar["highlightsHeading"] == "Bài mới nhất", (
+                "with no post marked the block falls back to `Bài mới nhất`"
+            )
+            assert len(sidebar["highlights"]) == HIGHLIGHT_LIMIT, (
+                f"expected {HIGHLIGHT_LIMIT} fallback highlights, got "
+                f"{len(sidebar['highlights'])}: {sidebar['highlights']}"
+            )
+
+
+def test_sidebar_tag_bound_holds_with_four_plus_posts_in_one_tag(tmp_path, browser):
+    """Content-state guard (#71): a tag with 4+ posts shows at most 3 rows.
+
+    Today's biggest tag has 2 posts, so `0 < len(tag posts) <= 3` is vacuous.
+    Collapsing every published post onto one tag forces the per-tag bound to bind.
+    """
+    _source, destination = _build_mutated_site(tmp_path, "tag-many", _mutate_tag_all_ai_agent)
+
+    with conftest._served(destination) as url:
+        with _viewport(browser, url, DESKTOP_WIDTH) as page:
+            _open(page, url, "/")
+            groups = page.evaluate(_SIDEBAR_JS)["tags"]
+            target = next((g for g in groups if "ai-agent" in (g["tag"] or "")), None)
+            assert target is not None, "the ai-agent tag row must render"
+            assert 0 < len(target["posts"]) <= TAG_POSTS_LIMIT, (
+                f"tag `ai-agent` lists an unbounded or empty set: {target['posts']}"
+            )
+            assert len(target["posts"]) == TAG_POSTS_LIMIT, (
+                f"expected the per-tag cap of {TAG_POSTS_LIMIT} rows with 4+ posts, "
+                f"got {len(target['posts'])}: {target['posts']}"
             )
