@@ -19,7 +19,18 @@
       {%- endif %}
       </div>
       <div class="footer-col">
+        {%- comment -%}
+          Bilingual footer description (#105): English pages (`lang: en`,
+          the default) render `site.description_en`; Vietnamese pages
+          (`lang: vi`) keep `site.description`. Same pattern as the
+          per-language feed link in `_includes/head.html`.
+        {%- endcomment -%}
+        {%- assign footer_lang = page.lang | default: site.lang | default: 'en' -%}
+        {%- if footer_lang == 'vi' -%}
         <p>{{ site.description | escape }}</p>
+        {%- else -%}
+        <p>{{ site.description_en | escape }}</p>
+        {%- endif -%}
       </div>
     </div>
 
