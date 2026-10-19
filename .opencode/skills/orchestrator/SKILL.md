@@ -114,8 +114,8 @@ not a guarantee of provider behaviour.
 
 ## Merge method
 
-- **Merge commits only**: `gh pr merge --merge --delete-branch`. Never
-  squash-merge or rebase-merge.
+- **Squash merge only**: `gh pr merge <n> --squash --delete-branch`. Never
+  use `--merge` (merge commit) or `--rebase`.
 - Merge only when CI is green.
 - Stacked PRs keep their base branch alive until the child merges; do not delete
   a base branch that a child PR still targets.
