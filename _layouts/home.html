@@ -28,9 +28,18 @@ layout: base
         the page language.
       {%- endcomment -%}
       {%- assign home_lang = page.lang | default: site.lang | default: 'en' -%}
+      {%- comment -%}
+        `site.vi_posts` is nil when the collection is undefined (e.g. the
+        upstream `_config_theme-dev.yml` CI build, which must keep passing);
+        degrade to an empty list instead of crashing `sort` on nil.
+      {%- endcomment -%}
+      {%- assign home_vi_source = site.vi_posts -%}
+      {%- if home_vi_source == nil -%}
+        {%- assign home_vi_source = "" | split: "" -%}
+      {%- endif -%}
       {%- if home_lang == 'vi' -%}
         {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-        {% assign posts = site.vi_posts | sort: "date" | reverse %}
+        {% assign posts = home_vi_source | sort: "date" | reverse %}
       {% else %}
         {%- assign date_format = "%b %-d, %Y" -%}
         {% if paginator %}

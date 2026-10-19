@@ -342,6 +342,58 @@ def test_english_posts_avoid_the_old_vietnamese_slugs():
 
 
 @pytest.mark.static
+def test_vi_collection_lookups_are_nil_safe():
+    """`site.vi_posts` is nil when the collection is undefined — the upstream
+    `_config_theme-dev.yml` CI build (`script/cibuild`) must keep passing, so
+    every Liquid *filter* over the collection degrades to an empty list instead
+    of crashing `sort`/`where` on nil. (`for` over nil is already safe.)
+    """
+    guarded = {
+        REPO_ROOT / "_layouts" / "tag.html": "tag_vi_source",
+        REPO_ROOT / "_layouts" / "home.html": "home_vi_source",
+        REPO_ROOT / "_layouts" / "post.html": "rel_vi_source",
+        REPO_ROOT / "_includes" / "site-sidebar.html": "sidebar_source",
+        REPO_ROOT / "vi" / "tags.md": "vi_tags_source",
+    }
+    for path, var in guarded.items():
+        html = _read(path)
+        assert re.search(
+            rf"assign {var} = site\.vi_posts", html
+        ), f"{path} must read the collection through `{var}`"
+        assert re.search(
+            rf"if {var} == nil", html
+        ), f"{path} must nil-guard `{var}` for the theme-dev CI build"
+        assert '"" | split: ""' in html, (
+            f"{path} must degrade to an empty list (`\"\" | split: \"\"`)"
+        )
+    # No unguarded filter over the collection may remain: every other
+    # `site.vi_posts` occurrence must be a nil-safe `for` loop or sit inside a
+    # `{% comment %}` block.
+    for path in [
+        REPO_ROOT / "_layouts" / "tag.html",
+        REPO_ROOT / "_layouts" / "home.html",
+        REPO_ROOT / "_layouts" / "post.html",
+        REPO_ROOT / "_includes" / "site-sidebar.html",
+        REPO_ROOT / "vi" / "tags.md",
+    ]:
+        in_comment = False
+        for i, line in enumerate(_read(path).splitlines(), 1):
+            stripped = line.strip()
+            if re.search(r"{%-?\s*comment", stripped):
+                in_comment = True
+            if in_comment:
+                if re.search(r"endcomment", stripped):
+                    in_comment = False
+                continue
+            if "site.vi_posts" not in stripped:
+                continue
+            assert (
+                re.search(r"assign \w+ = site\.vi_posts\s*-?%}", stripped)
+                or re.search(r"for \w+ in site\.vi_posts\s*-?%}", stripped)
+            ), f"{path}:{i} uses site.vi_posts outside the nil-guard pattern: {stripped}"
+
+
+@pytest.mark.static
 def test_templates_wire_the_switcher_alternates_and_fallback_notice():
     head = _read(REPO_ROOT / "_includes" / "head.html")
     assert "include lang-alternates.html" in head

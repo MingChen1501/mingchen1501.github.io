@@ -70,7 +70,15 @@ layout: base
 
       {%- assign primary_tag = post_tags.first -%}
       {%- if post_lang == 'vi' -%}
-        {%- assign tag_posts = site.vi_posts | where_exp: "rel_post", "rel_post.tags contains primary_tag" | sort: "date" | reverse -%}
+        {%- comment -%}
+          Nil-safe like the tag layout: the collection may be undefined in the
+          upstream `_config_theme-dev.yml` CI build.
+        {%- endcomment -%}
+        {%- assign rel_vi_source = site.vi_posts -%}
+        {%- if rel_vi_source == nil -%}
+          {%- assign rel_vi_source = "" | split: "" -%}
+        {%- endif -%}
+        {%- assign tag_posts = rel_vi_source | where_exp: "rel_post", "rel_post.tags contains primary_tag" | sort: "date" | reverse -%}
       {%- else -%}
         {%- assign tag_posts = site.tags[primary_tag] | sort: "date" | reverse -%}
       {%- endif -%}

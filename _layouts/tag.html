@@ -8,9 +8,18 @@ layout: base
   `tag_base` keeps the chips and the back link inside the page's language.
 {%- endcomment -%}
 {%- assign tag_lang = page.lang | default: site.lang | default: 'en' -%}
+{%- comment -%}
+  `site.vi_posts` is nil when the collection is undefined (e.g. the upstream
+  `_config_theme-dev.yml` CI build, which must keep passing); degrade to an
+  empty list instead of crashing `sort` on nil.
+{%- endcomment -%}
+{%- assign tag_vi_source = site.vi_posts -%}
+{%- if tag_vi_source == nil -%}
+  {%- assign tag_vi_source = "" | split: "" -%}
+{%- endif -%}
 {%- if tag_lang == 'vi' -%}
   {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-  {%- assign tag_posts = site.vi_posts | where_exp: "tag_post", "tag_post.tags contains tag_name" | sort: "date" | reverse -%}
+  {%- assign tag_posts = tag_vi_source | where_exp: "tag_post", "tag_post.tags contains tag_name" | sort: "date" | reverse -%}
   {%- assign tag_base = '/vi/tags/' -%}
 {%- else -%}
   {%- assign date_format = "%b %-d, %Y" -%}

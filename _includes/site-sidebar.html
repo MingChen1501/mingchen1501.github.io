@@ -49,6 +49,15 @@
 {%- assign sidebar_lang = page.lang | default: site.lang | default: 'en' -%}
 {%- if sidebar_lang == 'vi' -%}
   {%- assign sidebar_source = site.vi_posts -%}
+  {%- comment -%}
+    Nil-safe: the collection is undefined in the upstream
+    `_config_theme-dev.yml` CI build — degrade to an empty list instead of
+    crashing `where`/`sort` on nil (the block then takes the newest-posts
+    fallback path, which is also empty, instead of an empty box claim).
+  {%- endcomment -%}
+  {%- if sidebar_source == nil -%}
+    {%- assign sidebar_source = "" | split: "" -%}
+  {%- endif -%}
   {%- assign sidebar_dir = "_vi_posts/" -%}
   {%- assign sidebar_tag_base = "/vi/tags/" -%}
   {%- assign sidebar_count_unit = "bài" -%}
@@ -177,7 +186,7 @@
       docs (collections never populate `site.tags`).
     {%- endcomment -%}
     {%- if sidebar_lang == 'vi' -%}
-      {%- assign sidebar_tag_names = site.vi_posts | map: "tags" | join: "," | split: "," | uniq | sort -%}
+      {%- assign sidebar_tag_names = sidebar_source | map: "tags" | join: "," | split: "," | uniq | sort -%}
     {%- else -%}
       {%- assign sidebar_tag_pairs = site.tags | sort -%}
       {%- assign sidebar_tag_names_str = "" -%}
