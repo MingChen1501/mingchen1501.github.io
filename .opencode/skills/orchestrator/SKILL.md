@@ -57,6 +57,49 @@ and verification live in the `jekyll-review` and `jekyll-verify` skills.
   review worker; create follow-up issues if the review or CI surfaces any.
 - Do not let one session both implement and review its own PR.
 
+## Model separation and rate-limit rotation (#76)
+
+All AO sessions on this project share one free-tier OpenCode account. When a
+worker or reviewer runs the same model as the orchestrator, its long turns drain
+the quota the orchestrator needs to coordinate. Verified by direct observation
+(#76, worker `mingchen-site-115`); guidance here is what has actually worked,
+not a guarantee of provider behaviour.
+
+- **Separation rule.** Every worker and reviewer session must run on a model
+  **different** from the orchestrator's. This includes explicit overrides: an
+  `ao spawn --model <provider/model>` value for a worker/review session must
+  never equal the orchestrator model.
+- **Where the models live.** Durable per-role defaults are set with
+  `ao project set-config <id> --config-json` (models under
+  `worker.agentConfig.model`, `orchestrator.agentConfig.model` and
+  `reviewers[].agentConfig.model`; the three must all differ). For a one-off,
+  `ao spawn --model` overrides one session only and `ao review trigger --model`
+  one review pass only. Keep at least two free models available so rotation
+  always has a target; check the currently available free models rather than
+  assuming a specific name stays free.
+- **Detection (check on each wake, not only when a worker reports it).**
+  Evidence of a rate limit: the structured `provider.quota` / 429 /
+  `FreeUsageLimitError` error in the worker's native session, or a worker that
+  went idle with uncommitted work and no PR.
+- **No command changes a running session's model.** `ao session switch-agent
+  <id> <harness>` changes the harness, not the model, and is rejected for
+  `opencode-v2` (`UNSUPPORTED_SWITCH_HARNESS`). A worker therefore **cannot swap
+  its own model** — rotation is the orchestrator's job, and worker prompts must
+  not promise "auto-swap on rate limit".
+- **Rotation recipe** (verified when finishing #64 after a worker was
+  rate-limited):
+  1. Kill the stuck session with `ao session kill`. Its worktree **survives**
+     on disk under `~/.ao/data/worktrees/<project>/<session-id>`, dirty
+     (uncommitted) files included — nothing is lost.
+  2. Spawn a fresh worker on a **different** free model, assigned the same task.
+  3. In the new worker's prompt, give it the old worktree path and tell it to
+     copy the uncommitted files into its own worktree, then commit, push and
+     open the PR from there.
+  - Never respawn on the model that just failed.
+  - Do **not** use `ao spawn --branch <old-branch>` as the mechanism: it is
+    unverified and may fail because the old branch is already checked out by
+    the dead session's worktree.
+
 ## Review flow
 
 - Reviewers are **dedicated AO worker sessions** because the native AO reviewer

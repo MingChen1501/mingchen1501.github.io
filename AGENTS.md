@@ -195,6 +195,9 @@ for site-specific review/verify):
 - Risk labels: see "Risk labels and merge policy" (every issue/PR carries exactly
   one; risk-low/medium merge autonomously on green CI + review APPROVE;
   risk-high/very-high require owner approval; missing label => owner approval).
+- Model separation: workers and reviewers run on a model different from the
+  orchestrator's; a rate-limited worker is rotated by the orchestrator —
+  detail in `.opencode/skills/orchestrator/SKILL.md`.
 - CI/review routing: send failing output and review findings to the responsible
   worker; do not resolve conflicts or make code changes in the orchestrator.
 - Publishing scope: freeform work publishes only when the owner requests it or
