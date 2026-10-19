@@ -2,33 +2,32 @@
 layout: post
 lang: en
 ref: cach-pha-ca-phe
-fallback_vi: true
 author: Ming Chen
 title: "Brewing Vietnamese Phin Coffee"
 tags: [doi-song]
 description: "How to brew pure Vietnamese phin coffee at home: add grounds to the filter, press gently, bloom with boiling water and wait for the slow drip."
 ---
 
->Một ly cà phê ngon là phải vừa ngọt vừa đắng ![buoc2](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg)
+>A good cup of coffee has to be both sweet and bitter ![Step 2](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg)
 
-* Cho cà phê vào 1/2 phin.
+* Add coffee grounds to fill half of the phin filter.
 
-![buoc1](/assets/img/2022-10-27-cach-pha-ca-phe/b1.jpg)
+![Step 1](/assets/img/2022-10-27-cach-pha-ca-phe/b1.jpg)
 
-* Cho chặn phin cà phê vào phin và nén vừa phải (lực nén theo tổ tiên mách bảo :D).
+* Place the press plate into the phin and press down gently (pressing force guided by the ancestors :D).
 
-![buoc2](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg)
+![Step 2](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg)
 
-* Cho nước vào 2/3 phin và ủ khi nước ngấm hết vào cà phê.
+* Pour in water to fill 2/3 of the phin and let it bloom until the water has soaked fully into the grounds.
 
-![buoc3](/assets/img/2022-10-27-cach-pha-ca-phe/b3.jpg)
+![Step 3](/assets/img/2022-10-27-cach-pha-ca-phe/b3.jpg)
 
-* Cho nước vào đầy phin cà phê và đợi nước nhỏ hết.
+* Fill the phin to the top with water and wait for it to finish dripping.
 
-![buoc4](/assets/img/2022-10-27-cach-pha-ca-phe/b4.jpg)
+![Step 4](/assets/img/2022-10-27-cach-pha-ca-phe/b4.jpg)
 
-* Thành quả là chúng ta có 1 ly cà phê nguyên chất, uống bao phê, bao tỉnh :D :D :D (/≧▽≦)/.
+* The result: a cup of pure black coffee — strong enough to keep you wide awake :D :D :D (/≧▽≦)/.
 
-![buoc5](/assets/img/2022-10-27-cach-pha-ca-phe/b5.jpg)
+![Step 5](/assets/img/2022-10-27-cach-pha-ca-phe/b5.jpg)
 
-* Chúng ta có thể thêm đường, sữa tươi, sữa đặc và thêm đá tùy sở thích.
+* Add sugar, fresh milk, condensed milk and ice to taste.

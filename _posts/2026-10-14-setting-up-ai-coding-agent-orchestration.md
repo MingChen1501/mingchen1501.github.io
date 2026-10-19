@@ -2,28 +2,27 @@
 layout: post
 lang: en
 ref: setup-ai-coding-agent-orchestration
-fallback_vi: true
 author: Ming Chen
 title: "Trying Out Orchestration for AI Coding Agents"
 tags: [ai-agent]
 description: "Trying out an orchestration setup for AI coding agents to coordinate multiple sessions more tidily, and sketching the next step for my coding flow."
 ---
 
->Hôm nay mình dành thời gian thử setup một hệ thống orchestration cho AI coding agent, thấy khá hay, có lẽ thời gian tới sẽ còn nhiều cái để mò.
+>Today I spent some time setting up an orchestration system for AI coding agents. It looks quite promising — there'll probably be a lot more to tinker with ahead.
 
-## Vì sao thử?
-- Dạo này thấy anh em dùng các coding agent ngày càng nhiều, mỗi agent lại có chỗ mạnh riêng.
-- Một mình điều phối nhiều session/worker thủ công thì hơi rối, nên mình muốn thử có một lớp orchestration để quản lý công việc cho gọn.
-- Về lâu dài thì đây cũng là bước nhỏ trong việc tối ưu luồng code của mình.
+## Why try it?
+- Lately everyone seems to be using coding agents more and more, each with its own strengths.
+- Coordinating multiple sessions/workers by hand gets messy, so I wanted to try an orchestration layer to keep the work organized.
+- In the long run, this is also a small step toward optimizing my coding flow.
 
-## Thử hôm nay
-- Setup xong rồi chạy thử một vài tác vụ nhỏ.
-- Cảm giác luồng làm việc rõ ràng hơn, agent có vẻ "biết việc" hơn khi được điều phối và theo dõi trạng thái.
-- Có chỗ còn chưa quen, nhưng tổng thể thấy đáng để tiếp tục thử thêm.
+## Today's experiment
+- Got it set up, then ran a few small tasks through it.
+- The workflow feels clearer, and the agents seem to "know their jobs" better when orchestrated with tracked state.
+- Some parts still feel unfamiliar, but overall it seems worth experimenting with further.
 
 ## Next steps
-- Mò thêm các workflow phức tạp hơn (nhiều worker, review, CI).
-- Thử gắn vào các project cá nhân để xem có thực sự tiết kiệm thời gian không.
-- Nếu ổn thì có thể chuẩn hóa luôn thành quy trình làm việc mặc định.
+- Try more complex workflows (multiple workers, review, CI).
+- Hook it into personal projects to see if it actually saves time.
+- If it works out, I might standardize it as my default workflow.
 
-Tổng kết ngắn gọn: setup orchestration cho AI coding agent hôm nay khá đáng thử, và thời gian tới có lẽ sẽ còn nhiều thứ để làm và tinh chỉnh.
+Short version: today's orchestration setup for AI coding agents was well worth trying, and there's probably plenty more to build and fine-tune ahead.

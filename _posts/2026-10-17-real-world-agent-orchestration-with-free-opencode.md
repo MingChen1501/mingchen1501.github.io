@@ -2,66 +2,65 @@
 layout: post
 lang: en
 ref: agent-orchestration-opencode-free
-fallback_vi: true
 author: Ming Chen
 title: "Orchestration in Production: Blogging from the Beach with Free OpenCode"
 tags: [ai-agent]
 description: "Putting AI coding-agent orchestration to real use with free OpenCode: the orchestrator picks up the work, I just press merge — even from the beach."
 ---
 
->Đợt trước mình mới thử setup orchestration cho AI coding agent. Đợt này mình đem ra dùng thật, và có một chuyện mình không nghĩ tới: mình đang viết bài này từ bãi biển, chỉ bấm merge là xong.
+>Last time I just tried setting up orchestration for AI coding agents. This time I put it to real use — and something happened I didn't expect: I'm writing this post from the beach, and all I have to do is press merge.
 
-## Lần này không còn là "thử"
+## This time it's not a "trial" anymore
 
-- Đợt trước chỉ là setup rồi chạy vài tác vụ nhỏ cho biết. Đợt này mình đưa nó vào việc thật của chính site này: viết bài, sửa giao diện, dọn test.
-- Thay vì ngồi gõ từng prompt cho từng session, giờ mình mô tả việc một lần, rồi để hệ thống tự chia việc và tự chạy.
-- Và điều quan trọng nhất: mình không cần ngồi trước máy cả buổi nữa 😄
+- Last time was just setup plus a few small tasks to get a feel for it. This time I'm running it on real work for this very site: writing posts, fixing layouts, cleaning up tests.
+- Instead of typing a prompt into every session, I describe the work once and let the system split it up and run it.
+- And most importantly: I no longer have to sit at my desk all day 😄
 
-## Một orchestrator, vài worker
+## One orchestrator, a few workers
 
-- Kiến trúc chính vẫn là orchestrator + worker. Orchestrator là session "đầu não": nắm danh sách việc, biết việc nào đang chạy, việc nào kẹt, việc nào xong.
-- Worker là các session con, mỗi đứa ôm một việc: một issue, một lần sửa CI, một lần xử lý review comment.
-- Mình giữ worker pool nhỏ thôi: 2 worker chạy song song, và để dành 1 slot cho việc gấp. Mở nhiều hơn thì mình cũng chẳng kịp đọc, mà tài nguyên free thì có hạn.
+- The core architecture is still orchestrator + workers. The orchestrator is the "brain" session: it knows the task list, what's running, what's stuck, what's done.
+- Workers are child sessions, each owning one job: one issue, one CI fix, one round of review comments.
+- I keep the worker pool small: 2 workers running in parallel, with one slot reserved for urgent work. Opening more than that, I couldn't keep up with reading anyway — and free-tier resources are limited.
 
-## Cron đánh thức định kỳ
+## Cron wakes it up on schedule
 
-- Phần mình thích nhất: orchestrator được đánh thức định kỳ bằng cron. Mỗi lần thức dậy, nó tự xem queue còn việc gì, session nào đang chạy, session nào đã chết giữa đường.
-- Có việc mới thì nó tự spawn worker, tự giao task, tự theo dõi tới lúc có PR.
-- Nghĩa là mình không phải "ngồi canh". Giao việc xong là mình đi làm việc khác, hoặc đi chơi, hệ thống tự chạy tiếp.
+- My favorite part: the orchestrator gets woken up on a cron schedule. Each time it wakes, it checks what remains in the queue, which sessions are running, which died halfway.
+- New work comes in, it spawns a worker on its own, assigns the task, and tracks it until there's a PR.
+- Meaning I don't have to "stand watch". I hand off the work and go do something else — or go out — while the system keeps running.
 
-## Luồng issue -> PR -> reviewer -> merge
+## The issue -> PR -> reviewer -> merge flow
 
-- Luồng chuẩn mình dùng: mỗi việc là một issue -> worker tạo branch, code, chạy verify, mở PR -> có reviewer đọc -> mình là người cuối cùng bấm merge.
-- Chỗ mình giữ chặt nhất chính là bước cuối: merge vẫn phải là tay người. Orchestrator không được merge, agent cũng không. Đấy là ranh giới tin cậy của mình.
-- Reviewer thì mình phải thay. Reviewer native của công cụ bị hỏng, nên mình dùng luôn một session worker làm reviewer: nó đọc diff ở đầu PR, tự viết comment vào từng chỗ cần sửa, rồi báo ngược lại cho session đang làm.
-- Nói thật là reviewer bằng worker chưa "cứng" như mình kỳ vọng, nhưng nó vẫn bắt được mấy lỗi khiếm khuyết: thiếu meta description, tag không có page, sửa lan ra file ngoài phạm vi. Với mình thế là đủ để không tự bắn vào chân.
+- My standard flow: every job is an issue -> worker creates a branch, codes, runs verification, opens a PR -> a reviewer reads it -> I'm the last one to press merge.
+- The step I guard most strictly is the last one: merging is still done by a human hand. The orchestrator must not merge, and neither may an agent. That's my trust boundary.
+- I had to replace the reviewer. The tool's native reviewer was broken, so I use a worker session as the reviewer instead: it reads the diff at the top of the PR, writes comments on each spot that needs fixing, and reports back to the session doing the work.
+- Honestly, the worker-as-reviewer isn't as "solid" as I'd like, but it still catches real defects: missing meta descriptions, tags without pages, edits spilling outside the scope. That's enough for me not to shoot myself in the foot.
 
-## Model free và chuyện bị đổi model giữa chừng
+## Free models and getting switched mid-run
 
-- Mình chạy bằng model free, nên hết quota hay bị rate limit là bình thường, không phải ngoại lệ.
-- Hệ thống có cơ chế tự đổi sang model free khác khi model đang chạy bị limit. Session không chết, nó chỉ đổi "não" rồi chạy tiếp.
-- Mình thấy ổn: các model trả lời không đồng nhất hoàn toàn, nhưng mỗi worker ôm một việc nhỏ, task rõ ràng nên không lệch nhiều.
-- Đổi lại thì đừng mong nó nhanh như bản trả tiền. Chấp nhận chậm để không tốn tiền là cái deal của mình.
+- I run on free models, so hitting quota or rate limits is normal, not exceptional.
+- The system automatically switches to a different free model when the current one gets limited. The session doesn't die, it just swaps "brains" and keeps going.
+- That works fine for me: the models don't answer perfectly consistently, but each worker owns one small, clearly-defined job so it doesn't drift much.
+- In exchange, don't expect it to be as fast as the paid tier. Trading speed for zero cost is my deal.
 
-## Artifact và report là chỗ bàn giao
+## Artifacts and reports are where handoffs happen
 
-- Một chi tiết nhỏ nhưng cứu mình nhiều lần: worker không bàn giao bằng trí nhớ, mà bằng report và artifact.
-- Report có trạng thái rõ ràng: checkpoint, cần quyết định, kẹt, xong — nhìn vào là biết việc đang tới đâu, khỏi phải hỏi lại.
-- Mấy thứ không nằm trong PR — ghi chú, tài liệu nháp — được ghi ra thư mục artifact riêng, không nhét vào repo. Repo sạch, mình vẫn có cái để đọc.
+- One small detail that saved me many times: workers don't hand off through memory, but through reports and artifacts.
+- Reports have clear states: checkpoint, needs decision, stuck, done — one glance tells you where things stand, no need to ask again.
+- Things that don't belong in a PR — notes, draft documents — go into a separate artifact directory, never into the repo. The repo stays clean, and I still have something to read.
 
-## Cái được lớn nhất: bãi biển + cái điện thoại
+## The biggest win: the beach + a phone
 
-- Đây mới là phần mình muốn kể. Vì luồng việc đã rõ và bước cuối chỉ là merge, mình có thể rời khỏi bàn làm việc.
-- Ngồi ở bãi biển, mình mở điện thoại, xem orchestrator báo gì xong rồi, đọc PR, bấm merge. Việc trong queue vẫn được nhặt lên đều đều.
-- Mình không code từ điện thoại — mình chỉ duyệt kết quả. Khác biệt lớn đấy: không cần gõ phím, chỉ cần quyết định.
-- Cảm giác thật sự là "đi chơi mà việc vẫn chạy", chứ không phải "đi chơi mà trong đầu vẫn lo việc" 🏖️
+- This is the part I really want to tell. Because the flow is clear and the last step is just a merge, I can leave my desk.
+- Sitting on the beach, I open my phone, see what the orchestrator reports as done, read the PR, press merge. Work in the queue keeps getting picked up.
+- I don't code from the phone — I only review results. That's a big difference: no typing, just decisions.
+- It genuinely feels like "out playing while the work still moves", not "out playing while worrying about work" 🏖️
 
-## Nếu bạn định thử, mình nói trước vài điều
+## If you want to try it, a few warnings first
 
-- Rate limit của bản free là có thật. Sẽ có lúc bạn phải chờ, phải đổi model, có lúc cả buổi chỉ nhích được một đoạn ngắn.
-- Session hay đứng giữa đường. Nó không lỗi ầm ĩ, nó chỉ im. Bạn phải để ý và restart, chứ không phải cứ bấm chạy rồi đi ngủ là xong.
-- Bạn vẫn là người merge, vẫn là người quyết định. Orchestration không thay bạn ra quyết định, nó chỉ bớt việc tay chân cho bạn.
-- Điều quan trọng nhất: agent chạy bằng quyền người dùng của bạn. Nó đọc được file của bạn, chạy được lệnh của bạn, push được lên repo của bạn. Hãy nghĩ trước xem cho nó quyền gì, làm trong thư mục nào, và cái gì tuyệt đối không cho chạm vào.
-- Nếu mới bắt đầu, mình khuyên làm nhỏ thôi: một repo, một loại việc, một reviewer. Đừng mở hết cùng lúc.
+- Free-tier rate limits are real. There will be times you wait, times you switch models, times a whole session barely inches forward.
+- Sessions often die midway. They don't fail loudly, they just go quiet. You have to watch and restart them — don't just press run and go to sleep.
+- You're still the one who merges, still the one who decides. Orchestration doesn't decide for you, it just removes the manual labor.
+- Most importantly: the agent runs with your user privileges. It can read your files, run your commands, push to your repos. Think ahead about what permissions it gets, which directory it works in, and what it must absolutely never touch.
+- If you're just starting, my advice is to start small: one repo, one kind of task, one reviewer. Don't turn everything on at once.
 
-Tổng kết: đợt trước mình "thử", đợt này mình "áp dụng". Setup orchestration không biến AI thành kỹ sư tự động, nhưng nó làm được một thứ mình thích: mình rời khỏi bàn làm việc mà công việc vẫn nhích về phía trước — và mình vẫn là người bấm nút cuối.
+To sum up: last time I "tried" it, this time I "apply" it. Setting up orchestration doesn't turn AI into an autonomous engineer, but it does one thing I love: I can leave my desk while the work keeps inching forward — and I'm still the one pressing the final button.
