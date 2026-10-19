@@ -606,3 +606,37 @@ ul.post-toc__list {
   background-color: $background-color;
   font-size: $small-font-size;
 }
+
+// ---------------------------------------------------------------------------
+// Copy-code button (#126): `assets/js/copy-code.js` wraps each `pre > code`
+// in `.copy-code` and adds a localized button (without JS the markup is
+// unchanged, so there is no button to style). The wrapper — not the `pre` —
+// is the positioning context, so the button stays put while a long line
+// scrolls horizontally underneath it. The button keeps the 44px minimum
+// touch target; keyboard focus stays visible through the global
+// `button:focus-visible` rule above.
+// ---------------------------------------------------------------------------
+.copy-code {
+  position: relative;
+}
+
+.copy-code__button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid $border-color-01;
+  border-radius: 6px;
+  background-color: $background-color;
+  color: $text-color;
+  font-size: $small-font-size;
+  line-height: 1.4;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $brand-color-dark;
+    color: $brand-color-dark;
+  }
+}
