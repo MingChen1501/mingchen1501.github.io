@@ -117,6 +117,15 @@ missing on the live index page for up to four hours after the deploy (#61).
   old stylesheet under the unversioned URL still gets the sidebar). See the README
   "Asset cache versioning (#61)" section for the full rationale.
 
+## Performance notes (#86)
+
+- Cache-buster: `assets/css/style.css?v={{ site.time | date: '%s' }}` (from #61); GitHub Pages serves `Cache-Control: max-age=600` for HTML, longer for assets; do not change without verifying Lighthouse.
+- New images must pass script/check-images (≤500KB/file, ≤6MB total). Optimize with imagemin/squoosh before commit.
+- Content images are lazy-loaded at runtime by `assets/js/lazy-load.js` (#86): the
+  first image of a content block stays `loading="eager"` (it can be the LCP
+  element), the following ones become `loading="lazy"`. The script is a
+  fixed-URL asset, so it carries the same `?v=` build token as the stylesheet.
+
 ## Safety
 
 - Do not hand-edit build-generated paths: `_site/`, `.jekyll-cache/`,

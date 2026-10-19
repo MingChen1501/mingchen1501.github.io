@@ -2,3 +2,12 @@
   Use this to insert markup before the closing body tag.
   For example, scripts that need to be executed after the document has finished loading.
 {% endcomment %}
+
+{%- comment -%}
+  Lazy-loading of the content images (#86). The script is a fixed-URL asset, so
+  it carries the same build token as the stylesheet (see AGENTS.md, "Asset
+  cache versioning"): a warm browser must never pair this HTML with an older
+  copy of the script.
+{%- endcomment -%}
+{%- assign asset_version = site.time | date: '%s' -%}
+<script src="/assets/js/lazy-load.js?v={{ asset_version }}" defer></script>
