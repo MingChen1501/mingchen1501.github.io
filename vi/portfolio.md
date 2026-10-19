@@ -7,7 +7,7 @@ permalink: /vi/portfolio/
 description: "Hồ sơ của Trần Công Minh, Backend Engineer: hệ phân tán, SRE, Kubernetes/GitOps và GenAI ứng dụng."
 ---
 
-# Trần Công Minh
+## Trần Công Minh
 
 Backend Engineer
 

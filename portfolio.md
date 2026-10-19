@@ -7,7 +7,7 @@ permalink: /portfolio/
 description: "Resume of Tran Cong Minh, Backend Engineer: distributed systems, SRE, Kubernetes/GitOps and applied GenAI."
 ---
 
-# Tran Cong Minh
+## Tran Cong Minh
 
 Backend Engineer
 
