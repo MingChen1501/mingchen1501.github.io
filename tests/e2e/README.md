@@ -64,6 +64,29 @@ and every page showing one scrolled ~40px sideways at phone widths.
 - `test_img_rule_keeps_padding_inside_max_width` is a static backstop for the
   `_sass/minima/_base.scss` `img` rule that needs neither Ruby nor a browser.
 
+## Code and table overflow (`test_code_table_overflow.py`)
+
+Guard for #151 (follow-up of the #112 reader-UX audit). Wide code blocks and
+Markdown tables must scroll *inside* their own container at real-device
+widths instead of pushing the page sideways.
+
+- Static (no Ruby, no browser): the site-wide `pre` rule keeps
+  `overflow-x: auto` and the phone-width `table` rule keeps `display: block`
+  + `overflow-x: auto` in `_sass/minima/_base.scss`.
+- Browser (needs Ruby + a browser): a fixture with a wide fenced block, a
+  rouge line-number block (`figure.highlight` + `table.rouge-table`, as
+  produced by `{% highlight ... linenos %}`) and a wide Markdown table is
+  injected into a real built page with the real copy-code script running.
+  At 360px and 320px the document keeps
+  `scrollWidth <= innerWidth`, every element wider than the viewport sits
+  inside an active scroll container, each wide block really scrolls
+  (`scrollWidth > clientWidth`, so content is reachable, not clipped), and
+  the copy buttons keep their 44px target without adding page overflow.
+- Verification for #151 found no page-level overflow (including the
+  unpublished code-heavy 2016 post rendered with `--unpublished`), so there
+  is deliberately no CSS change: desktop rendering is untouched and this
+  guard pins the existing containment against future regressions.
+
 ## Shared fixtures (#56)
 
 `tests/e2e/conftest.py` owns the plumbing every module reuses, so a suite run
