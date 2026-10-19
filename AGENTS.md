@@ -165,6 +165,14 @@ missing on the live index page for up to four hours after the deploy (#61).
   confirmation first.
 - `AGENTS.md` and `.opencode/` are `exclude`d from the build (see `_config.yml`), so the agent guide and kit never leak to the public site. Leak check: a build must leave neither `AGENTS.md` nor `.opencode/` in `_site/`.
 
+## Language rule (#110)
+
+All public repository artifacts MUST be English: PR titles/bodies, commit
+messages (subject + body), issue titles/bodies, GitHub review comments, and
+code/docs/config comments added to the repo. Vietnamese is allowed only for
+internal AO reporting (worker reports, orchestrator/owner chat, internal
+analysis files). Do not rewrite historical artifacts.
+
 ## Risk labels and merge policy
 
 Every issue and PR carries exactly one risk label: `risk-low`, `risk-medium`,
