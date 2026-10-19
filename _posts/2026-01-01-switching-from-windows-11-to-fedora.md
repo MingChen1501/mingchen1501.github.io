@@ -2,31 +2,30 @@
 layout: post
 lang: en
 ref: migrate-windows-11-to-fedora
-fallback_vi: true
 author: Ming Chen
 title: "Switching from Windows 11 to Fedora"
 tags: [linux-tooling]
 description: "Moving my old laptop from glitchy Windows 11 drivers to Fedora Linux: installing it, tuning the touchpad and typing Vietnamese with Bamboo."
 ---
 
->Windows 11 lỗi quá, chuyển sang Linux cho con máy ở nhà thôi ![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg)
+>Windows 11 is too buggy — time to switch the home machine to Linux ![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg)
 
-## Hiện trạng
-- Windows 11 trên con laptop ghẻ thời sinh viên của mình đang khá lỗi: lỗi touchpad, lỗi driver, ...
-- Mình khá lười fix mấy lỗi này, càng vá càng lỗi, fix driver được 3 hôm, hôm sau lại lỗi, akay :v
-- Đợt này cũng không có dùng nhiều tác vụ trên con laptop này nên cài thử  1 distro linux xem dùng như nào hehe
+## The situation
+- Windows 11 on my old student-days laptop is pretty broken: touchpad glitches, driver issues, ...
+- I'm too lazy to fix these bugs — the more I patch, the worse it gets. Fix a driver, three days later it breaks again, ugh :v
+- I don't have many heavy tasks on this laptop lately, so why not try a Linux distro for fun hehe
 
-## Tìm hiểu
-- lướt 1 vòng internet thấy anh em suggest đủ mọi loại distro với đủ nhu cầu, cấu hình abcxyz @@.
-- check thử thì thấy dual boot cả Win cả Linux, cơ mà thấy anh em bảo nếu lỗi thì bị mất data gì đó nên thôi xóa hẳn Win đi luôn :v
-- Ơ mà hình như phải cần USB để cài boot lên à. Chết, có mấy cái USB thừa hôm trước copy nhạc mang đi cho ông anh hết rồi, mò mãi cũng có cái USB thừa, cắm thử thấy dung lượng 4GB
-- Down thử ISO Ubuntu về thấy nặng quá (~5GB gì đó). Thôi, kiếm cái khác zị
-- Òa thấy cái Fedora anh em suggest cũng oke phết, không hardcore lắm. Tải thử về cài lên USB coi
-## Cài đặt
-- Mở Bios con dell cổ lên, cài mãi theo mấy anh youtube cũng cài xong, nhìn ổn áp phết
+## Research
+- One lap around the internet and everyone suggests a different distro for every need and spec @@.
+- I checked dual-booting Win + Linux, but people say a failure can wipe your data, so I just nuked Windows entirely :v
+- Oh wait, looks like I need a USB stick to make a boot drive. Shoot, I gave away all my spare USBs with music for my brother earlier — dug around forever and found one spare, plugged it in, 4GB capacity
+- Downloaded the Ubuntu ISO and it's way too heavy (~5GB or so). Never mind, looking for something else
+- Oh, Fedora looks pretty decent from what people suggest, not too hardcore. Downloaded it and flashed it onto the USB
+## Installation
+- Opened the BIOS on this ancient Dell, followed some YouTube tutorials and finally got it installed — looks quite slick
 ![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg)
-- Mò 1 lúc thấy touchpad bị nhanh, google 1 lúc thì thấy post này làm theo cũng fix được 1 tí https://ubuntuhandbook.org/index.php/2023/05/adjust-touchpad-scrolling-ubuntu/
-- Cay 1 cái là GNOME setting nó chưa cho setting scroll touchpad 2 ngón tay, thôi fix đâu dùng tạm.
-- ngồi mò thêm cái Gõ tiếng việt mãi cũng oke, deps gì gì tên là bamboo ấy, tên nghe cũng Vietnamese giống bamboo airways phết chứ
-## Tổng kết
-- Được ngày nghỉ, nghịch nghịch cũng chình cho con laptop đời cũ dùng mượt mượt lại tí. Hiện tại mấy tác vụ kiểu lướt lướt, viết linh tinh, mở trình duyệt dùng khá oke, mỗi tội không cài được vài soft bên win như rekordbox mix DJ (dùng tạm app trên điện thoại vậy)
+- Poked around and found the touchpad too fast; googled a bit and this post helped me fix it partway https://ubuntuhandbook.org/index.php/2023/05/adjust-touchpad-scrolling-ubuntu/
+- One annoyance: GNOME Settings still doesn't let you configure two-finger touchpad scrolling, so I'll live with the workaround for now.
+- Spent a while fiddling with Vietnamese input and finally got it working — some IME called Bamboo, a name that sounds Vietnamese just like Bamboo Airways hehe
+## Wrap-up
+- A day off well spent tinkering, making the old laptop smooth again. Everyday stuff like browsing, jotting notes and opening a browser works nicely now — the only loss is a few Windows-only apps like Rekordbox for DJ mixing (using the phone app for now)

@@ -1,15 +1,18 @@
-"""Bilingual guards, phase 1 — infrastructure (#93, PR A).
+"""Bilingual guards, phase 2 — full translations (#97, PR B).
 
 English default at `/` (`_posts/`), Vietnamese under `/vi/` (the `site.vi_posts`
 collection plus `vi/*.md` pages). The two sides are linked by a shared `ref`.
 
-Phase 1 ships the structure with English *stubs*: an English post/page whose
-translation is still pending carries `fallback_vi: true` and temporarily reuses
-the Vietnamese body under a banner (`_includes/vi-fallback-notice.html`).
-PR B replaces the stubs with real translations; PR C adds the SEO surface
-(sitemap alternates, bilingual `llms.txt`, `/vi/feed.xml`). There is no
-`translation_pending` marker — a missing English side is a fallback, never a
-silent gap.
+Phase 1 (PR A) shipped the structure with English *stubs*: an English post/page
+whose translation was still pending carried `fallback_vi: true` and temporarily
+reused the Vietnamese body under a banner
+(`_includes/vi-fallback-notice.html`). Phase 2 replaces every stub with a real
+translation, so no content source may carry `fallback_vi: true` anymore and no
+built page may render the banner. The layout/include plumbing stays wired (it
+degrades to nothing without the flag) for any future untranslated post; PR C
+adds the SEO surface (sitemap alternates, bilingual `llms.txt`, `/vi/feed.xml`).
+There is no `translation_pending` marker — every English side is translated,
+never a silent gap.
 
 Static guards (no Ruby) cover the source contract; build guards (need Ruby, no
 browser) cover the emitted site.
@@ -77,8 +80,9 @@ def _front_matter(path):
 
 
 def _body(path):
-    match = FRONT_MATTER_RE.match(_read(path))
-    return match.group(2) if match else ""
+    text = _read(path)
+    match = FRONT_MATTER_RE.match(text)
+    return text[match.end():] if match else text
 
 
 def _value(block, key):
@@ -246,8 +250,8 @@ def test_every_published_post_declares_lang_ref_and_pillar_tags():
 
 @pytest.mark.static
 def test_no_translation_pending_marker_exists():
-    """The owner dropped `translation_pending`: a missing English side is a
-    `fallback_vi` stub (PR A), a real translation (PR B) — never a silent gap."""
+    """The owner dropped `translation_pending`: every English side ships a real
+    translation (PR B) — never a silent gap."""
     offenders = []
     for directory, _, in _content_sources():
         if not directory.is_dir():
@@ -256,21 +260,43 @@ def test_no_translation_pending_marker_exists():
             if "translation_pending" in _front_matter(path):
                 offenders.append(str(path.relative_to(REPO_ROOT)))
     assert not offenders, (
-        "`translation_pending` is retired — use `fallback_vi: true` + the "
-        "Vietnamese body instead: " + ", ".join(offenders)
+        "`translation_pending` is retired — every English side ships a real "
+        "translation: " + ", ".join(offenders)
     )
 
 
 @pytest.mark.static
-def test_every_post_ref_has_vietnamese_and_english_or_fallback():
-    """Phase 1 pairing rule: every post ref resolves to Vietnamese, and to
-    English that is either translated or an explicit `fallback_vi` stub."""
+def test_no_fallback_vi_stubs_remain():
+    """Phase 2 ships real translations: no content source may carry
+    `fallback_vi: true` anymore (posts or pages, either language)."""
+    offenders = []
+    for directory, _ in _content_sources():
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.glob("*.md")):
+            if _value(_front_matter(path), "fallback_vi") == "true":
+                offenders.append(str(path.relative_to(REPO_ROOT)))
+    assert not offenders, (
+        "`fallback_vi` stubs are retired — translate the English side "
+        "instead: " + ", ".join(offenders)
+    )
+
+
+@pytest.mark.static
+def test_every_post_ref_has_vietnamese_and_real_english_translation():
+    """Phase 2 pairing rule: every post ref resolves to Vietnamese and to a
+    real English translation — flagged stubs are gone, and an English body
+    identical to the Vietnamese one fails."""
     en_refs = {}
     vi_refs = {}
     for path in sorted(POSTS_DIR.glob("*.md")):
         front_matter = _front_matter(path)
         if _value(front_matter, "published") == "false":
             continue
+        assert _value(front_matter, "fallback_vi") != "true", (
+            f"{path.name} still carries `fallback_vi: true` — ship the real "
+            "translation (PR B)"
+        )
         en_refs[_value(front_matter, "ref")] = (path, front_matter)
     for path in sorted(VI_POSTS_DIR.glob("*.md")):
         front_matter = _front_matter(path)
@@ -283,11 +309,9 @@ def test_every_post_ref_has_vietnamese_and_english_or_fallback():
         assert ref in en_refs, f"ref `{ref}` has no English file (1 post = 2 files)"
         en_path, en_fm = en_refs[ref]
         vi_path, _ = vi_refs[ref]
-        if _value(en_fm, "fallback_vi") == "true":
-            continue
         assert _normalized_body(en_path) != _normalized_body(vi_path), (
-            f"{en_path.name} reuses the Vietnamese body without "
-            "`fallback_vi: true` — flag it (PR A) or translate it (PR B)"
+            f"{en_path.name} reuses the Vietnamese body without a real "
+            "translation — translate it (PR B)"
         )
 
 
@@ -485,35 +509,26 @@ def test_hreflang_alternates_resolve_to_built_files(built_site):
     assert checked > 10, "the hreflang guard measured almost nothing"
 
 
-def test_fallback_pages_show_the_banner_and_link_vietnamese(built_site):
-    """Every `fallback_vi` stub renders the notice with a working VI link."""
+def test_no_built_page_renders_the_fallback_banner(built_site):
+    """Phase 2 ships real translations: the fallback banner must appear on no
+    built page (posts, pages or homes, either language)."""
     checked = 0
-    for path, front_matter, lang in _iter_content_docs():
-        if _value(front_matter, "fallback_vi") != "true":
-            continue
-        assert lang == "en", f"fallback stubs must be English: {path}"
+    for path, _, _ in _iter_content_docs():
         built = _built_for_source(built_site, path)
-        assert built is not None and built.is_file()
+        if built is None or not built.is_file():
+            continue
         html = built.read_text(encoding="utf-8")
-        match = re.search(
-            r'<p class="translation-notice"[^>]*>.*?<a href="([^"]+)"',
-            html,
-            re.S,
-        )
-        assert match, f"{built} has no fallback banner"
-        target = _file_for(built_site, match.group(1))
-        assert target.is_file(), (
-            f"the fallback banner on {built} points at {match.group(1)}, "
-            "which is not in the build"
-        )
-        assert "/vi/" in match.group(1), (
-            f"the fallback banner on {built} must link the Vietnamese version"
+        assert "translation-notice" not in html, (
+            f"{built} renders the fallback banner, but phase 2 has no stubs"
         )
         checked += 1
-    assert checked >= 6, (
-        "expected the English post stubs to carry the banner, "
-        f"found {checked}"
-    )
+    for rel in ("index.html", "vi/index.html"):
+        html = (built_site / rel).read_text(encoding="utf-8")
+        assert "translation-notice" not in html, (
+            f"/{rel} renders the fallback banner, but phase 2 has no stubs"
+        )
+        checked += 1
+    assert checked > 20, "the banner-absence guard measured almost nothing"
 
 
 def test_switcher_points_to_a_real_counterpart(built_site):
@@ -560,8 +575,8 @@ def test_old_vietnamese_urls_emit_redirects_to_vi(built_site):
 
 
 def test_canonicals_are_self_referencing(built_site):
-    for url in ["/", "/vi/", "/about/", "/vi/about/", "/tags/ai-agent/",
-                "/vi/tags/ai-agent/"]:
+    for url in ["/", "/vi/", "/about/", "/vi/about/", "/portfolio/",
+                "/vi/portfolio/", "/tags/ai-agent/", "/vi/tags/ai-agent/"]:
         built = _file_for(built_site, url)
         assert built.is_file(), f"{url} is missing from the build"
         html = built.read_text(encoding="utf-8")

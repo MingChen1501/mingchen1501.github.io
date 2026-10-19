@@ -28,9 +28,10 @@ deployed with GitHub Pages from the `master` branch.
 - Posts are bilingual since #93: **English default** in `_posts/` (served at
   `/`), **Vietnamese** in the `site.vi_posts` collection (`_vi_posts/`, served
   at `/vi/...`). Every post carries `lang:` (`en`/`vi`) and a shared `ref:`
-  linking the two translations (drives the header switcher + hreflang); a post
-  with no translation yet sets `fallback_vi: true` and reuses the Vietnamese
-  body under a banner (no `translation_pending` marker). English slugs must
+  linking the two translations (drives the header switcher + hreflang); every
+  post ships a real translation in both languages since #97 (no
+  `translation_pending` marker, no `fallback_vi` stubs — the layout/include
+  banner plumbing stays wired for any future untranslated post). English slugs must
   never reuse old Vietnamese slugs (redirect stubs would collide).
 - Posts live in `_posts/` (EN) / `_vi_posts/` (VI) with filenames like
   `YYYY-MM-DD-slug-ascii.md`, body content in that file's language, slug in

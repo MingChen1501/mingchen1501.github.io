@@ -524,12 +524,14 @@ Full history can be fetched later with `git fetch --unshallow`.
 The blog is bilingual since #93: **English is the default** (`/`, `_posts/`),
 **Vietnamese is the second option** (`/vi/`, the `site.vi_posts` collection).
 Every post ships in both languages, linked by a shared `ref` in front matter
-(the switcher and the hreflang alternates resolve through it); a post with no
-translation yet sets `fallback_vi: true` and reuses the Vietnamese body under a
-banner (`tests/e2e/test_i18n.py` fails otherwise). English-only going forward
+(the switcher and the hreflang alternates resolve through it); every post ships
+a real translation in both languages since #97
+(`tests/e2e/test_i18n.py` fails otherwise — no `fallback_vi` stubs remain, the
+layout/include banner plumbing stays wired for any future untranslated post).
+English-only going forward
 is acceptable; Vietnamese-only is not. Old Vietnamese URLs keep working via
 `redirect_from` stubs to `/vi/...`, so a new English slug must never reuse an
-old Vietnamese slug. Phasing: PR A ships the infrastructure with English stubs,
+old Vietnamese slug. Phasing: PR A shipped the infrastructure with English stubs,
 PR B the full translations, PR C the per-language SEO surface (sitemap/llms/feed).
 
 New posts must pick tags from the 4 content pillars only

@@ -2,146 +2,145 @@
 layout: post
 lang: en
 ref: gioi-thieu-ve-internet
-fallback_vi: true
 author: Ming Chen
 title: "Explaining the Internet"
 tags: [backend-production]
 description: "What the Internet is and how it works — the last mile, data centers and the backbone — plus applications like the web and email."
 ---
 
->Internet là mạng máy tính phổ biến nhất thế giới. Nó bắt đầu như một dự án nghiên cứu học thuật vào năm 1969. Và trở thành một mạng lưới thương mại toàn cầu vào những năm 1990. ![Chân dung Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Ảnh: chân dung chính thức, phạm vi công cộng")
+>The Internet is the most popular computer network in the world. It started as an academic research project in 1969 and grew into a global commercial network in the 1990s. ![Portrait of Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Photo: official portrait, public domain")
 
-## Internet là cái gì ?
+## What is the Internet?
 
-Internet là mạng máy tính phổ biến nhất thế giới. Nó bắt đầu như một dự án nghiên cứu học thuật vào năm 1969. Và trở thành một mạng lưới thương mại toàn cầu vào những năm 1990. Ngày nay nó được sử dụng bởi hơn 4,9 tỷ người trên thế giới
+The Internet is the most popular computer network in the world. It started as an academic research project in 1969 and grew into a global commercial network in the 1990s. Today it is used by more than 4.9 billion people around the world.
 
-Internet đáng chú ý vì tính phi tập trung của nó. Không ai sở hữu internet hoặc kiểm soát những người có thể kết nối với nó. Thay vào đó, hàng ngàn tổ chức khác nhau vận hành mạng lưới của riêng họ và đàm phán các thỏa thuận kết nối tự nguyện.
+The Internet is remarkable for its decentralization. Nobody owns the Internet or controls who can connect to it. Instead, thousands of different organizations operate their own networks and negotiate voluntary interconnection agreements.
 
-Hầu hết mọi người truy cập nội dung internet bằng trình duyệt web. Thật vậy, web đã trở nên phổ biến đến mức nhiều người coi internet và web là đồng nghĩa một cách sai lầm. nhưng trên thực tế, web chỉ là một trong nhiều ứng dụng của internet. Các ứng dụng internet phổ biến khác bao gồm email và BitTorrent.
+Most people access Internet content with a web browser. Indeed, the web has become so popular that many people wrongly treat the Internet and the web as synonyms. But in reality the web is just one of many Internet applications. Other popular Internet applications include email and BitTorrent.
 
-## Internet ở đâu ?
+## Where is the Internet?
 
-Internet có 3 phần cơ bản:
+The Internet has 3 basic parts:
 
-1) đoạn cuối của kết nối (the last mile) là một phần của internet kết nối các hộ gia đình và doanh nghiệp nhỏ với internet. Hiện tại, khoảng 60% kết nối internet dân cư ở Hoa Kỳ được cung cấp bởi các công ty truyền hình cáp như Comcast và Time Warner. Trong đó 40% còn lại, một phần ngày càng tăng sử dụng cáp quang mới. Hầu hết trong số đó là một phần của chương trình FiOS của Verizon hoặc U-Verse của AT&T. cuối cùng một số lượng đáng kể nhưng đang bị thu hẹp lại sử dụng dịch vụ DSL đã lỗi thời được cung cấp qua cáp điện thoại
-đoạn cuối của kết nối (the last mile) cũng bao gồm các tòa tháp cho phép mọi người truy cập internet bằng điện thoại di động của họ. Dịch vụ internet không dây chiếm một phần lớn và ngày càng tăng trong tất cả việc sử dụng internet
-![Sơ đồ đoạn cuối kết nối từ nhà bạn đến nhà mạng](/assets/img/2022-12-25-gioi-thieu-ve-internet/last-mile.jpg)
+1) The "last mile" is the part of the Internet that connects homes and small businesses to the Internet. Right now, about 60% of residential Internet connections in the US are provided by cable TV companies like Comcast and Time Warner. Of the remaining 40%, a growing share uses new fiber-optic cable — most of it part of Verizon's FiOS program or AT&T's U-Verse. Finally, a significant but shrinking number still uses outdated DSL service delivered over telephone lines.
+The last mile also includes the towers that let people access the Internet from their mobile phones. Wireless Internet service accounts for a large and growing share of all Internet use.
+![Diagram of the last-mile connection from your home to the carrier](/assets/img/2022-12-25-gioi-thieu-ve-internet/last-mile.jpg)
 
-2) trung tâm dữ liệu (Data center) là các phòng chứa đầy máy chủ lưu trữ dữ liệu người dùng và lưu trữ các ứng dụng và nội dung trực tuyến. Một số thuộc sở hữu của các công ty lớn như Google và Meta. Những nơi khác là cơ sở thương mại cung cấp dịch vụ cho nhiều trang web nhỏ hơn. Các trung tâm dữ liệu có kết nối internet rất nhanh, cho phép chúng phục vụ đồng thời nhiều người dùng. Các trung tâm dữ liệu được đặt ở bất cứ đâu trên thế giới nhưng chúng thường đưuọc đặt ở những vùng xa xôi, nơ có giá đất và điện rẻ. Ví dụ: google, Meta, MS đều đã xây dựng các trung tâm dữ liệu rộng lớn ở Lowa.
-![Minh họa dãy tủ máy chủ trong trung tâm dữ liệu](/assets/img/2022-12-25-gioi-thieu-ve-internet/data-center.jpg)
+2) Data centers are rooms full of servers that store user data and host online applications and content. Some are owned by large companies like Google and Meta. Others are commercial facilities serving many smaller websites. Data centers have very fast Internet connections, so they can serve many users at the same time. Data centers can sit anywhere in the world, but they are often placed in remote regions where land and electricity are cheap. For example, Google, Meta and Microsoft have all built sprawling data centers in Iowa.
+![Illustration of server racks inside a data center](/assets/img/2022-12-25-gioi-thieu-ve-internet/data-center.jpg)
 
-3)đường trục Internet bao gồm các mạng đường dài, chủ yếu trên cáp quang, mang dữ liệu giữa các trung tâm dữ liệu và người tiêu dùng. Thị trường xương sống có tính cạnh tranh cao. Các nhà cung cấp đường trục thường kết nối các mạng của họ với nhau tại các điểm trao đổi internet, thường nằm ở các thành phố lớn. Thiết lập sự hiện diện tại các IEP giúp các nhà cung cấp dịch vụ xương sống cải thiện kết nối của họ với những người khác dễ dàng hơn nhiều.
-![Sơ đồ đường trục cáp quang nối các trung tâm dữ liệu qua điểm trao đổi](/assets/img/2022-12-25-gioi-thieu-ve-internet/duong-truc-backbone.jpg)
+3) The Internet backbone consists of long-distance networks, mostly over fiber-optic cable, carrying data between data centers and consumers. The backbone market is highly competitive. Backbone providers typically connect their networks at Internet exchange points, usually located in large cities. Establishing a presence at an IXP makes it much easier for backbone providers to improve their connectivity with one another.
+![Diagram of the fiber backbone connecting data centers through exchange points](/assets/img/2022-12-25-gioi-thieu-ve-internet/duong-truc-backbone.jpg)
 
-## Ai đã tạo ra Internet ?
+## Who created the Internet?
 
-Internet bắt đầu với tên ARPANET, một mạng nghiên cứu học thuật được tài trở bới cơ quan dự án nghiên cứu tiên tiến của quân đội (ARPA, nay là DARPA). Dự án được dẫn dắt bởi Bob Taylor, một quản trị viên ARPA và mạng được xây dựng bởi công ty tư vấn bởi Bolt, Beranek và Newman. Nó bắt đầu hoạt động vào năm 1969.
+The Internet began as ARPANET, an academic research network funded by the military's Advanced Research Projects Agency (ARPA, now DARPA). The project was led by Bob Taylor, an ARPA administrator, and the network was built by the consulting firm Bolt, Beranek and Newman. It went live in 1969.
 
-Năm 1973, các kỹ sư phần mềm Vint Cerf và Bob Kahn bắt đầu làm việc trên thế hệ tiêu chuẩn mạng tiếp theo cho ARPANET. Các tiêu chuẩn này được gọi là TCP/IP, đã trở thành nề tảng của Internet hiện đại, ARPANET chuyển sang sử dụng TCP/IP vào ngày 1 tháng 1 năm 1983.
-![Vint Cerf và Bob Kahn nhận Huân chương Tự do](/assets/img/2022-12-25-gioi-thieu-ve-internet/vint-cerf-bob-kahn.jpg "Ảnh: Nhà Trắng, phạm vi công cộng")
-Trong những năm 1980, nguồn tài trợ cho internet đã chuyển từ quân đội sang quỹ khoa học quốc gia (NFS). NFS đã tài trợ cho các mạng đường dài đóng vai trò là xương sống của internet từ năm 1981 đến năm 1994. Năm 1994, chính quyền Clinton đã chuyển quyền kiểm soát xương sống của internet cho tư nhân. Nó đã được tư nhân vận hành và tài trợ kể từ đó
+In 1973, software engineers Vint Cerf and Bob Kahn started working on the next generation of networking standards for ARPANET. These standards, called TCP/IP, became the foundation of the modern Internet; ARPANET switched to TCP/IP on January 1, 1983.
+![Vint Cerf and Bob Kahn receiving the Medal of Freedom](/assets/img/2022-12-25-gioi-thieu-ve-internet/vint-cerf-bob-kahn.jpg "Photo: White House, public domain")
+In the 1980s, funding for the Internet shifted from the military to the National Science Foundation (NSF). The NSF funded the long-distance networks that served as the Internet's backbone from 1981 to 1994. In 1994, the Clinton administration handed control of the Internet backbone to the private sector. It has been privately operated and funded ever since.
 
-## Al Gore (Phó tổng thứ thứ 45 của Hoa kỳ) đã phát minh ra Internet ?
+## Did Al Gore (the 45th US Vice President) invent the Internet?
 
-Cựu phó tổng thống AI Gore thường được trích dẫn là đã tuyên bố có công trong việc phát minh ra Internet. Nhưng điều ông thực sự đã nói trong một cuộc phỏng vấn của CNN năm 1999 là “Tôi đã chủ động tạo ra Internet.” Gỏe đã bị chế giễu rộng rãi vì tuyên bố này. Những những người đã phát minh ra internet, các nhà thiết kế TCP/IP Bob Kahn và Vint Cè, đã viết để bảo vệ Gỏe vào năm 2000. Họ lập luận rằng Gỏe là “nhà lãnh đạo chính trị đầu tiên nhận ra tầm quan trọng của internet và thúc đẩy cũng như hỗ trợ sự phát triển của nó.”
-![Chân dung Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Ảnh: chân dung chính thức, phạm vi công cộng")
-“từ những năm 1970 nghị sĩ Gore đã thúc đẩy ý tưởng về viễn thông tốc độ cao,” cặp đôi này đã viết. “Với tư cách là thượng nghị sĩ vào những năm 1980, Gỏe đã thúc giục các cơ quan chính phủ hợp nhất những gì vào thời điểm đó là hàng chục mạng khác nhau và không được kết nồi thành một ‘mạng liên cơ quan’”. Một trong những phương tiện chính là để phổ biến internet ra ngoài lĩnh vực khoa học máy tính.
+Former Vice President Al Gore is often quoted as claiming credit for inventing the Internet. But what he actually said in a 1999 CNN interview was "I took the initiative in creating the Internet." Gore was widely mocked for this claim. But the people who invented the Internet — TCP/IP designers Bob Kahn and Vint Cerf — wrote in his defense in 2000. They argued that Gore was "the first political leader to recognize the importance of the Internet and to promote and support its development."
+![Portrait of Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Photo: official portrait, public domain")
+"As far back as the 1970s Congressman Gore promoted the idea of high-speed telecommunications," the pair wrote. "As a Senator in the 1980s, Gore urged government agencies to consolidate what were then dozens of different and unconnected networks into an 'inter-agency network'." One of the main vehicles was to spread the Internet beyond the field of computer science.
 
-## Ai điều hành internet ?
+## Who runs the Internet?
 
-Không ai điều hành Internet. Nó được tổ chức như một mạng lưới phi tập trung của các mạng lưới. hàng nghìn công ty, trường học, chính phủ và các thực thể khác vận hành mạng của riêng họ và trao đổi lưu lượng với nhau dựa trên các thỏa thuận kết nối tự nguyện.
-Các tiêu chuẩn kỹ thuật dùng chung giúp Internet hoạt động được quản lý bởi một tổ chức có tên là lực lượng đặc nhiệm kỹ thuật internent (Internet engineering task force - IETF). IETF là một tổ chức mở; bất kỳ ai cũng được tự do tham dự các cuộc họp, đề xuất các tiêu chuẩn mới và đề xuất các thay đổi đối với các tiêu chuẩn hiện có. Không ai bắt buộc phải áp dụng các tiểu chuẩn được IETF xác nhận, nhưng quy trình ra quyết định dựa trên sự đồng thuận của IETF giúp đảm bảo rằng các khuyến nghị của nó thường được cộng đồng internet chấp nhận.
-![Minh họa cách IETF xây dựng tiêu chuẩn mở](/assets/img/2022-12-25-gioi-thieu-ve-internet/ietf-tieu-chuan.jpg)
-Tập đoàn cấp số và tên cho Internet (The Internet Corporation for Assigned Names and Numbers - ICANN) đôi khi được mô tả là chịu trách nhiểm quản trị internet. Đúng như tên gọi, ICANN chịu trách nhiệm phân phối tên miền (như mingchen.id.vn) và địa chỉ IP. Nhưng ICANN không kiểm soát ai có thể kết nối với internet hoặc loại thông tin nào có thể được gửi qua internet.
-![Minh họa vai trò điều phối tên miền và địa chỉ IP của ICANN](/assets/img/2022-12-25-gioi-thieu-ve-internet/icann-ten-mien-ip.jpg)
+Nobody runs the Internet. It is organized as a decentralized network of networks. Thousands of companies, schools, governments and other entities operate their own networks and exchange traffic with one another based on voluntary interconnection agreements.
+The shared technical standards that make the Internet work are managed by an organization called the Internet Engineering Task Force (IETF). The IETF is an open organization; anyone is free to attend meetings, propose new standards and suggest changes to existing ones. Nobody is forced to adopt IETF-endorsed standards, but the IETF's consensus-based decision process helps ensure its recommendations are usually accepted by the Internet community.
+![Illustration of how the IETF builds open standards](/assets/img/2022-12-25-gioi-thieu-ve-internet/ietf-tieu-chuan.jpg)
+The Internet Corporation for Assigned Names and Numbers (ICANN) is sometimes described as responsible for Internet governance. As its name suggests, ICANN is responsible for distributing domain names (like mingchen.id.vn) and IP addresses. But ICANN does not control who can connect to the Internet or what kind of information may be sent over it.
+![Illustration of ICANN's role coordinating domain names and IP addresses](/assets/img/2022-12-25-gioi-thieu-ve-internet/icann-ten-mien-ip.jpg)
 
-## Địa chỉ IP (IP address) là gì ?
+## What is an IP address?
 
-Địa chỉ giao thức internet là những số mà máy tính sử dụng để nhận dạng nhau trên internet. Ví dụ: địa chỉ IP của vox.com là 216.146.46.10. bộ phận ICANN được gọi là cơ quan cấp số được gán internet chịu trách nhiệm phân phối địa chỉ IP để đảm bảo rằng hai tổ chức khác nhau không sử dụng cùng một địa chỉ.
-![Minh họa cách xem địa chỉ IP trên máy tính](/assets/img/2022-12-25-gioi-thieu-ve-internet/dia-chi-ip.jpg)
+Internet Protocol addresses are the numbers computers use to identify one another on the Internet. For example, the IP address of vox.com is 216.146.46.10. ICANN's division called the Internet Assigned Numbers Authority is responsible for distributing IP addresses so that two different organizations never use the same address.
+![Illustration of how to look up an IP address on a computer](/assets/img/2022-12-25-gioi-thieu-ve-internet/dia-chi-ip.jpg)
 
-## IPv6 là gì ?
+## What is IPv6?
 
-![Sơ đồ cấu trúc địa chỉ IPv6](/assets/img/2022-12-25-gioi-thieu-ve-internet/ipv6.jpg)
-Tiêu chuẩn internet hiện tại, được gọi là IPv4, chỉ cho phép khoảng 4 tỷ địa chỉ Ip. Đây được coi là một con số rất lớn vào những năm 1970, nhưng ngày nay, nguồn cung cấp địa chỉ IPv4 gần như cạn kiệt.
+![Diagram of the IPv6 address structure](/assets/img/2022-12-25-gioi-thieu-ve-internet/ipv6.jpg)
+The current Internet standard, called IPv4, allows only about 4 billion IP addresses. That seemed like a huge number in the 1970s, but today the supply of IPv4 addresses is nearly exhausted.
 
-Vì vậy, các kỹ sư internet đã phát triển một tiêu chuẩn mới gọi là IPv6. IPv6 cho phép lượng địa duy nhất đáng kinh ngạc – con số chính xác dài 39 chữ số- đảm bảo rằng trên thế giới sẽ không bao giờ cạn kiệt nữa.
+So Internet engineers developed a new standard called IPv6. IPv6 allows an astonishing number of unique addresses — the exact figure is 39 digits long — ensuring the world will never run out again.
 
-Lúc đầu, quá trình chuyển đổi sang IPv6 diễn ra chậm. công việc kỹ thuật về tiêu chuẩn đã được hàn thành vào những năm 1990, nhưng cộng đồng internet phải đối mặt với một số vấn đề nghiêm trong về con gà và quả trứng: miễn là hầu hết mọi người sử dùng Ipv4, thì sẽ có rất ít động lực để mọi người chuyển sang IPv6.
+At first, the transition to IPv6 was slow. The technical work on the standard was finished in the 1990s, but the Internet community faced a serious chicken-and-egg problem: as long as most people used IPv4, there was little incentive for anyone to switch to IPv6.
 
-Nhưng khi địa chỉ IPv4 trở nên khan hiếm, việc áp dụng IPv6 đã tăng tốc. Tỷ lệ người dùng kết nồi với Google qua IPv6 đã tăng từ 1% vào đầu năm 2013 lên 6% vào giữa năm 2015.
+But as IPv4 addresses grew scarce, IPv6 adoption accelerated. The share of users connecting to Google over IPv6 rose from 1% in early 2013 to 6% by mid-2015.
 
-## Internet không dây (Wireless) hoạt động như thế nào?
+## How does wireless Internet work?
 
-Trong những năm đầu tiên, truy cập internet được truyền qua cáp vật lý. nhưng gần đây, truy cập internet không dây ngày càng trở nên phổ biến.
+In the early years, Internet access traveled over physical cables. But recently, wireless Internet access has become increasingly popular.
 
-Có hai loại truy cập internet không dây cơ bản: wifi và di động. mạng wifi thì tương đối đơn giản. bất cứ ai cũng có thể mua thiết bị mạng wifi để cung cấp truy cập internet trong nhà hoặc doanh nghiệp. mạng wifi sử dụng phổ không được cấp phép: tần số điển từ có sẵn cho bất kỳ ai sử dụng miễn phí. Để ngăn các mạng của hàng xóm can thiệp lẫn nhau, thì sẽ có các giới hạn nghiêm ngặt về công suất (phạm vi) của mạng wifi.
-![Sơ đồ mạng Wi-Fi trong nhà](/assets/img/2022-12-25-gioi-thieu-ve-internet/wifi-tai-nha.jpg)
+There are two basic kinds of wireless Internet access: Wi-Fi and cellular. Wi-Fi networks are relatively simple. Anyone can buy Wi-Fi networking gear to provide Internet access in a home or business. Wi-Fi networks use unlicensed spectrum: electromagnetic frequencies available for anyone to use for free. To stop neighbors' networks from interfering with each other, there are strict limits on the power (range) of Wi-Fi networks.
+![Diagram of a home Wi-Fi network](/assets/img/2022-12-25-gioi-thieu-ve-internet/wifi-tai-nha.jpg)
 
-Mạng di động tập trung hơn. Chúng hoạt động bằng cách chia vùng dịch vụ thành các ô. ở những khu vực đông đúc nhất, các ô có thể nhỏ bằng một khối thành phố; ở các vùng nông thôn một ô có thể dài hàng dặm. mỗi ô có một tháp ở trung tâm cung cấp dịch vụ cho các thiết bị ở đó. khi một thiết bị di chuyển từ ô này sang ô khác, mạng sẽ tự động chuyển thiết bị từ tháp này sang tháp khác, cho phép người dùng tiếp tục liên lạc mà không bị gián đoạn.
-![Sơ đồ mạng di động chia ô](/assets/img/2022-12-25-gioi-thieu-ve-internet/mang-di-dong.jpg)
-Các ô quá lớn để sử dụng năng lượng thấp, không có giấy phép được sử dụng bởi các mạng wifi. Thay vào đó, các mạng di động sử dụng phổ được cấp phép cho việc sử dụng độc quyền của họ. bởi vì quang phổ này khan hiếm nên nó thường được trao bằng hình thức đấu giá. Đấu giá không dây đã được tạo ra doanh thu hàng chục tỷ đô là cho kho bạc hoa kỳ kể từ lần đầu tiên tổ chức vào năm 1994.
+Cellular networks are more centralized. They work by dividing the service area into cells. In the most crowded areas, cells can be as small as a city block; in rural areas a cell can stretch for miles. Each cell has a tower at its center serving the devices in it. When a device moves from one cell to another, the network automatically hands the device from one tower to the next, letting users keep communicating without interruption.
+![Diagram of a cellular network divided into cells](/assets/img/2022-12-25-gioi-thieu-ve-internet/mang-di-dong.jpg)
+Cells are too large to use the low-power, unlicensed spectrum of Wi-Fi networks. Instead, cellular networks use spectrum licensed for their exclusive use. Because this spectrum is scarce, it is usually awarded by auction. Wireless auctions have generated tens of billions of dollars for the US Treasury since they were first held in 1994.
 
-## Điện toán đám mây (Cloud) là gì ?
+## What is the cloud?
 
-![Sơ đồ điện toán đám mây](/assets/img/2022-12-25-gioi-thieu-ve-internet/dien-toan-dam-may.jpg)
-điện toán đám mây mô tả một cách tiếp cận điện toán đã trở nên phổ biến vào đầu những năm 2000. Bằng cách lưu trữ tệp trên máy chủ và phân phối phần mềm qua internet, điện toán đám mây cung cấp cho người dùng trải nghiệm điện toán đơn giản hơn, đáng tin cậy hơn. Điện toán đám mây cho phép người tiêu dùng và doanh nghiệp coi điện toán như một tiện ích, để lại các chi tiết kỹ thuật cho các công ty công nghệ.
-Ví dụ, vào những nằm 1990, nhiều người đã sử dụng MS office để chỉnh sửa tài liệu và bảng tính. Họ lữu trữ tài liệu trên ổ cứng của họ. và khi một phiên bản mới của MS office được phát hành, khách hàng phải mua nó và cài đặt thủ công trên PC của họ.
-Ngược lại, google docs là bộ ứng dụng văn phòng đám mây. Khi người dùng truy cập docs.google.com, họ sẽ tự động nhận được pheiene bản google documents mới nhất. vì các tệp của họ được lưu trữ trên các máy củ của google nên chúng có sẵn trên mọi máy tính. Tuyệt vời hơn nữa, họ không phải lo lắng về việc mất các tệp của mình khi ổ cứng gặp sự cố (M$ hiện có bộ ứng dụng văn phòng đám mây riêng có tiền là office 365).
-Có rất nhiều ví dụ khác. Gmail và Hotmail là các dịch vụ email trên đám mây đã thay thê phần ớn các ứng dụng email trên bmays tính bàn như Outlook. Dropbox là một dịch vụ điện toán đám mây tự động đồng bộ hóa dữ liệu giữa các thiết bị, giúp mọi người không phải mang các tệp trên đĩa mềm. Icloud của Apple tự động sao chép nhạc của người dùng và các tệp khác từ máy tính để bàn sang thiết bị di động của họ, giúp người dùng không gặp rắc rối khi đồng bộ hóa qua kết nối USB.
-Điện toán đám mây cũng có tác động lớn đồi với các doanh nghiệp. vào những năm 1990, các công ty muốn tạo một trang web cần mua và vận hành các máy chủ của riêng họ. nhưng đên năm 2006, amazon.com tung ra amazon web services, cho phép khách hàng thuê máy chủ theo giờ. Điều đó đã hạ tấp rào cản gia nhập để tạo trang web và giúp các trang web nhanh chóng mở rộng dung lượng dễ dang hơn nhiều khi chúng trở nên phổ biến hơn.
+![Diagram of cloud computing](/assets/img/2022-12-25-gioi-thieu-ve-internet/dien-toan-dam-may.jpg)
+Cloud computing describes an approach to computing that became popular in the early 2000s. By storing files on servers and delivering software over the Internet, cloud computing gives users a simpler, more reliable computing experience. Cloud computing lets consumers and businesses treat computing as a utility, leaving the technical details to technology companies.
+For example, in the 1990s many people used MS Office to edit documents and spreadsheets. They stored documents on their hard drives, and when a new version of MS Office was released, customers had to buy it and manually install it on their PCs.
+Google Docs, by contrast, is a cloud office suite. When users visit docs.google.com, they automatically get the newest version of Google Docs. Because their files are stored on Google's machines, the files are available on every computer. Even better, users never have to worry about losing their files when a hard drive fails (M$ now has its own cloud office suite called Office 365).
+There are plenty of other examples. Gmail and Hotmail are cloud email services that largely replaced desktop email apps like Outlook. Dropbox is a cloud computing service that automatically syncs data across devices, freeing people from carrying files around on floppy disks. Apple's iCloud automatically copies users' music and other files from the desktop to their mobile devices, sparing users the hassle of syncing over a USB connection.
+Cloud computing has also had a big impact on businesses. In the 1990s, companies that wanted to create a website had to buy and operate their own servers. But in 2006, Amazon.com launched Amazon Web Services, letting customers rent servers by the hour. That lowered the barrier to creating a website and made it much easier for sites to scale up capacity quickly as they grew more popular.
 
-## Gói tin (packet) là gì ?
+## What is a packet?
 
-Gói tin là đơn vị cơ bản của thông tin được truyền qua internet. Việc chia thông tin thành các phần nhỏ, để dễ tiêu hóa cho phép sử dụng năng lực của mạng hiệu quả hơn.
-Một gói có hai phần. tiêu đề chưa thông tin giúp gói đến đích. Bao gồm độ dài của gói, nguồn và đích đến cảu gói và giá trị tổng kiểm tra giúp người nhận phát hiện xem gói tin có bị hỏng trong quá trình truyền hay không. Sau tiều đề là dữ liệu thực tế. một gói có thể chứa 64kb dữ liệu, tương đương với 20 trang văn bản thuần túy.
-Nếu các bộ định tuyến internet gặp phải tắc nghẽn hoặc các sự cố kỹ thuật khác, chúng được phép giải quyết vấn đề đó bằng cách loại bỏ các gói tin. Trách nhiệm của máy tính gửi là phải hiện ra rằng một gói không đến được đích và gửi một bản sao khác. Cách tiếp cận này có vẻ trực giác. Nhưng nó đơn giản hóa cơ sở hạ tầng cốt lõi của internet, dẫn đến hiệu suất cao hơn vỡi chi phí tấp
+A packet is the basic unit of information transmitted over the Internet. Splitting information into small, easy-to-digest pieces allows the network's capacity to be used more efficiently.
+A packet has two parts. The header holds information that helps the packet reach its destination: the packet's length, its source and destination, and a checksum value that helps the receiver detect whether the packet was damaged in transit. After the header comes the actual data. A packet can hold 64KB of data, equivalent to about 20 pages of plain text.
+If Internet routers run into congestion or other technical problems, they are allowed to solve the problem by dropping packets. It is the sending computer's job to notice that a packet never arrived and send another copy. This approach may seem counterintuitive. But it simplifies the Internet's core infrastructure, delivering higher performance at lower cost.
 
-## World Wide Web (Web) là gì ?
+## What is the World Wide Web?
 
-World wide web là một cách phổ biến để xuất bản thông tin trên internet. Web được tạo ra bởi Timothy Berners-Lee, một lập trình viên máy tính tại tổ chức nghiên cứu khoa học châu âu CERN, vào năm 1991. Nó cung cấp một giao diện mạnh mẽ và thân thiện với người dùng hơn các ứng dụng internet khác. Web hỗ trợ các siêu liên kết, cho phép người dùng duyệt từ tài liệu này sang tài liệu khác chỉ bằng một cú nhấp.
-![Tim Berners-Lee, cha đẻ của World Wide Web](/assets/img/2022-12-25-gioi-thieu-ve-internet/tim-berners-lee.jpg "Ảnh: Enrique Dans, CC BY 2.0")
-Theo thời gian, web càng ngày càng trở nên tinh vi hơn, hỗ trợ hình ảnh, âm thanh, video và nội dung tương tác. Vào giữa những năm 1990, các công ty như Yahoo và Amazon đã bắt đầu xây dựng các hoạt đông kinh doanh có lợi nhuận dựa trên web. Vào những năm 2000, các ứng dụng dựa trên web đầy đủ tính năng như Yahoo Maps và Google Docs đã được tạo ra.
-Năm 1994, Berners-Lee thành lập world wide web consortium (W3C) để trở thành tổ chức tiêu chuẩn chính thức của web. Ông vẫn là giám đốc của w3c và tiếp tục giám sát sự phát triển của các tiêu chuẩn web. Tuy nhiên, web là một nền tảng mở và w3c không thể bắt buộc bất kỳ ai chấp nhận các đề xuất của nó. Trên thực tế, các tổ chức có ảnh hưởng lớn nhất đối với web là M$, google, apple, mozilla, những công ty sản xuất các trình duyệt web hàng đầu. bất kỳ công nghệ nào được áp dụng bởi bốn công ty này đều trở thành tiêu chuẩn của web trên thực tế.
-Web đã trở nên phổ biến dến mức nhiều người hiện coi nó đồng nghĩa với chính interner. Nhưng về mặt kỹ thuật, web chỉ là một trong nhiều ứng dụng của internet. Các ứng dụng khác bao gồm email và bittorent.
+The World Wide Web is a popular way to publish information on the Internet. The web was created by Timothy Berners-Lee, a computer programmer at the European scientific research organization CERN, in 1991. It provided a more powerful and user-friendly interface than other Internet applications. The web supports hyperlinks, letting users browse from one document to another with a single click.
+![Tim Berners-Lee, father of the World Wide Web](/assets/img/2022-12-25-gioi-thieu-ve-internet/tim-berners-lee.jpg "Photo: Enrique Dans, CC BY 2.0")
+Over time, the web grew ever more sophisticated, supporting images, audio, video and interactive content. By the mid-1990s, companies like Yahoo and Amazon had started building profitable businesses on the web. In the 2000s, full-featured web-based applications like Yahoo Maps and Google Docs were created.
+In 1994, Berners-Lee founded the World Wide Web Consortium (W3C) to serve as the web's official standards body. He remains the W3C's director and continues to oversee the development of web standards. The web is an open platform, however, and the W3C cannot force anyone to accept its proposals. In practice, the organizations with the most influence over the web are M$, Google, Apple and Mozilla, the makers of the leading web browsers. Any technology adopted by these four companies becomes a de facto web standard.
+The web has become so popular that many people now treat it as synonymous with the Internet itself. But technically, the web is just one of many Internet applications. Other applications include email and BitTorrent.
 
-## Trình duyệt web là gì ?
+## What is a web browser?
 
-Trình duyệt web là một chương trình máy tính cho phép người dùng tải xuống và xem các trang web. Trình duyết có sẵn cho máy tính để bàn, máy tính bảng, và điện thoại di dộng.
-![Minh họa trình duyệt Mosaic năm 1993](/assets/img/2022-12-25-gioi-thieu-ve-internet/trinh-duyet-dau-tien.jpg)
-Trình duyệt được sử dụng rộng rãi đầu tiên là Mosaic. Do các nhà nghiên cứu tại đại học Illinois tạo ra. Nhóm Mosaic đã chuyển đến california để thành lập netscape, công ty đã xây dựng trình duyệt web thành công về mặt thương mại đầu tiên vào năm 1994.
-![Minh họa lại cửa sổ trình duyệt Mosaic](/assets/img/2022-12-25-gioi-thieu-ve-internet/mosaic-minh-hoa.jpg)
-![Minh họa lại trình duyệt Netscape Navigator](/assets/img/2022-12-25-gioi-thieu-ve-internet/netscape-minh-hoa.jpg)
-Sử phổ biến của netscape đã sớm bị IE của M$ làm lu mờ, nhưng một phiên bản mã nguồn mở của trình duyệt netscape đã trở thành trình duyệt firefox hiện đại. apple phát hành trình duyệt safari vào nằm 2003, và google đã phát hình trình duyệt có tên Chrome vào năm 2008. Đến năm 2015, Chrome đã trở thành trình duyệt web phổ biến nhất với thị phần 50%, IE, FF, Safari cũng có thị phần đáng kể
-![Dòng thời gian các trình duyệt web](/assets/img/2022-12-25-gioi-thieu-ve-internet/cuoc-dua-trinh-duyet.jpg)
+A web browser is a computer program that lets users download and view web pages. Browsers are available for desktops, tablets and mobile phones.
+![Illustration of the Mosaic browser in 1993](/assets/img/2022-12-25-gioi-thieu-ve-internet/trinh-duyet-dau-tien.jpg)
+The first widely used browser was Mosaic, created by researchers at the University of Illinois. The Mosaic team moved to California to found Netscape, which built the first commercially successful web browser in 1994.
+![Recreation of the Mosaic browser window](/assets/img/2022-12-25-gioi-thieu-ve-internet/mosaic-minh-hoa.jpg)
+![Recreation of the Netscape Navigator browser](/assets/img/2022-12-25-gioi-thieu-ve-internet/netscape-minh-hoa.jpg)
+Netscape's popularity was soon eclipsed by M$'s IE, but an open-source version of the Netscape browser became the modern Firefox browser. Apple released the Safari browser in 2003, and Google released a browser called Chrome in 2008. By 2015, Chrome had become the most popular web browser with a 50% market share, while IE, Firefox and Safari also held significant shares.
+![Timeline of web browsers](/assets/img/2022-12-25-gioi-thieu-ve-internet/cuoc-dua-trinh-duyet.jpg)
 
-## SSL là gì ?
+## What is SSL?
 
-SSL là viết tắt của Secure Sockets Layer - lớp cổng bảo mật, là một nhóm các công nghệ mã hóa cho phép người dùng web bảo vệ quyền riêng tư của thông tin họ truyền qua internet.
-Khi bạn truy cập một trang web an toàn chẳng hạn như gmail.com bạn sẽ thấy một ổ khóa bên cạnh URL. Nó cho biết rằng thông tin liên lạc của bạn với trang web đã được mã hóa. Đây là giao diện trong trình duyệt chrome của google.
-![Minh họa ổ khóa HTTPS và kết nối được mã hóa](/assets/img/2022-12-25-gioi-thieu-ve-internet/ssl-https.jpg)
+SSL stands for Secure Sockets Layer, a family of encryption technologies that lets web users protect the privacy of the information they transmit over the Internet.
+When you visit a secure website such as gmail.com, you see a padlock next to the URL. It indicates that your communication with the site is encrypted. Here is what the interface looks like in Google's Chrome browser.
+![Illustration of the HTTPS padlock and an encrypted connection](/assets/img/2022-12-25-gioi-thieu-ve-internet/ssl-https.jpg)
 
-Khóa đó được cho là báo hiệu rằng các bên thứ ba sẽ không thể đọc bất kỳ thông tin nào bạn gửi hoặc nhận. về cơ bản, SSL thực hiện điều này bằng cách chuyển đổi dữ liệu của bạn thành một thông báo đã đưuọc mã hóa mà chỉ người nhận mới biết cách giải mã. Nếu một bên độc hại đang nghe cuộc hội thoại, nó sẽ chỉ nhìn thấy một chuỗi ký tự có vẻ như ngẫu nhiên chứ không phải nội dung email, bài đăng trên facebook, số thẻ tín dụng hoặc thông tin cá nhân khác của bạn.
-SSL được netscape giới thiệu vào năm 1994. Trong những năm đầu, nó chỉ được sử dụng trên một số loại trang web, chẳng hạn như các trang web ngân hàng trực tuyến. Vào đầu những năm 2010, google, yahoo, và facebook đều sử dụng mã hóa SSL cho các trang web và dịch vụ trực tuyến của họ. Gần đây, đã có một phong trào hướng tới việc sử dụng SSL phổ biến. Vào năm 2015, mozilla đã thông báo rằng các phiên bản tương lai của trình duyệt firefox sẽ coi việc thiếu mã hóa SSl là một lỗi bảo mật, như một cách để khuyến khích tất cả các trăng web nâng cấp. Google đang cân nhắc thực hiện tương tự với chrome.
+That padlock is supposed to signal that third parties cannot read any information you send or receive. Basically, SSL does this by turning your data into an encrypted message that only the recipient knows how to decode. If a malicious party is listening in on the conversation, it sees only a seemingly random string of characters — not your email content, Facebook posts, credit card numbers or other personal information.
+SSL was introduced by Netscape in 1994. In the early years it was used only on certain kinds of sites, such as online banking websites. In the early 2010s, Google, Yahoo and Facebook all used SSL encryption for their websites and online services. More recently, there has been a movement toward universal SSL. In 2015, Mozilla announced that future versions of the Firefox browser would treat the lack of SSL encryption as a security bug, as a way to push every website to upgrade. Google was considering doing the same with Chrome.
 
-## DNS là gì ?
+## What is DNS?
 
-DNS - Domain Name System - Hệ thống phân giải tên miền là lý do bạn có thể truy cập mingchen bằng cách nhập mingchen.id.vn vào trình duyệt của mình thay vì một địa chỉ số khó nhớ, chẳng hạn như 216.146.46.10.
-Hệ thống có thứ bậc. ví dụ: tên miền .com được quản lý bởi một công ty có tên là Verisign. Verisign chỉ định các tên miền phụ như google.com và facebook.com. ngược lại, chủ sở hữu các miền cấp hai này có thể tạo các miền phụ như mail.google.com và maps.google.com.
-Bởi vì các trang web phổ biến sử dụng tên miền để tự nhận dạng công khai, nên tính bảo mật của DNS ngày càng trở thành mỗi quang tâm. Tội phạm cũng như gián điệp của chính phủ đã tìm cách xâm phạm DNS để mạo danh các trang web phổ biến như facebook.com và gmail.com và chặn liên lạc riêng tư của họ. một tiêu chuẩn đưuọc gọi là DNSSEC tìm cách tăng cường bảo mật DNS bằng mã hóa, nhưng ít người chấp nhận nó.
-![Sơ đồ phân cấp hệ thống tên miền DNS](/assets/img/2022-12-25-gioi-thieu-ve-internet/dns.jpg)
+DNS — the Domain Name System — is the reason you can reach mingchen by typing mingchen.id.vn into your browser instead of a hard-to-remember numeric address like 216.146.46.10.
+The system is hierarchical. For example, .com domains are managed by a company called Verisign. Verisign assigns subdomains like google.com and facebook.com. In turn, the owners of these second-level domains can create subdomains like mail.google.com and maps.google.com.
+Because popular websites use domain names to identify themselves publicly, DNS security has become a growing concern. Criminals as well as government spies have tried to compromise DNS to impersonate popular sites like facebook.com and gmail.com and intercept their private communications. A standard called DNSSEC seeks to strengthen DNS security with encryption, but few have adopted it.
+![Diagram of the DNS domain name hierarchy](/assets/img/2022-12-25-gioi-thieu-ve-internet/dns.jpg)
 
-## Ai quyết định tên miền nào tồn tại và ai có được chúng ?
+## Who decides which domain names exist and who gets them?
 
-Hệ thống tên miền được quản lý bởi ICANN – một tổ chức phi lợi nhuận có trụ sở tại california. ICANN được thành lập vào năm 1998. Nó được bộ thương mại hoa kỳ cấp quyền đối với DNS, mặc dù nó ngày càng khẳng định sự độc lập của mình với chính phủ hoa kỳ.
-Có hai loại tên miền. đầu tiên là tên miền chung cao cấp nhất (gTLDs - generic Top level Domains). chẳng hạn như .com .edu .org .gov. bởi vì internet bắt nguồn từ hoa kỳ nên những miền này có xu hướng phổ biến nhất ở đó. Quyền đối với các miền này thường là đưuọc ủy  quyền cho các tổ chức tư nhân.
-![Minh họa các tên miền chung cấp cao](/assets/img/2022-12-25-gioi-thieu-ve-internet/ten-mien-gtld.jpg)
-Ngoài ra còn có các tên miền cấp cao nhất theo mã quốc gia (ccTLDs - country-code top-level domains). Mỗi quốc gia trên thế giới đều có mã gồm 2 chữ cái riêng, ví dục ccTLD của hoa kỳ là .us, vương quốc anh là .uk, trung quốc là .cn. các miền này đưuọc quản lý bởi các cơ quan có thẩm quyền ở mỗi quốc gia. Một số ccTLD chẳng hạn như .tv (dành cho quốc đảo Tuvalu) và .io (lãnh thổ ấn độ dương thuộc anh), đã trở nên phổ biến để sử dụng bên ngoài quốc gia của họ.
-![Minh họa các tên miền quốc gia](/assets/img/2022-12-25-gioi-thieu-ve-internet/ten-mien-cctld.jpg)
-Vào năm 2011, ICANN đã bỏ phiếu để tạo gTLDs mới dễ dàng hơn. Kết quả là có thể có hàng chục,  thậm chí hàng trăm tên miền mới trong vài năm tới.
+The domain name system is managed by ICANN — a California-based nonprofit. ICANN was founded in 1998. It was granted authority over DNS by the US Department of Commerce, although it has increasingly asserted its independence from the US government.
+There are two kinds of domain names. First are generic top-level domains (gTLDs), such as .com, .edu, .org and .gov. Because the Internet originated in the US, these domains tend to be most popular there. Authority over these domains is usually delegated to private organizations.
+![Illustration of generic top-level domains](/assets/img/2022-12-25-gioi-thieu-ve-internet/ten-mien-gtld.jpg)
+Then there are country-code top-level domains (ccTLDs). Every country in the world has its own 2-letter code — the US ccTLD is .us, the UK's is .uk, China's is .cn. These domains are managed by authorities in each country. Some ccTLDs, such as .tv (for the island nation of Tuvalu) and .io (British Indian Ocean Territory), have become popular for use outside their own countries.
+![Illustration of country-code top-level domains](/assets/img/2022-12-25-gioi-thieu-ve-internet/ten-mien-cctld.jpg)
+In 2011, ICANN voted to make it easier to create new gTLDs. As a result, there may be dozens or even hundreds of new domains in the next few years.
 
-## Nguồn
+## Source
 
 [Vox](https://www.vox.com/2014/6/16/18076282/the-internet)
 
-*Nguồn ảnh: ảnh Al Gore là chân dung chính thức của Phó Tổng thống Hoa Kỳ (1994, phạm vi công cộng); ảnh Vint Cerf và Bob Kahn là ảnh Nhà Trắng của Paul Morse (2005, phạm vi công cộng); ảnh Tim Berners-Lee của Enrique Dans ([CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)) — cả ba qua Wikimedia Commons. Các sơ đồ còn lại do tác giả tự vẽ.*
+*Photo credits: the Al Gore photo is the official portrait of the US Vice President (1994, public domain); the Vint Cerf and Bob Kahn photo is a White House photo by Paul Morse (2005, public domain); the Tim Berners-Lee photo is by Enrique Dans ([CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)) — all three via Wikimedia Commons. The remaining diagrams are my own.*

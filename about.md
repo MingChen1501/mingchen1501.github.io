@@ -2,18 +2,17 @@
 layout: page
 lang: en
 ref: about
-fallback_vi: true
 title: About
 permalink: /about/
 description: "About Ming Chen: a software engineer blogging about Linux, AI agents, tooling and everyday life."
 ---
 
-Xin chào, mình là **Trần Công Minh** (hay gọi là **Ming Chen**) — tác giả của blog nhỏ này.
+Hi, I'm **Tran Cong Minh** (aka **Ming Chen**) — the author of this little blog.
 
-Blog là nơi mình ghi lại những trải nghiệm linh tinh trong học tập, công việc và cuộc sống: từ vọc Linux, thử nghiệm các công cụ lập trình, cho đến những chuyến đi chơi, ngày lễ Tết bên gia đình và bạn bè. Mình viết chủ yếu bằng tiếng Việt, theo kiểu nhật ký cá nhân — nghĩ gì viết nấy, không quá trau chuốt nhưng luôn thật.
+This blog is where I jot down bits of my studies, work and life: tinkering with Linux, trying out programming tools, trips, Tet holidays with family and friends. I write mostly in Vietnamese, in a personal-diary style — whatever comes to mind, unpolished but always honest.
 
-Về chuyên môn, mình làm việc trong lĩnh vực phần mềm và thích tìm hiểu các công nghệ mới, đặc biệt là những thứ giúp công việc hàng ngày hiệu quả hơn. Ngoài máy tính, mình còn mê cà phê, leo núi và đi đây đi đó mỗi khi có dịp.
+Professionally, I work in software and enjoy exploring new technologies, especially ones that make everyday work more effective. Beyond computers, I love coffee, hiking and getting out and about whenever I get the chance.
 
-Nếu bạn thấy bài viết nào hữu ích hoặc muốn góp ý, trao đổi, cứ thoải mái liên hệ qua email **tminh400@gmail.com** hoặc tìm mình trên các mạng xã hội có liên kết ở chân trang. Mình luôn vui khi nhận được phản hồi từ độc giả.
+If you find a post useful, or want to share feedback, feel free to reach out by email at **tminh400@gmail.com** or find me on the social links in the footer. I always enjoy hearing from readers.
 
-Cảm ơn bạn đã ghé thăm, chúc bạn một ngày vui vẻ!
+Thanks for stopping by, and have a lovely day!
