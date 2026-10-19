@@ -19,7 +19,7 @@ Posts are grouped under the blog's 4 main topics. Pick a topic to see its posts.
 {%- assign pillar_desc = pillar_entry.description_en | default: "" -%}
   <li>
     <a class="tag-chip" rel="tag" href="{{ '/tags/' | append: pillar_slug | append: '/' | relative_url }}">{{ pillar_label | escape }}</a>
-    <span class="tag-index__count">{{ pillar_posts | size }} posts</span>
+    <span class="tag-index__count">{{ pillar_posts | size }} post{% if pillar_posts.size != 1 %}s{% endif %}</span>
     {%- if pillar_desc != "" -%}
     <span class="tag-index__desc">{{ pillar_desc | escape }}</span>
     {%- endif -%}

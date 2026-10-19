@@ -633,8 +633,14 @@ def test_sidebar_shows_the_same_highlights_on_every_page(
 def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
     home_path, tag_base, built_site, built_site_url, browser
 ):
-    intro_re = r"(\d+) bài viết" if tag_base.startswith("/vi/") else r"(\d+) posts tagged"
+    # Singular/plural copy (#149): "1 post tagged", "N posts tagged".
+    intro_re = r"(\d+) bài viết" if tag_base.startswith("/vi/") else r"(\d+) posts? tagged"
     count_unit = "bài" if tag_base.startswith("/vi/") else "posts"
+    # Singular/plural copy (#149): "1 post", "N posts"; VI is invariant.
+    def _expected_count(total):
+        if tag_base.startswith("/vi/"):
+            return f"{total} bài"
+        return f"{total} post" if total == 1 else f"{total} posts"
     # Localized slug -> label for this sidebar's language (#129).
     tag_labels = yaml.safe_load(
         (REPO_ROOT / "_data" / "tag_labels.yml").read_text(encoding="utf-8")
@@ -692,7 +698,7 @@ def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
                 f"the sidebar block for `{tag}` must list the tag's newest posts: "
                 f"{group['posts']} != {expected[:TAG_POSTS_LIMIT]}"
             )
-            assert group["count"] == f"{total} {count_unit}", (
+            assert group["count"] == _expected_count(total), (
                 f"the sidebar count for `{tag}` must match the tag page: "
                 f"{group['count']!r} vs {total}"
             )
