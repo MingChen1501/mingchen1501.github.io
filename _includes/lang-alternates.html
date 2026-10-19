@@ -39,13 +39,23 @@
       {%- endif -%}
     {%- endif -%}
   {%- endfor -%}
+  {%- comment -%}
+    First match wins in site.pages: jekyll-paginate appends its page-2..N
+    duplicates of the paginated index (carrying the same `ref: home`) AFTER
+    the source pages, so taking the last match would point the English
+    alternate of `/` at `/page2/` instead of `/`.
+  {%- endcomment -%}
   {%- for alt_doc in site.pages -%}
     {%- if alt_doc.ref == alt_ref -%}
       {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
       {%- if alt_doc_lang == 'vi' -%}
-        {%- assign alt_vi = alt_doc.url -%}
+        {%- if alt_vi == '' -%}
+          {%- assign alt_vi = alt_doc.url -%}
+        {%- endif -%}
       {%- else -%}
-        {%- assign alt_en = alt_doc.url -%}
+        {%- if alt_en == '' -%}
+          {%- assign alt_en = alt_doc.url -%}
+        {%- endif -%}
       {%- endif -%}
     {%- endif -%}
   {%- endfor -%}

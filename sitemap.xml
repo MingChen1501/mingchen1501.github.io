@@ -3,19 +3,30 @@ layout: null
 sitemap: false
 ---
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
 {% assign site_url = site.url | strip %}
 
-  <!-- Homepage -->
+  <!-- Homepage (English default) with its Vietnamese alternate (#93/#98). -->
   <url>
     <loc>{{ site_url }}/</loc>
     <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+    {% include sitemap-alternates.html ref="home" %}
+  </url>
+
+  <!-- Vietnamese homepage: same `ref: home`, the `vi` side of the pair. -->
+  <url>
+    <loc>{{ site_url }}/vi/</loc>
+    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+    {% include sitemap-alternates.html ref="home" %}
   </url>
 
   {% comment %} Paginated list pages (/page2/ ... /pageN/). `paginator` is bound
     only on the paginated index.html, never on this standalone page, so derive
     the page count from site.posts.size and site.paginate with ceil division and
     enumerate the pages explicitly (emitted only when the count is >= 2).
+    Alternates mirror the head on those pages (#93): both sides (and the
+    x-default) point at the first pages, never at a page-N URL.
   {% endcomment %}
   {% assign paginate_per_page = site.paginate | default: 0 | plus: 0 %}
   {% if paginate_per_page > 0 %}
@@ -26,6 +37,7 @@ sitemap: false
   <url>
     <loc>{{ site_url }}/page{{ page_num }}/</loc>
     <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+    {% include sitemap-alternates.html ref="home" %}
   </url>
       {% endfor %}
     {% endif %}
@@ -33,7 +45,9 @@ sitemap: false
 
   {% comment %} Static pages: single emission path for /tags/, /about-me/,
     /portfolio/ (layout: page with a permalink); 404/feed/sitemap/llms are
-    never emitted. {% endcomment %}
+    never emitted. Both languages are in site.pages already (`vi/*.md` carry
+    `/vi/...` permalinks); each entry links its counterpart via the shared ref.
+  {% endcomment %}
   {% for page in site.pages %}
     {% if page.layout == "page" and page.permalink %}
       {% unless page.url contains "404" or page.url contains "feed.xml" or page.url contains "sitemap.xml" or page.url contains "llms.txt" %}
@@ -46,23 +60,28 @@ sitemap: false
     {% elsif site.time %}
     <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
     {% endif %}
+    {% include sitemap-alternates.html ref=page.ref %}
   </url>
       {% endunless %}
     {% endif %}
   {% endfor %}
 
   {% comment %} Pillar tag pages: single emission path over the tags/<tag>.md
-    pages (layout: tag), one <loc> per page. {% endcomment %}
+    pages (layout: tag), one <loc> per page, in both languages (the `vi/`
+    mirrors carry the same `ref: tag-<pillar>`). {% endcomment %}
   {% for tag_page in site.pages %}
     {% if tag_page.layout == "tag" and tag_page.permalink %}
   <url>
     <loc>{{ site_url }}{{ tag_page.permalink }}</loc>
     <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+    {% include sitemap-alternates.html ref=tag_page.ref %}
   </url>
     {% endif %}
   {% endfor %}
 
-  {% comment %} Posts: single emission path over site.posts (published only). {% endcomment %}
+  {% comment %} English posts: single emission path over site.posts (published
+    only), each entry linking its Vietnamese translation via the shared ref.
+  {% endcomment %}
   {% for post in site.posts %}
     {% if post.url %}
   <url>
@@ -74,6 +93,28 @@ sitemap: false
     {% elsif site.time %}
     <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
     {% endif %}
+    {% include sitemap-alternates.html ref=post.ref %}
+  </url>
+    {% endif %}
+  {% endfor %}
+
+  {% comment %} Vietnamese posts: the `site.vi_posts` collection (`/vi/...`
+    permalinks), each entry linking its English original via the shared ref.
+    A plain `for` loop degrades to nothing when the collection is undefined
+    (the upstream `_config_theme-dev.yml` CI build in `script/cibuild`).
+  {% endcomment %}
+  {% for vi_post in site.vi_posts %}
+    {% if vi_post.url %}
+  <url>
+    <loc>{{ site_url }}{{ vi_post.url }}</loc>
+    {% if vi_post.date %}
+    <lastmod>{{ vi_post.date | date_to_xmlschema }}</lastmod>
+    {% elsif vi_post.last_modified_at %}
+    <lastmod>{{ vi_post.last_modified_at | date_to_xmlschema }}</lastmod>
+    {% elsif site.time %}
+    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+    {% endif %}
+    {% include sitemap-alternates.html ref=vi_post.ref %}
   </url>
     {% endif %}
   {% endfor %}
