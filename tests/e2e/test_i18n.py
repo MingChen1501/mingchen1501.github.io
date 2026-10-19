@@ -563,6 +563,81 @@ def test_switcher_points_to_a_real_counterpart(built_site):
     assert checked > 20, "the switcher guard measured almost nothing"
 
 
+def _switcher_href(html):
+    """Href of the header language switcher, or None when absent."""
+    match = re.search(r'<a class="lang-switcher"[^>]*href="([^"]+)"', html)
+    return match.group(1) if match else None
+
+
+def test_home_switchers_point_at_canonical_homes(built_site):
+    """Home switchers must link the canonical homes (#104).
+
+    Regression: `_includes/lang-switcher.html` resolved the counterpart by
+    taking the *last* `ref: home` match over `site.pages`, so the
+    jekyll-paginate duplicates (`/page2/`, …) overwrote `/` and the
+    switcher on `/vi/` pointed at `/page2/` instead of `/`.
+    """
+    en_home = (built_site / "index.html").read_text(encoding="utf-8")
+    assert _switcher_href(en_home) == "/vi/", (
+        "the switcher on `/` must point at the canonical `/vi/`"
+    )
+    vi_home = (built_site / "vi" / "index.html").read_text(encoding="utf-8")
+    assert _switcher_href(vi_home) == "/", (
+        "the switcher on `/vi/` must point at the canonical `/`, not /page2/"
+    )
+    page2 = built_site / "page2" / "index.html"
+    assert page2.is_file(), "/page2/ must survive the move (English pagination stays)"
+    assert _switcher_href(page2.read_text(encoding="utf-8")) == "/vi/", (
+        "the switcher on `/page2/` must point at the canonical `/vi/`"
+    )
+
+
+def test_no_switcher_targets_a_paginated_url(built_site):
+    """No built page may carry a switcher pointing at `/pageN/` (#104)."""
+    paginated = re.compile(r"/page\d+/?(\?|#|$)")
+    offenders = []
+    for html_file in sorted(built_site.rglob("*.html")):
+        try:
+            html = html_file.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for href in re.findall(
+            r'<a class="lang-switcher"[^>]*href="([^"]+)"', html
+        ):
+            if paginated.search(href):
+                offenders.append(
+                    f"{html_file.relative_to(built_site)} -> {href}"
+                )
+    assert not offenders, (
+        "no language switcher may target a paginated URL: "
+        + "; ".join(offenders)
+    )
+
+
+def test_switcher_pairs_stay_correct_after_the_pagination_fix(built_site):
+    """Spot-check exact counterpart pairs (posts EN/VI, about, portfolio,
+    tags) so the #104 first-match fix cannot misroute them."""
+    pairs = [
+        ("/about/", "/vi/about/"),
+        ("/portfolio/", "/vi/portfolio/"),
+        ("/tags/", "/vi/tags/"),
+        ("/tags/ai-agent/", "/vi/tags/ai-agent/"),
+        (
+            "/2022/10/27/brewing-vietnamese-coffee.html",
+            "/vi/2022/10/27/cach-pha-ca-phe.html",
+        ),
+    ]
+    for en_url, vi_url in pairs:
+        en_html = _file_for(built_site, en_url).read_text(encoding="utf-8")
+        assert _switcher_href(en_html) == vi_url, (
+            f"the switcher on {en_url} must point at {vi_url}"
+        )
+        vi_html = _file_for(built_site, vi_url).read_text(encoding="utf-8")
+        assert _switcher_href(vi_html) == en_url, (
+            f"the switcher on {vi_url} must point at {en_url}"
+        )
+
+
 def test_old_vietnamese_urls_emit_redirects_to_vi(built_site):
     for old, new in EXPECTED_REDIRECTS.items():
         stub = _file_for(built_site, old)

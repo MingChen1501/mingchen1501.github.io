@@ -18,22 +18,35 @@
     {%- assign switch_home = '/vi/' -%}
   {%- endif -%}
   {%- assign switch_url = switch_home -%}
+  {%- comment -%}
+    First match wins (#104): jekyll-paginate appends its page-2..N
+    duplicates of the paginated index (carrying the same `ref: home`)
+    AFTER the source pages, so taking the last match would point the
+    switcher of `/vi/` at `/page2/` instead of `/`. Paginated URLs are
+    additionally skipped outright, so no switcher ever targets `/pageN/`.
+  {%- endcomment -%}
+  {%- assign switch_found = false -%}
   {%- for switch_doc in site.posts -%}
     {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
-    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other -%}
+    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other and switch_found == false -%}
       {%- assign switch_url = switch_doc.url -%}
+      {%- assign switch_found = true -%}
     {%- endif -%}
   {%- endfor -%}
   {%- for switch_doc in site.vi_posts -%}
     {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
-    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other -%}
+    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other and switch_found == false -%}
       {%- assign switch_url = switch_doc.url -%}
+      {%- assign switch_found = true -%}
     {%- endif -%}
   {%- endfor -%}
   {%- for switch_doc in site.pages -%}
     {%- assign switch_doc_lang = switch_doc.lang | default: site.lang | default: 'en' -%}
-    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other -%}
-      {%- assign switch_url = switch_doc.url -%}
+    {%- if switch_doc.ref == switch_ref and switch_doc_lang == switch_other and switch_found == false -%}
+      {%- unless switch_doc.url contains '/page' -%}
+        {%- assign switch_url = switch_doc.url -%}
+        {%- assign switch_found = true -%}
+      {%- endunless -%}
     {%- endif -%}
   {%- endfor -%}
   <a class="lang-switcher" hreflang="{{ switch_other }}" href="{{ switch_url | relative_url }}" title="{{ switch_label }}">{{ switch_label }}</a>
