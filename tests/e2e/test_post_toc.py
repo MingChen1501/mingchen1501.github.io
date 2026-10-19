@@ -1,14 +1,21 @@
-"""Opt-in table of contents for long posts (#125).
+"""Automatic table of contents for posts with enough sections (#134).
 
-Long posts (16-18 sections) get a table of contents without a plugin:
+Posts need no opt-in flag: `_layouts/post.html` renders the `<details
+class="post-toc">` ToC from `_includes/post-toc.html` whenever the post has
+at least `toc_min_h2` (4) `h2` headings, unless the post sets `toc: false`.
 GitHub Pages builds with `--safe`, so `jekyll-toc` is unavailable, and
 kramdown's own `{:toc}` marker cannot be injected from the layout (it only
-expands inside the post's Markdown source). `_includes/post-toc.html`
-therefore builds the TOC in pure Liquid from the rendered `h2`/`h3` headings
-(kramdown `auto_ids` supply the anchors), with no JavaScript.
+expands inside the post's Markdown source). The include therefore builds the
+TOC in pure Liquid from the rendered `h2`/`h3` headings (kramdown `auto_ids`
+supply the anchors), with no JavaScript.
+
+The same include is mounted twice: inline at the top of `.post-content`
+(phones) and as the first `.post-sidebar` section above Tags/Related posts
+(desktop). CSS shows exactly one copy per viewport.
 
 Static guards (no Ruby) cover the source contract; build guards (need Ruby,
-no browser) cover the emitted site.
+no browser) cover the emitted site; one viewport guard covers the
+mobile/desktop split.
 """
 
 import re
@@ -21,8 +28,13 @@ POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 TOC_INCLUDE = REPO_ROOT / "_includes" / "post-toc.html"
 CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
-TOC_EN_POST = REPO_ROOT / "_posts" / "2022-12-25-explaining-the-internet.md"
-TOC_VI_POST = REPO_ROOT / "_vi_posts" / "gioi-thieu-ve-internet.md"
+LONG_EN_POST = REPO_ROOT / "_posts" / "2022-12-25-explaining-the-internet.md"
+LONG_VI_POST = REPO_ROOT / "_vi_posts" / "gioi-thieu-ve-internet.md"
+BOUNDARY_VI_POST = REPO_ROOT / "_vi_posts" / "migrate-windows-11-to-fedora.md"
+OPTOUT_EN_POST = (
+    REPO_ROOT / "_posts" / "2026-01-01-switching-from-windows-11-to-fedora.md"
+)
+SHORT_POST = REPO_ROOT / "_posts" / "2023-01-31-my-tet-holiday-2023.md"
 PLAIN_POST = REPO_ROOT / "_posts" / "2022-10-27-brewing-vietnamese-coffee.md"
 
 FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
@@ -37,21 +49,51 @@ def _front_matter(path):
     return match.group(1) if match else ""
 
 
-def _has_toc_flag(path):
-    return bool(re.search(r"^toc:\s*true\s*$", _front_matter(path), re.M))
+def _toc_flag(path):
+    match = re.search(r"^toc:\s*(\S+)\s*$", _front_matter(path), re.M)
+    return match.group(1) if match else None
 
 
 # --- source contract (static) ------------------------------------------------
 
 
 @pytest.mark.static
-def test_post_layout_gates_toc_on_the_opt_in_flag():
+def test_post_layout_shows_toc_automatically_above_a_single_threshold():
     html = _read(POST_LAYOUT)
-    assert "page.toc == true" in html
-    assert "include post-toc.html" in html
-    # The TOC leads the article body; short posts (no flag) render nothing.
+    # Single constant: the minimum h2 count, documented in the jekyll-post
+    # skill front-matter reference.
+    assert re.search(r"assign toc_min_h2 = 4", html)
+    assert html.count("toc_min_h2") >= 2  # defined once, compared once
+    assert "toc_h2_count >= toc_min_h2" in html
+    assert "split: '<h2'" in html
+    # Explicit opt-out only: an unset flag still shows the ToC.
+    assert "page.toc != false" in html
+    assert "page.toc == true" not in html
+
+
+@pytest.mark.static
+def test_post_layout_mounts_the_same_include_inline_and_in_the_sidebar():
+    html = _read(POST_LAYOUT)
+    assert html.count("include post-toc.html") == 2
+    inline = html.index("post-toc-mount--inline")
+    sidebar = html.index("post-toc-mount--sidebar")
     body_start = html.index('class="post-content e-content"')
-    assert body_start < html.index("page.toc == true") < html.index("{{ content }}")
+    content = html.index("{{ content }}")
+    aside = html.index('class="post-sidebar"')
+    # Inline copy leads the article body; sidebar copy lives in the aside.
+    assert body_start < inline < content < aside < sidebar
+    # Both mounts share the one automatic gate.
+    assert html.count("if show_toc") >= 2
+
+
+@pytest.mark.static
+def test_sidebar_renders_on_toc_alone_with_toc_first():
+    html = _read(POST_LAYOUT)
+    assert "post_tags.size > 0 or show_toc" in html
+    toc_section = html.index("post-sidebar__section--toc")
+    tags_heading = html.index('class="post-sidebar__heading">Tags')
+    related = html.index("related-posts")
+    assert toc_section < tags_heading < related
 
 
 @pytest.mark.static
@@ -85,41 +127,62 @@ def test_toc_include_links_h2_and_h3_anchors_without_plugins_or_js():
 @pytest.mark.static
 def test_toc_include_renders_nothing_without_headings():
     html = _read(TOC_INCLUDE)
-    # A `toc: true` post with no `h2`/`h3` must not emit an empty box.
+    # A qualifying post with no `h2`/`h3` must not emit an empty box.
     assert "toc_items != ''" in html
 
 
 @pytest.mark.static
-def test_custom_styles_keep_the_toc_compact():
-    scss = _read(CUSTOM_STYLES)
-    assert ".post-toc" in scss
-    assert ".post-toc__summary" in scss
-    assert ".post-toc__item--h3" in scss
-    block = scss.split(".post-toc {", 1)[1].split("}", 1)[0]
-    assert "border:" in block
-    assert "border-radius:" in block
-    assert "font-size: $small-font-size;" in block
-    # Inside the reading measure: no fixed width that could break the
-    # column on phones or crowd the sidebar.
-    assert "width" not in block
+def test_only_the_post_layout_references_the_toc():
+    hits = []
+    for layout in (REPO_ROOT / "_layouts").glob("*.html"):
+        if "post-toc" in _read(layout):
+            hits.append(layout.name)
+    assert hits == ["post.html"], f"ToC leaked into non-post layouts: {hits}"
 
 
 @pytest.mark.static
-def test_long_posts_opt_in_and_short_posts_do_not():
-    assert _has_toc_flag(TOC_EN_POST), f"{TOC_EN_POST.name} must set `toc: true`"
-    assert _has_toc_flag(TOC_VI_POST), f"{TOC_VI_POST.name} must set `toc: true`"
-    assert not _has_toc_flag(PLAIN_POST), (
-        f"{PLAIN_POST.name} must not set `toc: true` (opt-in only)"
-    )
+def test_custom_styles_show_exactly_one_toc_mount_per_viewport():
+    scss = _read(CUSTOM_STYLES)
+    assert ".post-toc-mount--sidebar" in scss
+    assert ".post-toc-mount--inline" in scss
+    # Phones: sidebar copy hidden (it would duplicate the inline copy at the
+    # bottom of the stacked layout); desktop: inline copy hidden.
+    sidebar_block = scss.split(".post-toc-mount--sidebar {", 1)[1].split("}", 1)[0]
+    assert "display: none;" in sidebar_block
+    assert "min-width: 960px" in scss
+
+
+@pytest.mark.static
+def test_long_posts_need_no_flag_and_short_posts_carry_none():
+    assert _toc_flag(LONG_EN_POST) is None
+    assert _toc_flag(LONG_VI_POST) is None
+    assert _toc_flag(BOUNDARY_VI_POST) is None
+    assert _toc_flag(SHORT_POST) is None
+    assert _toc_flag(PLAIN_POST) is None
+    assert _toc_flag(OPTOUT_EN_POST) == "false"
 
 
 # --- emitted site (needs Ruby, no browser) -----------------------------------
 
 
-def _toc_links(html):
-    details = re.search(r'<details class="post-toc">(.*?)</details>', html, re.S)
+def _toc_mounts(html):
+    inlines = re.findall(
+        r'<div class="post-toc-mount post-toc-mount--inline">(.*?)</div>',
+        html,
+        re.S,
+    )
+    sidebars = re.findall(
+        r'<div class="post-toc-mount post-toc-mount--sidebar">(.*?)</div>',
+        html,
+        re.S,
+    )
+    return inlines, sidebars
+
+
+def _toc_hrefs(mount):
+    details = re.search(r'<details class="post-toc">(.*?)</details>', mount, re.S)
     assert details, "expected a `<details class=\"post-toc\">` block"
-    return re.findall(r'href="#([^"]+)"', details.group(1)), details.group(1)
+    return re.findall(r'href="#([^"]+)"', details.group(1))
 
 
 @pytest.mark.parametrize(
@@ -127,22 +190,88 @@ def _toc_links(html):
     [
         ("2022/12/25/explaining-the-internet.html", "On this page"),
         ("vi/2022/12/25/gioi-thieu-ve-internet.html", "Trong bài này"),
+        ("vi/2026/01/01/migrate-windows-11-to-fedora.html", "Trong bài này"),
     ],
 )
-def test_toc_post_renders_a_toc_with_working_anchors(built_site, rel, label):
+def test_long_post_without_flag_renders_both_toc_mounts(built_site, rel, label):
     page = built_site / rel
     assert page.is_file(), f"expected a built page at {rel}"
     html = page.read_text(encoding="utf-8")
-    hrefs, details = _toc_links(html)
-    assert label in details
-    assert len(hrefs) >= 2, "a TOC with fewer than two entries is noise"
-    ids = set(re.findall(r'id="([^"]+)"', html))
-    missing = [href for href in hrefs if href not in ids]
-    assert not missing, f"TOC links without a matching heading id: {missing}"
+    inlines, sidebars = _toc_mounts(html)
+    assert len(inlines) == 1 and len(sidebars) == 1
+    for mount in inlines + sidebars:
+        assert label in mount
+        hrefs = _toc_hrefs(mount)
+        assert len(hrefs) >= 2, "a TOC with fewer than two entries is noise"
+        ids = set(re.findall(r'id="([^"]+)"', html))
+        missing = [href for href in hrefs if href not in ids]
+        assert not missing, f"TOC links without a matching heading id: {missing}"
+    # Both mounts list the same sections.
+    assert _toc_hrefs(inlines[0]) == _toc_hrefs(sidebars[0])
 
 
-def test_post_without_the_flag_renders_no_toc(built_site):
-    page = built_site / "2022/10/27/brewing-vietnamese-coffee.html"
-    assert page.is_file(), "expected the plain post in the build"
+@pytest.mark.parametrize(
+    "rel",
+    [
+        # Below the threshold but has headings.
+        "2023/01/31/my-tet-holiday-2023.html",
+        # No headings at all.
+        "2022/10/27/brewing-vietnamese-coffee.html",
+        # At the threshold but opted out.
+        "2026/01/01/switching-from-windows-11-to-fedora.html",
+    ],
+)
+def test_short_or_opted_out_post_renders_no_toc(built_site, rel):
+    page = built_site / rel
+    assert page.is_file(), f"expected a built page at {rel}"
     html = page.read_text(encoding="utf-8")
     assert '<details class="post-toc">' not in html
+    assert "post-toc-mount" not in html
+
+
+def test_sidebar_orders_toc_before_tags_before_related(built_site):
+    # The orchestration post qualifies for a ToC and shares its tag, so all
+    # three sidebar sections render.
+    page = built_site / "2026/10/17/real-world-agent-orchestration-with-free-opencode.html"
+    assert page.is_file(), "expected the long post in the build"
+    html = page.read_text(encoding="utf-8")
+    toc = html.index("post-sidebar__section--toc")
+    tags = html.index('class="post-sidebar__heading">Tags')
+    related = html.index("related-posts")
+    assert toc < tags < related
+
+
+# --- viewport behaviour (needs Ruby + browser) --------------------------------
+
+_MOUNT_DISPLAY_JS = """() => {
+  const display = (sel) => {
+    const el = document.querySelector(sel);
+    return el ? getComputedStyle(el).display : 'missing';
+  };
+  return {
+    inline: display('.post-toc-mount--inline'),
+    sidebar: display('.post-toc-mount--sidebar'),
+  };
+}"""
+
+
+@pytest.mark.parametrize("width,visible,hidden", [(375, "inline", "sidebar"), (1280, "sidebar", "inline")])
+def test_exactly_one_toc_mount_is_visible_per_viewport(
+    built_site_url, browser, width, visible, hidden
+):
+    context = browser.new_context(viewport={"width": width, "height": 900})
+    try:
+        page = context.new_page()
+        page.goto(
+            f"{built_site_url}/2022/12/25/explaining-the-internet.html",
+            wait_until="load",
+        )
+        displays = page.evaluate(_MOUNT_DISPLAY_JS)
+        assert displays[visible] != "none", (
+            f"expected the {visible} ToC mount to be visible at {width}px"
+        )
+        assert displays[hidden] == "none", (
+            f"expected the {hidden} ToC mount to be hidden at {width}px"
+        )
+    finally:
+        context.close()

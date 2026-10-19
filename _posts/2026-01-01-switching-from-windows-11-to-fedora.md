@@ -5,6 +5,7 @@ ref: migrate-windows-11-to-fedora
 author: Ming Chen
 title: "Switching from Windows 11 to Fedora"
 tags: [linux-tooling]
+toc: false
 description: "Moving my old laptop from glitchy Windows 11 drivers to Fedora Linux: installing it, tuning the touchpad and typing Vietnamese with Bamboo."
 ---
 

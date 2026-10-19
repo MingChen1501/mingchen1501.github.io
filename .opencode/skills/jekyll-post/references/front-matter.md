@@ -44,6 +44,19 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 | `fallback_vi: true` | Retired stub mechanism (phase 1): reuse the Vietnamese body under the fallback banner when a translation is still pending. No stub remains since PR B; never combined with a translated body. |
 | (no field) | Highlighting is configured in `_data/highlights.yml` (#64, per-language `en:` / `vi:` lists since #93): add the post's slug to that language's ordered list to feature it in the list sidebar's highlight block. No per-post front matter flag. |
 | `comments: false` | Disable comments for this post only (posts have Giscus by default). |
+| `toc: false` | Suppress the automatic table of contents for this post only (posts show a ToC by default once they qualify). |
+
+## Table of contents (#134, automatic)
+
+Posts need no opt-in flag: `_layouts/post.html` renders the `<details
+class="post-toc">` ToC from `_includes/post-toc.html` (pure Liquid over the
+rendered headings — no plugin, Pages `--safe`) whenever the post has at least
+**4 `h2` headings** and does not set `toc: false`. The threshold lives in a
+single constant (`toc_min_h2 = 4` in `_layouts/post.html`). The same include
+is mounted twice — inline at the top of the content (visible on phones) and as
+the first `.post-sidebar` section above Tags/Related (visible on desktop) —
+with CSS showing exactly one copy per viewport. Short posts render nothing;
+non-post pages (about/portfolio/tags) never render a ToC.
 
 ## Taxonomy rules (#26)
 

@@ -533,11 +533,14 @@ textarea:focus-visible {
 }
 
 // ---------------------------------------------------------------------------
-// Table of contents (#125): opt-in via front matter `toc: true` on long
-// posts. Rendered by `_includes/post-toc.html` as a `<details>` block at the
-// top of `.post-content`, so it lives inside the reading measure (never wider
-// than the main column), stacks naturally on phones, and never touches the
-// post sidebar's column or budget. No JS, no plugin (Pages `--safe`).
+// Table of contents (#125, automatic since #134): posts with at least
+// `toc_min_h2` h2 headings (constant in `_layouts/post.html`) get a
+// `<details>` TOC from `_includes/post-toc.html` — pure Liquid over the
+// rendered headings, so it stays Pages-safe. Mounted twice from the same
+// include: inline at the top of `.post-content` for phones (inside the
+// reading measure, never wider than the main column) and as the first
+// `.post-sidebar` section for desktop. Exactly one copy is visible per
+// viewport; `toc: false` suppresses both. No JS, no plugin.
 // ---------------------------------------------------------------------------
 .post-toc {
   margin: 0 0 $spacing-unit;
@@ -581,6 +584,24 @@ ul.post-toc__list {
 // in the Liquid include.
 .post-toc__item--h3 {
   padding-left: 16px;
+}
+
+// Dual mount (#134): the sidebar copy stays hidden on phones (the sidebar
+// stacks under the content there, so it would duplicate the inline copy at
+// the bottom), and the inline copy stays hidden on desktop (the sidebar copy
+// is sticky beside the content). Same 960px breakpoint as `.post-layout`.
+.post-toc-mount--sidebar {
+  display: none;
+}
+
+@media screen and (min-width: 960px) {
+  .post-toc-mount--inline {
+    display: none;
+  }
+
+  .post-toc-mount--sidebar {
+    display: block;
+  }
 }
 
 // ---------------------------------------------------------------------------
