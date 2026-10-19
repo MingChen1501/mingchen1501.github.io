@@ -1,0 +1,18 @@
+{%- comment -%}
+  Estimated reading time (#124): pure Liquid, no plugins (GitHub Pages
+  builds with `--safe`). `content` is the post's rendered HTML;
+  `number_of_words` strips the tags and counts the words. At ~200 wpm,
+  rounded up, minimum 1 minute. Labels: `N min read` (EN) / `N phút đọc`
+  (VI). `datetime="PTnM"` (ISO 8601 duration) keeps the `<time>` element
+  valid, matching the `<time>` post-meta style of `_layouts/post.html`.
+  Wrapped in one `nowrap` unit (see `.reading-time` in
+  `_sass/minima/custom-styles.scss`) so the label never splits mid-line
+  at 375px. Params: `content`, `lang`.
+{%- endcomment -%}
+{%- assign rt_words = include.content | number_of_words -%}
+{%- assign rt_minutes = rt_words | divided_by: 200.0 | ceil -%}
+{%- if rt_minutes < 1 -%}
+  {%- assign rt_minutes = 1 -%}
+{%- endif -%}
+{%- assign rt_lang = include.lang | default: 'en' -%}
+<span class="reading-time"><span class="bullet-divider">•</span> <time class="reading-time__value" datetime="PT{{ rt_minutes }}M">{% if rt_lang == 'vi' %}{{ rt_minutes }} phút đọc{% else %}{{ rt_minutes }} min read{% endif %}</time></span>
