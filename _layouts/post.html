@@ -55,13 +55,26 @@ layout: base
           {%- include vi-fallback-notice.html -%}
         {%- endif -%}
         {%- comment -%}
-          Opt-in table of contents (#125): `toc: true` renders the
-          `<details>` TOC from `_includes/post-toc.html` (pure Liquid over
-          the rendered headings, so it stays Pages-safe). Short posts carry
-          no flag and render nothing here.
+          Automatic table of contents (#134): renders when the post has at
+          least `toc_min_h2` h2 headings (single constant below; documented
+          in the jekyll-post skill front-matter reference). `toc: false`
+          suppresses it per post. Mounted twice from the same
+          `_includes/post-toc.html` include (pure Liquid over the rendered
+          headings, so it stays Pages-safe): once inline at the top of the
+          content for phones, once as the first sidebar section for desktop.
+          CSS (`post-toc-mount--inline` / `--sidebar`) shows exactly one copy
+          per viewport. Short posts carry no flag and render nothing here.
         {%- endcomment -%}
-        {%- if page.toc == true -%}
-          {%- include post-toc.html html=content lang=post_lang -%}
+        {%- assign toc_min_h2 = 4 -%}
+        {%- assign toc_h2_count = content | split: '<h2' | size | minus: 1 -%}
+        {%- assign show_toc = false -%}
+        {%- if page.toc != false and toc_h2_count >= toc_min_h2 -%}
+          {%- assign show_toc = true -%}
+        {%- endif -%}
+        {%- if show_toc -%}
+          <div class="post-toc-mount post-toc-mount--inline">
+            {%- include post-toc.html html=content lang=post_lang -%}
+          </div>
         {%- endif -%}
         {{ content }}
       </div>
@@ -70,14 +83,28 @@ layout: base
 
     {%- comment -%}
       Secondary column (#45): the post's tags plus the other posts sharing
-      the first tag. Rendered only when the post declares tags. Related posts
-      stay inside the page's language (#93): English from `site.tags`
+      the first tag, headed by the automatic ToC (#134) when the post
+      qualifies. Rendered when the post declares tags or shows a ToC.
+      Related posts stay inside the page's language (#93): English from `site.tags`
       (English-only since the Vietnamese posts moved to `site.vi_posts`),
       Vietnamese filtered out of `site.vi_posts`.
     {%- endcomment -%}
     {%- assign post_tags = page.tags | default: empty -%}
-    {%- if post_tags.size > 0 -%}
+    {%- if post_tags.size > 0 or show_toc -%}
     <aside class="post-sidebar" aria-label="{% if post_lang == 'vi' %}Chủ đề của bài viết{% else %}Post topics{% endif %}">
+      {%- comment -%}
+        Sidebar TOC (#134): first section of the aside, above Tags and
+        Related posts. The aside renders on TOC alone, so a post without
+        tags still gets its desktop ToC here.
+      {%- endcomment -%}
+      {%- if show_toc -%}
+      <section class="post-sidebar__section post-sidebar__section--toc">
+        <div class="post-toc-mount post-toc-mount--sidebar">
+          {%- include post-toc.html html=content lang=post_lang -%}
+        </div>
+      </section>
+      {%- endif -%}
+      {%- if post_tags.size > 0 -%}
       <section class="post-sidebar__section">
         <h2 class="post-sidebar__heading">Tags</h2>
         {%- include post-tags.html tags=post_tags -%}
@@ -113,6 +140,7 @@ layout: base
           {%- endfor -%}
         </ul>
       </section>
+      {%- endif -%}
       {%- endif -%}
     </aside>
     {%- endif -%}

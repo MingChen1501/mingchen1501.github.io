@@ -1,5 +1,7 @@
 {%- comment -%}
-  Post table of contents (#125). Opt-in via front matter `toc: true`.
+  Post table of contents (#125, automatic since #134). Rendered when the
+  post has at least `toc_min_h2` h2 headings (single constant in
+  `_layouts/post.html`; `toc: false` suppresses it).
 
   Pages-safe by design: GitHub Pages builds with `--safe`, so the
   `jekyll-toc` plugin is unavailable. kramdown's own `{:toc}` marker was
@@ -10,8 +12,10 @@
   `id` anchors on every heading via `auto_ids`, which `--safe` keeps), so no
   plugin and no JavaScript are needed.
 
-  Usage from `_layouts/post.html`:
+  Usage from `_layouts/post.html` (two mounts of this same include):
     {%- include post-toc.html html=content lang=post_lang -%}
+  once inline at the top of `.post-content` (phones) and once as the first
+  `.post-sidebar` section (desktop); CSS shows exactly one copy per viewport.
   Emits a `<details>` block (localized summary, links to the `h2`/`h3`
   anchors) or nothing when the page has no `h2`/`h3` headings with ids.
 {%- endcomment -%}
