@@ -4,7 +4,6 @@ author: Ming Chen
 title: "Giải thích về Internet"
 tags: [backend-production]
 description: "Giải thích Internet là gì và cách nó vận hành qua last mile, trung tâm dữ liệu và đường trục, cùng các ứng dụng như web và email."
-highlight: true
 ---
 
 >Internet là mạng máy tính phổ biến nhất thế giới. Nó bắt đầu như một dự án nghiên cứu học thuật vào năm 1969. Và trở thành một mạng lưới thương mại toàn cầu vào những năm 1990. ![Chân dung Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Ảnh: chân dung chính thức, phạm vi công cộng")

@@ -53,11 +53,11 @@ deployed with GitHub Pages from the `master` branch.
 - List sidebar (#58, reworked in #63): the home list (`/`, `/page2/`…) and the tag
   pages (`/tags/<tag>/`) wrap their list in the same shell (`.site-layout` >
   `.site-main` + `aside.site-sidebar`) fed by ONE include,
-  `_includes/site-sidebar.html`: the highlighted posts — the posts marked
-  `highlight: true` in their own front matter, newest first, at most 5, with
-  title + date + thumbnail (falling back to the 5 newest posts when nothing is
-  marked) — and every tag as a row collapsed by default (`<details>` without
-  `open`) that shows at most 3 posts once opened. Keep the aside AFTER
+  `_includes/site-sidebar.html`: the highlighted posts — the slugs listed
+  in `_data/highlights.yml` (#64), in file order, at most 5, with title + date +
+  thumbnail (falling back to the 5 newest posts when the file is empty/missing)
+  — and every tag as a row collapsed by default (`<details>` without `open`)
+  that shows at most 3 posts once opened. Keep the aside AFTER
   `.site-main` in the DOM, keep the tag chips coming from
   `_includes/post-tags.html` (no forked chip markup), never crop or upscale a
   thumbnail (capped `max-width`/`max-height` box, no `object-fit`, `padding: 0`

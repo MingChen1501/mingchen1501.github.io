@@ -5,22 +5,27 @@ Both layouts (`_layouts/home.html`, `_layouts/tag.html`) wrap their list in the
 same two-column shell — `.site-layout` > `.site-main` + `aside.site-sidebar` —
 fed by one shared include, `_includes/site-sidebar.html`, whose two blocks are
 
-1. the highlighted posts: the posts that opt in with `highlight: true` in their
-   own front matter (`_posts/*.md`), newest first, at most five, each with its
-   thumbnail (when the post has one), its title and its publication date — or,
-   when no post is marked yet, the five newest posts with a heading that says
+1. the highlighted posts: the post file names listed in `_data/highlights.yml`
+   (#64, single source of truth), resolved against `site.posts` in the file's
+   order, at most five, each with its thumbnail (when the post has one), its
+   title and its publication date — or, when the file is empty/missing or no
+   entry resolves to a post, the five newest posts with a heading that says
    so, and
 2. every tag as a row collapsed by default (`<details>` without `open`)
    showing the tag chip and its post count, and — once opened — at most three
    post links plus a link to that tag's page.
 
-Acceptance guarded here (issues #58 and #63):
+Acceptance guarded here (issues #58, #63 and #64):
 
 - the shell exists in both layouts with the sidebar *after* the list in the DOM
   (the #47 chips must stay the first `a.tag-chip` in the document, and below
   960px the single column then stacks the sidebar under the list by itself),
-- the highlight block is fed by the posts' own front matter, not by the newest
-  posts and not by `paginator.posts` (the same list on every page),
+- the highlight block is fed by `_data/highlights.yml` — the rendered order
+  follows the file exactly (not date order), an unknown slug is skipped
+  without breaking the build, a listed-but-unpublished slug never leaks, the
+  cap of five binds, and the newest-posts fallback (`Bài mới nhất`) renders
+  for an empty/missing/unmatched file — and never by `paginator.posts` (the
+  same list on every page),
 - the tag rows are collapsed and bounded, and they link to the tag's own newest
   posts,
 - the sidebar never scrolls inside itself (#63): no `max-height`/`overflow-y`
@@ -44,6 +49,7 @@ import os
 import re
 import shutil
 import subprocess
+import yaml
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -167,9 +173,11 @@ def _read(path):
     return path.read_text(encoding="utf-8")
 
 
-# --- the posts' own front matter, the source of the highlight block (#63) ---
+# --- `_data/highlights.yml`, the source of the highlight block (#64) ---------
 
 _FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
+
+_DATE_PREFIX_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-")
 
 
 def _front_matter(path):
@@ -187,20 +195,33 @@ def _front_matter_value(block, key):
     return value
 
 
-def _marked_highlights():
-    """`(date, title, path)` of the posts that opted in, newest first."""
-    marked = []
-    for path in POSTS_DIR.glob("*.md"):
-        front_matter = _front_matter(path)
-        if _front_matter_value(front_matter, "published") == "false":
-            continue
-        if _front_matter_value(front_matter, "highlight") != "true":
-            continue
-        marked.append(
-            (path.name[:10], _front_matter_value(front_matter, "title"), path)
-        )
-    # Newest first, like `site.posts` (so the same order as the sidebar).
-    return sorted(marked, key=lambda post: (post[0], post[2].name), reverse=True)
+def _slug_matches(stem, slug):
+    """The include accepts a file name with or without its `YYYY-MM-DD-` prefix."""
+    return stem == slug or _DATE_PREFIX_RE.sub("", stem) == slug
+
+
+def _data_highlights():
+    """`(date, title, path)` of the posts listed in `_data/highlights.yml`,
+    in file order, resolved against `site.posts` (unknown or unpublished
+    entries resolve to nothing and are skipped, like the include skips them)."""
+    data_file = REPO_ROOT / "_data" / "highlights.yml"
+    if not data_file.is_file():
+        return []
+    data = yaml.safe_load(data_file.read_text(encoding="utf-8")) or {}
+    slugs = (data or {}).get("highlights", []) or []
+    result = []
+    for slug in slugs:
+        for path in POSTS_DIR.glob("*.md"):
+            if not _slug_matches(path.stem, str(slug)):
+                continue
+            front_matter = _front_matter(path)
+            if _front_matter_value(front_matter, "published") == "false":
+                continue
+            result.append(
+                (path.name[:10], _front_matter_value(front_matter, "title"), path)
+            )
+            break
+    return result
 
 
 @contextlib.contextmanager
@@ -310,17 +331,11 @@ def _build_mutated_site(tmp_path, name, mutate):
     return source, destination
 
 
-def _mark_all_published_highlight(front_matter):
+def _unpublish(front_matter):
+    """Add `published: false` to a post so Jekyll keeps it out of `site.posts`."""
     if "published: false" in front_matter:
         return front_matter
-    if "highlight:" in front_matter:
-        return front_matter
-    return front_matter.rstrip() + "\nhighlight: true"
-
-
-def _unmark_all_highlight(front_matter):
-    lines = [line for line in front_matter.splitlines() if not re.match(r"\s*highlight\s*:", line)]
-    return "\n".join(lines)
+    return front_matter.rstrip() + "\npublished: false"
 
 
 def _tag_all_published(front_matter, tag):
@@ -371,14 +386,25 @@ def test_sidebar_include_holds_both_blocks_once():
 
 
 @pytest.mark.static
-def test_sidebar_highlights_are_opt_in_from_the_post_front_matter():
+def test_sidebar_highlights_come_from_the_data_file():
     html = _read(SIDEBAR_INCLUDE)
-    # Enabling a highlight is static, in the post's own `.md` front matter.
-    assert 'where: "highlight", true' in html
-    assert f"sidebar_highlights limit: {HIGHLIGHT_LIMIT}" in html
-    # Nothing marked yet: fall back to the newest posts, and let the heading say
+    # Highlight selection lives in `_data/highlights.yml` (#64), resolved
+    # against `site.posts` (no `highlight: true` front matter flag anymore).
+    assert "site.data.highlights" in html
+    assert "sidebar_highlight_slugs" in html
+    # Each entry resolves by file name first, then by bare slug, via `where` —
+    # never via a nested Liquid loop over `site.posts` (that was the inherited
+    # O(entries x posts) double loop, re-rendered on every list page).
+    assert html.count('site.posts | where: "path"') >= 2
+    assert html.count('site.posts | where: "slug"') >= 2
+    assert html.count("for sidebar_post in site.posts") == 1, (
+        "the only loop over site.posts left is the 5-newest fallback"
+    )
+    assert "for sidebar_post in site.posts limit: 5" in html
+    # The cap binds in the render loop itself (#58/#63/#64).
+    assert "sidebar_rendered < 5" in html
+    # Nothing resolvable: fall back to the newest posts, and let the heading say
     # which of the two the reader is looking at (never an empty block).
-    assert "assign sidebar_highlights = site.posts" in html
     assert "Bài nổi bật" in html
     assert "Bài mới nhất" in html
     # Not the paginator's page: the block must not change while paging.
@@ -484,39 +510,39 @@ def test_post_page_and_comments_are_untouched_by_the_sidebar():
 def test_sidebar_shows_the_same_highlights_on_every_page(
     built_site, built_site_url, browser
 ):
-    """The highlights are the posts that opted in — not simply the newest."""
-    marked = _marked_highlights()[:HIGHLIGHT_LIMIT]
+    """The highlights are the posts listed in `_data/highlights.yml`, in file order."""
+    expected = _data_highlights()[:HIGHLIGHT_LIMIT]
 
     with _viewport(browser, built_site_url, DESKTOP_WIDTH) as page:
         _open(page, built_site_url, "/")
         sidebar = page.evaluate(_SIDEBAR_JS)
 
-        if marked:
+        if expected:
             assert sidebar["highlightsHeading"] == "Bài nổi bật", (
-                "with posts marked in their front matter the block is `Bài nổi bật`"
+                "with posts listed in `_data/highlights.yml` the block is `Bài nổi bật`"
             )
         else:
-            # No post opted in yet: the block falls back to the newest posts and
-            # says so, instead of rendering an empty box.
+            # Nothing resolvable in the data file: the block falls back to the
+            # newest posts and says so, instead of rendering an empty box.
             assert sidebar["highlightsHeading"] == "Bài mới nhất"
-            marked = [
+            expected = [
                 (None, title, None)
                 for title in page.evaluate(
                     "() => Array.from(document.querySelectorAll('.post-list a.post-link')).map((a) => a.textContent.trim())"
                 )[:HIGHLIGHT_LIMIT]
             ]
 
-        assert len(sidebar["highlights"]) == len(marked), (
-            f"expected {len(marked)} highlights, got {sidebar['highlights']}"
+        assert len(sidebar["highlights"]) == len(expected), (
+            f"expected {len(expected)} highlights, got {sidebar['highlights']}"
         )
         assert [entry["title"] for entry in sidebar["highlights"]] == [
-            title for _, title, _ in marked
+            title for _, title, _ in expected
         ], (
-            "the sidebar must list exactly the posts marked `highlight: true`, "
-            f"newest first: {sidebar['highlights']}"
+            "the sidebar must list exactly the posts from `_data/highlights.yml`, "
+            f"in the file's order: {sidebar['highlights']}"
         )
 
-        for (date, title, path), entry in zip(marked, sidebar["highlights"]):
+        for (date, title, path), entry in zip(expected, sidebar["highlights"]):
             assert entry["title"], f"sidebar entry without a title: {entry}"
             if path is not None:
                 # `site.posts` order, thumbnail resolution and date all come
@@ -768,17 +794,78 @@ def test_no_horizontal_overflow_from_the_sidebar_at_375px(path, built_site_url, 
             )
 
 
-# --- content-state guards (#71): exercise the documented maxima ---------------
+# --- content-state guards (#71/#64): exercise the documented maxima ---------
+#
+# The shared `built_site` fixture carries today's content (3 listed posts, no
+# tag with more than 2 posts), so the highlight cap, the file-order rule and
+# the per-tag bound are never exercised at their documented maxima. These
+# helpers build a *copy* of the repository with a mutated `_data/highlights.yml`
+# (and/or mutated front matter), so a guard can render the maximum or exotic
+# content state without changing the committed site (or its build output).
 
 
-def _mutate_mark_six(source):
-    for path in (source / "_posts").glob("*.md"):
-        _mutate_front_matter(path, _mark_all_published_highlight)
+def _published_stems(source):
+    """File-name stems (without `.md`) of the published posts, sorted."""
+    stems = []
+    for path in sorted((source / "_posts").glob("*.md")):
+        match = re.match(r"\A---\s*\n(.*?)\n---\s*\n", path.read_text(encoding="utf-8"), re.S)
+        front_matter = match.group(1) if match else ""
+        if _front_matter_value(front_matter, "published") == "false":
+            continue
+        stems.append(path.stem)
+    return stems
 
 
-def _mutate_unmark_all(source):
-    for path in (source / "_posts").glob("*.md"):
-        _mutate_front_matter(path, _unmark_all_highlight)
+def _write_highlights(source, text):
+    data_dir = source / "_data"
+    data_dir.mkdir(exist_ok=True)
+    (data_dir / "highlights.yml").write_text(text, encoding="utf-8")
+
+
+def _mutate_list_all_published(source):
+    """List every published post in `_data/highlights.yml` (6 today): the cap
+    must bind at 5, in the file's (sorted) order."""
+    _write_highlights(source, "highlights: [" + ", ".join(_published_stems(source)) + "]\n")
+
+
+def _mutate_delete_highlights(source):
+    """The missing-file fallback case."""
+    data_file = source / "_data" / "highlights.yml"
+    if data_file.is_file():
+        data_file.unlink()
+
+
+def _mutate_empty_highlights(source):
+    """The empty-file fallback case."""
+    _write_highlights(source, "highlights: []\n")
+
+
+def _mutate_unknown_only_highlights(source):
+    """A file whose entries all resolve to nothing must also fall back."""
+    _write_highlights(source, "highlights: [no-such-post-xyzzy]\n")
+
+
+# A listed slug that is real today but unpublished at build time, and a bare
+# (dateless) slug, mixed into a deliberately non-chronological order.
+_ORDER_DRAFT_POST = "2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi"
+
+
+def _mutate_order_skip_draft(source):
+    """File order != date order, plus an unknown and an unpublished entry.
+
+    The rendered block must keep the file's order, skip the unknown entry
+    silently and never leak the unpublished post.
+    """
+    _mutate_front_matter(source / "_posts" / f"{_ORDER_DRAFT_POST}.md", _unpublish)
+    _write_highlights(
+        source,
+        "highlights:\n"
+        "  - no-such-post-xyzzy\n"
+        "  - 2022-10-27-cach-pha-ca-phe\n"
+        f"  - {_ORDER_DRAFT_POST}\n"
+        "  - Migrate-windows-11-to-fedora\n"
+        "  - 2022-12-25-gioi-thieu-ve-internet\n",
+    )
 
 
 def _mutate_tag_all_ai_agent(source):
@@ -797,52 +884,156 @@ def _mutate_tag_all_ai_agent(source):
         tags_index.unlink()
 
 
-def test_sidebar_highlight_cap_holds_with_six_marked_posts(tmp_path, browser):
-    """Content-state guard (#71): with 6 posts marked, only 5 highlights render.
+def _post_title(path):
+    match = re.match(r"\A---\s*\n(.*?)\n---\s*\n", path.read_text(encoding="utf-8"), re.S)
+    return _front_matter_value(match.group(1) if match else "", "title")
 
-    Today's content has 3 marked posts, so a wrong limit of 3/4 is invisible to
-    the browser tier. Marking 6 posts forces the cap to bind: the 4th and 5th
-    rows must be present and the 6th must not.
+
+def test_sidebar_highlight_cap_holds_with_six_listed_posts(tmp_path, browser):
+    """Content-state guard (#71/#64): with 6 posts listed, only 5 render.
+
+    Today's data file lists 3 posts, so a wrong limit of 3/4 is invisible to
+    the browser tier. Listing all 6 published posts forces the cap to bind,
+    and the rows must be the file's first 5 entries in the file's order.
     """
-    _source, destination = _build_mutated_site(tmp_path, "hl-six", _mutate_mark_six)
+    _source, destination = _build_mutated_site(tmp_path, "hl-six", _mutate_list_all_published)
+
+    stems = _published_stems(REPO_ROOT)
+    assert len(stems) > HIGHLIGHT_LIMIT, "this guard needs more published posts than the cap"
+    expected = [
+        _post_title(POSTS_DIR / f"{stem}.md")
+        for stem in stems[:HIGHLIGHT_LIMIT]
+    ]
 
     with conftest._served(destination) as url:
         with _viewport(browser, url, DESKTOP_WIDTH) as page:
             _open(page, url, "/")
             sidebar = page.evaluate(_SIDEBAR_JS)
             assert sidebar["highlightsHeading"] == "Bài nổi bật", (
-                "with posts marked in their front matter the block is `Bài nổi bật`"
+                "with posts listed in the data file the block is `Bài nổi bật`"
             )
             assert len(sidebar["highlights"]) == HIGHLIGHT_LIMIT, (
                 f"expected the highlight cap of {HIGHLIGHT_LIMIT} rows with 6 "
-                f"marked posts, got {len(sidebar['highlights'])}: "
+                f"listed posts, got {len(sidebar['highlights'])}: "
                 f"{sidebar['highlights']}"
             )
-            # The cap must actually bind: a 6th marked post must not appear.
-            assert len(sidebar["highlights"]) < 6, (
-                "the highlight limit did not cap the block at 5 rows"
+            # The cap binds on the file's first 5 entries, in file order — not
+            # on date order (here the same, but asserted from the file).
+            assert [entry["title"] for entry in sidebar["highlights"]] == expected, (
+                "the capped block must show the data file's first 5 entries in "
+                f"the file's order: {sidebar['highlights']} != {expected}"
+            )
+            # The 6th listed post must not appear.
+            sixth = _post_title(POSTS_DIR / f"{stems[HIGHLIGHT_LIMIT]}.md")
+            assert sixth not in [entry["title"] for entry in sidebar["highlights"]], (
+                f"the highlight limit did not cap the block: {sixth} rendered"
             )
 
 
-def test_sidebar_highlight_fallback_shows_five_newest_with_none_marked(tmp_path, browser):
-    """Content-state guard (#71): with nothing marked, the fallback shows 5.
+@pytest.mark.parametrize(
+    "mutate, kind",
+    [
+        (_mutate_delete_highlights, "missing-file"),
+        (_mutate_empty_highlights, "empty-file"),
+        (_mutate_unknown_only_highlights, "unknown-slugs-only"),
+    ],
+)
+def test_sidebar_highlight_fallback_shows_five_newest(tmp_path, browser, mutate, kind):
+    """Content-state guard (#71/#64): the fallback renders the 5 newest.
 
-    Exercises the D2 fallback path (`Bài mới nhất`) at its documented maximum
-    instead of relying on the 3-mark state.
+    An empty file, a missing file, or a file whose entries all resolve to
+    nothing must all take the `Bài mới nhất` path at its documented maximum
+    (5 rows), in newest-first order.
     """
-    _source, destination = _build_mutated_site(tmp_path, "hl-none", _mutate_unmark_all)
+    _source, destination = _build_mutated_site(tmp_path, f"hl-none-{kind}", mutate)
+
+    newest = sorted(
+        (path.stem[:10] for path in POSTS_DIR.glob("*.md")
+         if _front_matter_value(_front_matter(path), "published") != "false"),
+        reverse=True,
+    )[:HIGHLIGHT_LIMIT]
 
     with conftest._served(destination) as url:
         with _viewport(browser, url, DESKTOP_WIDTH) as page:
             _open(page, url, "/")
             sidebar = page.evaluate(_SIDEBAR_JS)
             assert sidebar["highlightsHeading"] == "Bài mới nhất", (
-                "with no post marked the block falls back to `Bài mới nhất`"
+                f"with a {kind} data file the block falls back to `Bài mới nhất`"
             )
             assert len(sidebar["highlights"]) == HIGHLIGHT_LIMIT, (
                 f"expected {HIGHLIGHT_LIMIT} fallback highlights, got "
                 f"{len(sidebar['highlights'])}: {sidebar['highlights']}"
             )
+            assert [entry["datetime"][:10] for entry in sidebar["highlights"]] == newest, (
+                "the fallback must show the 5 newest posts, newest first: "
+                f"{sidebar['highlights']} != {newest}"
+            )
+
+
+def test_sidebar_highlights_follow_file_order_and_skip_unknown_and_draft(tmp_path, browser):
+    """Content-state guard (#64): file order wins; bad entries are skipped.
+
+    The data file lists posts in a deliberately non-chronological order, mixed
+    with an unknown slug and a real-but-unpublished slug:
+
+    - the rendered order must follow the file exactly (the oldest listed post
+      first — so an implementation that silently re-sorts by date fails),
+    - the unknown slug must be skipped without breaking the build, and
+    - the unpublished post must never leak into the sidebar (Jekyll keeps it
+      out of `site.posts`; the lookup must not resurrect it).
+
+    One entry is written as a bare slug (without the `YYYY-MM-DD-` prefix) to
+    pin the documented "with or without the prefix" resolution.
+    """
+    _source, destination = _build_mutated_site(tmp_path, "hl-order", _mutate_order_skip_draft)
+
+    draft_title = _post_title(POSTS_DIR / f"{_ORDER_DRAFT_POST}.md")
+    expected_titles = [
+        _post_title(POSTS_DIR / "2022-10-27-cach-pha-ca-phe.md"),      # oldest, first
+        _post_title(POSTS_DIR / "2026-01-01-Migrate-windows-11-to-fedora.md"),  # bare slug
+        _post_title(POSTS_DIR / "2022-12-25-gioi-thieu-ve-internet.md"),
+    ]
+    expected_dates = [
+        path.stem[:10]
+        for path in (
+            POSTS_DIR / "2022-10-27-cach-pha-ca-phe.md",
+            POSTS_DIR / "2026-01-01-Migrate-windows-11-to-fedora.md",
+            POSTS_DIR / "2022-12-25-gioi-thieu-ve-internet.md",
+        )
+    ]
+    # The guard only proves "order follows the file" if file order differs
+    # from date order; fail loudly if content drift makes it vacuous.
+    assert expected_dates != sorted(expected_dates, reverse=True), (
+        "reorder `_mutate_order_skip_draft` so the file order differs from date order"
+    )
+
+    with conftest._served(destination) as url:
+        with _viewport(browser, url, DESKTOP_WIDTH) as page:
+            _open(page, url, "/")
+            sidebar = page.evaluate(_SIDEBAR_JS)
+
+            assert sidebar["highlightsHeading"] == "Bài nổi bật", (
+                "with resolvable entries the block is `Bài nổi bật` (the build "
+                "did not fail — the unknown entry was skipped)"
+            )
+            assert [entry["title"] for entry in sidebar["highlights"]] == expected_titles, (
+                "the sidebar must follow `_data/highlights.yml` order, skipping "
+                f"unknown and unpublished entries: {sidebar['highlights']} != "
+                f"{expected_titles}"
+            )
+            assert draft_title not in [entry["title"] for entry in sidebar["highlights"]], (
+                f"the unpublished post {draft_title!r} leaked into the highlights"
+            )
+            sidebar_text = page.inner_text("aside.site-sidebar")
+            assert draft_title not in sidebar_text, (
+                f"the unpublished post {draft_title!r} leaked into the sidebar text"
+            )
+            for entry in sidebar["highlights"]:
+                assert (destination / entry["url"].lstrip("/")).is_file(), (
+                    f"highlight {entry['url']} is not in the build"
+                )
+                response = page.request.get(f"{url}{entry['url']}")
+                assert response.status == 200, f"{entry['url']} returned {response.status}"
 
 
 def test_sidebar_tag_bound_holds_with_four_plus_posts_in_one_tag(tmp_path, browser):

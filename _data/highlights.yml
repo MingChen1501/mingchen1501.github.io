@@ -1,0 +1,9 @@
+# Single source of truth for the list sidebar's "Bài nổi bật" block (#64).
+# An ordered list of post file names (with or without the `YYYY-MM-DD-` prefix,
+# without `.md`), rendered in exactly this order, at most 5 rows. Unknown or
+# unpublished entries are skipped silently; an empty/missing file (or no entry
+# resolving to a post) falls back to the 5 newest posts under "Bài mới nhất".
+highlights:
+  - 2026-01-01-Migrate-windows-11-to-fedora
+  - 2022-12-25-gioi-thieu-ve-internet
+  - 2022-10-27-cach-pha-ca-phe

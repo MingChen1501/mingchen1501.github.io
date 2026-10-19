@@ -23,7 +23,7 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 | `modified_date` | Updated date — the layout adds an "Updated:" line. |
 | `tags` | Required — exactly one (max 4) of the 4 content pillars: `backend-production`, `ai-agent`, `linux-tooling`, `doi-song`. Drives the `/tags/` index, the post page's secondary tag column and the `/tags/<tag>/` page. |
 | `description` | Required — ~120-155 chars; rendered as `<meta name="description">` by `jekyll-seo-tag`. |
-| `highlight: true` | Optional — features the post in the list sidebar's "Bài nổi bật" block (`_includes/site-sidebar.html`): the marked posts, newest first, at most 5, with title, date and thumbnail. Choosing a few highlights is a per-post, static flag — no data file, no plugin. |
+| (no field) | Highlighting is configured in `_data/highlights.yml` (#64): add the post's slug to that ordered list to feature it in the list sidebar's "Bài nổi bật" block. No per-post front matter flag. |
 | `comments: false` | Disable comments for this post only (posts have Giscus by default). |
 
 ## Taxonomy rules (#26)
