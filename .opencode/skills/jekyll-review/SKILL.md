@@ -13,7 +13,7 @@ description: Review Jekyll site layout/include/sass/config changes. Use when che
    - **Blocker**: broken layout, lost comments, wrong production config.
    - **Should fix**: maintainability, a11y, SEO/feed.
    - **Suggestion**: style, spelling, small improvements.
-4. Confirm or update the PR risk label and justify it (see `references/review-checklist.md` "Risk label").
+4. Confirm or update the PR risk label (`risk-low`/`risk-medium`/`risk-high`/`risk-very-high`) and justify it (see `references/review-checklist.md` "Risk label").
 5. Concurrency: a review session counts as a task worker — do not run it in
    parallel with another task worker; queue it (see `references/review-checklist.md`
    "Concurrency").

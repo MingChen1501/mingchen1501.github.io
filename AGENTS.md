@@ -128,43 +128,30 @@ missing on the live index page for up to four hours after the deploy (#61).
 
 ## Risk labels and merge policy
 
-Every issue and PR carries exactly one risk label: `risk-low`, `risk-medium` or
-`risk-high`. It is a planning-time estimate confirmed at review time, and the
-orchestrator uses it to decide whether a merge needs the owner.
+Every issue and PR carries exactly one risk label: `risk-low`, `risk-medium`,
+`risk-high` or `risk-very-high`. Planning-time estimate confirmed at review time;
+the orchestrator uses it to decide whether a merge needs the owner. Detailed
+rules, estimation guide and merge policy live in
+`.opencode/skills/jekyll-review/references/review-checklist.md` and
+`.opencode/skills/jekyll-verify/references/checklist.md`.
 
 Labels:
-- `risk-low` (green): no reader-visible behaviour change and nothing irreversible.
+- `risk-low` (green): no reader-visible behaviour change, nothing irreversible.
 - `risk-medium` (amber): reader-visible change that is reversible and guarded.
-- `risk-high` (red): can break published URLs/SEO/content, weaken existing
-  guards, change how assets are served/cached, or needs manual owner action.
+- `risk-high` (red): can break published URLs/SEO/content, weaken guards, change
+  how assets are served/cached, or needs manual owner action.
+- `risk-very-high` (dark red): irreversible or high-blast-radius (data loss,
+  published-URL/SEO breakage, cache/CDN strategy, guard removal) — owner approval
+  required and the owner is pinged explicitly.
 
-Who sets it, and when:
-1. Planning: the issue writer assigns one risk label to the issue and states the
-   justification (what can break, blast radius, reversibility) in the issue body.
-2. Review: the reviewer confirms or updates the PR's risk label and justifies it
-   in the review body. The PR carries the same label as its issue unless the
-   reviewer changes it. If the reviewer raises the risk above the planned label,
-   the orchestrator escalates to the owner instead of merging.
-3. Merge: the orchestrator records the resulting label and the merge decision.
-
-Estimation guide:
-- low: docs/README/agent-skill text; comments and typo fixes; test-only additions
-  that do not delete or relax an assertion; CI structure that cannot change the
-  built site.
-- medium: CSS/markup changes to real pages that keep every existing guard green;
-  new guards; new reader-visible UI behaviour that is reversible; image-budget
-  changes.
-- high: changes to published post content, front matter conventions, permalinks
-  or URLs; deleting or relaxing an existing guard; anything about how assets, the
-  cache or the CDN serve content; `_config.yml`, plugins, dependencies,
-  SEO/sitemap/feed; anything irreversible or requiring manual owner action (e.g.
-  a hard refresh or a Cloudflare purge).
-
-Merge policy:
-- CI green + adversarial review APPROVE + `risk-low` => the orchestrator merges
-  autonomously (merge commit, delete branch) and reports afterwards.
-- `risk-medium`, `risk-high`, or a missing risk label => explicit owner approval
-  is required before merging.
+Merge policy (concise):
+- CI green + adversarial review APPROVE + `risk-low` or `risk-medium` => the
+  orchestrator merges autonomously (merge commit, delete branch) and reports
+  afterwards.
+- `risk-high`, `risk-very-high`, or a missing risk label => explicit owner
+  approval required before merging.
+- If the reviewer raises the risk above the planned label, the orchestrator
+  escalates to the owner instead of merging.
 
 ## Concurrency (task workers)
 
@@ -199,6 +186,7 @@ and the `jekyll-review` / `jekyll-verify` skills.
   4-pillar taxonomy template (`tags`, `description`).
 - Use the dedicated skills when available: `jekyll-post`, `jekyll-verify`, `jekyll-review`.
 - Risk label: confirm the issue and the PR each carry exactly one of `risk-low`,
-  `risk-medium`, `risk-high` before finishing (see "Risk labels and merge policy").
+  `risk-medium`, `risk-high`, `risk-very-high` before finishing (see
+  "Risk labels and merge policy").
 - Concurrency: never spawn a second task worker; queue work instead (see
   "Concurrency (task workers)").
