@@ -7,10 +7,22 @@
 
     <div class="footer-col-wrapper">
       <div class="footer-col">
+      {%- comment -%}
+        Bilingual footer strings (#105, #123): English pages (`lang: en`,
+        the default) render `site.description_en` and
+        `site.author.name_en`; Vietnamese pages (`lang: vi`) keep
+        `site.description` and `site.author.name`.
+      {%- endcomment -%}
+      {%- assign footer_lang = page.lang | default: site.lang | default: 'en' -%}
       {%- if site.author %}
         <ul class="contact-list">
-          {% if site.author.name -%}
-            <li class="p-name">{{ site.author.name | escape }}</li>
+          {%- if footer_lang == 'vi' -%}
+            {%- assign footer_author_name = site.author.name -%}
+          {%- else -%}
+            {%- assign footer_author_name = site.author.name_en | default: site.author.name -%}
+          {%- endif -%}
+          {% if footer_author_name -%}
+            <li class="p-name">{{ footer_author_name | escape }}</li>
           {% endif -%}
           {% if site.author.email -%}
             <li><a class="u-email" href="mailto:{{ site.author.email }}">{{ site.author.email }}</a></li>
@@ -25,7 +37,6 @@
           (`lang: vi`) keep `site.description`. Same pattern as the
           per-language feed link in `_includes/head.html`.
         {%- endcomment -%}
-        {%- assign footer_lang = page.lang | default: site.lang | default: 'en' -%}
         {%- if footer_lang == 'vi' -%}
         <p>{{ site.description | escape }}</p>
         {%- else -%}
