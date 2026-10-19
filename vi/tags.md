@@ -25,9 +25,13 @@ viết cùng tag.
 {%- assign pillar_entry = site.data.tag_labels[pillar] -%}
 {%- assign pillar_label = pillar_entry.vi | default: pillar -%}
 {%- assign pillar_slug = pillar_entry.slug_vi | default: pillar -%}
+{%- assign pillar_desc = pillar_entry.description_vi | default: "" -%}
   <li>
     <a class="tag-chip" rel="tag" href="{{ '/vi/tags/' | append: pillar_slug | append: '/' | relative_url }}">{{ pillar_label | escape }}</a>
     <span class="tag-index__count">{{ pillar_posts | size }} bài</span>
+    {%- if pillar_desc != "" -%}
+    <span class="tag-index__desc">{{ pillar_desc | escape }}</span>
+    {%- endif -%}
   </li>
 {% endfor %}
 </ul>

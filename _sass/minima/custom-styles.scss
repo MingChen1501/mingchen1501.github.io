@@ -187,6 +187,16 @@ ul.tag-index {
   color: $brand-color-dimmed;
 }
 
+// One-line topic summary on the tag indexes (#140): same dimmed meta tone
+// as the count, wrapped onto its own visual line so the 4 long summaries
+// stay readable on 375px phones instead of squeezing beside the chip.
+.tag-index__desc {
+  display: block;
+  margin-top: 2px;
+  font-size: $small-font-size;
+  color: $brand-color-dimmed;
+}
+
 .tag-page__intro {
   color: $brand-color-dimmed;
 }
