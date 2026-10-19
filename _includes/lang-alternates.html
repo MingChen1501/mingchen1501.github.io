@@ -44,9 +44,14 @@
     duplicates of the paginated index (carrying the same `ref: home`) AFTER
     the source pages, so taking the last match would point the English
     alternate of `/` at `/page2/` instead of `/`.
+    Hand-paginated Vietnamese pages (`vi/pageN/index.html`, #155) carry
+    `vi_page_num: N` and sort *before* `vi/index.html`, so they are skipped
+    outright — alternates must point at the first pages, never at a page-N
+    URL (same convention as the paginator branch above).
   {%- endcomment -%}
   {%- for alt_doc in site.pages -%}
     {%- if alt_doc.ref == alt_ref -%}
+      {%- unless alt_doc.vi_page_num > 1 -%}
       {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
       {%- if alt_doc_lang == 'vi' -%}
         {%- if alt_vi == '' -%}
@@ -57,6 +62,7 @@
           {%- assign alt_en = alt_doc.url -%}
         {%- endif -%}
       {%- endif -%}
+      {%- endunless -%}
     {%- endif -%}
   {%- endfor -%}
   {%- endif -%}

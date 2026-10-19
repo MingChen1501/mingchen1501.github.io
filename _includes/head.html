@@ -10,6 +10,35 @@
   {%- endcomment -%}
   {%- include lang-alternates.html -%}
   {%- comment -%}
+    Paginated Vietnamese home head signals (#155): jekyll-seo-tag emits
+    `<link rel="prev|next">` only for its single (English) paginator stream,
+    so the VI home family (`ref: home`, `lang: vi`, `vi_page_num` front
+    matter on `vi/index.html` / `vi/pageN/index.html`) emits them explicitly
+    here, mirroring the EN convention. Alternates stay first-pages-only via
+    `lang-alternates.html`; canonicals stay self-referencing via seo-tag.
+  {%- endcomment -%}
+  {%- if page.ref == 'home' and page.lang == 'vi' -%}
+    {%- assign vi_head_per_page = 5 -%}
+    {%- assign vi_head_num = page.vi_page_num | default: 1 -%}
+    {%- assign vi_head_source = site.vi_posts -%}
+    {%- if vi_head_source == nil -%}
+      {%- assign vi_head_source = "" | split: "" -%}
+    {%- endif -%}
+    {%- assign vi_head_total = vi_head_source | size | plus: vi_head_per_page | minus: 1 | divided_by: vi_head_per_page -%}
+    {%- if vi_head_num > 1 -%}
+      {%- assign vi_head_prev = vi_head_num | minus: 1 -%}
+      {%- if vi_head_prev == 1 -%}
+  <link rel="prev" href="{{ '/vi/' | absolute_url }}">
+      {%- else -%}
+  <link rel="prev" href="{{ '/vi/page' | append: vi_head_prev | append: '/' | absolute_url }}">
+      {%- endif -%}
+    {%- endif -%}
+    {%- assign vi_head_next = vi_head_num | plus: 1 -%}
+    {%- if vi_head_next <= vi_head_total -%}
+  <link rel="next" href="{{ '/vi/page' | append: vi_head_next | append: '/' | absolute_url }}">
+    {%- endif -%}
+  {%- endif -%}
+  {%- comment -%}
     Asset cache versioning (#61, follow-up to #58) - see AGENTS.md
     "Asset cache versioning". GitHub Pages serves `/assets/**` with
     `cache-control: max-age=14400` from a fixed URL, so a returning visitor can

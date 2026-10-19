@@ -22,10 +22,10 @@ layout: base
       {%- comment -%}
         Language-aware list (#93): the English home (`/`, paginated by
         jekyll-paginate over the English-only `site.posts`) shows
-        `paginator.posts`; the Vietnamese home (`/vi/`, a plain page with no
-        paginator — jekyll-paginate supports a single stream) lists every
-        Vietnamese post, newest first, with no pager. `date_format` follows
-        the page language.
+        `paginator.posts`; the Vietnamese home (`/vi/`, `vi/page2/`, … — plain
+        pages with `vi_page_num` front matter, since jekyll-paginate supports
+        a single stream) slices the newest-first Vietnamese list to 5 posts
+        per page (#155). `date_format` follows the page language.
       {%- endcomment -%}
       {%- assign home_lang = page.lang | default: site.lang | default: 'en' -%}
       {%- comment -%}
@@ -37,9 +37,14 @@ layout: base
       {%- if home_vi_source == nil -%}
         {%- assign home_vi_source = "" | split: "" -%}
       {%- endif -%}
+      {%- assign vi_per_page = 5 -%}
+      {%- assign vi_page_num = page.vi_page_num | default: 1 -%}
       {%- if home_lang == 'vi' -%}
         {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-        {% assign posts = home_vi_source | sort: "date" | reverse %}
+        {% assign vi_sorted = home_vi_source | sort: "date" | reverse %}
+        {%- assign vi_total = home_vi_source | size -%}
+        {%- assign vi_offset = vi_page_num | minus: 1 | times: vi_per_page -%}
+        {% assign posts = vi_sorted | slice: vi_offset, vi_per_page %}
       {% else %}
         {%- assign date_format = "%b %-d, %Y" -%}
         {% if paginator %}
@@ -100,8 +105,49 @@ layout: base
           matching `<link rel="next|prev">` head tags come from
           jekyll-seo-tag (verified in the built `/` and `/page2/`), so no
           head change is needed here.
+          Vietnamese pages (#155) reuse the same markup/classes with
+          localized labels ("Bài mới hơn" / "Bài cũ hơn"); their head
+          prev/next links are emitted explicitly in `_includes/head.html`
+          because jekyll-seo-tag only knows the English paginator stream.
+          The pager renders only when the collection spans more than one
+          page, in either language.
         {%- endcomment -%}
-        {% if paginator and home_lang != 'vi' %}
+        {% if home_lang == 'vi' %}
+          {%- assign vi_total_pages = vi_total | plus: vi_per_page | minus: 1 | divided_by: vi_per_page -%}
+          {%- if vi_total_pages > 1 -%}
+          <nav class="pager" aria-label="Pagination">
+            <ul class="pagination">
+            {%- if vi_page_num > 1 -%}
+              {%- assign vi_prev = vi_page_num | minus: 1 -%}
+              <li>
+                {% if vi_prev == 1 %}
+                <a href="{{ '/vi/' | relative_url }}" class="previous-page" rel="prev" title="Đi tới trang 1">
+                  &larr; Bài mới hơn
+                </a>
+                {% else %}
+                <a href="{{ '/vi/page' | append: vi_prev | append: '/' | relative_url }}" class="previous-page" rel="prev" title="Đi tới trang {{ vi_prev }}">
+                  &larr; Bài mới hơn
+                </a>
+                {% endif %}
+              </li>
+            {%- else -%}
+              <li><div class="pager-edge">•</div></li>
+            {%- endif %}
+              <li><div class="current-page">{{ vi_page_num }}</div></li>
+            {%- assign vi_next = vi_page_num | plus: 1 -%}
+            {%- if vi_next <= vi_total_pages %}
+              <li>
+                <a href="{{ '/vi/page' | append: vi_next | append: '/' | relative_url }}" class="next-page" rel="next" title="Đi tới trang {{ vi_next }}">
+                  Bài cũ hơn &rarr;
+                </a>
+              </li>
+            {%- else -%}
+              <li><div class="pager-edge">•</div></li>
+            {%- endif %}
+            </ul>
+          </nav>
+          {%- endif %}
+        {% elsif paginator %}
           <nav class="pager" aria-label="Pagination">
             <ul class="pagination">
             {%- if paginator.previous_page %}

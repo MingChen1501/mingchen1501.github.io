@@ -43,6 +43,31 @@ sitemap: false
     {% endif %}
   {% endif %}
 
+  {% comment %} Paginated Vietnamese home (/vi/page2/ ... /vi/pageN/, #155).
+    Plain `for` over the collection degrades to nothing when it is undefined
+    (the upstream `_config_theme-dev.yml` CI build in `script/cibuild`), and
+    `size` on nil is 0, so no explicit nil-guard is needed. Pages are
+    enumerated from the collection size with ceil division over the same
+    5-posts-per-page constant as `_layouts/home.html`; a page-N URL listed
+    here must resolve to a built `vi/pageN/index.html` file (guarded by
+    `test_sitemap_xml_parses_and_urls_match_site_files`), so adding an 11th
+    VI post fails the suite until `vi/page3/index.html` is created.
+    Alternates mirror the head on those pages (#93): both sides (and the
+    x-default) point at the first pages, never at a page-N URL.
+  {% endcomment %}
+  {% assign vi_per_page = 5 %}
+  {% assign vi_post_count = site.vi_posts | size %}
+  {% assign vi_total_pages = vi_post_count | plus: vi_per_page | minus: 1 | divided_by: vi_per_page %}
+  {% if vi_total_pages > 1 %}
+    {% for vi_page_num in (2..vi_total_pages) %}
+  <url>
+    <loc>{{ site_url }}/vi/page{{ vi_page_num }}/</loc>
+    <lastmod>{{ site.time | date_to_xmlschema }}</lastmod>
+    {% include sitemap-alternates.html ref="home" %}
+  </url>
+    {% endfor %}
+  {% endif %}
+
   {% comment %} Static pages: single emission path for /tags/, /about-me/,
     /portfolio/ (layout: page with a permalink); 404/feed/sitemap/llms are
     never emitted. Both languages are in site.pages already (`vi/*.md` carry
