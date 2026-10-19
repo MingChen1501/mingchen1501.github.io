@@ -462,6 +462,44 @@ long edge exceeds 1600px. Budget limits live in `script/image-budget.sh`
 (single source of truth). It runs in `script/cibuild` and as the
 "Check image sizes" step in `.github/workflows/ci.yaml`.
 
+## External attachment images (temporary workaround, #195)
+
+Dedicated object storage is unavailable due to billing, so article images
+live as GitHub issue attachments and posts embed them by direct URL
+(`https://github.com/user-attachments/assets/...`). This is explicitly
+temporary: when Cloudflare R2, Amazon S3, or another dedicated store becomes
+available and the owner approves it, the worker moves the files, rewrites
+the post URLs, and removes the workaround.
+
+Single source of truth: `_data/image_hosts.yml` (allowed hosts + path
+prefixes). Repointing that one file repoints every check. Rules for new
+article images:
+
+- `https://` only — plain `http://` fails CI.
+- Host and path must be allowlisted in `_data/image_hosts.yml`
+  (today: `github.com` + `/user-attachments/assets/`).
+- Non-empty alt text describing the photo.
+- Explicit dimensions for CLS: kramdown
+  `{: width="W" height="H" }` after a markdown image (values are the real
+  pixel size of the attachment), or literal `width`/`height` attributes on
+  raw-HTML `<img>` blocks, e.g.
+  `![Fedora desktop after setup](https://github.com/user-attachments/assets/XXXX){: width="1600" height="900" }`.
+
+Enforcement: `script/check-external-images` (the "Check external attachment
+images" step in `.github/workflows/ci.yaml`) validates every external image
+in `_posts/` and `_vi_posts/` fully offline — it never downloads the URLs,
+so CI has no live-network dependency. `script/check-images` still covers
+only local files: external bytes never count toward the 6MB `assets/img/`
+budget. Lighthouse keeps measuring pages with external images (no origin is
+blocked); attachment-hosted bytes carry a documented exemption from the
+local budget instead of a byte threshold, because the site does not control
+their compression.
+
+Migration cleanup (owner-approved storage only): repoint
+`_data/image_hosts.yml` to the new store, rewrite the post URLs, remove the
+attachment-host allowlist entry if no longer needed, remove the Lighthouse
+budget exemption, and update this section.
+
 ## Asset cache versioning (#61)
 
 GitHub Pages (through Cloudflare) serves everything under `assets/**` with

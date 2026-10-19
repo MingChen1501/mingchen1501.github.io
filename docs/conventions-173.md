@@ -39,6 +39,22 @@ post; raising the cap needs a decision recorded in the tracking issue.
 Rules and the Pillow compress snippet: see the README "Image conventions"
 section and the `jekyll-assets` skill.
 
+## External attachment images (#195, temporary workaround)
+
+Article images live as GitHub issue attachments
+(`https://github.com/user-attachments/assets/...`) until a dedicated store
+is approved. Single source of truth: `_data/image_hosts.yml` (allowed hosts
++ path prefixes) — referenced by `script/check-external-images` (CI step in
+`.github/workflows/ci.yaml`), `tests/e2e/test_external_images.py`, and the
+README "Image conventions" section. Rules: https only, allowlisted host +
+path, non-empty alt, explicit `width`/`height` (IAL or attributes) for CLS.
+The guard is fully offline (never downloads the URLs); external bytes never
+count toward the 6MB local budget that `script/check-images` enforces.
+Lighthouse still measures pages with external images with a documented
+exemption for attachment-hosted bytes (see the README section). Migration:
+repoint `_data/image_hosts.yml`, rewrite post URLs, drop the allowlist
+entry, remove the Lighthouse exemption, update docs.
+
 ## Pagination sources (#155, #176)
 
 `paginate:` in `_config.yml` is the only per-page value. `jekyll-paginate`
