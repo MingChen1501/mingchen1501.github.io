@@ -79,12 +79,16 @@ deployed with GitHub Pages from the `master` branch.
   `_data/highlights.yml` (#64), in file order, at most 5, with title + date +
   thumbnail (falling back to the 5 newest posts of that language when the list
   is empty/missing) — and every tag as a row collapsed by default
-  (`<details>` without `open`) that shows at most 3 posts of that language
-  once opened. Headings are English on English pages (`Featured`,
-  `Latest posts`, `Topics`) and Vietnamese on Vietnamese pages (`Bài nổi bật`,
-  `Bài mới nhất`, `Chủ đề`). Keep the aside AFTER `.site-main` in the DOM,
-  keep the tag chips coming from `_includes/post-tags.html` (no forked chip
-  markup), never crop or upscale a thumbnail (capped `max-width`/`max-height`
+  (`<details>` without `open`): a chip-styled, non-link label plus the post
+  count, showing at most 3 posts of that language once opened (the label is
+  a plain `<span>` — links are invalid inside `<summary>`, #114 — and the
+  row's tag-page link lives in the opened panel). Headings are English on
+  English pages (`Featured`, `Latest posts`, `Topics`) and Vietnamese on
+  Vietnamese pages (`Bài nổi bật`, `Bài mới nhất`, `Chủ đề`). Keep the aside
+  AFTER `.site-main` in the DOM, keep the list/home/post chips coming from
+  `_includes/post-tags.html` (no forked chip markup; the sidebar summary
+  label only reuses the `.tag-chip` class), never crop or upscale a
+  thumbnail (capped `max-width`/`max-height`
   box, no `object-fit`, `padding: 0` — the `img` reset in `_base.scss` distorts
   a two-`max-*` box), do not add `thumb-*` files, and keep the column inside
   its height budget (short rows, no `max-height`/`overflow-y` inner scrollbar;
@@ -253,6 +257,11 @@ for site-specific review/verify):
   sidebar shell (aside after the list in the DOM), the highlights, the collapsed
   tag block, the absent inner scrollbar and the 375px overflow on `/` and a
   `/tags/<tag>/` page.
+- Touched `_includes/header.html`, `_includes/nav-items.html`,
+  `_includes/sub-footer.html`, `assets/js/` or the nav rules in `_sass/` →
+  `tests/e2e/test_nav_a11y.py` guards the button disclosure (accessible
+  name, aria-expanded toggling, keyboard/Escape) and the link-free
+  summaries.
 - Touched `assets/` (images) → run `script/check-images` (single file <= 500KB,
   `assets/img/` total <= 6MB) before committing.
 - New post only → a build smoke test is enough; verify front matter matches the

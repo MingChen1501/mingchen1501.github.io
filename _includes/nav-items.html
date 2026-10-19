@@ -1,4 +1,4 @@
-<div class="nav-items">
+<div class="nav-items" id="nav-menu">
   {%- for path in include.paths -%}
   {%- assign hyperpage = site.pages | where: "path", path | first -%}
   {%- if hyperpage.title %}
