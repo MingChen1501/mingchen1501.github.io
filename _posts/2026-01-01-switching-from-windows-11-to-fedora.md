@@ -25,7 +25,7 @@ description: "Moving my old laptop from glitchy Windows 11 drivers to Fedora Lin
 ## Installation
 - Opened the BIOS on this ancient Dell, followed some YouTube tutorials and finally got it installed — looks quite slick
 ![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" }
-- Poked around and found the touchpad too fast; googled a bit and this post helped me fix it partway https://ubuntuhandbook.org/index.php/2023/05/adjust-touchpad-scrolling-ubuntu/
+- Poked around and found the touchpad too fast; googled a bit and [this UbuntuHandbook guide to adjusting touchpad scrolling](https://ubuntuhandbook.org/index.php/2023/05/adjust-touchpad-scrolling-ubuntu/) helped me fix it partway.
 - One annoyance: GNOME Settings still doesn't let you configure two-finger touchpad scrolling, so I'll live with the workaround for now.
 - Spent a while fiddling with Vietnamese input and finally got it working — some IME called Bamboo, a name that sounds Vietnamese just like Bamboo Airways hehe
 ## Wrap-up

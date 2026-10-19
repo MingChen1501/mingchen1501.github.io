@@ -28,7 +28,7 @@ redirect_from:
 ## Cài đặt
 - Mở Bios con dell cổ lên, cài mãi theo mấy anh youtube cũng cài xong, nhìn ổn áp phết
 ![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" }
-- Mò 1 lúc thấy touchpad bị nhanh, google 1 lúc thì thấy post này làm theo cũng fix được 1 tí https://ubuntuhandbook.org/index.php/2023/05/adjust-touchpad-scrolling-ubuntu/
+- Mò 1 lúc thấy touchpad bị nhanh, google 1 lúc thì thấy [bài hướng dẫn chỉnh tốc độ cuộn touchpad của UbuntuHandbook](https://ubuntuhandbook.org/index.php/2023/05/adjust-touchpad-scrolling-ubuntu/) này, làm theo cũng fix được 1 tí.
 - Cay 1 cái là GNOME setting nó chưa cho setting scroll touchpad 2 ngón tay, thôi fix đâu dùng tạm.
 - ngồi mò thêm cái Gõ tiếng việt mãi cũng oke, deps gì gì tên là bamboo ấy, tên nghe cũng Vietnamese giống bamboo airways phết chứ
 ## Tổng kết
