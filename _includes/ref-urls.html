@@ -11,13 +11,14 @@
   build in `script/cibuild`), and `for` over nil degrades to nothing while a
   filter would crash.
 
-  First match wins in site.pages: jekyll-paginate appends its page-2..N
-  duplicates of the paginated index (carrying the same `ref: home`) AFTER
-  the source pages, so taking the last match would point the English
-  alternate of `/` at `/page2/` instead of `/` (#104). Hand-paginated
-  Vietnamese pages (`vi/pageN/index.html`, #155) carry `vi_page_num: N` and
-  sort *before* `vi/index.html`, so they are skipped outright — resolved
-  URLs point at the first pages, never at a page-N URL.
+  First match wins in every source: duplicate `ref`s resolve to the first
+  document, never overwritten by a later one (jekyll-paginate appends its
+  page-2..N duplicates of the paginated index — carrying the same
+  `ref: home` — AFTER the source pages, so taking the last match would
+  point the English alternate of `/` at `/page2/` instead of `/`, #104).
+  Hand-paginated Vietnamese pages (`vi/pageN/index.html`, #155) carry
+  `vi_page_num: N` and sort *before* `vi/index.html`, so they are skipped
+  outright — resolved URLs point at the first pages, never at a page-N URL.
 {%- endcomment -%}
 {%- assign ref_en = '' -%}
 {%- assign ref_vi = '' -%}
@@ -27,9 +28,13 @@
     {%- if ref_doc.ref == ref_key -%}
       {%- assign ref_doc_lang = ref_doc.lang | default: site.lang | default: 'en' -%}
       {%- if ref_doc_lang == 'vi' -%}
-        {%- assign ref_vi = ref_doc.url -%}
+        {%- if ref_vi == '' -%}
+          {%- assign ref_vi = ref_doc.url -%}
+        {%- endif -%}
       {%- else -%}
-        {%- assign ref_en = ref_doc.url -%}
+        {%- if ref_en == '' -%}
+          {%- assign ref_en = ref_doc.url -%}
+        {%- endif -%}
       {%- endif -%}
     {%- endif -%}
   {%- endfor -%}
@@ -37,9 +42,13 @@
     {%- if ref_doc.ref == ref_key -%}
       {%- assign ref_doc_lang = ref_doc.lang | default: site.lang | default: 'en' -%}
       {%- if ref_doc_lang == 'vi' -%}
-        {%- assign ref_vi = ref_doc.url -%}
+        {%- if ref_vi == '' -%}
+          {%- assign ref_vi = ref_doc.url -%}
+        {%- endif -%}
       {%- else -%}
-        {%- assign ref_en = ref_doc.url -%}
+        {%- if ref_en == '' -%}
+          {%- assign ref_en = ref_doc.url -%}
+        {%- endif -%}
       {%- endif -%}
     {%- endif -%}
   {%- endfor -%}

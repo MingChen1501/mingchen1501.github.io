@@ -441,6 +441,54 @@ def test_templates_wire_the_switcher_alternates_and_fallback_notice():
 
 
 @pytest.mark.static
+def test_ref_resolution_is_first_match_wins_with_vi_page_num_guard():
+    """#172: `ref-urls.html` resolves first-match-wins over every source and
+    skips hand-paginated VI pages via `vi_page_num` — never via a fragile
+    `contains '/page'` URL heuristic.
+
+    Regression: the pre-#170 copies took the *last* `ref` match (so a later
+    duplicate overwrote the canonical URL) and the switcher skipped
+    paginated pages by matching `/page` in the URL (so any slug containing
+    "page" was misclassified). Both deviations are locked out here: the
+    test fails when any source loop assigns unconditionally or when the
+    URL heuristic comes back.
+    """
+    partial = REPO_ROOT / "_includes" / "ref-urls.html"
+    body = _read(partial)
+    # The paginated-page skip must key on front matter, not on the URL.
+    assert "vi_page_num" in body, (
+        "_includes/ref-urls.html must skip hand-paginated pages via `vi_page_num`"
+    )
+    for name in (
+        "ref-urls.html",
+        "lang-alternates.html",
+        "sitemap-alternates.html",
+        "lang-switcher.html",
+        "vi-fallback-notice.html",
+    ):
+        html = _read(REPO_ROOT / "_includes" / name)
+        assert "contains '/page'" not in html and 'contains "/page' not in html, (
+            f"_includes/{name} must not sniff paginated URLs with "
+            "`contains '/page'` — use the `vi_page_num` front matter instead"
+        )
+    # First match wins: every source loop may only fill an empty slot, so a
+    # later document sharing one `ref` never overwrites the canonical URL.
+    for source in ("site.posts", "site.vi_posts", "site.pages"):
+        start = body.find(f"for ref_doc in {source}")
+        assert start != -1, f"ref-urls.html has no loop over {source}"
+        end = body.find("endfor", start)
+        loop = body[start:end]
+        assert "if ref_en == ''" in loop, (
+            f"the {source} loop must keep the first English match "
+            "(`if ref_en == ''`)"
+        )
+        assert "if ref_vi == ''" in loop, (
+            f"the {source} loop must keep the first Vietnamese match "
+            "(`if ref_vi == ''`)"
+        )
+
+
+@pytest.mark.static
 def test_ref_resolution_is_shared_through_one_partial():
     """#170: the ref -> EN/VI lookup lives in `ref-urls.html` only — the four
     call sites delegate to it instead of copy-pasting the three-source scan,
@@ -626,6 +674,22 @@ def test_home_switchers_point_at_canonical_homes(built_site):
     assert page2.is_file(), "/page2/ must survive the move (English pagination stays)"
     assert _switcher_href(page2.read_text(encoding="utf-8")) == "/vi/", (
         "the switcher on `/page2/` must point at the canonical `/vi/`"
+    )
+
+
+def test_vi_page2_switcher_points_at_canonical_home(built_site):
+    """Hand-paginated VI pages share the home `ref` (#155, #172).
+
+    `vi/index.html` (`vi_page_num: 1`) and `vi/page2/index.html`
+    (`vi_page_num: 2`) are two VI docs sharing one `ref: home`; the
+    resolver must skip the page-2 doc via `vi_page_num` (first match wins),
+    so the switcher on `/vi/page2/` points at the canonical English home
+    `/` — never back at a `/pageN/` URL.
+    """
+    vi_page2 = built_site / "vi" / "page2" / "index.html"
+    assert vi_page2.is_file(), "/vi/page2/ must list the remaining VI posts (#155)"
+    assert _switcher_href(vi_page2.read_text(encoding="utf-8")) == "/", (
+        "the switcher on `/vi/page2/` must point at the canonical `/`, not /page2/"
     )
 
 
