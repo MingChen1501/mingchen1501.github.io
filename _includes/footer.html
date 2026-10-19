@@ -25,7 +25,20 @@
             <li class="p-name">{{ footer_author_name | escape }}</li>
           {% endif -%}
           {% if site.author.email -%}
-            <li><a class="u-email" href="mailto:{{ site.author.email }}">{{ site.author.email }}</a></li>
+            {%- comment -%}
+              Stable accessible name (#150): under Cloudflare Email
+              Obfuscation the visible text can become
+              "[email protected]", so the link carries a localized
+              `aria-label` naming the recipient (no raw address in the
+              label, so obfuscation cannot rewrite it). Visible text
+              stays the plain address and works with JS off.
+            {%- endcomment -%}
+            {%- if footer_lang == 'vi' -%}
+              {%- assign email_label = 'Gửi email cho ' | append: footer_author_name -%}
+            {%- else -%}
+              {%- assign email_label = 'Email ' | append: footer_author_name -%}
+            {%- endif -%}
+            <li><a class="u-email" href="mailto:{{ site.author.email }}" aria-label="{{ email_label }}">{{ site.author.email }}</a></li>
           {%- endif %}
         </ul>
       {%- endif %}
