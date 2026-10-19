@@ -63,7 +63,19 @@ layout: base
                 {{ post.title | escape }}
               </a>
             </h2>
-            {%- if site.minima.show_excerpts -%}
+            {%- comment -%}
+              List excerpt (#113): prefer the translated `description`
+              front matter (same as the tag pages) over `post.excerpt`.
+              The Jekyll excerpt is the first paragraph of the body, which
+              embeds the full-size content image for posts that open with
+              one — rendering it here would download that image in every
+              list item and shift the list while it loads. `description`
+              is mandatory per the taxonomy, so the excerpt fallback below
+              only serves posts that predate it.
+            {%- endcomment -%}
+            {%- if post.description -%}
+              <p class="post-description">{{ post.description | escape }}</p>
+            {%- elsif site.minima.show_excerpts -%}
               {{ post.excerpt }}
             {%- endif -%}
             {%- comment -%}
