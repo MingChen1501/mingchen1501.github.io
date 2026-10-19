@@ -1,0 +1,20 @@
+# TEMPORARY workaround for #195 (single source of truth, referenced by
+# `script/check-external-images`, `tests/e2e/test_external_images.py`,
+# the README "Image conventions" section, and `docs/conventions-173.md`).
+#
+# Reason: dedicated object storage is unavailable due to billing, so article
+# images live as GitHub issue attachments and posts embed them by direct URL.
+# Every external article image MUST use https, an allowlisted host below, a
+# non-empty alt text, and explicit width/height (see the guard script).
+#
+# Migration: when Cloudflare R2, Amazon S3, or another dedicated store
+# becomes available and the owner approves it, repoint this file to the new
+# store, rewrite the post URLs, remove the attachment-host entry below if no
+# longer needed, remove the Lighthouse budget exemption, and update the docs.
+# All external-image handling added for #195 must be easy to remove here.
+
+scheme: https
+allowed_hosts:
+  - github.com
+attachment_path_prefixes:
+  - /user-attachments/assets/

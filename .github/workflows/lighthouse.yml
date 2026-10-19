@@ -25,6 +25,12 @@ jobs:
           bundler-cache: true
       - name: Build site with Jekyll
         run: bundle exec jekyll build
+      # NOTE (#195): pages embedding external attachment images
+      # (`https://github.com/user-attachments/assets/...`) are measured as-is;
+      # no origin is blocked. Attachment-hosted bytes are exempt from the local
+      # 6MB `assets/img/` budget (enforced by script/check-images) instead of
+      # carrying a byte threshold here, because the site does not control
+      # their compression. Remove this exemption on storage migration.
       - name: Set Up Node
         uses: actions/setup-node@v4
         with:

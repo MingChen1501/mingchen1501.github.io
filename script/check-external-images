@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""CI guard for #195: external article images (temporary workaround).
+
+Article images are embedded by direct GitHub issue-attachment URL
+(`https://github.com/user-attachments/assets/...`) until a dedicated store
+(Cloudflare R2, Amazon S3, or equivalent) is approved. This guard validates
+every external image in `_posts/` and `_vi_posts/`:
+
+- https only (plain http is rejected);
+- host allowlisted in `_data/image_hosts.yml` (the single source of truth)
+  with an allowlisted attachment path prefix;
+- non-empty alt text (no decorative exception: external article images are
+  informative by convention);
+- explicit `width`/`height` (kramdown `{: width="W" height="H" }` IAL for
+  markdown images, literal attributes for raw-HTML `<img>` blocks) so the
+  CLS aspect-ratio reservation (`img[width][height] { height: auto; }`)
+  applies to off-site bytes too.
+
+The check is fully offline: it never fetches the URLs (no live network
+dependency in CI). Local files under `assets/img/` are NOT checked here —
+`script/check-images` still owns the local budgets (each file <= 500KB,
+`assets/img/` total <= 6MB).
+
+Usage:
+    script/check-external-images [--root DIR] [--config FILE]
+"""
+
+import argparse
+import os
+import re
+import sys
+from urllib.parse import urlparse
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_ROOT = os.path.dirname(SCRIPT_DIR)
+DEFAULT_CONFIG = os.path.join(DEFAULT_ROOT, "_data", "image_hosts.yml")
+
+MD_IMG_RE = re.compile(r'!\[([^\]]*)\]\((https?://[^\s)]+)(?:\s+"[^"]*")?\)')
+IAL_RE = re.compile(r'\{\:\s*width="(\d+)"\s+height="(\d+)"[^}]*\}')
+HTML_IMG_RE = re.compile(r"<img\b[^>]*>", re.S)
+SRC_RE = re.compile(r'src="(https?://[^"]+)"')
+ALT_RE = re.compile(r'alt="([^"]*)"')
+WIDTH_RE = re.compile(r'width="(\d+)"')
+HEIGHT_RE = re.compile(r'height="(\d+)"')
+
+
+def load_config(path):
+    """Parse the tiny `_data/image_hosts.yml` without a YAML dependency."""
+    scheme = "https"
+    hosts = []
+    prefixes = []
+    key = None
+    try:
+        with open(path, encoding="utf-8") as fh:
+            lines = fh.read().splitlines()
+    except OSError as exc:
+        return None, f"cannot read image-host config {path}: {exc}"
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        match = re.match(r"^([A-Za-z_]+):\s*(\S+)?\s*$", stripped)
+        if match and not line.startswith((" ", "\t")):
+            key, value = match.group(1), match.group(2)
+            if key == "scheme" and value:
+                scheme = value
+            elif key in ("allowed_hosts", "attachment_path_prefixes"):
+                pass
+            else:
+                key = None
+            continue
+        item = re.match(r"^\s*-\s*(\S+)\s*$", line)
+        if item and key == "allowed_hosts":
+            hosts.append(item.group(1))
+        elif item and key == "attachment_path_prefixes":
+            prefixes.append(item.group(1))
+    if not hosts:
+        return None, f"image-host config {path} lists no allowed_hosts"
+    return {"scheme": scheme, "hosts": hosts, "prefixes": prefixes}, None
+
+
+def check_url(url, config):
+    """None when the URL is allowed; a reason otherwise."""
+    parsed = urlparse(url)
+    if parsed.scheme != config["scheme"]:
+        return (
+            f"INSECURE SCHEME: {url} (external images must use "
+            f"{config['scheme']}://)"
+        )
+    if parsed.hostname not in config["hosts"]:
+        return (
+            f"HOST NOT ALLOWLISTED: {url} (allowed hosts: "
+            f"{', '.join(config['hosts'])}, see _data/image_hosts.yml)"
+        )
+    if config["prefixes"] and not any(
+        parsed.path.startswith(prefix) for prefix in config["prefixes"]
+    ):
+        return (
+            f"PATH NOT ALLOWLISTED: {url} (allowed path prefixes: "
+            f"{', '.join(config['prefixes'])}, see _data/image_hosts.yml)"
+        )
+    return None
+
+
+def check_posts_dir(posts_dir, config):
+    errors = []
+    checked = 0
+    if not os.path.isdir(posts_dir):
+        return checked, errors
+    for name in sorted(os.listdir(posts_dir)):
+        if not name.endswith(".md"):
+            continue
+        path = os.path.join(posts_dir, name)
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+        # Skip YAML front matter: external URLs there (if any) are not images.
+        body = text
+        if body.startswith("---"):
+            end = body.find("---", 3)
+            if end != -1:
+                body = body[end + 3 :]
+        base_line = text.count("\n", 0, len(text) - len(body)) + 1
+        for match in MD_IMG_RE.finditer(body):
+            alt, url = match.group(1), match.group(2)
+            lineno = base_line + body.count("\n", 0, match.start())
+            checked += 1
+            reason = check_url(url, config)
+            if reason:
+                errors.append(f"{name}:{lineno}: {reason}")
+                continue
+            if not alt.strip():
+                errors.append(
+                    f"{name}:{lineno}: EMPTY ALT TEXT: {url} "
+                    "(external images must describe the photo)"
+                )
+                continue
+            line_end = body.find("\n", match.end())
+            tail = body[match.end():] if line_end == -1 else body[match.end():line_end]
+            if not IAL_RE.match(tail.lstrip()):
+                errors.append(
+                    f"{name}:{lineno}: MISSING DIMENSIONS: {url} "
+                    '(append {: width="W" height="H" } to reserve '
+                    "the aspect-ratio box and avoid CLS)"
+                )
+        for match in HTML_IMG_RE.finditer(body):
+            tag = match.group(0)
+            src = SRC_RE.search(tag)
+            if not src or not src.group(1).startswith(("http://", "https://")):
+                continue
+            url = src.group(1)
+            lineno = base_line + body.count("\n", 0, match.start())
+            checked += 1
+            reason = check_url(url, config)
+            if reason:
+                errors.append(f"{name}:{lineno}: {reason}")
+                continue
+            alt = ALT_RE.search(tag)
+            if alt is None or not alt.group(1).strip():
+                errors.append(
+                    f"{name}:{lineno}: EMPTY ALT TEXT: {url} "
+                    "(external images must describe the photo)"
+                )
+                continue
+            if not (WIDTH_RE.search(tag) and HEIGHT_RE.search(tag)):
+                errors.append(
+                    f"{name}:{lineno}: MISSING DIMENSIONS: {url} "
+                    "(raw-HTML images need width/height attributes "
+                    "to reserve the aspect-ratio box and avoid CLS)"
+                )
+    return checked, errors
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", default=DEFAULT_ROOT)
+    parser.add_argument("--config", default=DEFAULT_CONFIG)
+    args = parser.parse_args(argv)
+
+    config, problem = load_config(args.config)
+    if problem:
+        print(f"ERROR: {problem}", file=sys.stderr)
+        return 2
+
+    total = 0
+    errors = []
+    for posts_dir in (
+        os.path.join(args.root, "_posts"),
+        os.path.join(args.root, "_vi_posts"),
+    ):
+        checked, found = check_posts_dir(posts_dir, config)
+        total += checked
+        errors.extend(found)
+
+    if errors:
+        print("External image check FAILED:")
+        for error in errors:
+            print(f"  {error}")
+        return 1
+    if total == 0:
+        print("OK: no external images in _posts/ or _vi_posts/.")
+    else:
+        print(f"OK: {total} external image(s) use allowlisted https URLs "
+              "with alt text and dimensions.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

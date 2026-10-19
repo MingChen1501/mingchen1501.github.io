@@ -4,6 +4,10 @@
 #   - whole assets/img <= 6MB (MAX_TOTAL_BYTES)
 #   - new image filenames follow lowercase-hyphen naming (legacy allowlisted)
 #   - long edge <= 1600px (MAX_DIMENSION)
+#
+# Local files only (#195): external article images (GitHub issue-attachment
+# URLs) are never downloaded or budgeted here — they are validated offline by
+# script/check-external-images against _data/image_hosts.yml instead.
 # Usage: script/check-images [ASSETS_DIR]
 # Budget limits live in script/image-budget.sh (single source of truth, #171).
 set -u
