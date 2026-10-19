@@ -76,12 +76,21 @@ Spawning:
   and only when a slot is free; queue the remaining eligible issues
   (lowest number first) for later wakes. Never batch-spawn.
 - One worker, one issue, one PR. The per-issue spawn prompt must name the
-  issue number/title/URL, point at the article-writer procedure (#191),
-  require EN+VI posts in a single PR with `Closes #<n>`, and require issue
+  issue number/title/URL, point at the writer role
+  (`.opencode/agents/article-writer.md`) and the `article-writer` skill
+  (`.opencode/skills/article-writer/SKILL.md`, procedure #191), require
+  EN+VI posts in a single PR with `Closes #<n>`, and require issue
   images to be embedded by direct attachment URL
   (`https://github.com/user-attachments/assets/...`) — never downloaded,
   converted, or committed under `assets/img` (explicit workaround: no
-  dedicated image host until the owner approves one).
+  dedicated image host until the owner approves one). Full workflow,
+  handoff/report contract, and image policy live in that skill — do not
+  duplicate them here.
+- Chat drafts (#192) first become a well-formed `article` issue, then
+  follow the same spawn flow. Spawn provides the issue number (or draft
+  text plus file-issue-first instruction) and owner constraints; the
+  writer reports title/slug/tags, assessment outcome, verification
+  results, and the PR URL.
 
 ## Pool
 
@@ -269,6 +278,9 @@ Checklist (each review starts from the pinned baseline, never re-derived):
 
 ## Related
 
+- Article writer role/skill: `.opencode/agents/article-writer.md` and
+  `.opencode/skills/article-writer/SKILL.md` (entry: intake #190,
+  chat-draft #192; handoff/report contract and image workaround inside).
 - Site review rules: `.opencode/skills/jekyll-review/SKILL.md` and
   `references/review-checklist.md`.
 - Site verify rules: `.opencode/skills/jekyll-verify/SKILL.md` and
