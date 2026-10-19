@@ -1,0 +1,41 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches:
+      - master
+
+# A superseded PR push cancels its in-flight run instead of letting a whole
+# duplicate run finish (#56).
+concurrency:
+  group: lighthouse-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Up Ruby 3.3
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Build site with Jekyll
+        run: bundle exec jekyll build
+      - name: Set Up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.15.1 autorun
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7
