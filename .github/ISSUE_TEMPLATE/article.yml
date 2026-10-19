@@ -1,0 +1,125 @@
+name: Article request
+description: Request a new bilingual (EN + VI) article. Carries all metadata the article worker needs.
+title: "[article] "
+labels: ["article"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## How this template works
+
+        Each article starts life as an issue using this form (`.github/ISSUE_TEMPLATE/article.yml`).
+        The owner (or anyone filing on their behalf) fills in every required field; the
+        orchestrator intake scan picks the issue up via the `article` label and the
+        article worker drafts both the EN (`_posts/`) and VI (`_vi_posts/`) posts in
+        one PR from this metadata.
+
+        Field contract: `article-title` and `slug` become the post identity (`ref`,
+        file names); `primary-language` selects which draft is written first;
+        `tags` must come from the 4 content pillars only; `description` becomes the
+        SEO meta description (120-155 characters); `body-outline` is the draft source;
+        `images` lists attachment URLs embedded directly; `publish-date` schedules
+        the post; `special-instructions` carries anything else (tone, audience,
+        links that must be kept).
+
+  - type: input
+    id: article-title
+    attributes:
+      label: Article title
+      description: Working title of the article. Used for both language drafts unless special instructions say otherwise.
+      placeholder: "Example: Switching from Windows 11 to Fedora"
+    validations:
+      required: true
+
+  - type: input
+    id: slug
+    attributes:
+      label: Slug
+      description: URL/file slug in lowercase kebab-case (ASCII letters, numbers, hyphens only). Must be unique and must never reuse an old Vietnamese slug.
+      placeholder: "Example: switching-from-windows-11-to-fedora"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: primary-language
+    attributes:
+      label: Primary language
+      description: Language of the first draft. The worker always produces both EN and VI posts in the same PR.
+      options:
+        - en
+        - vi
+      default: 0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tags
+    attributes:
+      label: Tags
+      description: Pick 1-4 tags from the 4 content pillars only (canonical keys from `_data/tag_labels.yml`). No new tags.
+      multiple: true
+      options:
+        - backend-production
+        - ai-agent
+        - linux-tooling
+        - doi-song
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: One short SEO sentence, about 120-155 characters, summarising the article. Rendered as the meta description in both languages.
+      placeholder: "Example (count the characters): How I replaced Windows 11 with Fedora for a leaner dev setup, what broke, and the fixes that stuck."
+    validations:
+      required: true
+
+  - type: textarea
+    id: body-outline
+    attributes:
+      label: Body / outline
+      description: "The article substance: full draft text or a section-by-section outline with the key points, facts, and links each section must cover."
+      placeholder: |
+        Example:
+        - Intro: why I switched, machine context.
+        - Setup: Fedora edition, partitioning, drivers (link: ...).
+        - What broke and the fix for each.
+        - Verdict: who should / should not switch.
+    validations:
+      required: true
+
+  - type: textarea
+    id: images
+    attributes:
+      label: Images (issue attachment URLs, used directly)
+      description: >
+        Optional. Upload images directly to THIS issue (drag and drop or paste),
+        then list each `https://github.com/user-attachments/assets/...` URL with
+        its alt text and where it belongs. Posts embed these URLs directly.
+        Never download, convert, or commit issue images under `assets/img/`.
+        Direct attachment URLs are a temporary workaround until a dedicated
+        store (Cloudflare R2, Amazon S3, or equivalent) is approved; on
+        migration the worker moves the files and rewrites the URLs.
+      placeholder: |
+        Example:
+        - Alt "Fedora desktop after setup" -> https://github.com/user-attachments/assets/XXXX (after the setup section)
+      render: markdown
+
+  - type: input
+    id: publish-date
+    attributes:
+      label: Publish date
+      description: Optional target date (owner confirms). Leave blank when there is no scheduling constraint.
+      placeholder: "Example: 2026-11-01 (YYYY-MM-DD)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: special-instructions
+    attributes:
+      label: Special instructions
+      description: Optional. Tone, audience, links that must be kept, sections to skip, or anything the outline does not cover.
+      placeholder: "Example: Practical tone for developers; keep the driver download link; no affiliate links."
+    validations:
+      required: false
