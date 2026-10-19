@@ -63,6 +63,14 @@
   long edge <= 1600px, each file <= 500KB, `assets/img/` total <= 6MB.
 - `script/check-images` must pass; do not drift the 500KB/6MB limits.
 
+## Language (#110)
+
+All public repository artifacts MUST be English: PR titles/bodies, commit
+messages (subject + body), issue titles/bodies, GitHub review comments, and
+code/docs/config comments added to the repo. Vietnamese is allowed only for
+internal AO reporting (worker reports, orchestrator/owner chat, internal
+analysis files). Do not rewrite historical artifacts.
+
 ## Risk label
 
 - Confirm or update the PR's risk label (`risk-low`, `risk-medium`, `risk-high`,

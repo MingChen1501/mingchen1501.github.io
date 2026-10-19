@@ -1,6 +1,7 @@
 ---
 name: Jekyll Review
 description: Review Jekyll site layout/include/sass/config changes. Use when checking a diff before a PR or with the /review command.
+trigger: "Reviewing a site diff or PR (correctness, risk label, merge policy, English artifacts): read this skill plus references/review-checklist.md."
 ---
 
 # Review site changes
