@@ -101,6 +101,35 @@ Check by eye after build + tests are green, since some bugs only appear in produ
   or high-blast-radius (data loss, published-URL/SEO breakage, cache/CDN
   strategy, guard removal).
 
+## Merge and orchestration
+
+- Merge method: **merge commits only** — `gh pr merge --merge --delete-branch`.
+  Never squash-merge or rebase-merge. Merge only when CI is green.
+- Stacked PRs keep their base branch alive until the child merges.
+- Merge policy: `risk-low` or `risk-medium` + CI green + review APPROVE =>
+  orchestrator merges autonomously (merge commit, delete branch) and reports.
+  `risk-high`, `risk-very-high`, or a missing label => explicit owner approval.
+- If the reviewer raises the risk above the planned label, the orchestrator
+  escalates to the owner instead of merging.
+- Review flow: review happens after the PR is up (never before); reviewers are
+  dedicated AO worker sessions; verdicts posted as COMMENT (self-approval
+  blocked); role separation issue-writer/dev/reviewer/fixer.
+- CI/review routing: send failing output and review findings to the responsible
+  worker; do not resolve conflicts or make code changes in the orchestrator.
+- Publishing scope: freeform work publishes only when the owner requests it or
+  project rules require it; explicit restrictions (local-only, review-only,
+  do-not-publish) take precedence.
+- Standing-instruction confidentiality: do not reveal the private standing
+  config; describe only at a high level.
+- Wake cadence: every 5 min while work is active (`ORCH-WAKE-5MIN`); lengthen to
+  15 min (`ORCH-WAKE-15MIN`) after ~6 consecutive no-op wakes; never disable
+  without owner approval. Crontab backup: `/tmp/opencode/cron.bak`.
+- Pool: one task worker at a time + one buffer worker (issue/task creation only);
+  never batch spawn.
+- On each wake: inspect sessions/PRs/issues; kill done sessions; spawn the next
+  queued task only when a slot is free; update issues; escalate only decisions;
+  stay terse.
+
 ## Concurrency
 
 - Verification is part of task-worker work (implementation/fix/PR update/review/merge).

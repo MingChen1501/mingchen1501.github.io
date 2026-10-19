@@ -16,7 +16,11 @@ description: Check changes before opening a PR (Jekyll build, comments E2E tests
 3. Test: `python -m pytest tests/e2e -v` (first time: `pip install -r tests/e2e/requirements.txt`).
 4. Review the common breakages in `references/checklist.md`.
 5. Confirm the issue and PR carry a risk label (`risk-low`/`risk-medium`/`risk-high`/`risk-very-high`).
-6. Concurrency: a verify session is part of task-worker work — do not run it
+6. Merge/CI: merge only when CI is green; merge commits only
+   (`gh pr merge --merge --delete-branch`); stacked PRs keep their base branch
+   alive until the child merges. See `references/checklist.md` "Merge and
+   orchestration".
+7. Concurrency: a verify session is part of task-worker work — do not run it
    alongside another task worker; queue it (see `references/checklist.md`
    "Concurrency").
-7. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.
+8. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.

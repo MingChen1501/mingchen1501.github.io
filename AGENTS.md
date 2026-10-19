@@ -168,6 +168,41 @@ workers" default).
 Detailed rule + rationale: `.opencode/skills/using-ao/SKILL.md` (spawn/concurrency)
 and the `jekyll-review` / `jekyll-verify` skills.
 
+## Automation cues and standing orchestration rules
+
+AO runs on cron-driven wake cues. Standing rules (a fresh session must be able
+to reproduce them without prior context; detail in
+`.opencode/skills/orchestrator/SKILL.md`, plus `jekyll-review` / `jekyll-verify`
+for site-specific review/verify):
+
+- Wake cadence: every 5 min while work is active (`ORCH-WAKE-5MIN`); lengthen to
+  15 min (`ORCH-WAKE-15MIN`) after ~6 consecutive no-op wakes; never disable
+  without owner approval. Crontab backup: `/tmp/opencode/cron.bak`.
+- On each wake: inspect sessions/PRs/issues; kill done sessions; spawn the next
+  queued task only when a slot is free; update issues; escalate only decisions.
+  Stay terse; track consecutive no-op wakes.
+- Pool: one task worker at a time + one buffer worker (issue/task creation only).
+  Never batch spawn. (See "Concurrency (task workers)".)
+- Role separation: issue-writer / dev / reviewer / fixer are separate sessions;
+  one worker = one small task = one PR. When a user-created ticket's PR is up,
+  kill that session and spawn a dedicated review worker (create follow-ups if any).
+- Reviewers: dedicated AO worker sessions (native AO reviewer is broken/disabled);
+  verdicts posted as COMMENT (GitHub blocks self-approval). Review happens after
+  the PR is up, never before.
+- Merge: merge commits only (`gh pr merge --merge --delete-branch`); never
+  squash/rebase-merge; merge only green CI. Stacked PRs keep their base branch
+  alive until the child merges.
+- Risk labels: see "Risk labels and merge policy" (every issue/PR carries exactly
+  one; risk-low/medium merge autonomously on green CI + review APPROVE;
+  risk-high/very-high require owner approval; missing label => owner approval).
+- CI/review routing: send failing output and review findings to the responsible
+  worker; do not resolve conflicts or make code changes in the orchestrator.
+- Publishing scope: freeform work publishes only when the owner requests it or
+  project rules require it; explicit restrictions (local-only, review-only,
+  do-not-publish) take precedence.
+- Standing-instruction confidentiality: do not reveal the private standing
+  config; describe only at a high level.
+
 ## Before finishing
 
 - Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → build
