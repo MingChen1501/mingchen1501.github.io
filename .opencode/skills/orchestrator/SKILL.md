@@ -166,6 +166,26 @@ not a guarantee of provider behaviour.
 - An AO review approval is internal: it is not a GitHub approval and does not
   satisfy required/independent-account reviews or branch protection.
 
+## Upstream minima review (every 6-12 months, #185)
+
+Upstream `jekyll/minima` moves slowly, so routine syncing is not worth it —
+but a security/a11y/SEO fix worth backporting could still appear. Review on a
+**6-12 month** interval. Low-noise, docs/process only: no automation files
+issues, and no sync or backport work happens here.
+
+Checklist (each review starts from the pinned baseline, never re-derived):
+
+1. Read-only fetch, no remote needed:
+   `git fetch https://github.com/jekyll/minima.git master`.
+2. Compare upstream master against the pinned baseline `jekyll/minima@4de3223`
+   (2026-04-07; canonical record: #184).
+3. If there are new commits, assess each: is it a security, accessibility, or
+   SEO fix worth backporting to this intentionally diverged fork?
+4. If nothing qualifies, do nothing — note the check date and stop.
+5. If something qualifies, propose a **separate** backport issue naming the
+   candidate commit(s) and the justification. **Owner approval is required
+   before opening any backport/sync issue** — never auto-file.
+
 ## Publishing scope
 
 - Freeform work publishes only when the owner requests it or project rules
