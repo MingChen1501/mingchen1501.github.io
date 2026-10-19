@@ -38,10 +38,23 @@ minima:
       url: "https://www.youtube.com/channel/UCriw08sS1Jg4ftN8Wd3Wefg"
 
 # Build settings
-# Keep AGENTS.md (agent guide) out of the public site.
+# Keep the repository internals out of the public site (#82): the agent guide
+# and kit, the E2E test suite, the CI helper scripts, the gem metadata, the
+# project docs and the retired Unity WebGL demo payload.
 exclude:
   - AGENTS.md
   - .opencode
+  - tests
+  - script
+  - Gemfile
+  - Gemfile.lock
+  - minima.gemspec
+  - README.md
+  - LICENSE.txt
+  - CODE_OF_CONDUCT.md
+  - gam102.html
+  - Build
+  - TemplateData
 
 theme: minima
 
