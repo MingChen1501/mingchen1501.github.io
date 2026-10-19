@@ -17,3 +17,9 @@
   "Asset cache versioning").
 {%- endcomment -%}
 <script src="/assets/js/nav-toggle.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  Copy-code button (#126). Same fixed-URL rule: the script enhances every
+  `pre > code` at runtime, so a warm browser must never pair this HTML with
+  an older copy of it.
+{%- endcomment -%}
+<script src="/assets/js/copy-code.js?v={{ asset_version }}" defer></script>
