@@ -146,6 +146,7 @@ def test_sitemap_source_declares_xhtml_and_covers_vi():
     assert "include sitemap-alternates.html" in sitemap
     assert "site.vi_posts" in sitemap, "the sitemap must list the Vietnamese collection"
     assert "/vi/" in sitemap, "the sitemap must list the Vietnamese homepage"
+    assert "/vi/page" in sitemap, "the sitemap must enumerate the paginated VI pages (#155)"
     include = REPO_ROOT / "_includes" / "sitemap-alternates.html"
     assert include.is_file(), "the sitemap alternates include is missing"
     snippet = _read(include)

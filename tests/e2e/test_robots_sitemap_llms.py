@@ -84,6 +84,20 @@ def test_sitemap_xml_parses_and_urls_match_site_files(built_site):
             f"paginated page /{page_dir}/ exists in the build but is missing from sitemap.xml"
         )
 
+    # Hand-paginated Vietnamese home pages (#155): every vi/pageN/ in the
+    # build must be listed too.
+    vi_dir = built_site / "vi"
+    vi_paginated = sorted(
+        entry.name
+        for entry in vi_dir.iterdir()
+        if entry.is_dir() and re.fullmatch(r"page\d+", entry.name)
+    )
+    assert vi_paginated, "the build has no vi/pageN/ directory but the VI collection spans 2+ pages"
+    for page_dir in vi_paginated:
+        assert f"{SITE_URL}/vi/{page_dir}/" in locs, (
+            f"paginated page /vi/{page_dir}/ exists in the build but is missing from sitemap.xml"
+        )
+
     # Check each loc resolves to a file in the build
     for loc in locs:
         file_path = _file_for(built_site, loc)

@@ -173,9 +173,10 @@ def _home_pages(built_site, lang):
     """Every paginated home list page of one language."""
     pages = []
     if lang == "vi":
-        candidate = built_site / "vi" / "index.html"
-        if candidate.is_file():
-            pages.append(candidate)
+        for rel in ["vi/index.html", "vi/page2/index.html", "vi/page3/index.html"]:
+            candidate = built_site / rel
+            if candidate.is_file():
+                pages.append(candidate)
     else:
         for rel in ["index.html", "page2/index.html", "page3/index.html"]:
             candidate = built_site / rel

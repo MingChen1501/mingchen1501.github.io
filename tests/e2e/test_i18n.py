@@ -724,12 +724,19 @@ def test_homes_paginate_in_english_and_list_all_in_vietnamese(built_site):
         "/page2/ must survive the move (English pagination stays)"
     )
     vi_home = (built_site / "vi" / "index.html").read_text(encoding="utf-8")
-    assert 'class="pager"' not in vi_home, (
-        "the Vietnamese home lists every post with no pagination (#93)"
+    assert 'class="pager"' in vi_home, (
+        "the Vietnamese home paginates like the English one (#155)"
     )
     vi_links = re.findall(r'class="post-link" href="([^"]+)"', vi_home)
-    assert len(vi_links) == 6, (
-        f"/vi/ must list all 6 Vietnamese posts, got {len(vi_links)}"
+    assert len(vi_links) == 5, (
+        f"/vi/ must list the 5 newest Vietnamese posts, got {len(vi_links)}"
     )
     for href in vi_links:
         assert href.startswith("/vi/"), f"/vi/ lists the English post {href}"
+    vi_page2 = built_site / "vi" / "page2" / "index.html"
+    assert vi_page2.is_file(), "/vi/page2/ must list the remaining VI posts (#155)"
+    vi_page2_links = re.findall(r'class="post-link" href="([^"]+)"', vi_page2.read_text(encoding="utf-8"))
+    assert vi_page2_links, "/vi/page2/ lists no posts"
+    assert not (set(vi_page2_links) & set(vi_links)), (
+        "/vi/page2/ duplicates posts from /vi/"
+    )
