@@ -1,20 +1,29 @@
 {%- comment -%}
-  Language switcher (#93). Rendered in the header on every page/post that
-  carries a `ref`: links to the counterpart in the other language when one
-  exists, otherwise falls back to the other language's home (both always
-  exist, so the switcher never 404s). Pages without a `ref` (404, feeds,
-  standalone demos) render no switcher.
+  Language switcher (#93, redesigned #122). Rendered in the header row on
+  every page/post that carries a `ref`: links to the counterpart in the
+  other language when one exists, otherwise falls back to the other
+  language's home (both always exist, so the switcher never 404s). Pages
+  without a `ref` (404, feeds, standalone demos) render no switcher.
+
+  Compact pill control (#122): inline globe icon (`aria-hidden`) + short
+  target code (`EN` / `VI`); the full target language name stays available
+  as the accessible name (`aria-label`) and `title`, with a `lang`
+  attribute on the code and `hreflang` on the link. It lives in the header
+  row — never inside the collapsible nav panel (`#nav-menu`) and never in
+  the sidebar — so it cannot break the sidebar's 5-row budget (#65).
 {%- endcomment -%}
 {%- assign switch_ref = page.ref | default: '' -%}
 {%- if switch_ref != '' -%}
   {%- assign switch_cur = page.lang | default: site.lang | default: 'en' -%}
   {%- if switch_cur == 'vi' -%}
     {%- assign switch_other = 'en' -%}
-    {%- assign switch_label = 'English' -%}
+    {%- assign switch_code = 'EN' -%}
+    {%- assign switch_name = 'View this page in English' -%}
     {%- assign switch_home = '/' -%}
   {%- else -%}
     {%- assign switch_other = 'vi' -%}
-    {%- assign switch_label = 'Tiếng Việt' -%}
+    {%- assign switch_code = 'VI' -%}
+    {%- assign switch_name = 'Xem trang này bằng tiếng Việt' -%}
     {%- assign switch_home = '/vi/' -%}
   {%- endif -%}
   {%- assign switch_url = switch_home -%}
@@ -49,5 +58,5 @@
       {%- endunless -%}
     {%- endif -%}
   {%- endfor -%}
-  <a class="lang-switcher" hreflang="{{ switch_other }}" href="{{ switch_url | relative_url }}" title="{{ switch_label }}">{{ switch_label }}</a>
+  <a class="lang-switcher" hreflang="{{ switch_other }}" href="{{ switch_url | relative_url }}" aria-label="{{ switch_name }}" title="{{ switch_name }}"><svg class="lang-switcher__icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.5 8h13M8 1.5c-5 5-5 8 0 13M8 1.5c5 5 5 8 0 13" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span class="lang-switcher__code" lang="{{ switch_other }}">{{ switch_code }}</span></a>
 {%- endif -%}
