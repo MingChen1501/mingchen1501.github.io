@@ -1,9 +1,10 @@
 # Front matter for posts (bilingual since #93: English default, Vietnamese option)
 
 Minimal template (copy, then change `title`). Every post ships in **both**
-languages, linked by a shared `ref` — or carries `fallback_vi: true` with the
-Vietnamese body reused under a banner until its translation lands (PR B);
-`tests/e2e/test_i18n.py` fails otherwise:
+languages with a real translation in each file, linked by a shared `ref`
+(`tests/e2e/test_i18n.py` fails otherwise). The `fallback_vi: true` stub
+mechanism from phase 1 is retired — no stub remains; the layout/include banner
+plumbing stays wired in case a future post lands untranslated:
 
 ```yaml
 ---
@@ -24,7 +25,7 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 - `_vi_posts/vietnamese-slug.md` — the Vietnamese version, with `date:
   YYYY-MM-DD` and `redirect_from: [/YYYY/MM/DD/old-url.html, ...]` pointing at
   the pre-#93 URL(s) so old links 301 to `/vi/...`.
-- A post with no translation yet sets `fallback_vi: true` and reuses the
+- A post landing without a translation yet may set `fallback_vi: true` to reuse the
   Vietnamese body under the fallback banner instead of a missing counterpart
   (English-only is acceptable going forward; Vietnamese-only is not, since
   English is the default). There is no `translation_pending` marker.
@@ -40,7 +41,7 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 | `modified_date` | Updated date — the layout adds an "Updated:" line. |
 | `tags` | Required — exactly one (max 4) of the 4 content pillars: `backend-production`, `ai-agent`, `linux-tooling`, `doi-song`. Drives the `/tags/` index, the post page's secondary tag column and the `/tags/<tag>/` page. |
 | `description` | Required — ~120-155 chars; rendered as `<meta name="description">` by `jekyll-seo-tag`. |
-| `fallback_vi: true` | Phase-1 stub only: reuse the Vietnamese body under the fallback banner until PR B translates it. Never combined with a translated body. |
+| `fallback_vi: true` | Retired stub mechanism (phase 1): reuse the Vietnamese body under the fallback banner when a translation is still pending. No stub remains since PR B; never combined with a translated body. |
 | (no field) | Highlighting is configured in `_data/highlights.yml` (#64, per-language `en:` / `vi:` lists since #93): add the post's slug to that language's ordered list to feature it in the list sidebar's highlight block. No per-post front matter flag. |
 | `comments: false` | Disable comments for this post only (posts have Giscus by default). |
 
