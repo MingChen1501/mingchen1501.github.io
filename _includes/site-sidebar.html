@@ -4,8 +4,8 @@
   in `_layouts/tag.html`. Both layouts render this same include, so the two
   blocks exist once:
 
-  1. the highlighted posts: the posts that opt in with `highlight: true` in
-     their own front matter (`_posts/*.md`), newest first, at most five, each
+  1. the highlighted posts: the slugs listed in `_data/highlights.yml`
+     (#64), resolved against `site.posts` in file order, at most five, each
      with its thumbnail (when it has one), its title and its publication date,
   2. every tag as a collapsed row (`<details>` without `open`): the tag chip
      and how many posts it has, and — once the reader opens it — at most three
@@ -14,9 +14,9 @@
   `site.posts` — not `paginator.posts` — on purpose: the highlights are the
   same on every page, so the sidebar does not change while paging.
 
-  No post marked yet (a fresh site, or every highlighted post removed): the
-  block falls back to the five newest posts and its heading says so, so the
-  sidebar is never an empty box.
+  Nothing in the file resolves (a fresh site, an empty or missing file, or
+  every listed slug unknown/unpublished): the block falls back to the five
+  newest posts and its heading says so, so the sidebar is never an empty box.
 
   Height budget (#63): the sidebar has to fit beside the list without a
   scrollbar of its own, so every row here is deliberately short — a capped
@@ -38,19 +38,67 @@
   caller's variables.
 {%- endcomment -%}
 {%- assign sidebar_date_format = "%d-%m-%Y" -%}
-{%- assign sidebar_marked = site.posts | where: "highlight", true -%}
-{%- if sidebar_marked.size > 0 -%}
-  {%- assign sidebar_highlights = sidebar_marked -%}
+{%- comment -%}
+  Highlight selection lives in `_data/highlights.yml` (single source of truth,
+  #64): an ordered list of post file names, with or without the `YYYY-MM-DD-`
+  prefix and always without `.md`. Each entry resolves against `site.posts`
+  with `where` — by file name first, then by bare slug — so unknown or
+  unpublished slugs are skipped silently (unpublished posts never enter
+  `site.posts` at all) and the block keeps the file's order. An empty or
+  missing file, or a file whose entries all resolve to nothing, falls back to
+  the five newest posts.
+
+  The slug pass and the render loop below never nest a Liquid loop over
+  `site.posts`: `where`+`first` does the lookup, so cost stays one small pass
+  per entry however many posts the site grows to.
+{%- endcomment -%}
+{%- assign sidebar_highlight_slugs = site.data.highlights.highlights -%}
+{%- comment -%}
+  One cheap pass over the (handful of) slugs decides the heading before any
+  row renders; `break` on the first hit.
+{%- endcomment -%}
+{%- assign sidebar_has_highlights = false -%}
+{%- for sidebar_slug in sidebar_highlight_slugs -%}
+  {%- assign sidebar_candidate = sidebar_slug | prepend: "_posts/" | append: ".md" -%}
+  {%- assign sidebar_post = site.posts | where: "path", sidebar_candidate | first -%}
+  {%- unless sidebar_post -%}
+    {%- assign sidebar_post = site.posts | where: "slug", sidebar_slug | first -%}
+  {%- endunless -%}
+  {%- if sidebar_post -%}
+    {%- assign sidebar_has_highlights = true -%}
+    {%- break -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- if sidebar_has_highlights -%}
+  {%- assign sidebar_keys = sidebar_highlight_slugs -%}
   {%- assign sidebar_highlights_heading = "Bài nổi bật" -%}
 {%- else -%}
-  {%- assign sidebar_highlights = site.posts -%}
+  {%- comment -%}
+    Fallback: the five newest posts, keyed by file name so they resolve
+    through the same loop below.
+  {%- endcomment -%}
+  {%- assign sidebar_keys = "" -%}
+  {%- for sidebar_post in site.posts limit: 5 -%}
+    {%- assign sidebar_key = sidebar_post.path | split: "/" | last | remove: ".md" -%}
+    {%- assign sidebar_keys = sidebar_keys | append: sidebar_key | append: " " -%}
+  {%- endfor -%}
+  {%- assign sidebar_keys = sidebar_keys | strip | split: " " -%}
   {%- assign sidebar_highlights_heading = "Bài mới nhất" -%}
 {%- endif -%}
 
 <section class="sidebar__section">
   <h2 class="sidebar__heading">{{ sidebar_highlights_heading }}</h2>
   <ul class="sidebar-posts">
-    {%- for sidebar_post in sidebar_highlights limit: 5 -%}
+    {%- assign sidebar_rendered = 0 -%}
+    {%- for sidebar_slug in sidebar_keys -%}
+      {%- assign sidebar_candidate = sidebar_slug | prepend: "_posts/" | append: ".md" -%}
+      {%- assign sidebar_post = site.posts | where: "path", sidebar_candidate | first -%}
+      {%- unless sidebar_post -%}
+        {%- assign sidebar_post = site.posts | where: "slug", sidebar_slug | first -%}
+      {%- endunless -%}
+      {%- if sidebar_post and sidebar_rendered < 5 -%}
+            {%- assign sidebar_rendered = sidebar_rendered | plus: 1 -%}
       {%- assign sidebar_thumb = sidebar_post.image | default: '' -%}
       {%- if sidebar_thumb == '' -%}
         {%- assign sidebar_body_parts = sidebar_post.content | split: '<img' -%}
@@ -82,6 +130,7 @@
           <time class="sidebar-post__meta" datetime="{{ sidebar_post.date | date_to_xmlschema }}">{{ sidebar_post.date | date: sidebar_date_format }}</time>
         </div>
       </li>
+      {%- endif -%}
     {%- endfor -%}
   </ul>
 </section>

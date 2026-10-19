@@ -524,9 +524,10 @@ Full history can be fetched later with `git fetch --unshallow`.
 New posts must pick tags from the 4 content pillars only
 (`backend-production`, `ai-agent`, `linux-tooling`, `doi-song`, max 4 tags/post)
 and always include a short `description` (~120–155 characters) so
-`jekyll-seo-tag` renders a proper meta description. Add `highlight: true` to one
-of the posts you want the list sidebar's **Bài nổi bật** block to feature. Copy
-this template:
+`jekyll-seo-tag` renders a proper meta description. To feature posts in the list
+sidebar's **Bài nổi bật** block, add their slugs (file name without `.md`) to
+`_data/highlights.yml` (single source of truth, #64) in the order you want them
+to appear. Copy this template:
 
 ```yaml
 ---
@@ -556,12 +557,12 @@ The list pages — the home list (`/`, `/page2/`…) and the tag pages
 (`/tags/<tag>/`) — render the same sidebar from one shared include,
 `_includes/site-sidebar.html`:
 
-- **Bài nổi bật** — the *highlighted* posts: the posts that opt in with
-  `highlight: true` in their own front matter (`_posts/*.md`), newest first, at
-  most five, each with its title, its publication date and its thumbnail when it
-  has one. Highlighting a post is a one-line, static change — no data file and no
-  plugin. When no post is marked yet (a fresh site), the block falls back to the
-  five newest posts and its heading reads **Bài mới nhất**.
+- **Bài nổi bật** — the *highlighted* posts: the slugs listed in
+  `_data/highlights.yml` (single source of truth, #64), resolved against
+  `site.posts` in the file's order, at most five, each with its title, its
+  publication date and its thumbnail when it has one. Unknown or unpublished
+  slugs are skipped. When the file is empty or missing, the block falls back to
+  the five newest posts and its heading reads **Bài mới nhất**.
 - **Chủ đề** — every tag as a row collapsed by default (`<details>`): the chip
   and its post count, and, once opened, at most three post links plus `Xem tất
   cả` to that tag's page.

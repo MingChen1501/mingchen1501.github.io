@@ -50,11 +50,12 @@ Check by eye after build + tests are green, since some bugs only appear in produ
 - Post pages are two columns above 960px: main = post, secondary = tags +
   "Bài viết cùng chủ đề". Below that it must collapse to a single column and the
   sidebar sits under the article. A post without `tags` renders no sidebar at all.
-- The list sidebar (home list and `/tags/<tag>/`, #58/#63) shows the posts marked
-  `highlight: true` — title, compact `dd-mm-yyyy` date and thumbnail, falling back
-  to the 5 newest when nothing is marked — and every tag as a row collapsed by
-  default (`<details>`) with at most 3 posts. It must not scroll inside itself and
-  is pinned only where it fits; `tests/e2e/test_sidebar_layout.py` guards it.
+- The list sidebar (home list and `/tags/<tag>/`, #58/#63) shows the posts listed
+  in `_data/highlights.yml` (#64) — title, compact `dd-mm-yyyy` date and thumbnail,
+  falling back to the 5 newest when the file is empty/missing — and every tag as a
+  row collapsed by default (`<details>`) with at most 3 posts. It must not scroll
+  inside itself and is pinned only where it fits; `tests/e2e/test_sidebar_layout.py`
+  guards it.
 - The comments block stays **outside** the grid, full width, below both columns.
 - `/tags/` is an index of the 4 pillars linking to `/tags/<tag>/`; each tag page
   lists the posts with that tag. A tag chip that 404s usually means a missing
