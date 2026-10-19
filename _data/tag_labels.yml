@@ -1,4 +1,5 @@
-# Single source of truth for tag display labels and localized URL slugs (#129).
+# Single source of truth for tag display labels, localized URL slugs (#129),
+# and one-line topic descriptions for the tag index pages (#140).
 #
 # Post front matter keeps the canonical tag key (e.g. `doi-song`); templates
 # resolve the human-readable label and the tag-page URL slug for the current
@@ -6,23 +7,39 @@
 # show "Life" at `/tags/life/`, Vietnamese pages show "Đời sống" at
 # `/vi/tags/doi-song/`. Technical tags keep the same slug and the English
 # label in both languages (owner decision, #129).
+#
+# `description_en` / `description_vi` are the one-line topic summaries shown
+# on the tag indexes (`tags.md`, `vi/tags.md`). The wording reuses the
+# per-tag page bodies (`tags/*.md`, `vi/tags/*.md`) flattened to a single
+# line — keep them in sync when that copy changes so the two cannot drift
+# apart. The individual tag pages keep rendering their own body copy via
+# `_layouts/tag.html` (`{{ content }}`), so the descriptions are NOT repeated
+# there.
 backend-production:
   en: Backend Production
   vi: Backend Production
   slug_en: backend-production
   slug_vi: backend-production
+  description_en: "Backend production: running real systems — infrastructure, networking, data and lessons from serving real users."
+  description_vi: "Backend production: vận hành hệ thống thật — hạ tầng, mạng, dữ liệu và những bài học khi chạy sản phẩm cho người dùng thật."
 ai-agent:
   en: AI Agent
   vi: AI Agent
   slug_en: ai-agent
   slug_vi: ai-agent
+  description_en: "AI agents: using and building coding agents, orchestration, prompts and tooling to bring AI into the everyday workflow."
+  description_vi: "AI agent: dùng và tự dựng coding agent, orchestration, prompt và công cụ để đưa AI vào luồng làm việc hằng ngày."
 linux-tooling:
   en: Linux Tooling
   vi: Linux Tooling
   slug_en: linux-tooling
   slug_vi: linux-tooling
+  description_en: "Linux and tooling: machine setup, command line, terminal, editor and tools that keep the workspace lean and fast."
+  description_vi: "Linux và tooling: cài đặt máy, dòng lệnh, terminal, editor và những công cụ giúp môi trường làm việc gọn và nhanh hơn."
 doi-song:
   en: Life
   vi: Đời sống
   slug_en: life
   slug_vi: doi-song
+  description_en: "Everyday life: daily stories, hobbies, experiences and off-work notes."
+  description_vi: "Đời sống: chuyện thường ngày, sở thích, trải nghiệm và những ghi chép ngoài lề công việc."
