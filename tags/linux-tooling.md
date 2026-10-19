@@ -2,7 +2,7 @@
 layout: tag
 lang: en
 ref: tag-linux-tooling
-title: "Tag: linux-tooling"
+title: "Tag: Linux Tooling"
 tag: linux-tooling
 permalink: /tags/linux-tooling/
 ---

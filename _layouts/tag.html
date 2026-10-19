@@ -26,6 +26,20 @@ layout: base
   {%- assign tag_posts = site.tags[tag_name] | sort: "date" | reverse -%}
   {%- assign tag_base = '/tags/' -%}
 {%- endif -%}
+{%- comment -%}
+  Display label and URL slug from `_data/tag_labels.yml` (#129): "Life" /
+  `/tags/life/` on English pages, "Đời sống" / `/vi/tags/doi-song/` on
+  Vietnamese ones; technical tags keep their English label and slug in both.
+  Unknown keys degrade to the canonical tag key.
+{%- endcomment -%}
+{%- assign tag_entry = site.data.tag_labels[tag_name] -%}
+{%- if tag_lang == 'vi' -%}
+  {%- assign tag_label = tag_entry.vi | default: tag_name -%}
+  {%- assign tag_slug = tag_entry.slug_vi | default: tag_name -%}
+{%- else -%}
+  {%- assign tag_label = tag_entry.en | default: tag_name -%}
+  {%- assign tag_slug = tag_entry.slug_en | default: tag_name -%}
+{%- endif -%}
 
 {%- comment -%}
   Same two-column shell as the home list (#58): `.site-main` keeps this tag's
@@ -35,13 +49,13 @@ layout: base
 <div class="tag-page">
   <div class="site-layout">
     <div class="site-main">
-      <h1 class="page-heading">{{ page.title | default: tag_name | escape }}</h1>
+      <h1 class="page-heading">{{ tag_label | default: page.title | default: tag_name | escape }}</h1>
 
       {{ content }}
 
       <p class="tag-page__intro">
         {% if tag_lang == 'vi' %}{{ tag_posts | size }} bài viết với tag{% else %}{{ tag_posts | size }} posts tagged with{% endif %}
-        <a class="tag-chip" rel="tag" href="{{ tag_base | append: tag_name | append: '/' | relative_url }}">{{ tag_name | escape }}</a>
+        <a class="tag-chip" rel="tag" href="{{ tag_base | append: tag_slug | append: '/' | relative_url }}">{{ tag_label | escape }}</a>
       </p>
 
       {%- if tag_posts.size > 0 -%}

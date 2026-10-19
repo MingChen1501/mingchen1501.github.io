@@ -10,6 +10,13 @@
   identical wherever the include is used, so the home list (#47) and the post
   sidebar (#45) cannot drift apart.
 
+  Labels and URL slugs come from `_data/tag_labels.yml` (#129): the label
+  follows the page language (the lifestyle pillar reads "Life" on English
+  pages, "Đời sống" on Vietnamese ones; technical tags keep their English
+  label in both), and the link targets the tag page of the current language
+  (`/tags/life/` on EN, `/vi/tags/doi-song/` on VI). Post front matter keeps
+  the canonical tag key, so unknown keys degrade to the key itself.
+
   Renders nothing when there are no tags.
 {%- endcomment -%}
 {%- assign chips = include.tags | default: empty -%}
@@ -22,8 +29,16 @@
 {%- if chips.size > 0 -%}
 <ul class="tag-chip-list{% if extra_class != '' %} {{ extra_class }}{% endif %}">
   {%- for tag in chips -%}
+  {%- assign chip_entry = site.data.tag_labels[tag] -%}
+  {%- if chips_lang == 'vi' -%}
+    {%- assign chip_label = chip_entry.vi | default: tag -%}
+    {%- assign chip_slug = chip_entry.slug_vi | default: tag -%}
+  {%- else -%}
+    {%- assign chip_label = chip_entry.en | default: tag -%}
+    {%- assign chip_slug = chip_entry.slug_en | default: tag -%}
+  {%- endif -%}
   <li>
-    <a class="tag-chip" rel="tag" href="{{ chips_base | append: tag | append: '/' | relative_url }}">{{ tag | escape }}</a>
+    <a class="tag-chip" rel="tag" href="{{ chips_base | append: chip_slug | append: '/' | relative_url }}">{{ chip_label | escape }}</a>
   </li>
   {%- endfor -%}
 </ul>

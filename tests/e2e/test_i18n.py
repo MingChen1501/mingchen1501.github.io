@@ -22,6 +22,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 POSTS_DIR = REPO_ROOT / "_posts"
@@ -688,22 +689,27 @@ def test_sidebar_and_tag_pages_stay_in_their_language(built_site):
 
 
 def test_tag_pages_list_only_their_own_language(built_site):
+    labels = yaml.safe_load((REPO_ROOT / "_data" / "tag_labels.yml").read_text(encoding="utf-8"))
     for tag in PILLARS:
-        en_html = (built_site / "tags" / tag / "index.html").read_text(
+        # Localized slugs (#129): the lifestyle pillar is `/tags/life/` in
+        # English but stays `/vi/tags/doi-song/` in Vietnamese.
+        en_slug = labels[tag]["slug_en"]
+        vi_slug = labels[tag]["slug_vi"]
+        en_html = (built_site / "tags" / en_slug / "index.html").read_text(
             encoding="utf-8"
         )
         for href in re.findall(r'class="post-link" href="([^"]+)"', en_html):
             assert not href.startswith("/vi/"), (
-                f"/tags/{tag}/ links the Vietnamese post {href}"
+                f"/tags/{en_slug}/ links the Vietnamese post {href}"
             )
-        vi_html = (built_site / "vi" / "tags" / tag / "index.html").read_text(
+        vi_html = (built_site / "vi" / "tags" / vi_slug / "index.html").read_text(
             encoding="utf-8"
         )
         links = re.findall(r'class="post-link" href="([^"]+)"', vi_html)
-        assert links, f"/vi/tags/{tag}/ lists no posts"
+        assert links, f"/vi/tags/{vi_slug}/ lists no posts"
         for href in links:
             assert href.startswith("/vi/"), (
-                f"/vi/tags/{tag}/ links the English post {href}"
+                f"/vi/tags/{vi_slug}/ links the English post {href}"
             )
 
 

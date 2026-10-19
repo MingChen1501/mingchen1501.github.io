@@ -2,7 +2,7 @@
 layout: tag
 lang: en
 ref: tag-ai-agent
-title: "Tag: ai-agent"
+title: "Tag: AI Agent"
 tag: ai-agent
 permalink: /tags/ai-agent/
 ---

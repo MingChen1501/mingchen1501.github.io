@@ -1,0 +1,28 @@
+# Single source of truth for tag display labels and localized URL slugs (#129).
+#
+# Post front matter keeps the canonical tag key (e.g. `doi-song`); templates
+# resolve the human-readable label and the tag-page URL slug for the current
+# `page.lang` from this file. The lifestyle pillar is localized: English pages
+# show "Life" at `/tags/life/`, Vietnamese pages show "Đời sống" at
+# `/vi/tags/doi-song/`. Technical tags keep the same slug and the English
+# label in both languages (owner decision, #129).
+backend-production:
+  en: Backend Production
+  vi: Backend Production
+  slug_en: backend-production
+  slug_vi: backend-production
+ai-agent:
+  en: AI Agent
+  vi: AI Agent
+  slug_en: ai-agent
+  slug_vi: ai-agent
+linux-tooling:
+  en: Linux Tooling
+  vi: Linux Tooling
+  slug_en: linux-tooling
+  slug_vi: linux-tooling
+doi-song:
+  en: Life
+  vi: Đời sống
+  slug_en: life
+  slug_vi: doi-song

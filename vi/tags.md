@@ -22,8 +22,11 @@ viết cùng tag.
 <ul class="tag-index">
 {% for pillar in pillars %}
 {% assign pillar_posts = vi_tags_source | where_exp: "post", "post.tags contains pillar" | sort: "date" | reverse %}
+{%- assign pillar_entry = site.data.tag_labels[pillar] -%}
+{%- assign pillar_label = pillar_entry.vi | default: pillar -%}
+{%- assign pillar_slug = pillar_entry.slug_vi | default: pillar -%}
   <li>
-    <a class="tag-chip" rel="tag" href="{{ '/vi/tags/' | append: pillar | append: '/' | relative_url }}">{{ pillar }}</a>
+    <a class="tag-chip" rel="tag" href="{{ '/vi/tags/' | append: pillar_slug | append: '/' | relative_url }}">{{ pillar_label | escape }}</a>
     <span class="tag-index__count">{{ pillar_posts | size }} bài</span>
   </li>
 {% endfor %}

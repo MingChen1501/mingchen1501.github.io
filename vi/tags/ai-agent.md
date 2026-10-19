@@ -2,7 +2,7 @@
 layout: tag
 lang: vi
 ref: tag-ai-agent
-title: "Tag: ai-agent"
+title: "Tag: AI Agent"
 tag: ai-agent
 permalink: /vi/tags/ai-agent/
 ---

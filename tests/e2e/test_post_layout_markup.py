@@ -30,6 +30,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 pytestmark = pytest.mark.static
 
@@ -49,9 +50,9 @@ VI_POSTS_DIR = REPO_ROOT / "_vi_posts"
 
 PILLARS = ["backend-production", "ai-agent", "linux-tooling", "doi-song"]
 
+TAG_LABELS = REPO_ROOT / "_data" / "tag_labels.yml"
+
 FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
-TAG_PERMALINK = "/tags/{tag}/"
-VI_TAG_PERMALINK = "/vi/tags/{tag}/"
 
 
 def _read(path):
@@ -95,6 +96,27 @@ def _tag_pages(tag_pages_dir):
     return {
         path.stem: _front_matter(path) for path in sorted(tag_pages_dir.glob("*.md"))
     }
+
+
+def _tag_labels():
+    """The single source of truth for tag labels/slugs (#129)."""
+    assert TAG_LABELS.is_file(), "_data/tag_labels.yml is missing"
+    return yaml.safe_load(TAG_LABELS.read_text(encoding="utf-8")) or {}
+
+
+def _canonical_tag_keys(tag_pages_dir):
+    """Canonical tag keys served by a tag-page directory (via `tag:`).
+
+    File names are localized URL slugs (#129: `tags/life.md` serves the
+    canonical `doi-song` key), so the front matter — not the stem — decides
+    which key a page serves.
+    """
+    keys = set()
+    for path in sorted(tag_pages_dir.glob("*.md")):
+        match = re.search(r"^tag:\s*(.+?)\s*$", _front_matter(path), re.M)
+        if match:
+            keys.add(match.group(1))
+    return keys
 
 
 # --- post layout (#45) -----------------------------------------------------
@@ -165,11 +187,15 @@ def test_post_tags_include_links_every_chip_to_its_tag_page():
     html = _read(POST_TAGS_INCLUDE)
     assert "include.tags" in html
     assert "tag-chip" in html
-    # One base per language (#93): English chips to `/tags/<tag>/`,
-    # Vietnamese chips to `/vi/tags/<tag>/`, via a single variable.
-    assert "chips_base | append: tag | append: '/'" in html
+    # One base per language (#93): English chips to `/tags/<slug>/`,
+    # Vietnamese chips to `/vi/tags/<slug>/`, via a single variable.
+    # Labels and slugs resolve per language from `_data/tag_labels.yml`
+    # (#129), so the chip links the tag page of the current language.
+    assert "chips_base | append: chip_slug | append: '/'" in html
     assert "chips_base = '/tags/'" in html
     assert "chips_base = '/vi/tags/'" in html
+    assert "site.data.tag_labels" in html
+    assert "chip_label" in html
     assert "relative_url" in html
 
 
@@ -183,6 +209,10 @@ def test_tag_layout_lists_posts_for_page_tag():
     assert "tag_base = '/tags/'" in html
     assert "tag_base = '/vi/tags/'" in html
     assert "tag_base | relative_url" in html
+    # The heading and the intro chip read the label/slug for the page's
+    # language from `_data/tag_labels.yml` (#129).
+    assert "site.data.tag_labels[tag_name]" in html
+    assert "tag_base | append: tag_slug" in html
 
 
 def test_every_published_post_tag_has_a_tag_page():
@@ -190,12 +220,13 @@ def test_every_published_post_tag_has_a_tag_page():
         (POSTS_DIR, TAG_PAGES_DIR),
         (VI_POSTS_DIR, VI_TAG_PAGES_DIR),
     ):
-        tag_pages = _tag_pages(tag_pages_dir)
+        keys = _canonical_tag_keys(tag_pages_dir)
         for post_name, tags in _published_post_tags(posts_dir):
             for tag in tags:
-                assert tag in tag_pages, (
-                    f"{post_name} uses tag '{tag}' with no "
-                    f"{tag_pages_dir.relative_to(REPO_ROOT)}/{tag}.md"
+                assert tag in keys, (
+                    f"{post_name} uses tag '{tag}' with no tag page "
+                    f"declaring `tag: {tag}` under "
+                    f"{tag_pages_dir.relative_to(REPO_ROOT)}/"
                 )
 
 
@@ -206,21 +237,33 @@ def test_published_posts_only_use_the_four_pillars():
 
 
 def test_tag_pages_declare_the_matching_tag_and_permalink():
-    for tag_pages_dir, permalink_template in (
-        (TAG_PAGES_DIR, TAG_PERMALINK),
-        (VI_TAG_PAGES_DIR, VI_TAG_PERMALINK),
+    labels = _tag_labels()
+    for tag_pages_dir, slug_key, base in (
+        (TAG_PAGES_DIR, "slug_en", "/tags/"),
+        (VI_TAG_PAGES_DIR, "slug_vi", "/vi/tags/"),
     ):
-        for tag, front_matter in _tag_pages(tag_pages_dir).items():
-            rel = f"{tag_pages_dir.relative_to(REPO_ROOT)}/{tag}.md"
-            assert re.search(rf"^tag:\s*{re.escape(tag)}\s*$", front_matter, re.M), (
-                f"{rel} must declare `tag: {tag}`"
-            )
+        seen = set()
+        for stem, front_matter in _tag_pages(tag_pages_dir).items():
+            rel = f"{tag_pages_dir.relative_to(REPO_ROOT)}/{stem}.md"
+            tag = re.search(r"^tag:\s*(.+?)\s*$", front_matter, re.M)
+            assert tag, f"{rel} must declare a canonical `tag:`"
+            key = tag.group(1)
+            assert key in PILLARS, f"{rel} serves a tag outside the pillars: {key}"
+            assert key in labels, f"{rel} serves a tag missing from tag_labels.yml: {key}"
+            # The permalink is the *localized* slug (#129: `doi-song` lives
+            # at `/tags/life/` in English, `/vi/tags/doi-song/` in Vietnamese).
+            expected = f"{base}{labels[key][slug_key]}/"
             assert re.search(
-                rf"^permalink:\s*{re.escape(permalink_template.format(tag=tag))}\s*$",
+                rf"^permalink:\s*{re.escape(expected)}\s*$",
                 front_matter,
                 re.M,
-            ), f"{rel} must declare `permalink: {permalink_template.format(tag=tag)}`"
+            ), f"{rel} must declare `permalink: {expected}`"
             assert re.search(r"^layout:\s*tag\s*$", front_matter, re.M)
+            seen.add(key)
+        assert seen == set(PILLARS), (
+            f"{tag_pages_dir.relative_to(REPO_ROOT)}/ must serve every pillar: "
+            f"missing {sorted(set(PILLARS) - seen)}"
+        )
 
 
 def test_tags_index_links_every_tag_page():
@@ -229,28 +272,31 @@ def test_tags_index_links_every_tag_page():
         (VI_TAGS_INDEX, VI_TAG_PAGES_DIR, "/vi/tags/"),
     ):
         index = _read(tags_index)
-        tag_pages = _tag_pages(tag_pages_dir)
         rel_index = tags_index.relative_to(REPO_ROOT)
 
         listed = re.search(r'assign pillars = "([^"]+)"', index)
         assert listed, f"{rel_index} must list the pillars to build the index"
         assert listed.group(1).split(",") == PILLARS
 
-        # The index builds the chip URL from the loop variable, so the pillar
-        # list plus the permalink shape are what has to stay in sync.
-        assert f"'{base}' | append: pillar | append: '/'" in index
-        for tag in tag_pages:
-            assert tag in listed.group(1), f"{rel_index} does not link {tag}"
+        # The index builds the chip label and URL from the loop variable via
+        # `_data/tag_labels.yml` (#129), so the pillar list carries canonical
+        # keys while the rendered links carry localized slugs.
+        assert "site.data.tag_labels[pillar]" in index
+        assert f"'{base}' | append: pillar_slug | append: '/'" in index
+        for key in _canonical_tag_keys(tag_pages_dir):
+            assert key in listed.group(1), f"{rel_index} does not link {key}"
 
 
 def test_permalinks_of_generated_tag_pages_are_unique():
     permalinks = []
-    for tag_pages_dir, permalink_template in (
-        (TAG_PAGES_DIR, TAG_PERMALINK),
-        (VI_TAG_PAGES_DIR, VI_TAG_PERMALINK),
-    ):
-        for tag in _tag_pages(tag_pages_dir):
-            permalinks.append(permalink_template.format(tag=tag))
+    for tag_pages_dir in (TAG_PAGES_DIR, VI_TAG_PAGES_DIR):
+        for stem, front_matter in _tag_pages(tag_pages_dir).items():
+            match = re.search(r"^permalink:\s*(.+?)\s*$", front_matter, re.M)
+            assert match, (
+                f"{tag_pages_dir.relative_to(REPO_ROOT)}/{stem}.md "
+                "must declare a permalink"
+            )
+            permalinks.append(match.group(1))
     assert len(permalinks) == len(set(permalinks)) == 2 * len(PILLARS)
 
 

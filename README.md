@@ -565,6 +565,12 @@ GitHub Pages builds with `--safe`, where no archive/tagging plugin can run.
 A new tag therefore needs **both** a `tags/<tag>.md` page and its entry in
 `tags.md` (and the same pair under `vi/`); `tests/e2e/test_post_layout_markup.py`
 fails if a published post uses a tag without a page in its language.
+Tag display labels and URL slugs are localized per page language via
+`_data/tag_labels.yml` (single source of truth, #129): post front matter
+keeps the canonical key (e.g. `doi-song`), English pages render "Life" at
+`/tags/life/` (the old `/tags/doi-song/` redirects there), Vietnamese pages
+render "Đời sống" at `/vi/tags/doi-song/`. Technical tags keep the same slug
+and English label in both languages.
 
 Post pages render a secondary column with the post's tags and the other posts
 sharing its first tag (`_layouts/post.html`, `_includes/post-tags.html`, styles
