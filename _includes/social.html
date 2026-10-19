@@ -1,15 +1,26 @@
 <ul class="social-media-list">
 {%- for entry in site.minima.social_links -%}
   <li>
-    <a rel="me" href="{{ entry.url }}" target="_blank" title="{{ entry.title }}">
-      <span class="grey fa-brands fa-{{ entry.icon }} fa-lg"></span>
+    <a rel="me" href="{{ entry.url }}" target="_blank" title="{{ entry.title }}" aria-label="{{ entry.title }}">
+      <span class="grey fa-brands fa-{{ entry.icon }} fa-lg" aria-hidden="true"></span>
     </a>
   </li>
 {%- endfor -%}
+{%- comment -%}
+  Feed link label (#146): service names above are proper nouns shared by
+  both languages, but the feed sentence is localized so the accessible
+  name matches the page language.
+{%- endcomment -%}
+{%- assign social_lang = page.lang | default: site.lang | default: 'en' -%}
+{%- if social_lang == 'vi' -%}
+  {%- assign feed_label = 'Đăng ký nhận tin RSS' -%}
+{%- else -%}
+  {%- assign feed_label = 'Subscribe to syndication feed' -%}
+{%- endif -%}
 {% unless site.minima.hide_site_feed_link %}
   <li>
-    <a href="{{ site.feed.path | default: 'feed.xml' | absolute_url }}" target="_blank" title="Subscribe to syndication feed">
-      <svg class="svg-icon grey" viewbox="0 0 16 16">
+    <a href="{{ site.feed.path | default: 'feed.xml' | absolute_url }}" target="_blank" title="{{ feed_label }}" aria-label="{{ feed_label }}">
+      <svg class="svg-icon grey" aria-hidden="true" focusable="false" viewbox="0 0 16 16">
         <path d="M12.8 16C12.8 8.978 7.022 3.2 0 3.2V0c8.777 0 16 7.223 16 16h-3.2zM2.194
           11.61c1.21 0 2.195.985 2.195 2.196 0 1.21-.99 2.194-2.2 2.194C.98 16 0 15.017 0
           13.806c0-1.21.983-2.195 2.194-2.195zM10.606
