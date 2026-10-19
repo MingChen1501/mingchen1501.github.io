@@ -77,3 +77,16 @@ Check by eye after build + tests are green, since some bugs only appear in produ
 
 - Risk label present on the issue and the PR (`risk-low`, `risk-medium` or
   `risk-high`); a missing label means owner approval is required before merge.
+
+## Concurrency
+
+- Verification is part of task-worker work (implementation/fix/PR update/review/merge).
+  Never run two task workers in parallel: queue the verify step and run it only
+  when the active task worker finishes.
+- At most one task worker at a time, plus one buffer worker reserved only for
+  issue/task creation when the owner asks. The buffer worker must not run
+  implementation, fix, review or merge work.
+- Do not spawn a second task worker for independent queued work; queue it
+  instead. Applies to orchestrator spawning decisions.
+- Rationale: peak CPU on the owner's machine; two task workers caused CPU peaks
+  (replaces the old "max 2 concurrent task workers" default).

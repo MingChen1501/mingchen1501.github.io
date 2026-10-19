@@ -166,6 +166,21 @@ Merge policy:
 - `risk-medium`, `risk-high`, or a missing risk label => explicit owner approval
   is required before merging.
 
+## Concurrency (task workers)
+
+At most **one task worker at a time**, plus **one buffer worker** reserved only
+for creating issues/tasks when the owner asks. A "task worker" is any session
+doing implementation, a fix, a PR update, review, or a merge. Never spawn a
+second task worker for independent queued work — queue it and start it only when
+the active task worker finishes. The buffer worker must not run implementation,
+fix, review or merge work. This applies to orchestrator spawning decisions, not
+just one session's internal behaviour. Rationale: peak CPU on the owner's machine;
+two task workers caused CPU peaks (replaces the old "max 2 concurrent task
+workers" default).
+
+Detailed rule + rationale: `.opencode/skills/using-ao/SKILL.md` (spawn/concurrency)
+and the `jekyll-review` / `jekyll-verify` skills.
+
 ## Before finishing
 
 - Touched `_layouts/`, `_includes/`, `_sass/`, `_config.yml`, `assets/` → build
@@ -185,3 +200,5 @@ Merge policy:
 - Use the dedicated skills when available: `jekyll-post`, `jekyll-verify`, `jekyll-review`.
 - Risk label: confirm the issue and the PR each carry exactly one of `risk-low`,
   `risk-medium`, `risk-high` before finishing (see "Risk labels and merge policy").
+- Concurrency: never spawn a second task worker; queue work instead (see
+  "Concurrency (task workers)").

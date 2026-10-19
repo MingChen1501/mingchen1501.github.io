@@ -14,4 +14,7 @@ description: Review Jekyll site layout/include/sass/config changes. Use when che
    - **Should fix**: maintainability, a11y, SEO/feed.
    - **Suggestion**: style, spelling, small improvements.
 4. Confirm or update the PR risk label and justify it (see `references/review-checklist.md` "Risk label").
-5. Do not edit code during review. Record findings to fix separately.
+5. Concurrency: a review session counts as a task worker — do not run it in
+   parallel with another task worker; queue it (see `references/review-checklist.md`
+   "Concurrency").
+6. Do not edit code during review. Record findings to fix separately.

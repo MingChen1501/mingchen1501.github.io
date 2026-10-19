@@ -69,3 +69,16 @@
   unless the reviewer changes it; raising the risk above the planned label must
   be called out so the orchestrator escalates instead of merging.
 - A missing risk label blocks autonomous merge (`risk-medium` policy applies).
+
+## Concurrency
+
+- A review session is a task worker (implementation/fix/PR update/review/merge).
+  Never run two task workers in parallel: queue the review and start it only when
+  the active task worker finishes.
+- At most one task worker at a time, plus one buffer worker reserved only for
+  issue/task creation when the owner asks. The buffer worker must not run
+  implementation, fix, review or merge work.
+- Do not spawn a second task worker for independent queued work; queue it
+  instead. Applies to orchestrator spawning decisions.
+- Rationale: peak CPU on the owner's machine; two task workers caused CPU
+  peaks (replaces the old "max 2 concurrent task workers" default).
