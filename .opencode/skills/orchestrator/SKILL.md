@@ -49,6 +49,19 @@ and verification live in the `jekyll-review` and `jekyll-verify` skills.
 - Rationale: peak CPU on the owner's machine; two task workers caused CPU peaks
   (replaces the old "max 2 concurrent task workers" default).
 
+## Owner-task buffer-worker workflow
+
+Trigger: the owner describes a new task, bug, or enhancement in chat.
+
+1. The orchestrator first spawns a dedicated **buffer worker** for issue
+   creation only. The buffer worker is exempt from the task-worker pool.
+2. The buffer worker files GitHub issue(s) with context, scope, acceptance
+   criteria, a risk label, and an English title/body.
+3. The buffer worker must not implement, review, or merge.
+4. The orchestrator routes the filed issues into the queue and spawns
+   implementation workers under the normal pool.
+5. The orchestrator must not file owner-task issues itself.
+
 ## Role separation
 
 - Roles are **separate sessions**: issue-writer / dev / reviewer / fixer.
