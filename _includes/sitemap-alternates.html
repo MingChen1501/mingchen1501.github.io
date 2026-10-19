@@ -1,0 +1,68 @@
+{%- comment -%}
+  Sitemap hreflang alternates (#98). Given a shared `ref` (include parameter),
+  resolve the English and Vietnamese URLs — over `site.posts`, the
+  `site.vi_posts` collection and `site.pages`, the same sources as
+  `lang-alternates.html` — and emit absolute `xhtml:link` alternates (`en` /
+  `vi` plus `x-default` pointing at English, the default language). Docs
+  without a `ref` get no alternates.
+
+  Plain `for` loops only (no `sort`/`where` filters): `site.vi_posts` is nil
+  when the collection is undefined (the upstream `_config_theme-dev.yml` CI
+  build in `script/cibuild`), and `for` over nil degrades to nothing while a
+  filter would crash.
+{%- endcomment -%}
+{%- assign sitemap_ref = include.ref | default: '' -%}
+{%- if sitemap_ref != '' -%}
+  {%- assign sitemap_en = '' -%}
+  {%- assign sitemap_vi = '' -%}
+  {%- for alt_doc in site.posts -%}
+    {%- if alt_doc.ref == sitemap_ref -%}
+      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if alt_doc_lang == 'vi' -%}
+        {%- assign sitemap_vi = alt_doc.url -%}
+      {%- else -%}
+        {%- assign sitemap_en = alt_doc.url -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for alt_doc in site.vi_posts -%}
+    {%- if alt_doc.ref == sitemap_ref -%}
+      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if alt_doc_lang == 'vi' -%}
+        {%- assign sitemap_vi = alt_doc.url -%}
+      {%- else -%}
+        {%- assign sitemap_en = alt_doc.url -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- comment -%}
+    First match wins in site.pages: jekyll-paginate appends its page-2..N
+    duplicates of the paginated index (carrying the same `ref: home`) AFTER
+    the source pages, so taking the last match would point the English
+    alternate of `/` at `/page2/` instead of `/`.
+  {%- endcomment -%}
+  {%- for alt_doc in site.pages -%}
+    {%- if alt_doc.ref == sitemap_ref -%}
+      {%- assign alt_doc_lang = alt_doc.lang | default: site.lang | default: 'en' -%}
+      {%- if alt_doc_lang == 'vi' -%}
+        {%- if sitemap_vi == '' -%}
+          {%- assign sitemap_vi = alt_doc.url -%}
+        {%- endif -%}
+      {%- else -%}
+        {%- if sitemap_en == '' -%}
+          {%- assign sitemap_en = alt_doc.url -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- assign site_url_stripped = site.url | strip -%}
+  {%- if sitemap_en != '' -%}
+    <xhtml:link rel="alternate" hreflang="en" href="{{ site_url_stripped }}{{ sitemap_en }}"/>
+  {%- endif -%}
+  {%- if sitemap_vi != '' -%}
+    <xhtml:link rel="alternate" hreflang="vi" href="{{ site_url_stripped }}{{ sitemap_vi }}"/>
+  {%- endif -%}
+  {%- if sitemap_en != '' -%}
+    <xhtml:link rel="alternate" hreflang="x-default" href="{{ site_url_stripped }}{{ sitemap_en }}"/>
+  {%- endif -%}
+{%- endif -%}

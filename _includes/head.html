@@ -41,7 +41,18 @@
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
   <link id="main-stylesheet" rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v={{ asset_version }}">
   <link rel="icon" type="image/ico" href="/assets/img/favicon.ico?v={{ asset_version }}">
-  {%- feed_meta -%}
+  {%- comment -%}
+    Per-language feed discovery (#98): jekyll-feed only emits the English
+    `/feed.xml`, so Vietnamese pages (`lang: vi`) advertise the Liquid-mirrored
+    `/vi/feed.xml` (`vi/feed.xml`, same Atom shape over `site.vi_posts`)
+    instead of the English feed. English pages keep the plugin's `feed_meta`.
+  {%- endcomment -%}
+  {%- assign head_lang = page.lang | default: site.lang | default: 'en' -%}
+  {%- if head_lang == 'vi' -%}
+  <link type="application/atom+xml" rel="alternate" href="{{ '/vi/feed.xml' | absolute_url }}" title="{{ site.title | xml_escape }} (Tiếng Việt)">
+  {%- else -%}
+    {%- feed_meta -%}
+  {%- endif -%}
   {%- if jekyll.environment == 'production' and site.google_analytics -%}
     {%- include google-analytics.html -%}
   {%- endif -%}

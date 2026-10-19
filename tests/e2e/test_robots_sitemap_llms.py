@@ -91,7 +91,11 @@ def test_sitemap_xml_parses_and_urls_match_site_files(built_site):
 
 
 def test_sitemap_post_count_matches(built_site):
-    """Number of post URLs in sitemap equals number of published posts."""
+    """Post URLs in sitemap match published posts in both languages (#98).
+
+    Date-segment URLs split by language: `/YYYY/MM/DD/...` (English,
+    `_posts/`) vs `/vi/YYYY/MM/DD/...` (Vietnamese, `_vi_posts/`).
+    """
     sitemap_path = built_site / "sitemap.xml"
     assert sitemap_path.exists()
 
@@ -105,23 +109,29 @@ def test_sitemap_post_count_matches(built_site):
     # (pages, tag pages and /pageN/ paginated lists never do).
     locs = [url.text or "" for url in root.findall(".//{*}loc")]
     post_locs = [loc for loc in locs if re.search(r"/\d{4}/\d{2}/\d{2}/", loc)]
+    en_locs = [loc for loc in post_locs if "/vi/" not in loc]
+    vi_locs = [loc for loc in post_locs if "/vi/" in loc]
 
-    # Count actual published posts in _posts
-    posts_dir = REPO_ROOT / "_posts"
-    published_posts = []
-    if posts_dir.exists():
-        for p in posts_dir.glob("*.md"):
-            try:
-                content = p.read_text(encoding="utf-8")
-                # Simple check for published: false
-                if "published: false" in content:
-                    continue
-                published_posts.append(p)
-            except Exception:
-                published_posts.append(p)
-    post_files = published_posts
+    # Count actual published posts per language source
+    def published_in(posts_dir):
+        published_posts = []
+        if posts_dir.exists():
+            for p in posts_dir.glob("*.md"):
+                try:
+                    content = p.read_text(encoding="utf-8")
+                    # Simple check for published: false
+                    if "published: false" in content:
+                        continue
+                    published_posts.append(p)
+                except Exception:
+                    published_posts.append(p)
+        return published_posts
 
-    assert len(post_locs) == len(post_files), f"sitemap has {len(post_locs)} post URLs but there are {len(post_files)} published posts"
+    en_files = published_in(REPO_ROOT / "_posts")
+    vi_files = published_in(REPO_ROOT / "_vi_posts")
+
+    assert len(en_locs) == len(en_files), f"sitemap has {len(en_locs)} English post URLs but there are {len(en_files)} published posts"
+    assert len(vi_locs) == len(vi_files), f"sitemap has {len(vi_locs)} Vietnamese post URLs but there are {len(vi_files)} published Vietnamese posts"
 
 
 def test_llms_txt_exists_and_urls_resolve(built_site):

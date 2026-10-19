@@ -7,17 +7,43 @@ layout: null
 
 Canonical: {{ site.url }}
 
-## Pages
+{% comment %} Bilingual link map (#98): one section per language so crawlers
+  and LLMs can pick a side. English pages/posts under `## English`, their
+  Vietnamese translations under `## Tiếng Việt`, linked by the shared `ref`.
+  Redirect stubs, feeds, sitemap/llms/robots themselves are never listed.
+{% endcomment %}
+## English
 {%- for page in site.pages %}
 {%- if page.layout == "page" and page.permalink %}
+{%- assign llms_lang = page.lang | default: site.lang | default: 'en' %}
+{%- if llms_lang == 'en' %}
 {%- unless page.url contains "404" or page.url contains "feed.xml" or page.url contains "sitemap.xml" or page.url contains "llms.txt" or page.url contains "robots.txt" %}
 - {{ site.url }}{{ page.permalink }}: {% if page.description %}{{ page.description | strip_newlines | strip }}{% elsif page.excerpt %}{{ page.excerpt | strip_html | strip_newlines | truncate: 155, "..." | strip }}{% else %}{{ page.title }}{% endif %}
 {%- endunless %}
 {%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- for post in site.posts %}
+{%- if post.url %}
+- {{ site.url }}{{ post.url }}: {% if post.description %}{{ post.description | strip_newlines | strip }}{% elsif post.excerpt %}{{ post.excerpt | strip_html | strip_newlines | truncate: 155, "..." | strip }}{% else %}{{ post.title }}{% endif %}
+{%- endif %}
 {%- endfor %}
 
-## Posts
-{%- for post in site.posts %}
+## Tiếng Việt
+{%- for page in site.pages %}
+{%- if page.layout == "page" and page.permalink %}
+{%- assign llms_lang = page.lang | default: site.lang | default: 'en' %}
+{%- if llms_lang == 'vi' %}
+{%- unless page.url contains "404" or page.url contains "feed.xml" or page.url contains "sitemap.xml" or page.url contains "llms.txt" or page.url contains "robots.txt" %}
+- {{ site.url }}{{ page.permalink }}: {% if page.description %}{{ page.description | strip_newlines | strip }}{% elsif page.excerpt %}{{ page.excerpt | strip_html | strip_newlines | truncate: 155, "..." | strip }}{% else %}{{ page.title }}{% endif %}
+{%- endunless %}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- comment %} Plain `for` over the collection: nil-safe for the upstream
+  `_config_theme-dev.yml` CI build (`script/cibuild`), where `site.vi_posts`
+  is undefined. {% endcomment %}
+{%- for post in site.vi_posts %}
 {%- if post.url %}
 - {{ site.url }}{{ post.url }}: {% if post.description %}{{ post.description | strip_newlines | strip }}{% elsif post.excerpt %}{{ post.excerpt | strip_html | strip_newlines | truncate: 155, "..." | strip }}{% else %}{{ post.title }}{% endif %}
 {%- endif %}
