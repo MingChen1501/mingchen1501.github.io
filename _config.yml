@@ -6,6 +6,8 @@ author:
   email: tminh400@gmail.com
 description: > # this means to ignore newlines until "show_excerpts:"
   Hola world, mình là Ming, đây là nơi mình chia sẻ linh tinh trong học tập và cuộc sống
+description_en: >
+  Hola world, I'm Ming — this is where I share bits and pieces about learning and everyday life.
 
 # Minima-specific settings
 minima:
