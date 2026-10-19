@@ -21,10 +21,18 @@
 
     {%- unless page_titles == empty %}
       <nav class="site-nav" aria-label="{% if header_lang == 'vi' %}Điều hướng chính{% else %}Main navigation{% endif %}">
-        <input type="checkbox" id="nav-trigger" />
-        <label for="nav-trigger">
-          <span class="menu-icon"></span>
-        </label>
+        {%- comment -%}
+          Accessible disclosure (#114): a real `<button>` toggles the mobile
+          menu (`aria-expanded` + `aria-controls`), so keyboard and
+          screen-reader users can open it — the old checkbox + `<label>` hack
+          exposed no accessible name and was unreachable by keyboard/AT.
+          `assets/js/nav-toggle.js` collapses the panel on small screens at
+          load and wires click/Escape; on desktop the panel is always shown
+          by CSS. Markup ships open, so readers without JS keep the full menu.
+        {%- endcomment -%}
+        <button type="button" class="nav-toggle" aria-expanded="true" aria-controls="nav-menu" aria-label="Menu">
+          <span class="menu-icon" aria-hidden="true"></span>
+        </button>
 
         {% include nav-items.html paths = page_paths %}
         {% include lang-switcher.html %}

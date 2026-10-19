@@ -11,3 +11,9 @@
 {%- endcomment -%}
 {%- assign asset_version = site.time | date: '%s' -%}
 <script src="/assets/js/lazy-load.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  Mobile nav disclosure (#114). A fixed-URL asset like the stylesheet and the
+  lazy-load script, so it carries the same build token (see AGENTS.md,
+  "Asset cache versioning").
+{%- endcomment -%}
+<script src="/assets/js/nav-toggle.js?v={{ asset_version }}" defer></script>

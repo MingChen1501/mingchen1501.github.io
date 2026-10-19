@@ -33,8 +33,16 @@
   border: none;
   background-color: inherit;
 
-  label[for="nav-trigger"], #nav-trigger {
+  // The mobile toggle is a real `<button>` (#114); desktop never shows it.
+  .nav-toggle {
     display: none;
+  }
+
+  // Desktop always shows the menu: this author rule outranks the UA
+  // `[hidden]` style, so the panel stays visible even when the collapsed
+  // state lingers on the attribute (e.g. after a phone-to-desktop resize).
+  .nav-items {
+    display: block;
   }
 
   .nav-item {
@@ -53,57 +61,63 @@
     border-radius: 5px;
     text-align: right;
 
-    label[for="nav-trigger"] {
+    .nav-toggle {
       display: block;
       float: right;
       width: 36px;
       height: 36px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      font: inherit;
       cursor: pointer;
-    }
 
-    .menu-icon {
-      float: right;
-      width: 36px;
-      height: 26px;
-      line-height: 0;
-      padding-top: 18px;
-      text-align: center;
+      .menu-icon {
+        float: right;
+        width: 36px;
+        height: 26px;
+        line-height: 0;
+        padding-top: 18px;
+        text-align: center;
 
-      &::before {
-        font-family: "Font Awesome 7 Free";
-        font-weight: 900;
+        &::before {
+          font-family: "Font Awesome 7 Free";
+          font-weight: 900;
+        }
+
+        > svg path {
+          fill: $border-color-03;
+        }
       }
 
-      > svg path {
-        fill: $border-color-03;
-      }
-    }
-
-    #nav-trigger {
-      ~ label[for=nav-trigger] .menu-icon {
+      &[aria-expanded="false"] .menu-icon {
         &::before {
           content: "\f0c9";
           font-size: 1.25em;
         }
       }
-      ~ .nav-items {
-        clear: both;
-        display: none
-      }
-      &:checked {
-      ~ label[for=nav-trigger] .menu-icon {
+
+      &[aria-expanded="true"] .menu-icon {
         &::before {
           content: "\f00d";
           font-size: 1.5em;
         }
       }
-        ~ .nav-items {
-          display: block;
-          padding-bottom: 5px;
-          .nav-item {
-            margin-left: 20px;
-            padding: 5px 10px;
-          }
+    }
+
+    .nav-items {
+      &[hidden] {
+        display: none;
+      }
+
+      &:not([hidden]) {
+        clear: both;
+        display: block;
+        padding-bottom: 5px;
+        .nav-item {
+          margin-left: 20px;
+          padding: 5px 10px;
         }
       }
     }

@@ -9,9 +9,10 @@
      against the page's language post source in file order, at most five,
      each with its thumbnail (when it has one), its title and its publication
      date,
-  2. every tag as a collapsed row (`<details>` without `open`): the tag chip
-     and how many posts it has, and — once the reader opens it — at most three
-     post links plus a link to that tag's page.
+  2. every tag as a collapsed row (`<details>` without `open`): the tag name
+      as a chip-styled label plus its post count.
+      The label is a plain span, never a link: interactive content inside summary is invalid and breaks keyboard/AT behaviour (#114). Once open,
+      the row shows at most three post links plus a link to that tag's page.
 
   Language (#93): English pages read `site.posts` + `site.tags` and render
   English labels; Vietnamese pages read `site.vi_posts` (tags derived from
@@ -41,8 +42,11 @@
   generated: `assets/img/` runs close to its 6MB budget
   (see `script/check-images`).
 
-  Chips come from `_includes/post-tags.html`, the single source of the chip
-  markup (#45/#47); it takes a one-element tag list here. Locals are
+  List, post and tag-page chips come from the shared include, the single
+  source of the chip markup (#45/#47). The summary label below reuses only
+  the tag-chip class on a plain span for identical visuals: a link inside
+  the summary element would be nested interactive content (#114), so this
+  row's tag-page link lives in the opened panel instead. Locals are
   `sidebar_*`-prefixed so nothing this include assigns can collide with the
   caller's variables.
 {%- endcomment -%}
@@ -201,11 +205,10 @@
       {%- else -%}
         {%- assign sidebar_tag_posts = site.tags[sidebar_tag_name] | sort: "date" | reverse -%}
       {%- endif -%}
-      {%- assign sidebar_chip_tags = sidebar_tag_name | split: "|" -%}
       <li class="sidebar-tag">
         <details class="sidebar-tag__group">
           <summary class="sidebar-tag__summary">
-            {%- include post-tags.html tags=sidebar_chip_tags -%}
+            <span class="tag-chip">{{ sidebar_tag_name | escape }}</span>
             <span class="tag-index__count">{{ sidebar_tag_posts | size }} {{ sidebar_count_unit }}</span>
           </summary>
           <ul class="sidebar-tag__posts">

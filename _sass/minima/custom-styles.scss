@@ -329,7 +329,9 @@ ul.sidebar-tag__posts {
     color: $brand-color-dimmed;
   }
 
-  // The row toggles the group; the chip inside still links to the tag page.
+  // The row toggles the group (#114): the summary holds a chip-styled
+  // label (a span, never a link — interactive content inside `<summary>`
+  // is invalid) and the count; the tag-page link lives in the panel.
   &:hover .tag-index__count {
     color: $brand-color-dark;
   }

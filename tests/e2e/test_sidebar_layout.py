@@ -12,7 +12,8 @@ fed by one shared include, `_includes/site-sidebar.html`, whose two blocks are
    entry resolves to a post, the five newest posts with a heading that says
    so, and
 2. every tag as a row collapsed by default (`<details>` without `open`)
-   showing the tag chip and its post count, and — once opened — at most three
+   showing the tag name (a chip-styled, non-link label — links are invalid
+   inside `<summary>`, #114) and its post count, and — once opened — at most three
    post links plus a link to that tag's page.
 
 Acceptance guarded here (issues #58, #63 and #64):
@@ -147,13 +148,15 @@ _SIDEBAR_JS = """
       };
     }),
     tags: Array.from(document.querySelectorAll('.sidebar-tag')).map((li) => {
-      const chip = li.querySelector('a.tag-chip');
+      const label = li.querySelector('.sidebar-tag__summary span.tag-chip');
       const count = li.querySelector('.tag-index__count');
       const more = li.querySelector('a.sidebar-tag__more');
       const group = li.querySelector('details.sidebar-tag__group');
       return {
-        tag: chip ? chip.getAttribute('href') : null,
-        chipLabel: chip ? (chip.textContent || '').trim() : null,
+        // #114: the summary holds a plain-text label (no link); the tag
+        // page URL comes from the panel's own link.
+        tag: more ? more.getAttribute('href') : null,
+        chipLabel: label ? (label.textContent || '').trim() : null,
         count: count ? (count.textContent || '').trim() : null,
         more: more ? more.getAttribute('href') : null,
         open: group ? group.hasAttribute('open') : null,
@@ -441,12 +444,24 @@ def test_sidebar_thumbnail_falls_back_to_the_first_body_image():
 
 
 @pytest.mark.static
-def test_sidebar_tag_block_reuses_the_shared_chip_include():
+def test_sidebar_tag_summary_holds_no_links():
+    """#114: no interactive content inside `<summary>` (EN + VI rows)."""
     html = _read(SIDEBAR_INCLUDE)
-    assert "include post-tags.html" in html
-    # No forked chip markup: the single source is `_includes/post-tags.html`
-    # (#45/#47).
-    assert 'class="tag-chip"' not in html
+    summaries = re.findall(r"<summary.*?</summary>", html, re.S)
+    assert summaries, "the sidebar tag rows must keep their summary elements"
+    for summary in summaries:
+        assert "<a " not in summary, (
+            f"a link nests inside <summary>, which is invalid and breaks "
+            f"keyboard/AT behaviour: {summary[:120]!r}"
+        )
+        assert "include post-tags.html" not in summary, (
+            "the shared chip include renders links, so it cannot stay inside "
+            "<summary>"
+        )
+    # The summary label reuses the chip look on a plain span (visuals
+    # unchanged), and the tag-page link lives in the opened panel.
+    assert '<span class="tag-chip">' in html
+    assert "sidebar_tag_name | escape" in html
     assert re.search(
         r"sidebar_tag_base\s*\|\s*append: sidebar_tag_name\s*\|\s*append: '/' \| relative_url", html
     )
@@ -671,9 +686,9 @@ def test_sidebar_tag_rows_are_collapsed_bounded_and_expandable(
                 )
 
             # Collapsed in the rendering too — not just in the markup — then one
-            # click on the row opens it. The click lands on the count: the chip
-            # next to it links to the tag page (asserted above), so the row's own
-            # toggle area is the rest of the summary.
+            # click on the row opens it. The click lands on the count: the
+            # label next to it is plain text (#114 — no link inside
+            # `<summary>`), so the whole summary is the row's toggle area.
             _open(page, built_site_url, home_path)
             row = page.locator(".sidebar-tag").nth(index)
             assert not row.locator(".sidebar-tag__posts a").first.is_visible(), (
