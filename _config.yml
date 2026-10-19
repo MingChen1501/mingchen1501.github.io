@@ -3,7 +3,7 @@ url: "https://mingchen.id.vn" # prod domain (must match CNAME); keeps canonical/
 lang: en # default language; every Vietnamese page sets `lang: vi` (#93)
 author:
   name: Trần Công Minh
-  email: tminh400@gmail.com
+  email: mingchen1501@gmail.com
 description: > # this means to ignore newlines until "show_excerpts:"
   Hola world, mình là Ming, đây là nơi mình chia sẻ linh tinh trong học tập và cuộc sống
 
