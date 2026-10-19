@@ -13,6 +13,6 @@ This blog is where I jot down bits of my studies, work and life: tinkering with 
 
 Professionally, I work in software and enjoy exploring new technologies, especially ones that make everyday work more effective. Beyond computers, I love coffee, hiking and getting out and about whenever I get the chance.
 
-If you find a post useful, or want to share feedback, feel free to reach out by email at **tminh400@gmail.com** or find me on the social links in the footer. I always enjoy hearing from readers.
+If you find a post useful, or want to share feedback, feel free to reach out by email at **mingchen1501@gmail.com** or find me on the social links in the footer. I always enjoy hearing from readers.
 
 Thanks for stopping by, and have a lovely day!
