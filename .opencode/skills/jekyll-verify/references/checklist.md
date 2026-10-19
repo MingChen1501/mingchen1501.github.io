@@ -75,8 +75,31 @@ Check by eye after build + tests are green, since some bugs only appear in produ
 
 ## Risk label
 
-- Risk label present on the issue and the PR (`risk-low`, `risk-medium` or
-  `risk-high`); a missing label means owner approval is required before merge.
+- Risk label present on the issue and the PR (`risk-low`, `risk-medium`,
+  `risk-high` or `risk-very-high`); a missing label means owner approval is
+  required before merge.
+- Merge policy: `risk-low` or `risk-medium` + CI green + adversarial review
+  APPROVE => the orchestrator merges autonomously (merge commit, delete branch)
+  and reports afterwards. `risk-high`, `risk-very-high`, or a missing risk
+  label => explicit owner approval required before merging.
+- If the reviewer raises the risk above the planned label, the orchestrator
+  escalates to the owner instead of merging.
+- `risk-very-high`: irreversible or high-blast-radius change (data loss,
+  published-URL/SEO breakage, cache/CDN strategy, guard removal) — owner
+  approval required, and the owner is pinged explicitly.
+
+- Estimation guide: `risk-low` = docs/README/agent-skill text, comments and
+  typo fixes, test-only additions that do not delete or relax an assertion, CI
+  structure that cannot change the built site. `risk-medium` = CSS/markup
+  changes to real pages that keep every existing guard green, new guards, new
+  reader-visible UI behaviour that is reversible, image-budget changes.
+  `risk-high` = changes to published post content, front matter conventions,
+  permalinks or URLs, deleting or relaxing an existing guard, anything about how
+  assets/the cache/the CDN serve content, `_config.yml`, plugins, dependencies,
+  SEO/sitemap/feed, anything irreversible or requiring manual owner action
+  (e.g. a hard refresh or a Cloudflare purge). `risk-very-high` = irreversible
+  or high-blast-radius (data loss, published-URL/SEO breakage, cache/CDN
+  strategy, guard removal).
 
 ## Concurrency
 
