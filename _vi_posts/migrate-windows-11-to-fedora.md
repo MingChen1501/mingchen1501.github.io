@@ -12,7 +12,7 @@ redirect_from:
   - /2026/01/01/migate-windows-11-to-fedora.html
 ---
 
->Windows 11 lỗi quá, chuyển sang Linux cho con máy ở nhà thôi ![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" }
+>Windows 11 lỗi quá, chuyển sang Linux cho con máy ở nhà thôi ![](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" aria-hidden="true" }
 
 ## Hiện trạng
 - Windows 11 trên con laptop ghẻ thời sinh viên của mình đang khá lỗi: lỗi touchpad, lỗi driver, ...
@@ -27,7 +27,7 @@ redirect_from:
 - Òa thấy cái Fedora anh em suggest cũng oke phết, không hardcore lắm. Tải thử về cài lên USB coi
 ## Cài đặt
 - Mở Bios con dell cổ lên, cài mãi theo mấy anh youtube cũng cài xong, nhìn ổn áp phết
-![Desktop](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" }
+![Màn hình desktop Fedora GNOME mặc định trên laptop sau khi cài đặt](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" }
 - Mò 1 lúc thấy touchpad bị nhanh, google 1 lúc thì thấy [bài hướng dẫn chỉnh tốc độ cuộn touchpad của UbuntuHandbook](https://ubuntuhandbook.org/index.php/2023/05/adjust-touchpad-scrolling-ubuntu/) này, làm theo cũng fix được 1 tí.
 - Cay 1 cái là GNOME setting nó chưa cho setting scroll touchpad 2 ngón tay, thôi fix đâu dùng tạm.
 - ngồi mò thêm cái Gõ tiếng việt mãi cũng oke, deps gì gì tên là bamboo ấy, tên nghe cũng Vietnamese giống bamboo airways phết chứ

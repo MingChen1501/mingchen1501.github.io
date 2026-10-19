@@ -58,7 +58,9 @@ HOME_LAYOUT = REPO_ROOT / "_layouts" / "home.html"
 CUSTOM_STYLES = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
 
 MD_IMG_RE = re.compile(r'!\[([^\]]*)\]\((/assets/[^\s)]+)(?:\s+"([^"]*)")?\)')
-IAL_RE = re.compile(r'\{\:\s*width="(\d+)"\s+height="(\d+)"\s*\}')
+IAL_RE = re.compile(r'\{\:\s*width="(\d+)"\s+height="(\d+)"[^}]*\}')
+# NB (#147): the IAL may carry extra attributes after the dimensions
+# (e.g. aria-hidden="true" on decorative repeats) — still a valid declaration.
 HTML_IMG_RE = re.compile(r'<img\b[^>]*>', re.S)
 
 
