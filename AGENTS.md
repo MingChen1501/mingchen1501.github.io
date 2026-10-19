@@ -193,7 +193,7 @@ Labels:
 
 Merge policy (concise):
 - CI green + adversarial review APPROVE + `risk-low` or `risk-medium` => the
-  orchestrator merges autonomously (merge commit, delete branch) and reports
+  orchestrator merges autonomously (squash merge, delete branch) and reports
   afterwards.
 - `risk-high`, `risk-very-high`, or a missing risk label => explicit owner
   approval required before merging.
@@ -236,8 +236,8 @@ for site-specific review/verify):
 - Reviewers: dedicated AO worker sessions (native AO reviewer is broken/disabled);
   verdicts posted as COMMENT (GitHub blocks self-approval). Review happens after
   the PR is up, never before.
-- Merge: merge commits only (`gh pr merge --merge --delete-branch`); never
-  squash/rebase-merge; merge only green CI. Stacked PRs keep their base branch
+- Merge: squash merge only (`gh pr merge <n> --squash --delete-branch`); never
+  use `--merge` (merge commit) or `--rebase`; merge only green CI. Stacked PRs keep their base branch
   alive until the child merges.
 - Risk labels: see "Risk labels and merge policy" (every issue/PR carries exactly
   one; risk-low/medium merge autonomously on green CI + review APPROVE;

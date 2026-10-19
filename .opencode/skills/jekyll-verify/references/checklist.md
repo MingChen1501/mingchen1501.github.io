@@ -80,7 +80,7 @@ Check by eye after build + tests are green, since some bugs only appear in produ
   `risk-high` or `risk-very-high`); a missing label means owner approval is
   required before merge.
 - Merge policy: `risk-low` or `risk-medium` + CI green + adversarial review
-  APPROVE => the orchestrator merges autonomously (merge commit, delete branch)
+  APPROVE => the orchestrator merges autonomously (squash merge, delete branch)
   and reports afterwards. `risk-high`, `risk-very-high`, or a missing risk
   label => explicit owner approval required before merging.
 - If the reviewer raises the risk above the planned label, the orchestrator
@@ -104,11 +104,11 @@ Check by eye after build + tests are green, since some bugs only appear in produ
 
 ## Merge and orchestration
 
-- Merge method: **merge commits only** — `gh pr merge --merge --delete-branch`.
-  Never squash-merge or rebase-merge. Merge only when CI is green.
+- Merge method: **squash merge only** — `gh pr merge <n> --squash --delete-branch`.
+  Never use `--merge` (merge commit) or `--rebase`. Merge only when CI is green.
 - Stacked PRs keep their base branch alive until the child merges.
 - Merge policy: `risk-low` or `risk-medium` + CI green + review APPROVE =>
-  orchestrator merges autonomously (merge commit, delete branch) and reports.
+  orchestrator merges autonomously (squash merge, delete branch) and reports.
   `risk-high`, `risk-very-high`, or a missing label => explicit owner approval.
 - If the reviewer raises the risk above the planned label, the orchestrator
   escalates to the owner instead of merging.

@@ -71,7 +71,7 @@
   planned label must be called out so the orchestrator escalates instead of
   merging.
 - Merge policy: `risk-low` or `risk-medium` + CI green + adversarial review
-  APPROVE => the orchestrator merges autonomously (merge commit, delete branch)
+  APPROVE => the orchestrator merges autonomously (squash merge, delete branch)
   and reports afterwards. `risk-high`, `risk-very-high`, or a missing risk label
   => explicit owner approval required before merging.
 - `risk-very-high`: irreversible or high-blast-radius change (data loss,
@@ -110,11 +110,11 @@
   orchestrator — the reviewer cannot swap its own model. See
   `.opencode/skills/orchestrator/SKILL.md` "Model separation and rate-limit
   rotation".
-- Merge method: **merge commits only** — `gh pr merge --merge --delete-branch`.
-  Never squash-merge or rebase-merge. Merge only when CI is green.
+- Merge method: **squash merge only** — `gh pr merge <n> --squash --delete-branch`.
+  Never use `--merge` (merge commit) or `--rebase`. Merge only when CI is green.
 - Stacked PRs keep their base branch alive until the child merges.
 - Merge policy: `risk-low` or `risk-medium` + CI green + review APPROVE =>
-  orchestrator merges autonomously (merge commit, delete branch) and reports.
+  orchestrator merges autonomously (squash merge, delete branch) and reports.
   `risk-high`, `risk-very-high`, or a missing label => explicit owner approval.
 - CI/review routing: send failing output and review findings to the responsible
   worker; do not resolve conflicts or make code changes in the orchestrator.
