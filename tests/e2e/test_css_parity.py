@@ -112,7 +112,12 @@ EXPECTED_VARIABLES = {
 # new before bumping: the only change is that additive print hunk; no
 # existing rule moved and screen media is untouched, so every screen render
 # stays identical.
-EXPECTED_CSS_SHA256 = "a479b0f2c3f9afe6484f57e9db13f4996548dccefa5cbb86bfea30e9ddfeb4f1"
+# #244 (copy-link no-JS gating): additive `.share__fallback` /
+# `.share__fallback-link` rules in the `share` partial only (the `noscript`
+# plain-URL link). Diffed old vs new before bumping: the only change is
+# that additive hunk; no existing rule moved, so every render stays
+# identical.
+EXPECTED_CSS_SHA256 = "dd8c9cf993f5f657aa44cda808b2098792e25d51f6855f776d1782c1c2bd0ded"
 
 
 def _imported_partials():

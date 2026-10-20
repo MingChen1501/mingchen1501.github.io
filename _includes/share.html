@@ -2,10 +2,13 @@
   Share row (#222): tracker-free sharing for post pages only. Rendered from
   `_layouts/post.html` at the end of the post column (below the content).
 
-  - The copy-link button carries the canonical post URL in `data-share-url`;
-    `assets/js/share.js` copies it through the Clipboard API with a
+  - The copy-link item ships `hidden` and is revealed by `assets/js/share.js`
+    (#244), so without JS there is no dead control: `assets/js/share.js`
+    copies it through the Clipboard API with a
     textarea + execCommand fallback and announces the localized confirmation
     ("Copied" / "Đã sao chép") in the `role="status"` line below.
+    The `noscript` fallback shows the canonical post URL as a plain visible
+    link, so no-JS readers can still copy or open it manually.
   - The native-share button stays `hidden` until the same script finds
     `navigator.share`, so browsers without the Web Share API never show a
     dead control.
@@ -23,6 +26,7 @@
   {%- assign share_x = 'Chia sẻ lên X' -%}
   {%- assign share_facebook = 'Chia sẻ lên Facebook' -%}
   {%- assign share_linkedin = 'Chia sẻ lên LinkedIn' -%}
+  {%- assign share_link_label = 'Liên kết bài viết' -%}
 {%- else -%}
   {%- assign share_heading = 'Share' -%}
   {%- assign share_copy = 'Copy link' -%}
@@ -31,6 +35,7 @@
   {%- assign share_x = 'Share on X' -%}
   {%- assign share_facebook = 'Share on Facebook' -%}
   {%- assign share_linkedin = 'Share on LinkedIn' -%}
+  {%- assign share_link_label = 'Post link' -%}
 {%- endif -%}
 {%- assign share_url = page.url | absolute_url -%}
 {%- assign share_url_encoded = share_url | uri_escape -%}
@@ -38,7 +43,7 @@
 <section class="share" aria-labelledby="share-heading">
   <h2 class="share__heading" id="share-heading">{{ share_heading }}</h2>
   <ul class="share__list">
-    <li class="share__item">
+    <li class="share__item" data-share-copy-item hidden>
       <button type="button" class="share__button share__copy" data-share-url="{{ share_url }}" data-copied-label="{{ share_copied }}">{{ share_copy }}</button>
     </li>
     <li class="share__item" data-share-native-item hidden>
@@ -54,5 +59,8 @@
       <a class="share__link" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url_encoded }}" target="_blank" rel="noopener noreferrer">{{ share_linkedin }}</a>
     </li>
   </ul>
+  <noscript>
+    <p class="share__fallback">{{ share_link_label }}: <a class="share__fallback-link" href="{{ share_url }}">{{ share_url }}</a></p>
+  </noscript>
   <p class="share__status" role="status" aria-live="polite"></p>
 </section>
