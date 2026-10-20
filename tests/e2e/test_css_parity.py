@@ -32,6 +32,7 @@ EXPECTED_ORDER = (
     "layout",
     "tags",
     "post",
+    "lightbox",
     "sidebar",
     "a11y",
     "header",
@@ -73,7 +74,14 @@ EXPECTED_VARIABLES = {
 # before bumping: the only change is the additive `.search` / `.search__*`
 # block at the end (form, input, results list, language badge); no existing
 # rule moved, so every other page renders unchanged.
-EXPECTED_CSS_SHA256 = "252b0ed3bc14de27558b6529306f3f765c4807336886c2a8cd12621a10ff8fa7"
+# #223 (image lightbox): the `lightbox` partial was inserted after `post`.
+# Diffed old vs new before bumping: the only change is the additive
+# `.lightbox*` overlay block plus the `.post-content img.lightbox-trigger`
+# cursor/focus hints; no existing rule moved, so every other page renders
+# unchanged. It sits before (not after) the legibility partial because the
+# #148 guard scans everything past its own marker for height budgets, and
+# the dialog image needs `max-height` to fit the viewport.
+EXPECTED_CSS_SHA256 = "5e5c30eca6d9aec2b90854d50ba82466c559bba1391a85b2d31242bd2e5f84f1"
 
 
 def _imported_partials():

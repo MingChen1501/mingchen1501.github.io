@@ -15,11 +15,15 @@
 // the per-tag pages (#46) implemented in `_layouts/tag.html`.
 // ---------------------------------------------------------------------------
 
+// Lightbox (#223) sits with the post content it enhances — and before
+// the #148 legibility pass, whose guard scans everything after its own
+// marker for height/overflow budgets.
 @import
   "minima/custom/variables",
   "minima/custom/layout",
   "minima/custom/tags",
   "minima/custom/post",
+  "minima/custom/lightbox",
   "minima/custom/sidebar",
   "minima/custom/a11y",
   "minima/custom/header",

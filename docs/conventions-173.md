@@ -55,6 +55,18 @@ exemption for attachment-hosted bytes (see the README section). Migration:
 repoint `_data/image_hosts.yml`, rewrite post URLs, drop the allowlist
 entry, remove the Lighthouse exemption, update docs.
 
+## Image lightbox (#223)
+
+Clicking (or Enter/Space on) an informative `.post-content` image opens the
+full-resolution source (`currentSrc`, no new variants) in an accessible
+overlay with its alt/caption; arrows move prev/next within the post, Esc
+closes and returns focus to the invoking image. Decorative repeats
+(`aria-hidden`, #147) and linked images never join the set. Vanilla
+`assets/js/lightbox.js` (deferred, `?v=` token in `_includes/sub-footer.html`)
+builds the dialog at runtime, so without JS the page is unchanged; styles in
+`_sass/minima/custom/_lightbox.scss` (imported last in `custom-styles.scss`).
+Labels follow `<html lang>` (EN/VI). Guard: `tests/e2e/test_lightbox.py`.
+
 ## Pagination sources (#155, #176)
 
 `paginate:` in `_config.yml` is the only per-page value. `jekyll-paginate`

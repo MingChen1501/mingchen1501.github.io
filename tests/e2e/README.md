@@ -110,6 +110,38 @@ widths instead of pushing the page sideways.
   is deliberately no CSS change: desktop rendering is untouched and this
   guard pins the existing containment against future regressions.
 
+## Image lightbox (`test_lightbox.py`)
+
+Guard for #223. Post content images open full-size in an accessible overlay:
+click (or Enter/Space on the focused image) shows the already-loaded source
+(`currentSrc`, so no new image variants) with its alt/caption text, arrow
+keys move prev/next within the post, and Esc closes and returns focus to
+the invoking image. Decorative repeats (`aria-hidden`, #147) and linked
+images never join the set; the dialog is built at runtime, so without JS
+the page ships no overlay markup at all.
+
+- Static (no Ruby, no browser): the script stays vanilla, tiny and localized
+  (EN/VI from `<html lang>`); only informative images become triggers;
+  dialog semantics (`role="dialog"`, `aria-modal`, focus trap + restore,
+  Escape/arrows, swipe) live in the script; the template links it with the
+  `?v=` build token (#61); the SCSS partial joins the cascade and scopes
+  every new box under `.lightbox` (`hidden` hides, 44px controls, trigger
+  focus, reduced motion) without changing trigger geometry.
+- Build (needs Ruby, no browser): the EN/VI coffee posts ship no dialog
+  markup and no trigger attributes (progressive enhancement); the script
+  URL carries a non-empty epoch token.
+- Browser (needs Ruby + a browser): click opens with the full-size source
+  and caption; keyboard-only flow (focus, Enter/Space, arrows, live
+  counter, Esc restores focus); focus stays trapped while open;
+  single-image sets hide prev/next; external attachment URLs (#195) open
+  the same way; axe is clean with the overlay open; no-JS pages stay plain
+  images; opening adds no page overflow at 375px/1280px.
+
+The overlay is runtime-built and hidden by default, so baselined pages
+render pixel-identical with or without the script: lightbox work never
+regenerates the visual baselines below unless the trigger/overlay styling
+itself changes page pixels.
+
 ## Offline search (`test_search.py`)
 
 Guard for #221. A build-time JSON index (`search.json`, emitted by Liquid
