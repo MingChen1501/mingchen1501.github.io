@@ -359,7 +359,20 @@ script/update-visual-baselines
   (or run the `Visual baselines` dispatch workflow once merged) and
   download the `visual-fresh-chromium` artifact from the failed browser-E2E run
   into `tests/e2e/visual/baseline/` — never commit locally rendered
-  captures.
+  captures. Local failure captures under `tests/e2e/visual/fresh/` (via
+  `$SAVE_FRESH_DIR`) are gitignored (#265).
+
+  Pixel compares skip locally by default (#265): a plain
+  `python -m pytest tests/e2e` run leaves the 36 `test_visual_baseline`
+  cases skipped with an explicit reason, while the static
+  `test_baseline_budget` guard still runs. CI always runs the compares
+  (`CI`/`GITHUB_ACTIONS` is set there), so CI stays the gate. To run them
+  locally — e.g. after an intentional visual change, before pushing for
+  CI-rendered baselines — opt in:
+
+```sh
+E2E_VISUAL=1 python -m pytest tests/e2e/test_visual_regression.py -q
+```
 
   Content-only PRs never need baseline regeneration (#229): adding a post
   changes the home list, so pixel captures drift by design, and the
@@ -374,6 +387,10 @@ pip install -r tests/e2e/requirements.txt
 python -m playwright install chromium firefox webkit   # or reuse system Chrome automatically
 python -m pytest tests/e2e -v
 ```
+
+Visual pixel compares (`test_visual_baseline`, #208) skip locally by
+default and always run in CI; opt in locally with `E2E_VISUAL=1` (#265).
+The static `test_baseline_budget` guard always runs.
 
 `-m static` runs only the fast browser-free guards, `-m "not static"` only the
 browser ones. Append `--browser-name firefox` (or `webkit`) to run the

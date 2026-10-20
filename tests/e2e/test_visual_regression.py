@@ -32,6 +32,14 @@ Chromium-only (#209): the baselines are Chromium renders, and other engines
 rasterize text and plugins differently, so `test_visual_baseline` skips on
 Firefox/WebKit with an explicit reason while the rest of the browser suite
 runs on all three engines.
+
+Local skip (#265): the baselines are canonical on the CI runner
+(`ubuntu-latest`), so pixel compares fail on clean local trees for
+environment reasons (font rasterization drift). `test_visual_baseline`
+therefore skips locally unless explicitly enabled with `E2E_VISUAL=1`
+(`UPDATE_BASELINES=1` also enables it, so `script/update-visual-baselines`
+keeps working), while CI always runs it. The static `test_baseline_budget`
+guard below stays always on — file sizes are deterministic on any machine.
 """
 
 from __future__ import annotations
@@ -48,6 +56,27 @@ from PIL import Image, ImageChops
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BASELINE_DIR = Path(__file__).resolve().parent / "visual" / "baseline"
+
+#: Skip reason used when the pixel compares do not run on this machine (#265).
+VISUAL_SKIP_REASON = (
+    "pixel compares are canonical on the CI runner (#208): font "
+    "rasterization differs between machines, so they skip locally unless "
+    "explicitly enabled with `E2E_VISUAL=1` (#265)"
+)
+
+
+def _visual_enabled():
+    """Whether the pixel-compare cases run on this machine (#265).
+
+    Always true in CI (``CI``/``GITHUB_ACTIONS``); locally only with an
+    explicit opt-in (``E2E_VISUAL=1``) or baseline-regeneration mode
+    (``UPDATE_BASELINES=1``).
+    """
+    if os.environ.get("E2E_VISUAL") == "1":
+        return True
+    if os.environ.get("UPDATE_BASELINES") == "1":
+        return True
+    return os.environ.get("CI") == "true" or "GITHUB_ACTIONS" in os.environ
 
 # Fixed capture geometry (#208): phone, tablet, desktop.
 VIEWPORT_WIDTHS = (375, 768, 1280)
@@ -228,6 +257,8 @@ def test_visual_baseline(stem, path, width, built_site_url, browser, browser_nam
             "runner (#208); other engines rasterize differently, so the "
             "pixel comparison only runs on Chromium (#209)"
         )
+    if not _visual_enabled():
+        pytest.skip(VISUAL_SKIP_REASON)
     baseline = _baseline_path(stem, width)
     update = os.environ.get("UPDATE_BASELINES") == "1"
     if not baseline.is_file() and not update:
