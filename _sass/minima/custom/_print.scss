@@ -1,0 +1,136 @@
+// #225: print stylesheet for clean article printing. Cascade slot 12 of 12.
+// ---------------------------------------------------------------------------
+// Printing (or save-to-PDF) a post used to dump the header nav, sidebar,
+// Related posts, share row, comments and footer around the article. This
+// block trims the page to the article column only, in both languages (all
+// selectors are language-neutral; no per-language rules).
+//
+// Screen safety: every rule lives inside this single `@media print` block,
+// so screen rendering is unchanged (verified by the existing Chromium visual
+// baselines in `tests/e2e/test_visual_regression.py`, which capture screen
+// media only). Keep it that way: no top-level rules in this partial.
+// ---------------------------------------------------------------------------
+@media print {
+  // Chrome around the article never prints: header/nav, sidebars, both TOC
+  // mounts (inline + sidebar copy), the share row, Related posts, comments
+  // (and the disabled-comments notice), footer, the fixed reading progress
+  // bar, the back-to-top pill, the lightbox overlay and the skip link.
+  .site-header,
+  .site-nav,
+  .post-sidebar,
+  .site-sidebar,
+  .post-toc-mount,
+  .post-toc,
+  .share,
+  .related-posts,
+  .comments,
+  .comments-disabled-message,
+  .site-footer,
+  .reading-progress,
+  .back-to-top,
+  .lightbox,
+  .skip-link {
+    display: none !important;
+  }
+
+  // The article column takes the full page width: the two-column post grid
+  // collapses to a single block and the wide desktop wrapper relaxes.
+  .post-layout,
+  .site-layout {
+    display: block !important;
+  }
+
+  .layout-post main .wrapper,
+  .layout-home main .wrapper,
+  .layout-tag main .wrapper,
+  .wrapper {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .page-content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  // Readable print typography: dark text on white, point-sized body copy,
+  // comfortable measure and link underlines (screen colours never print).
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .post-content,
+  .post-content p,
+  .post-content li {
+    color: #000 !important;
+    font-size: 12pt;
+    line-height: 1.6;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .post-title,
+  .post-content h1,
+  .post-content h2,
+  .post-content h3,
+  .post-content h4 {
+    color: #000 !important;
+    break-after: avoid;
+  }
+
+  .post-content a {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+
+  // Show destination URLs for outbound links only: internal links render as
+  // site-relative paths (`relative_url`), so only absolute `http(s)` hrefs
+  // — which are always off-site — grow the parenthesised URL.
+  .post-content a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  // Never split these across pages: headings stay with the text that
+  // follows, code blocks / figures / tables / quotes stay whole.
+  .post-content h1,
+  .post-content h2,
+  .post-content h3,
+  .post-content h4,
+  .post-content pre,
+  .post-content .highlight,
+  .post-content figure,
+  .post-content img,
+  .post-content table,
+  .post-content blockquote {
+    break-inside: avoid;
+  }
+
+  // Long code lines wrap to the page instead of clipping past the margin.
+  .post-content pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px solid #999;
+    background: none !important;
+  }
+
+  .post-content code {
+    background: none !important;
+  }
+
+  // Images stay inside the text column at their rendered ratio.
+  .post-content img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  // Room for the printer's own margins.
+  @page {
+    margin: 2cm;
+  }
+}
