@@ -16,11 +16,13 @@ coverage overlaps.
   `asset-budget.sh` (JS/CSS byte ceilings), `generate-thumbnails` (#226),
   `article-intake`, `cibuild`, `update-visual-baselines`, plus thin
   `bootstrap`/`build`/`server` wrappers.
-- `.github/workflows/` (5 files, 597 LOC): `ci.yaml` (Jekyll matrix +
-  image guards + `cibuild`), `e2e.yml` (content-only classifier → static
-  guards → one shared build → browser matrix), `lighthouse.yml`,
-  `visual-baselines.yml`, `demo_site.yml` (legacy upstream-minima demo
-  deploy, unrelated to the personal site).
+- `.github/workflows/` (4 files): `ci.yaml` (Jekyll matrix +
+  image guards + `cibuild`), `e2e.yml` (shared content-only
+  classifier → static guards → one shared build → browser matrix +
+  both LHCI passes, #320), `visual-baselines.yml`, `demo_site.yml`
+  (legacy upstream-minima demo deploy, unrelated to the personal site).
+  The shared classifier step lives in
+  `.github/actions/classify-content-only/`.
 
 Two layers by design: static guards (no browser: markup, budgets, image
 rules) run always; browser tests (Playwright, visual compares opt-in

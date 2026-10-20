@@ -1,0 +1,47 @@
+name: Classify content-only vs full run
+description: >
+  Shared content-only classifier (#229, #320): diffs the pull-request or
+  push change set through script/classify-content-only and exposes
+  content_only=true/false. Requires a full-history checkout
+  (actions/checkout with fetch-depth: 0) before this action runs.
+inputs:
+  force-full:
+    description: >
+      Set to 'true' to skip classification and force content_only=false
+      (the workflow_dispatch full=true override).
+    required: false
+    default: 'false'
+outputs:
+  content_only:
+    description: "'true' when every changed file is a content path, else 'false'."
+    value: ${{ steps.classify.outputs.content_only }}
+runs:
+  using: composite
+  steps:
+    - name: Classify changed files
+      id: classify
+      shell: bash
+      run: |
+        if [ "${{ inputs.force-full }}" = "true" ]; then
+          echo "full override: forcing full run."
+          echo "content_only=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          RANGE="origin/${{ github.base_ref }}...HEAD"
+        elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+          RANGE="${{ github.event.before }} ${{ github.sha }}"
+        else
+          echo "No base available for diff: defaulting to the full suite."
+          echo "content_only=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        # shellcheck disable=SC2086
+        if FILES=$(git diff --name-only $RANGE 2>/dev/null); then
+          echo "Changed files:"
+          echo "$FILES"
+          echo "$FILES" | script/classify-content-only >> "$GITHUB_OUTPUT"
+        else
+          echo "Diff unavailable: defaulting to the full suite."
+          echo "content_only=false" >> "$GITHUB_OUTPUT"
+        fi

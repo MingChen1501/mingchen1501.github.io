@@ -86,8 +86,8 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
    `_site/` (both are `exclude`d in `_config.yml`).
 6. `robots.txt`, `sitemap.xml`, and `llms.txt` are generated at build time and
    must not be hand-edited.
-7. CI: Lighthouse CI (`.github/workflows/lighthouse.yml`) runs on PRs to
-   `master` and fails on Performance / Accessibility / Best Practices / SEO
+7. CI: E2E + Lighthouse (`.github/workflows/e2e.yml`) runs on PRs to
+   `master` (plus `ci.yaml` on pushes) and fails on Performance / Accessibility / Best Practices / SEO
    regressions; thresholds live in `lighthouserc.json` (Performance is `warn`,
    the rest `error`).
 8. Confirm the issue and PR carry a risk label (`risk-low`/`risk-medium`/`risk-high`/`risk-very-high`).

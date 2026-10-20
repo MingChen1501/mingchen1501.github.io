@@ -420,7 +420,7 @@ does the expensive work once:
 
 - `built_site` - one `bundle exec jekyll build` per session, into a temp dir
   (the fixture logs its invocation to stderr, and to `$E2E_BUILD_LOG` when set);
-  when `$E2E_PREBUILT_SITE` points at a built tree (CI's shared `e2e-site`
+  when `$E2E_PREBUILT_SITE` points at a built tree (CI's shared `site`
   artifact, #266), the fixture serves that directory instead of rebuilding;
 - `built_site_url` - one loopback HTTP server for that build;
 - `browser` - one headless browser for every browser test (each test still
@@ -637,50 +637,60 @@ without a `bundle` executable they skip themselves with an explicit reason.
 
 ## CI
 
-`.github/workflows/e2e.yml` runs (Python 3.12, with pip and Playwright
-browser caches, and Ruby 3.3 with `bundler-cache`):
+`.github/workflows/e2e.yml` runs the merged E2E + Lighthouse suite
+(Python 3.12, with pip and Playwright browser caches, and Ruby 3.3 with
+`bundler-cache`):
 
-- `Classify content-only vs full run` (`script/classify-content-only`,
-  #229) — see the classification table below;
+- `Classify content-only vs full run` (composite action
+  `.github/actions/classify-content-only`, #320, over
+  `script/classify-content-only`, #229) — see the classification table
+  below;
 - `E2E static guards` - `pytest tests/e2e -m static`: no Ruby, no browser.
   Always runs, including on content-only PRs;
-- `E2E build site once` (#266) - one `bundle exec jekyll build` shared by
-  the whole workflow, uploaded as the `e2e-site` artifact. Skipped on
+- `Build site once` (#320) - one `bundle exec jekyll build` shared by the
+  whole workflow, uploaded as the `site` artifact. Skipped on
   content-only PRs;
 - `E2E browser (<engine>)` - one job per engine (`chromium`, `firefox`,
   `webkit`, `fail-fast: false` so one engine never hides the others):
-  downloads the `e2e-site` artifact and runs
+  downloads the `site` artifact and runs
   `E2E_BROWSER=<engine> E2E_PREBUILT_SITE=<artifact> pytest tests/e2e
   -m "not static"`, so no engine rebuilds the site or sets up Ruby (the
   `built_site` fixture serves the shared directory as-is; assertions are
   unchanged). Skipped on content-only PRs;
-- `E2E suite result` - aggregator for branch protection: passes when the
-  shared build plus the full matrix passed, or when a content-only PR
-  skipped the build and matrix with green static guards. Protect this
-  job, not the matrix jobs (a skipped job reports "skipped", never
-  "success").
+- `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
+  `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
+  emulation, `numberOfRuns: 3` with median assertion) — both served from
+  the same shared `site` artifact, so the mobile pass costs no extra
+  build. The desktop pass asserts `lighthouserc.json` (`preset: desktop`)
+  thresholds; the mobile pass (`lighthouserc.mobile.json`, default mobile
+  emulation, `numberOfRuns: 3` with median assertion) covers `/`, the
+  photo-heavy Tet 2023 posts (EN/VI), and `/tags/`. Both passes assert
+  performance warn-only at 0.85 and
+  accessibility/best-practices/SEO as errors at 0.90, so a mobile
+  regression is visible per PR without blocking on noise. Both run on PRs
+  and manual dispatches only, and are skipped on content-only PRs
+  alongside the browser matrix;
+- `E2E suite result` and `Lighthouse suite result` - aggregators for
+  branch protection: each passes when its jobs passed, or when a
+  content-only PR skipped them with green static guards (Lighthouse also
+  passes on master pushes, where it never runs). Protect these jobs, not
+  the matrix jobs (a skipped job reports "skipped", never "success").
 
-Runtime savings (#266): a full run previously built the identical site
-three times (once per engine, each with its own Ruby/bundler setup) and
-now builds it once — two fewer Jekyll builds and two fewer Ruby setups
-per full-run PR. Billed minutes drop by roughly twice one engine's
-build+setup slice; wall-clock is unchanged (the engines still run in
-parallel), and no guard is weakened: same tests, same engines, same
-thresholds.
+Runtime savings (#320): a full PR previously built the identical site
+twice — once per workflow (`E2E build site once` + `Lighthouse build
+site once`), each with its own Ruby/bundler setup and artifact
+round-trip — and now builds it once. Billed minutes drop by roughly one
+ruby-setup + build + artifact round-trip; wall-clock is unchanged (the
+consumers still run in parallel), and no guard is weakened: same tests,
+same engines, same thresholds (before #266 each engine built it
+separately; that collapse into one build per workflow is what #320
+extends across workflows).
 
 The Jekyll builds (3.9 and 4.2 via `script/cibuild`), the link crawl /
 sitemap+feed XML validation, and `script/check-images` (+ external-image
 and alt-text checks) in `ci.yaml` always run, including on content-only
-PRs. Lighthouse (`.github/workflows/lighthouse.yml`) is skipped on
-content-only PRs with its own `Lighthouse suite result` aggregator. On
-full runs it builds the site once and runs two passes against the shared
-`_site/` artifact: `Lighthouse CI (desktop)` (`lighthouserc.json`,
-`preset: desktop`) and `Lighthouse CI (mobile)`
-(`lighthouserc.mobile.json`, default mobile emulation, `numberOfRuns: 3`
-with median assertion). The mobile pass covers `/`, the photo-heavy Tet
-2023 posts (EN/VI), and `/tags/`; both passes assert performance
-warn-only at 0.85 and accessibility/best-practices/SEO as errors at 0.90,
-so a mobile regression is visible per PR without blocking on noise.
+PRs. The merged workflow skips its heavy jobs on content-only change
+sets instead of a smoke/nightly split.
 
 ### Content-only classification (#229)
 
@@ -717,8 +727,7 @@ Rules:
 ### Full-run override
 
 To force the full suite on a content-only PR, dispatch the workflow
-manually with `full=true` (the default): the Actions tab → `E2E` (or
-`Lighthouse CI`) → `Run workflow` on the PR branch. `full=false` on a
+manually with `full=true` (the default): the Actions tab → `E2E + Lighthouse` → `Run workflow` on the PR branch. `full=false` on a
 dispatch re-runs classification against the branch instead.
 
 Both run on pushes and pull requests to `master`; a superseded push cancels its
