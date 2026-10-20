@@ -9,7 +9,7 @@ image: /assets/img/2022-10-27-cach-pha-ca-phe/b1.jpg
 description: "How to brew pure Vietnamese phin coffee at home: add grounds to the filter, press gently, bloom with boiling water and wait for the slow drip."
 ---
 
->A good cup of coffee has to be both sweet and bitter ![](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg){: width="899" height="1600" aria-hidden="true" }
+>A good cup of coffee has to be both sweet and bitter ![Stainless steel phin filter with its press plate on a wooden desk](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg){: width="899" height="1600" }
 
 * Add coffee grounds to fill half of the phin filter.
 

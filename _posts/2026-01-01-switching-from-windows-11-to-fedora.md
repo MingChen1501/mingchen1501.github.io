@@ -10,7 +10,7 @@ image: /assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg
 description: "Moving my old laptop from glitchy Windows 11 drivers to Fedora Linux: installing it, tuning the touchpad and typing Vietnamese with Bamboo."
 ---
 
->Windows 11 is too buggy — time to switch the home machine to Linux ![](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" aria-hidden="true" }
+>Windows 11 is too buggy — time to switch the home machine to Linux ![Fedora terminal showing system details over a moonlit rocket-launch wallpaper](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" }
 
 ## The situation
 - Windows 11 on my old student-days laptop is pretty broken: touchpad glitches, driver issues, ...

@@ -390,7 +390,11 @@ def test_click_opens_the_overlay_with_alt_and_escape_restores_focus(
         page.locator(".lightbox__image").get_attribute("alt")
         == _triggers(page).first.get_attribute("alt")
     )
-    assert "Step 2" in page.locator(".lightbox__caption").inner_text()
+    # First trigger is the blockquote lead repeat (#309 gave it a
+    # descriptive alt instead of `aria-hidden`, so it joins the set).
+    assert "Stainless steel phin filter" in page.locator(
+        ".lightbox__caption"
+    ).inner_text()
     assert page.locator(".lightbox__counter").inner_text() == "1 / 6"
     assert page.get_by_role("button", name=CLOSE_EN).count() == 1
 

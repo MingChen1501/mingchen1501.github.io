@@ -13,12 +13,15 @@ changes):
 
 - every informative EN image has an English alt describing what the photo
   shows (one clause, no ``image``/``picture``/``photo`` prefix), mirroring
-  the Vietnamese wording in translation;
+  the Vietnamese wording in translation; the blockquote lead repeats and
+  the closing greeting card got descriptive alts too, because the CI
+  ``#87`` guard forbids empty alt in ``_posts/`` entirely;
 - genuinely decorative images (blockquote lead repeats, the closing
-  greeting card whose text duplicates the adjacent prose) keep
+  greeting card whose text duplicates the adjacent prose) would keep
   ``![](...)`` (empty alt) and carry ``aria-hidden="true"`` in the
   kramdown IAL so the built ``<img>`` is hidden from assistive
-  technology;
+  technology — but no such image remains in ``_posts/`` (see above), so
+  every EN image currently carries a meaningful alt;
 - no image was removed and no URL/filename changed.
 
 Guarded here (same rules as ``test_vi_alt_text.py`` for ``_vi_posts/``):
