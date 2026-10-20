@@ -2,7 +2,8 @@
 
 Recent work shrank shipped bytes with no ceiling to keep them small: #253
 gated the post-only scripts (non-post pages went from 9 to 7 sub-footer
-scripts) and #254 replaced the Font Awesome CDN with inline SVGs. With no
+scripts), #318 gated copy-code and lightbox the same way (9 to 5), and
+#254 replaced the Font Awesome CDN with inline SVGs. With no
 budget, any new global script silently regrows every page: ``test_post_only_js.py``
 pins script *count* per page kind but not *bytes*, and ``test_css_parity.py``
 pins an exact SHA of the built CSS instead of a budget. #275 then split the
@@ -78,8 +79,7 @@ EXPECTED_SETS = {
     "page": frozenset(test_post_only_js.ALWAYS_LOADED),
     "post": frozenset(
         (*test_post_only_js.ALWAYS_LOADED,
-         test_post_only_js.SHARE_PATH,
-         test_post_only_js.PROGRESS_PATH,
+         *test_post_only_js.POST_ONLY,
          GISCUS_THEME_PATH)
     ),
     "search": frozenset((*test_post_only_js.ALWAYS_LOADED, SEARCH_PATH)),
@@ -155,10 +155,9 @@ def test_pinned_script_sets_match_the_templates():
         "the shared sub-footer script set changed: every page would ship "
         f"the difference ({unconditional}) (#267)"
     )
-    assert gated == [
-        test_post_only_js.SHARE_PATH,
-        test_post_only_js.PROGRESS_PATH,
-    ], f"the post-gated script set changed: {gated} (#253, #267)"
+    assert gated == list(test_post_only_js.POST_ONLY), (
+        f"the post-gated script set changed: {gated} (#253, #267, #318)"
+    )
     search_refs = _template_scripts(SEARCH_INCLUDE)
     assert search_refs == ["/assets/js/site-utils.js", SEARCH_PATH], (
         f"_includes/search.html must reference only its helper + search.js, "
@@ -173,23 +172,21 @@ def test_pinned_script_sets_match_the_templates():
 
 @pytest.mark.static
 def test_non_post_kinds_exclude_the_post_only_scripts():
-    """The #253 win, locked from the templates: share/reading-progress ship
-    on post pages only, so no non-post kind can regain their weight."""
+    """The #253 win, extended by #318, locked from the templates: all four
+    post-only scripts ship on post pages only, so no non-post kind can
+    regain their weight."""
     unconditional, gated = _sub_footer_sets()
-    for path in (
-        test_post_only_js.SHARE_PATH,
-        test_post_only_js.PROGRESS_PATH,
-    ):
+    for path in test_post_only_js.POST_ONLY:
         assert path not in unconditional, (
             f"{path} leaked out of the post-layout gate: non-post pages "
-            f"would ship it again (#253)"
+            f"would ship it again (#253, #318)"
         )
         assert path in gated, (
-            f"{path} is no longer inside the post-layout gate (#253)"
+            f"{path} is no longer inside the post-layout gate (#253, #318)"
         )
     for kind in ("page", "search"):
-        assert test_post_only_js.SHARE_PATH not in EXPECTED_SETS[kind]
-        assert test_post_only_js.PROGRESS_PATH not in EXPECTED_SETS[kind]
+        for path in test_post_only_js.POST_ONLY:
+            assert path not in EXPECTED_SETS[kind]
 
 
 @pytest.mark.static
@@ -270,7 +267,7 @@ def _representative_pages(built_site):
 
 def test_built_pages_reference_only_their_budgeted_scripts(built_site):
     """Real output check: each kind references exactly its budgeted set
-    (non-post pages link neither post-only script) and weighs under it."""
+    (non-post pages link none of the post-only scripts) and weighs under it."""
     budget = _read_budget()
     keys = {
         "page": "MAX_JS_PAGE_BYTES",

@@ -1,24 +1,28 @@
-"""Guards for #253: post-only JS loads on post pages only.
+"""Guards for #253 + #318: post-only JS loads on post pages only.
 
 Every page used to ship every first-party script: ``_includes/sub-footer.html``
-loaded eight deferred scripts unconditionally, including ``share.js`` (which
+loaded nine deferred scripts unconditionally, including ``share.js`` (which
 wires the copy-link button rendered by ``_includes/share.html``, itself only
-included from ``_layouts/post.html``) and ``reading-progress.js`` (which
+included from ``_layouts/post.html``), ``reading-progress.js`` (which
 drives the progress bar + back-to-top button that ship ``hidden`` in
-``_layouts/post.html``). Home, tag, about, portfolio and search pages
-rendered neither control yet downloaded both files.
+``_layouts/post.html``), ``copy-code.js`` (which enhances ``pre > code``,
+rendered only on posts) and ``lightbox.js`` (which queries
+``.post-content img``, absent from non-post ``.post-content`` blocks).
+Home, tag, about, portfolio and search pages rendered none of those
+controls yet downloaded all four files (#253 gated share + reading-progress;
+#318 gated copy-code + lightbox the same way).
 
 Guarded here:
 
-- the two tags stay in ``sub-footer.html`` with the ``?v=`` build token in
-  the same relative order (share, then reading-progress, both after
-  ``site-utils.js``), wrapped in a single ``page.layout == 'post'``
+- the four tags stay in ``sub-footer.html`` with the ``?v=`` build token in
+  the same relative order (copy-code, lightbox, share, then reading-progress,
+  all after ``site-utils.js``), wrapped in a single ``page.layout == 'post'``
   conditional (static);
-- the six scripts every page needs stay unconditional (static);
+- the five scripts every page needs stay unconditional (static);
 - built non-post pages (home EN/VI, tag index + one tag page, about,
-  portfolio, search EN/VI) link neither script and go from 9 to 7
+  portfolio, search EN/VI) link none of the four scripts and go from 9 to 5
   sub-footer script requests, while built EN/VI post pages still link
-  both with a non-empty epoch token (built, needs Ruby).
+  all four with a non-empty epoch token (built, needs Ruby).
 """
 
 import re
@@ -30,18 +34,21 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
 
-SHARE_PATH = "/assets/js/share.js"
-PROGRESS_PATH = "/assets/js/reading-progress.js"
-
 # Scripts every page needs: helper first, then the site-wide enhancements.
 ALWAYS_LOADED = (
     "/assets/js/site-utils.js",
     "/assets/js/lazy-load.js",
     "/assets/js/nav-toggle.js",
-    "/assets/js/copy-code.js",
     "/assets/js/lang-switch.js",
     "/assets/js/theme-toggle.js",
+)
+
+# Scripts that only post pages need, in document order (#253, #318).
+POST_ONLY = (
+    "/assets/js/copy-code.js",
     "/assets/js/lightbox.js",
+    "/assets/js/share.js",
+    "/assets/js/reading-progress.js",
 )
 
 EN_POST_REL = Path("2022/10/27/brewing-vietnamese-coffee.html")
@@ -57,7 +64,7 @@ def _read(path):
 
 @pytest.mark.static
 def test_the_post_only_scripts_are_gated_on_the_post_layout():
-    """Both tags render only where the post markup lives (#253)."""
+    """All four tags render only where the post markup lives (#253, #318)."""
     html = _read(SUB_FOOTER)
     gate = re.search(r"\{%-?\s*if page\.layout == 'post'\s*-?%\}", html)
     assert gate, (
@@ -67,38 +74,34 @@ def test_the_post_only_scripts_are_gated_on_the_post_layout():
     endif = html.find("endif", gate.end())
     assert endif != -1, "the post-layout conditional must be closed"
     gated = html[gate.end():endif]
-    assert f"{SHARE_PATH}?v=" in gated, (
-        "the share script tag must live inside the post-layout "
-        "conditional (#253)"
-    )
-    assert f"{PROGRESS_PATH}?v=" in gated, (
-        "the reading-progress script tag must live inside the "
-        "post-layout conditional (#253)"
-    )
+    for path in POST_ONLY:
+        assert f"{path}?v=" in gated, (
+            f"the {path.rsplit('/', 1)[-1]} script tag must live inside the "
+            "post-layout conditional (#253, #318)"
+        )
 
 
 @pytest.mark.static
 def test_the_gated_scripts_keep_token_and_order():
-    """Cache versioning and document order survive the gating (#253)."""
+    """Cache versioning and document order survive the gating (#253, #318)."""
     html = _read(SUB_FOOTER)
     assert re.search(r"site\.time", conftest.template_with_includes(SUB_FOOTER)), (
         "the version token must still be derived from the build"
     )
-    share_pos = html.index(f"{SHARE_PATH}?v=")
-    progress_pos = html.index(f"{PROGRESS_PATH}?v=")
-    assert share_pos < progress_pos, (
-        "share.js must stay before reading-progress.js "
-        "(deferred scripts run in document order)"
+    positions = [html.index(f"{path}?v=") for path in POST_ONLY]
+    assert positions == sorted(positions), (
+        "post-only order must stay copy-code, lightbox, share, "
+        "reading-progress (deferred scripts run in document order)"
     )
     helper_pos = html.index("/assets/js/site-utils.js?v=")
-    assert helper_pos < share_pos, (
+    assert helper_pos < positions[0], (
         "the shared helper must still load before its users (#246)"
     )
 
 
 @pytest.mark.static
 def test_the_site_wide_scripts_stay_unconditional():
-    """Gating must not swallow a script every page needs (#253)."""
+    """Gating must not swallow a script every page needs (#253, #318)."""
     html = _read(SUB_FOOTER)
     gate = re.search(r"\{%-?\s*if page\.layout == 'post'\s*-?%\}", html)
     head = html[:gate.start()] if gate else html
@@ -129,49 +132,47 @@ def _non_post_pages(built_site):
     return pages
 
 
-def test_non_post_pages_skip_both_post_only_scripts(built_site):
-    """Home, tag, about, portfolio, search: no post-only downloads (#253).
+def test_non_post_pages_skip_all_post_only_scripts(built_site):
+    """Home, tag, about, portfolio, search: no post-only downloads (#318).
 
-    Non-post pages drop from 9 to 7 sub-footer scripts (search pages carry
+    Non-post pages drop from 9 to 5 sub-footer scripts (search pages carry
     their own ``search.js`` + helper tags on top); every page keeps the
-    seven scripts it actually needs.
+    five scripts it actually needs.
     """
     for page in _non_post_pages(built_site):
         assert (built_site / page).is_file(), f"{page} is missing"
         html = _read(built_site / page)
-        assert SHARE_PATH not in html, (
-            f"{page} downloads share.js although it renders no share "
-            "row (#253)"
-        )
-        assert PROGRESS_PATH not in html, (
-            f"{page} downloads reading-progress.js although it renders "
-            "no progress controls (#253)"
-        )
+        for path in POST_ONLY:
+            assert path not in html, (
+                f"{page} downloads {path.rsplit('/', 1)[-1]} although it "
+                "renders no post controls (#253, #318)"
+            )
         for path in ALWAYS_LOADED:
             assert f"{path}?v=" in html, (
                 f"{page} lost {path}, which every page needs (#253)"
             )
         scripts = re.findall(r'<script src="(/assets/js/[^"]+)" defer>', html)
-        assert len(scripts) == 7, (
+        assert len(scripts) == 5, (
             f"{page} loads {len(scripts)} deferred first-party scripts, "
-            f"expected 7 (got {scripts}) (#253)"
+            f"expected 5 (got {scripts}) (#318)"
         )
 
 
-def test_post_pages_still_load_both_scripts(built_site):
-    """EN + VI posts keep both tags with a real epoch token (#253)."""
+def test_post_pages_still_load_all_four_scripts(built_site):
+    """EN + VI posts keep all four tags with a real epoch token (#318)."""
     for rel in (EN_POST_REL, VI_POST_REL):
         assert (built_site / rel).is_file(), f"{rel} is missing"
         html = _read(built_site / rel)
-        for path in (SHARE_PATH, PROGRESS_PATH):
+        for path in POST_ONLY:
             match = re.search(
                 rf'<script src="({re.escape(path)}\?v=([^"]+))" defer>', html
             )
-            assert match, f"{rel} no longer links {path} (#253)"
+            assert match, f"{rel} no longer links {path} (#253, #318)"
             assert re.fullmatch(r"\d+", match.group(2)), (
                 f"{rel}: the {path} token must be a non-empty epoch, got "
                 f"{match.group(2)!r}"
             )
-        assert html.index(f"{SHARE_PATH}?v=") < html.index(
-            f"{PROGRESS_PATH}?v="
-        ), f"{rel}: script order must be unchanged (#253)"
+        positions = [html.index(f"{path}?v=") for path in POST_ONLY]
+        assert positions == sorted(positions), (
+            f"{rel}: script order must be unchanged (#253, #318)"
+        )

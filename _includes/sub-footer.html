@@ -26,12 +26,6 @@
 {%- endcomment -%}
 <script src="/assets/js/nav-toggle.js?v={{ asset_version }}" defer></script>
 {%- comment -%}
-  Copy-code button (#126). Same fixed-URL rule: the script enhances every
-  `pre > code` at runtime, so a warm browser must never pair this HTML with
-  an older copy of it.
-{%- endcomment -%}
-<script src="/assets/js/copy-code.js?v={{ asset_version }}" defer></script>
-{%- comment -%}
   Language-switch reading position (#145). Progressive enhancement only: it
   appends the current section to the switcher href at runtime and scrolls to
   the matching section after landing, so like every other fixed-URL asset it
@@ -47,22 +41,30 @@
 {%- endcomment -%}
 <script src="/assets/js/theme-toggle.js?v={{ asset_version }}" defer></script>
 {%- comment -%}
+  Post-only scripts (#253, #318): copy-code + lightbox + share + reading
+  progress. Their markup ships only from post pages (code blocks,
+  `.post-content` images, the share row include, the hidden progress bar
+  and back-to-top button), so non-post pages (home, tag, page, search)
+  skip all four tags: 4 fewer requests and ~17KB less per non-post view.
+  Deferred scripts run in document order; all users of `site-utils.js`
+  stay after it, and the relative order is unchanged.
+{%- endcomment -%}
+{%- if page.layout == 'post' -%}
+{%- comment -%}
+  Copy-code button (#126). Same fixed-URL rule: the script enhances every
+  `pre > code` at runtime, so a warm browser must never pair this HTML with
+  an older copy of it. Post-only per #318: code blocks render only on posts.
+{%- endcomment -%}
+<script src="/assets/js/copy-code.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
   Accessible image lightbox (#223). Progressive enhancement only: it turns
   informative `.post-content` images into keyboard-operable viewer triggers
   at runtime and builds the dialog on demand, so without JS the page ships
   no overlay markup at all. A fixed-URL asset like the scripts above, so it
-  carries the same build token.
+  carries the same build token. Post-only per #318: non-post `.post-content`
+  blocks render no images.
 {%- endcomment -%}
 <script src="/assets/js/lightbox.js?v={{ asset_version }}" defer></script>
-{%- comment -%}
-  Post-only scripts (#253): share + reading progress. Their markup ships
-  only from `_layouts/post.html` (share row include, hidden progress bar
-  and back-to-top button), so non-post pages (home, tag, page, search)
-  skip both tags: 2 fewer requests and ~5KB less per non-post view.
-  Deferred scripts run in document order; both users of `site-utils.js`
-  stay after it, and the relative order is unchanged.
-{%- endcomment -%}
-{%- if page.layout == 'post' -%}
 {%- comment -%}
   Share row (#222). Progressive enhancement only: the intent links are plain
   anchors that work without JS; this script wires the copy-link button

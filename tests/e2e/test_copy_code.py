@@ -37,6 +37,10 @@ SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
 
 SCRIPT_PATH = "/assets/js/copy-code.js"
 
+# Post pages alone load the script (#318); the built-HTML token guard below
+# reads one of them. The EN/VI coffee pair shares `ref: cach-pha-ca-phe`.
+EN_POST_REL = "2022/10/27/brewing-vietnamese-coffee.html"
+
 # The script is plain DOM code with a Clipboard fallback and localized
 # feedback; keep it that way.
 MAX_SCRIPT_BYTES = 2048
@@ -193,9 +197,9 @@ def test_the_button_style_meets_the_touch_target_and_focus():
 
 def test_the_rendered_script_url_carries_a_non_empty_token(built_site):
     """The token must render as a real epoch, not as an empty query."""
-    text = _read(built_site / "index.html")
+    text = _read(built_site / EN_POST_REL)
     match = re.search(r'<script src="(/assets/js/copy-code\.js\?v=([^"]+))"', text)
-    assert match, "the home page does not link the copy-code script"
+    assert match, "the post page does not link the copy-code script (#318)"
     assert re.fullmatch(r"\d+", match.group(2)), (
         "the version token must be a non-empty epoch, got "
         f"{match.group(2)!r}"
