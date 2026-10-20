@@ -18,8 +18,9 @@ Guarded here:
 - the script exists, stays tiny and has no dependency (static);
 - the template links it through the ``?v=`` build token, like every other
   fixed-URL asset (#61) (static);
-- the head preconnects the only third-party origin the templates load, the
-  Font Awesome stylesheet on ``cdn.jsdelivr.net`` (static);
+- the templates load no third-party origin: the footer social icons are
+  inline SVGs, so the old Font Awesome ``cdn.jsdelivr.net`` stylesheet and
+  its head preconnect are gone (static, #254);
 - on a real post page the first content image is eager and the others are
   lazy (browser);
 - the sidebar thumbnails keep the ``loading="lazy"`` they were rendered with
@@ -37,9 +38,9 @@ SCRIPT = REPO_ROOT / "assets" / "js" / "lazy-load.js"
 SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
 HEAD_INCLUDE = REPO_ROOT / "_includes" / "head.html"
 FOOTER_INCLUDE = REPO_ROOT / "_includes" / "footer.html"
+SOCIAL_INCLUDE = REPO_ROOT / "_includes" / "social.html"
 
 SCRIPT_PATH = "/assets/js/lazy-load.js"
-FONT_ORIGIN = "https://cdn.jsdelivr.net"
 
 # The script is a few hundred bytes of plain DOM code; keep it that way.
 MAX_SCRIPT_BYTES = 2048
@@ -103,21 +104,33 @@ def test_the_script_is_linked_with_the_cache_version_token():
 
 
 @pytest.mark.static
-def test_head_preconnects_the_only_third_party_origin():
-    """The Font Awesome stylesheet is the one external stylesheet."""
-    assert FONT_ORIGIN in _read(FOOTER_INCLUDE), (
-        "the Font Awesome stylesheet is expected to come from "
-        f"{FONT_ORIGIN}; the preconnect guard must follow it"
-    )
+def test_templates_load_no_third_party_origin():
+    """Reader pages make zero third-party requests (#254).
+
+    The footer social icons used to come from the Font Awesome stylesheet
+    on ``cdn.jsdelivr.net`` (with a head preconnect/dns-prefetch pair);
+    they are inline SVGs now, so neither the stylesheet nor the hints may
+    come back. Only real references count — comments may still name the
+    retired origin for context.
+    """
+    for include in (FOOTER_INCLUDE, HEAD_INCLUDE, SOCIAL_INCLUDE):
+        html = _read(include)
+        assert "https://cdn.jsdelivr.net" not in html, (
+            f"{include.relative_to(REPO_ROOT)} still fetches the retired "
+            "Font Awesome CDN origin (#254)"
+        )
+        assert "fontawesome" not in html.lower(), (
+            f"{include.relative_to(REPO_ROOT)} still references Font Awesome "
+            "(#254)"
+        )
     head = _read(HEAD_INCLUDE)
-    assert re.search(
-        rf'<link[^>]*rel="preconnect"[^>]*href="{re.escape(FONT_ORIGIN)}"[^>]*>',
-        head,
-    ), f"the head must preconnect {FONT_ORIGIN}"
-    assert re.search(
-        rf'<link[^>]*rel="dns-prefetch"[^>]*href="{re.escape(FONT_ORIGIN)}"[^>]*>',
-        head,
-    ), f"the head must dns-prefetch {FONT_ORIGIN}"
+    assert 'rel="preconnect"' not in head, (
+        "the head must not preconnect any origin: reader pages ship zero "
+        "third-party requests (#254)"
+    )
+    assert 'rel="dns-prefetch"' not in head, (
+        "the head must not dns-prefetch any origin (#254)"
+    )
 
 
 def test_the_rendered_script_url_carries_a_non_empty_token(built_site):
@@ -138,8 +151,8 @@ def test_the_rendered_script_url_carries_a_non_empty_token(built_site):
 def page(browser):
     context = browser.new_context(viewport={"width": 1280, "height": 900})
     browser_page = context.new_page()
-    # Only the site's own files are fetched: the third-party stylesheet is
-    # aborted so the run stays offline-safe.
+    # Only the site's own files are fetched: third-party requests are
+    # aborted so the run stays offline-safe (reader pages make none, #254).
     browser_page.route(
         "**/*",
         lambda route: (

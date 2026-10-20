@@ -45,10 +45,10 @@ minima:
   # date_format: "%b-%d-%Y"
 
   # Social Media Links
-  #   Renders icons via Font Awesome Free webfonts CDN, based on ordered list of entries.
+  #   Renders inline SVG brand icons (no webfont, no CDN), based on ordered list of entries.
   #   Entry keys:
   #     * title    Tooltip rendered on hovering over icon.
-  #     * icon     Font Awesome icon id. `github` corresponds to `fa-github`.
+  #     * icon     Brand icon id (`github`, `facebook`, `instagram`, `linkedin`, `youtube`).
   #     * url      Full URL of social profile.
   social_links:
     - title: Minima Theme repository at GitHub

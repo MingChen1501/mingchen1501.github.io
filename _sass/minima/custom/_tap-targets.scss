@@ -78,8 +78,8 @@
   min-height: $tap-target-minimum;
 }
 
-// The icon links collapse to their 22px padding box when the icon font fails
-// to load (offline reader, blocked CDN): the target must not depend on it.
+// The icon links keep their minimum on the link box itself, independent of
+// the glyph inside (inline SVG since #254, icon font before it).
 .social-media-list a {
   min-height: $tap-target-minimum;
 }

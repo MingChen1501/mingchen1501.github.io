@@ -8,6 +8,10 @@ screen reader / browser combinations, so every link now carries an
 the icons are hidden from assistive technology, and the visible design is
 unchanged.
 
+Since #254 the brand glyphs are inline SVGs instead of the Font Awesome
+webfont: no external stylesheet is fetched, and every social link renders a
+decorative SVG whose name comes from the link's `aria-label`.
+
 Static guards (no Ruby) cover the source contract; build guards (need Ruby,
 no browser) assert the rendered footer on the EN and VI homes.
 """
@@ -54,7 +58,7 @@ def test_social_icons_are_decorative():
         "social icons must be hidden from assistive technology (#146)"
     )
     assert html.count('aria-hidden="true"') >= 2, (
-        "both the font glyph and the feed SVG must be decorative (#146)"
+        "every inline icon (brands + feed) must be decorative (#146)"
     )
 
 
@@ -67,6 +71,36 @@ def test_feed_label_matches_the_page_language():
     assert "page.lang" in html, (
         "social.html must pick the feed label by page language (#146)"
     )
+
+
+@pytest.mark.static
+def test_social_icons_are_inline_svg_not_an_icon_font():
+    """#254 retired the Font Awesome webfont: every brand link renders a
+    decorative inline SVG (currentColor via `.svg-icon`), and no `fa-*`
+    class may come back."""
+    html = SOCIAL_INCLUDE.read_text(encoding="utf-8")
+    assert "fa-brands" not in html and "fa-lg" not in html, (
+        "social.html still uses Font Awesome icon-font classes (#254)"
+    )
+    assert "fontawesome" not in html.lower(), (
+        "social.html still references Font Awesome (#254)"
+    )
+    assert "https://cdn.jsdelivr.net" not in html, (
+        "social.html still fetches the retired CDN origin (#254)"
+    )
+    svgs = re.findall(r"<svg\b[^>]*>", html)
+    # Five brand glyphs plus the feed icon.
+    assert len(svgs) >= 6, (
+        f"social.html must inline one SVG per icon (5 brands + feed), "
+        f"found {len(svgs)} (#254)"
+    )
+    for svg in svgs:
+        assert 'aria-hidden="true"' in svg, (
+            f"inline social SVG must stay decorative (#146): {svg}"
+        )
+        assert "viewBox" in svg or "viewbox" in svg, (
+            f"inline social SVG must scale with its viewBox (#254): {svg}"
+        )
 
 
 @pytest.mark.static
@@ -91,9 +125,20 @@ def _assert_named_links(page_html, url, feed_label):
     assert f'aria-label="{feed_label}"' in social, (
         f"{url} footer feed link must be labelled {feed_label!r} (#146)"
     )
-    # Icons stay decorative in the build (font glyph + feed SVG).
+    # Icons stay decorative in the build (brand SVGs + feed SVG).
     assert social.count('aria-hidden="true"') >= 2, (
         f"{url} footer social icons must be decorative (#146)"
+    )
+    # #254: every social link renders its own inline SVG — no icon font.
+    assert "fa-brands" not in social and "fa-lg" not in social, (
+        f"{url} footer still uses Font Awesome icon-font classes (#254)"
+    )
+    assert "cdn.jsdelivr.net" not in page_html, (
+        f"{url} still fetches the retired Font Awesome CDN origin (#254)"
+    )
+    bodies = re.findall(r"<a\b[^>]*>(.*?)</a>", social, re.S)
+    assert bodies and all("<svg" in body for body in bodies), (
+        f"{url} every footer social link must inline its icon SVG (#254)"
     )
 
 

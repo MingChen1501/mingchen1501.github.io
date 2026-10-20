@@ -377,10 +377,11 @@ minima:
 ```
 
 where `title` corresponds to the link-title displayed when a visitor hovers mouse-pointer over url / icon and
-`icon` refers to the Font Awesome icon id. e.g. `github` corresponds to `fa-github`.
+`icon` refers to the brand icon id. e.g. `github` renders the GitHub glyph.
 
-Social platform icons are rendered using the latest version of Font Awesome Free webfonts sourced via remote CDN.
-The full list of available social icons can be found at https://fontawesome.com/search?ic=brands
+Social platform icons are rendered as inline SVGs (no webfont, no third-party request).
+The supported icon ids are `github`, `facebook`, `instagram`, `linkedin`, `youtube` —
+each maps to an inline brand glyph in `_includes/social.html`.
 
 > [!NOTE]
 > The link to your site's main syndication feed is always rendered as the last item of the social-links list.<br />
