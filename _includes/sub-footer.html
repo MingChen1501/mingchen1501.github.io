@@ -55,6 +55,15 @@
 {%- endcomment -%}
 <script src="/assets/js/lightbox.js?v={{ asset_version }}" defer></script>
 {%- comment -%}
+  Post-only scripts (#253): share + reading progress. Their markup ships
+  only from `_layouts/post.html` (share row include, hidden progress bar
+  and back-to-top button), so non-post pages (home, tag, page, search)
+  skip both tags: 2 fewer requests and ~5KB less per non-post view.
+  Deferred scripts run in document order; both users of `site-utils.js`
+  stay after it, and the relative order is unchanged.
+{%- endcomment -%}
+{%- if page.layout == 'post' -%}
+{%- comment -%}
   Share row (#222). Progressive enhancement only: the intent links are plain
   anchors that work without JS; this script wires the copy-link button
   (Clipboard API with a textarea fallback) and reveals the Web Share button
@@ -70,3 +79,4 @@
   same build token.
 {%- endcomment -%}
 <script src="/assets/js/reading-progress.js?v={{ asset_version }}" defer></script>
+{%- endif %}
