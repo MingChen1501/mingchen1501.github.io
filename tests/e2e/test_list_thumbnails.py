@@ -28,23 +28,24 @@ Guarded here:
   variant exist at 240x180 WebP within budget (`script/check-images` still
   passes); both list layouts render the include inside the loop while
   `_layouts/post.html` stays thumbnail-free;
-- (static, #245) the dark placeholder twin exists with the same 120x90 box
-  in a dark neutral palette while the light tile is byte-identical, the
-  include emits the light/dark `img` pair only for placeholder items, and
-  the stylesheet swaps the pair via `html[data-theme]` with the OS
-  `prefers-color-scheme` fallback;
+- (static, #245) the dark tile artwork keeps the same 120x90 box in a
+  dark neutral palette while the light tile is byte-identical, the
+  include renders a single non-image placeholder tile (never an `img`
+  pair) only for placeholder items, and the stylesheet paints the tile
+  per theme via `html[data-theme]` with the OS `prefers-color-scheme`
+  fallback;
 - (built HTML) every `ul.post-list > li` on the EN/VI homes and every tag
   page carries exactly one thumbnail anchor with numeric 120x90 dimensions, local thumbs
   resolve to a file in the build, and the three source cases hold: front
   matter wins over the first body image (EN coffee post), else the first body
-  image (VI coffee post), else the placeholder light/dark pair (imageless
+  image (VI coffee post), else the single placeholder tile (imageless
   orchestration posts, #245);
 - (browser) every thumbnail box renders at an identical size at 375px and
   1280px on the EN/VI homes and tag pages — including with images blocked, so
   the reserved box alone (no CLS) already has the final size;
-- (browser, #245) the placeholder pair swaps visibility by theme while the
-  visible tile keeps the 120x90 box, and the dark tile meters comfortably
-  darker than the unchanged light tile (no glare).
+- (browser, #245) the single placeholder tile keeps the 120x90 box in both
+  themes, and the dark tile meters comfortably darker than the unchanged
+  light tile (no glare).
 """
 
 import contextlib
@@ -132,10 +133,10 @@ def test_thumbnail_include_implements_the_source_chain():
     thumb = html.index("assign thumb_src = include.post.thumbnail")
     image = html.index("default: include.post.image")
     body = html.index("split: '<img'")
-    placeholder = html.index("assign thumb_src = '/assets/img/placeholder.svg'")
+    placeholder = html.index("assign thumb_is_placeholder = true")
     assert thumb < image < body < placeholder, (
         "the thumbnail source chain must be front matter thumbnail, then "
-        "image, then the first body image, then the fixed placeholder"
+        "image, then the first body image, then the placeholder tile"
     )
     assert 'width="120" height="90"' in html, (
         "every thumbnail must carry explicit 120x90 dimensions (no CLS)"
@@ -238,11 +239,11 @@ def test_placeholder_and_variants_exist_and_are_fresh():
 
 
 def _list_thumbs(built_site):
-    """`(page_rel, item_html, img_tags)` for every list-item thumbnail anchor.
+    """`(page_rel, item_html, img_tags, placeholder_divs)` per list item.
 
-    Placeholder items (#245) carry a light/dark `img` pair inside their one
-    anchor, so this collects every `img` in the anchor: one tag for real
-    thumbnails, two (light then dark) for the placeholder.
+    Real thumbnails (#226) render one `img` inside their anchor; placeholder
+    items (#245) render one `post-thumb__placeholder` div and no `img` at
+    all, so a hidden lazy twin can never sit in `document.images` undecodable.
     """
     found = []
     for path in sorted(built_site.rglob("*.html")):
@@ -254,17 +255,22 @@ def _list_thumbs(built_site):
                 r"<li[^>]*>(.*?)</li>", match.group(1), re.S
             ):
                 anchors = re.findall(
-                    r'<a class="post-thumb[^"]*"[^>]*>((?:<img\b[^>]*>)+)</a>',
+                    r'<a class="post-thumb[^"]*"[^>]*>(.*?)</a>',
                     item.group(1),
                     re.S,
                 )
                 if len(anchors) != 1:
                     found.append(
-                        (path.relative_to(built_site), item.group(1), [])
+                        (path.relative_to(built_site), item.group(1), [], [])
                     )
                     continue
                 tags = re.findall(r"<img\b[^>]*>", anchors[0])
-                found.append((path.relative_to(built_site), item.group(1), tags))
+                divs = re.findall(
+                    r'<div class="post-thumb__placeholder"[^>]*>', anchors[0]
+                )
+                found.append(
+                    (path.relative_to(built_site), item.group(1), tags, divs)
+                )
     return found
 
 
@@ -277,19 +283,15 @@ def test_built_list_items_render_one_sized_thumbnail(built_site):
     thumbs = _list_thumbs(built_site)
     assert thumbs, "no post-list items found in the built site"
     problems = []
-    for page_rel, _item, tags in thumbs:
-        if len(tags) == 2 and (
-            "placeholder.svg" in tags[0]
-            and "placeholder-dark" not in tags[0]
-            and "placeholder-dark.svg" in tags[1]
-        ):
-            pair = tags  # the #245 placeholder light/dark pair in one anchor
-        elif len(tags) == 1:
-            pair = tags
+    for page_rel, _item, tags, divs in thumbs:
+        if len(tags) == 1 and not divs:
+            pair = tags  # a real thumbnail: exactly one sized img
+        elif len(tags) == 0 and len(divs) == 1:
+            continue  # a #245 placeholder: one CSS tile, no img at all
         else:
             problems.append(
-                f"{page_rel}: list item has {len(tags)} thumbnail images, "
-                "want 1 (or the #245 placeholder pair)"
+                f"{page_rel}: list item has {len(tags)} thumbnail images and "
+                f"{len(divs)} placeholder tiles, want 1 img or 1 tile"
             )
             continue
         for tag in pair:
@@ -310,11 +312,25 @@ def test_built_list_items_render_one_sized_thumbnail(built_site):
 
 
 def _list_thumb_by_post(built_site, post_href):
-    """Thumbnail `src` of the list item linking to `post_href` (or None)."""
-    for _page_rel, item, tags in _list_thumbs(built_site):
+    """Thumbnail `src` of the list item linking to `post_href` (or None).
+
+    Placeholder items (#245) render a CSS tile instead of an `img`, so
+    they contribute no `src` here; use `_list_placeholder_by_post` for them.
+    """
+    for _page_rel, item, tags, _divs in _list_thumbs(built_site):
         if f'href="{post_href}"' in item and tags:
             return _thumb_attr(tags[0], "src")
     return None
+
+
+def _list_placeholder_by_post(built_site, post_href):
+    """`(has_div, has_img)` for the list item linking to `post_href`."""
+    for _page_rel, item, tags, divs in _list_thumbs(built_site):
+        if f'href="{post_href}"' in item and (
+            'post-thumb--placeholder"' in item
+        ):
+            return (len(divs) == 1, len(tags) > 0)
+    return (False, False)
 
 
 def test_built_thumbnail_source_chain(built_site):
@@ -338,14 +354,18 @@ def test_built_thumbnail_source_chain(built_site):
         f"VI coffee post must use a small body-image variant, got {vi_thumb}"
     )
     assert "placeholder" not in vi_thumb
-    # Else the fixed placeholder: the orchestration posts carry no images.
+    # Else the fixed placeholder: the orchestration posts carry no images,
+    # so their items render the single CSS tile and no thumbnail `img`.
     for href in (
         "/2026/10/14/setting-up-ai-coding-agent-orchestration.html",
         "/2026/10/17/real-world-agent-orchestration-with-free-opencode.html",
     ):
         src = _list_thumb_by_post(built_site, href)
-        assert src is not None, f"{href} missing from every list"
-        assert "placeholder.svg" in src, f"{href} must use the placeholder, got {src}"
+        assert src is None, f"{href} must not render a thumbnail img, got {src}"
+        has_div, has_img = _list_placeholder_by_post(built_site, href)
+        assert has_div and not has_img, (
+            f"{href} must render the single placeholder tile with no img"
+        )
 
 
 # --- browser guards (identical rendered box, no CLS) -------------------------
@@ -377,12 +397,15 @@ _MEASURE_JS = """
 () => Array.from(document.querySelectorAll('ul.post-list > li')).map((li) => {
   const box = li.querySelector('.post-thumb');
   const img = li.querySelector('.post-thumb img');
+  const tile = li.querySelector('.post-thumb__placeholder');
   const boxRect = box ? box.getBoundingClientRect() : null;
   const imgRect = img ? img.getBoundingClientRect() : null;
+  const tileRect = tile ? tile.getBoundingClientRect() : null;
   return {
     href: (li.querySelector('a.post-link') || {}).href || null,
     box: boxRect ? {width: boxRect.width, height: boxRect.height} : null,
     img: imgRect ? {width: imgRect.width, height: imgRect.height} : null,
+    tile: tileRect ? {width: tileRect.width, height: tileRect.height} : null,
   };
 })
 """
@@ -419,9 +442,14 @@ def test_list_thumbnails_share_one_rendered_box(
         assert items, f"{path} at {width}px has no list items"
         for item in items:
             assert item["box"] is not None, f"{path}: item without .post-thumb"
-            assert item["img"] is not None, f"{path}: box without img"
+            # Real thumbnails render one sized img; placeholder items render
+            # the single CSS tile instead (#245) — exactly one of the two.
+            assert (item["img"] is None) != (item["tile"] is None), (
+                f"{path}: box must hold one img or one tile, got {item}"
+            )
             boxes.add((round(item["box"]["width"], 1), round(item["box"]["height"], 1)))
-            boxes.add((round(item["img"]["width"], 1), round(item["img"]["height"], 1)))
+            inner = item["img"] or item["tile"]
+            boxes.add((round(inner["width"], 1), round(inner["height"], 1)))
             checked += 1
     assert checked > 0
     assert boxes == {(THUMB_WIDTH, THUMB_HEIGHT)}, (
@@ -519,136 +547,145 @@ def test_placeholder_dark_twin_matches_the_light_box():
 
 
 @pytest.mark.static
-def test_thumbnail_include_emits_a_theme_aware_placeholder_pair():
-    """Only placeholder items get the light/dark `img` pair (#245)."""
+def test_thumbnail_include_renders_a_single_non_image_placeholder():
+    """Only placeholder items get the tile — and it is never an `img` (#245).
+
+    A second `display: none` + `loading="lazy"` img never decodes, which
+    trips the visual-regression settle check (`document.images` must fully
+    decode), so the placeholder is a `div` while real thumbnails keep the
+    single sized lazy `img`.
+    """
     html = _read(THUMB_INCLUDE)
-    assert "placeholder-dark.svg" in html, (
-        "the include must reference the dark placeholder twin"
+    assert "post-thumb__placeholder" in html, (
+        "the include must render the single placeholder tile"
+    )
+    assert "placeholder-dark.svg" not in html, (
+        "no dark-twin img may load: the tile is one theme-aware div"
+    )
+    assert "post-thumb__img--dark" not in html, (
+        "the light/dark img pair is gone with the hidden twin"
     )
     assert "thumb_is_placeholder" in html, (
         "the include must track placeholder items separately from real sources"
     )
-    assert "thumb_is_placeholder == false" in html, (
-        "real local sources must keep mapping to small variants, "
-        "never to the dark twin"
-    )
     assert (
         'class="post-thumb{% if thumb_is_placeholder %} '
         'post-thumb--placeholder{% endif %}"' in html
-    ), "only placeholder anchors may carry the swap hook class"
-    light = html.index("post-thumb__img--light")
-    dark = html.index("post-thumb__img--dark")
-    assert light < dark, "the light tile stays first so no-JS readers keep it"
+    ), "only placeholder anchors may carry the theme hook class"
+    assert (
+        '<div class="post-thumb__placeholder" aria-hidden="true" '
+        'role="presentation"></div>' in html
+    ), "the tile is presentational: hidden from assistive tech like the link"
     for snippet in ('width="120" height="90"', 'loading="lazy"', 'decoding="async"', 'alt=""'):
-        assert html.count(snippet) >= 2, (
-            f"both tiles of the pair need {snippet} (fixed box, no CLS)"
+        assert html.count(snippet) == 1, (
+            f"exactly the one real-thumbnail img carries {snippet} "
+            "(the tile is CSS, the hidden twin is gone)"
         )
-    assert html.count("append: '?v='") >= 2, (
-        "both fixed-URL tiles carry the build token like every cached asset"
+    assert html.count("append: '?v='") == 1, (
+        "only real local thumbnails carry the build token; "
+        "the CSS tile needs none (the stylesheet is versioned)"
     )
 
 
 @pytest.mark.static
-def test_stylesheet_swaps_the_placeholder_pair_by_theme():
-    """Dark mode shows the dark tile; light mode paints exactly one tile."""
+def test_stylesheet_paints_the_placeholder_tile_per_theme():
+    """The single tile follows the theme; light mode paints one tile (#245)."""
     scss = _read(LIST_THUMBS_SCSS)
-    assert ".post-thumb img.post-thumb__img--dark" in scss, (
-        "the dark tile needs a rule specific enough to beat the base img rule"
+    assert ".post-thumb__placeholder" in scss, (
+        "the tile needs its own fixed-box rule"
+    )
+    for literal in ("width: 120px", "height: 90px"):
+        assert literal in scss, f"the tile keeps the fixed box ({literal})"
+    assert "post-thumb__img--dark" not in scss, (
+        "no hidden-twin rule may remain: the tile is a single div"
     )
     assert 'html[data-theme="dark"]' in scss, (
-        "the stored theme choice must flip the pair"
+        "the stored theme choice must repaint the tile"
     )
     assert "@media (prefers-color-scheme: dark)" in scss, (
-        "the OS preference must flip the pair for no-JS readers"
+        "the OS preference must repaint the tile for no-JS readers"
     )
     assert "html:not([data-theme=\"light\"])" in scss, (
         "the OS fallback must yield to a stored light choice"
     )
-    for hidden, shown in (
-        ("post-thumb__img--light", "post-thumb__img--dark"),
-        ("post-thumb__img--dark", "post-thumb__img--light"),
-    ):
-        assert scss.count(hidden) >= 2 and scss.count(shown) >= 2, (
-            "each theme layer must hide one tile and show the other"
-        )
     assert 'html[data-theme="light"]' not in scss, (
-        "light mode needs no override: the base rules already paint one tile"
+        "light mode needs no override: the base rule already paints one tile"
     )
 
 
-def test_built_placeholder_items_render_the_light_dark_pair(built_site):
-    """Imageless posts carry both tiles with matching dims and tokens."""
+@pytest.mark.static
+def test_stylesheet_inlines_the_placeholder_artwork():
+    """The CSS tile backgrounds are byte-identical to the SVG files (#245).
+
+    The light tile must paint pixel-identically to the old single tile so
+    the light visual baselines stay valid; decoding the inlined data URIs
+    and comparing against the files keeps the copy from drifting.
+    """
+    import urllib.parse
+
+    scss = _read(LIST_THUMBS_SCSS)
+    uris = re.findall(r'url\("data:image/svg\+xml,(.*?)"\)', scss)
+    assert len(uris) == 2, (
+        f"the stylesheet must inline exactly the light and dark tiles, got {len(uris)}"
+    )
+    decoded = sorted(urllib.parse.unquote(uri) for uri in uris)
+    light = _read(PLACEHOLDER).replace('"', "'")
+    dark = _read(PLACEHOLDER_DARK).replace('"', "'")
+    normalize = lambda text: " ".join(text.split())
+    assert sorted([normalize(light), normalize(dark)]) == sorted(
+        normalize(text) for text in decoded
+    ), "the inlined tiles must match assets/img/placeholder(-dark).svg"
+
+
+def test_built_placeholder_items_render_a_single_tile(built_site):
+    """Imageless posts carry one CSS tile and no thumbnail `img`."""
     hrefs = (
         "/2026/10/14/setting-up-ai-coding-agent-orchestration.html",
         "/2026/10/17/real-world-agent-orchestration-with-free-opencode.html",
     )
     problems = []
     for href in hrefs:
+        divs = None
         tags = None
         anchor_placeholder = False
-        for _page_rel, item, item_tags in _list_thumbs(built_site):
-            if f'href="{href}"' in item and item_tags:
+        for _page_rel, item, item_tags, item_divs in _list_thumbs(built_site):
+            if f'href="{href}"' in item:
+                divs = item_divs
                 tags = item_tags
                 anchor_placeholder = 'post-thumb--placeholder"' in item
                 break
-        if not tags:
+        if divs is None:
             problems.append(f"{href} missing from every list")
             continue
         if not anchor_placeholder:
-            problems.append(f"{href}: placeholder anchor lacks the swap hook class")
-        if len(tags) != 2:
+            problems.append(f"{href}: placeholder anchor lacks the theme hook class")
+        if len(divs) != 1:
             problems.append(
-                f"{href}: placeholder must render the light/dark pair, "
-                f"got {len(tags)} images"
+                f"{href}: placeholder must render exactly one tile, "
+                f"got {len(divs)}"
             )
-            continue
-        light_src = _thumb_attr(tags[0], "src") or ""
-        dark_src = _thumb_attr(tags[1], "src") or ""
-        if "placeholder.svg" not in light_src or "placeholder-dark" in light_src:
-            problems.append(f"{href}: first tile must be the light one, got {light_src}")
-        if "placeholder-dark.svg" not in dark_src:
-            problems.append(f"{href}: second tile must be the dark one, got {dark_src}")
-        for tag in tags:
-            if _thumb_attr(tag, "width") != str(THUMB_WIDTH) or _thumb_attr(
-                tag, "height"
-            ) != str(THUMB_HEIGHT):
-                problems.append(f"{href}: pair tile without 120x90 dims: {tag[:160]}")
-            if _thumb_attr(tag, "loading") != "lazy" or (
-                _thumb_attr(tag, "decoding") != "async"
-            ):
-                problems.append(f"{href}: pair tile must stay lazy: {tag[:160]}")
-            src = _thumb_attr(tag, "src") or ""
-            local = src.split("?", 1)[0].lstrip("/")
-            if not (built_site / local).is_file():
-                problems.append(f"{href}: tile {src} not in the build")
-        light_token = light_src.split("?v=", 1)[1] if "?v=" in light_src else None
-        dark_token = dark_src.split("?v=", 1)[1] if "?v=" in dark_src else None
-        if not light_token or light_token != dark_token:
+        if tags:
             problems.append(
-                f"{href}: both tiles must share the build token, "
-                f"got {light_src} vs {dark_src}"
+                f"{href}: placeholder must render no img, got {tags[0][:160]}"
             )
-    assert not problems, "built placeholder pairs:\n" + "\n".join(problems)
+        for div in divs or []:
+            if 'aria-hidden="true"' not in div:
+                problems.append(f"{href}: tile must stay out of the a11y tree")
+    assert not problems, "built placeholder tiles:\n" + "\n".join(problems)
 
 
 _PLACEHOLDER_THEME_JS = """
 () => Array.from(document.querySelectorAll('ul.post-list > li')).map((li) => {
   const anchor = li.querySelector('a.post-thumb');
-  const light = anchor ? anchor.querySelector('img.post-thumb__img--light') : null;
-  const dark = anchor ? anchor.querySelector('img.post-thumb__img--dark') : null;
-  const state = (el) => {
-    if (!el) return null;
-    const rect = el.getBoundingClientRect();
-    return {
-      display: getComputedStyle(el).display,
-      width: rect.width,
-      height: rect.height,
-    };
-  };
+  const tile = anchor ? anchor.querySelector('.post-thumb__placeholder') : null;
+  const rect = tile ? tile.getBoundingClientRect() : null;
   return {
     placeholder: anchor ? anchor.classList.contains('post-thumb--placeholder') : false,
-    light: state(light),
-    dark: state(dark),
+    tile: tile ? {
+      display: getComputedStyle(tile).display,
+      width: rect.width,
+      height: rect.height,
+    } : null,
   };
 })
 """
@@ -659,10 +696,10 @@ _PLACEHOLDER_THEME_JS = """
 @pytest.mark.parametrize(
     "color_scheme,expected_theme", [("light", "light"), ("dark", "dark")]
 )
-def test_placeholder_pair_swaps_visibility_and_tone_by_theme(
+def test_placeholder_tile_follows_the_theme(
     browser, built_site_url, path, width, color_scheme, expected_theme
 ):
-    """The visible placeholder tile fits the theme: 120x90, no glare (#245)."""
+    """The single placeholder tile fits the theme: 120x90, no glare (#245)."""
     from io import BytesIO
 
     from PIL import Image, ImageStat
@@ -676,11 +713,10 @@ def test_placeholder_pair_swaps_visibility_and_tone_by_theme(
         page.locator("ul.post-list").wait_for(state="visible", timeout=10_000)
         page.wait_for_function(
             "() => {"
-            " const rendered = Array.from(document.querySelectorAll("
-            " 'a.post-thumb--placeholder img')).filter("
-            " (img) => img.getClientRects().length > 0);"
-            " return rendered.length > 0 && rendered.every("
-            " (img) => img.complete && img.naturalWidth > 0); }",
+            " const tiles = Array.from(document.querySelectorAll("
+            " 'a.post-thumb--placeholder .post-thumb__placeholder'));"
+            " return tiles.length > 0 && tiles.every("
+            " (tile) => tile.getClientRects().length > 0); }",
             timeout=10_000,
         )
         theme = page.evaluate(
@@ -693,29 +729,22 @@ def test_placeholder_pair_swaps_visibility_and_tone_by_theme(
         placeholders = [row for row in rows if row["placeholder"]]
         assert placeholders, f"{path} at {width}px renders no placeholder tiles"
         for row in placeholders:
-            visible = row["dark"] if expected_theme == "dark" else row["light"]
-            hidden = row["light"] if expected_theme == "dark" else row["dark"]
-            assert hidden["display"] == "none", (
-                f"{path} at {width}px in {expected_theme} mode must hide "
-                f"one tile, got {row}"
+            assert row["tile"] is not None, (
+                f"{path} at {width}px in {expected_theme} mode renders "
+                "a placeholder anchor without its tile"
             )
-            assert visible["display"] != "none", (
-                f"{path} at {width}px in {expected_theme} mode hides both tiles"
+            assert row["tile"]["display"] != "none", (
+                f"{path} at {width}px in {expected_theme} mode hides the tile"
             )
-            assert (round(visible["width"], 1), round(visible["height"], 1)) == (
+            assert (round(row["tile"]["width"], 1), round(row["tile"]["height"], 1)) == (
                 THUMB_WIDTH,
                 THUMB_HEIGHT,
             ), (
                 f"{path} at {width}px in {expected_theme} mode: "
-                f"visible tile is {visible}, want 120x90"
+                f"tile is {row['tile']}, want 120x90"
             )
-        shown = (
-            "post-thumb__img--dark"
-            if expected_theme == "dark"
-            else "post-thumb__img--light"
-        )
         shot = (
-            page.locator(f"a.post-thumb--placeholder img.{shown}")
+            page.locator("a.post-thumb--placeholder .post-thumb__placeholder")
             .first.screenshot()
         )
         mean = ImageStat.Stat(Image.open(BytesIO(shot)).convert("L")).mean[0]

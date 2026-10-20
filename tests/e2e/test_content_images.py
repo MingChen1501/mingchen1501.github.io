@@ -278,8 +278,8 @@ def test_built_list_items_contain_only_fixed_size_thumbnails(built_site):
     (the #113 excerpt rule). Reintroducing thumbnails keeps the #113 intent —
     no full-size content image may load inside a list item — while allowing
     exactly one ``post-thumb`` thumbnail per item: the small variant (or the
-    placeholder pair — light plus dark ``img`` in one anchor, #245 — or an
-    external attachment URL kept inside the fixed CSS box).
+    single #245 placeholder tile — a CSS ``div`` with no ``img`` at all — or
+    an external attachment URL kept inside the fixed CSS box).
     """
     problems = []
     checked = 0
@@ -292,12 +292,13 @@ def test_built_list_items_contain_only_fixed_size_thumbnails(built_site):
                 attrs, body = item.group(1), item.group(2)
                 checked += 1
                 thumbs = re.findall(
-                    r'<a class="post-thumb[^"]*"[^>]*><img\b[^>]*>', body
+                    r'<a class="post-thumb[^"]*"[^>]*>(?:<img\b[^>]*>|<div class="post-thumb__placeholder"[^>]*></div>)</a>',
+                    body,
                 )
                 if len(thumbs) != 1:
                     problems.append(
                         f"{path.relative_to(built_site)}: "
-                        f"list item has {len(thumbs)} post-thumb images, want 1"
+                        f"list item has {len(thumbs)} post-thumb thumbnails, want 1"
                     )
                     continue
                 for original in re.finditer(

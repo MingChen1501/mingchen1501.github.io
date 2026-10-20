@@ -47,10 +47,12 @@ item (`_sass/minima/custom/_list-thumbs.scss`: `width`/`height` 120x90,
 `object-fit: cover`, load-bearing `padding: 0` against the base `img` rule).
 
 - Source chain per post: front matter `thumbnail`, else front matter `image`,
-  else the first image of the post body, else the fixed built-in placeholder
-  (`assets/img/placeholder.svg`). Placeholder items render a second dark tile
-  (`assets/img/placeholder-dark.svg`, #245) in the same box; the stylesheet
-  shows one tile per theme via `html[data-theme]` (OS `prefers-color-scheme`
+  else the first image of the post body, else a single theme-aware
+  placeholder tile for posts with no image. Placeholder items render one
+  `post-thumb__placeholder` div (`assets/img/placeholder.svg` artwork inlined
+  as a CSS background, #245 — never an `img`, so no hidden lazy twin can
+  break image decoding) in the same box; the stylesheet repaints the tile per
+  theme via `html[data-theme]` (OS `prefers-color-scheme`
   fallback), so light mode is unchanged. The include emits `width="120" height="90"`
   so the box is reserved before the first byte (no CLS).
 - Local sources never load the original: `script/generate-thumbnails`
