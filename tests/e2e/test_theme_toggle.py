@@ -194,6 +194,89 @@ def test_theme_partial_defines_the_data_theme_layer():
     assert "outline-color" in scss
 
 
+@pytest.mark.static
+def test_dark_overrides_cover_share_lightbox_and_back_to_top():
+    """#241: the newer `$brand-color-dark` uses stay visible in dark mode.
+
+    The share hover/status, lightbox trigger focus ring and back-to-top
+    hover reuse the static light `$brand-color-dark` (near-invisible
+    `#2b2b2b` on the dark `#181818` background), and the image trigger is
+    not in the generic focus-override list. The dark layer must lift all
+    four to the same `$dm-brand-color-light` grey family the #220 overrides
+    use, while the light partials keep `$brand-color-dark` (light mode
+    pixel-identical). The status text must additionally hold 4.5:1 on the
+    dark background.
+    """
+    partial = REPO_ROOT / "_sass" / "minima" / "custom" / "_theme-toggle.scss"
+    dark = _read(partial)
+    for selector in (
+        ".share__link:hover",
+        ".share__button:hover",
+        ".share__status",
+        ".post-content img.lightbox-trigger:focus-visible",
+        ".back-to-top:hover",
+    ):
+        assert selector in dark, (
+            f"the dark theme layer covers no {selector} override (#241)"
+        )
+    assert dark.count("$dm-brand-color-light") >= 5, (
+        "the #241 overrides must reuse the $dm-brand-color-light grey family"
+    )
+    # Light mode stays untouched: the light partials still use the static
+    # value, so only the dark-scoped layer changes the paint.
+    light_uses = {
+        "_share.scss": ("border-color: $brand-color-dark", "color: $brand-color-dark"),
+        "_lightbox.scss": ("outline: 3px solid $brand-color-dark",),
+        "_reading-progress.scss": ("border-color: $brand-color-dark",),
+    }
+    for name, needles in light_uses.items():
+        text = _read(REPO_ROOT / "_sass" / "minima" / "custom" / name)
+        for needle in needles:
+            assert needle in text, (
+                f"{name} lost its light-mode `{needle}` "
+                "(light rendering must stay pixel-identical, #241)"
+            )
+    # Contrast: lighten(#999999, 5%) is #a6a6a6; pin ~7:1 on #181818.
+    skin = _read(REPO_ROOT / "_sass" / "minima" / "skins" / "auto.scss")
+    match = re.search(
+        r"^\s*\$dm-brand-color:\s*(#[0-9a-fA-F]{6})", skin, re.M
+    )
+    assert match, "the auto skin defines no dm-brand-color to judge (#241)"
+    import colorsys
+
+    base = match.group(1)
+    r, g, b = (int(base[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    h, lightness, s = colorsys.rgb_to_hls(r, g, b)
+    r2, g2, b2 = colorsys.hls_to_rgb(h, min(1.0, lightness + 0.05), s)
+    foreground = "#{:02x}{:02x}{:02x}".format(
+        round(r2 * 255), round(g2 * 255), round(b2 * 255)
+    )
+    assert foreground == "#a6a6a6", (
+        f"$dm-brand-color-light resolves to {foreground}, expected #a6a6a6 "
+        "(#241)"
+    )
+    background = re.search(
+        r"^\s*\$dm-background-color:\s*(#[0-9a-fA-F]{6})", skin, re.M
+    )
+    assert background, "the auto skin defines no dm-background-color (#241)"
+
+    def luminance(hex_color):
+        channels = [int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        linearized = [
+            c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+            for c in channels
+        ]
+        return 0.2126 * linearized[0] + 0.7152 * linearized[1] + 0.0722 * linearized[2]
+
+    peak = max(luminance(background.group(1)), luminance(foreground))
+    base_lum = min(luminance(background.group(1)), luminance(foreground))
+    ratio = (peak + 0.05) / (base_lum + 0.05)
+    assert ratio >= 4.5, (
+        f"share status {foreground} on {background.group(1)} is {ratio:.2f}:1 "
+        "(needs 4.5:1, #241)"
+    )
+
+
 # --- build guards (need Ruby; no browser) -----------------------------------
 
 

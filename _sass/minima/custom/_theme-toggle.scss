@@ -72,6 +72,8 @@
   // outline and the chip/switcher hovers use `$brand-color-dark`, which the
   // dark skin resolves to a near-background shade. `$dm-brand-color-light`
   // (`#a6a6a6`, ~7:1 on `#181818`) keeps the same grey family, visible.
+  // (#241 extends the same treatment to the share row, the lightbox image
+  // trigger, and the back-to-top hover, which all reuse `$brand-color-dark`.)
   a:focus-visible,
   button:focus-visible,
   input:focus-visible,
@@ -81,9 +83,23 @@
     outline-color: $dm-brand-color-light;
   }
 
+  .post-content img.lightbox-trigger:focus-visible {
+    outline-color: $dm-brand-color-light;
+  }
+
   .tag-chip:hover,
   .tag-chip:focus {
     border-color: $dm-brand-color-light;
+    color: $dm-brand-color-light;
+  }
+
+  .share__link:hover,
+  .share__button:hover,
+  .back-to-top:hover {
+    border-color: $dm-brand-color-light;
+  }
+
+  .share__status {
     color: $dm-brand-color-light;
   }
 
