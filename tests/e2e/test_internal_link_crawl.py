@@ -23,12 +23,8 @@ Out of scope (deliberately unchecked here):
 - external links (any host other than ``mingchen.id.vn``, ``mailto:``,
   ``tel:``, ``data:``, …) — no network dependency by design;
 - HTML validity and feed content semantics;
-- the contents of the documented orphans: ``gift.html`` is a standalone
-  hand-written page and ``fullmonth/`` a standalone event invitation,
-  both intentionally unlinked (shared directly, never navigated to).
-  Note: ``fullmonth/index.html`` references two stylesheets
-  (``css/ekko-lightbox.css``, ``styles/main.css``) that are absent from
-  the build — dead links on an unlinked legacy page, left alone here.
+- the contents of the documented orphans: ``404.html`` is served by the
+  host for missing URLs and intentionally unlinked.
 """
 
 from __future__ import annotations
@@ -54,10 +50,6 @@ CRAWL_SEEDS = ("/", "/vi/")
 DOCUMENTED_ORPHANS = {
     # GitHub Pages serves this for missing URLs; it is never linked to.
     "404.html": "error page served by the host, never linked",
-    # Standalone hand-written page shared directly, never navigated to.
-    "gift.html": "standalone unlinked page, contents out of scope",
-    # Standalone event invitation shared directly, never navigated to.
-    "fullmonth/index.html": "standalone unlinked page, contents out of scope",
 }
 
 # Schemes that are never internal links (external by design, #210).
