@@ -44,7 +44,9 @@ exactly one place; other files link to it instead of restating it.
   `risk-very-high`, or a missing label needs explicit owner approval.
 - All public repo artifacts MUST be English (PRs, commits, issues, review
   comments, code comments); Vietnamese only for internal AO reporting.
-- `robots.txt`, `sitemap.xml`, `llms.txt` are generated — never hand-edit.
+- `_site/` outputs are generated — never hand-edit. `sitemap.xml` and
+  `llms.txt` are Liquid sources edited like other pages; `robots.txt`
+  is static.
   `AGENTS.md` and `.opencode/` stay excluded from the built site.
 - CI content-only rule (#229): PRs touching only `_posts/**`,
   `_vi_posts/**`, `assets/img/**`, `_data/highlights.yml` skip the browser

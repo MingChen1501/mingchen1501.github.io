@@ -19,20 +19,20 @@ with `--safe`.
 
 | Area | Spec | Size (2026-10-20) |
 |---|---|---|
-| Layouts + includes (Liquid) | `content-pipeline.md` | 5 layouts (575 LOC) + 22 includes (1,290 LOC) |
-| SCSS layers | `styling.md` | 30 files, ~2,900 LOC |
+| Layouts + includes (Liquid) | `content-pipeline.md` | 5 layouts (541 LOC) + 24 includes (1,362 LOC) |
+| SCSS layers | `styling.md` | 27 files, ~3,200 LOC |
 | Vanilla JS modules | `javascript.md` | 11 files, 1,079 LOC |
 | Data files + taxonomy | `data-model.md` | 3 files, 80 LOC |
-| Tests + scripts + CI | `testing.md` | 59 e2e files (~19,100 LOC), 14 scripts, 5 workflows (597 LOC) |
-| Content (posts) | `content-pipeline.md` | 7 EN posts + 6 VI posts |
+| Tests + scripts + CI | `testing.md` | 62 e2e files (~19,500 LOC), 14 scripts, 5 workflows (554 LOC) |
+| Content (posts) | `content-pipeline.md` | 7 EN files (6 published + 1 unpublished sample) + 6 VI posts |
 | Decisions | `decisions/` | ADR template + first ADRs |
 
-339 tracked files total (`git ls-files`, excluding `_site/`).
+348 tracked files total (`git ls-files`, excluding `_site/`).
 
 ## Bloat headline numbers
 
-- The E2E suite (~19,100 LOC) is the largest area of the repo — larger than
-  layouts + includes + SCSS + JS combined (~5,800 LOC). See `testing.md`
+- The E2E suite (~19,500 LOC) is the largest area of the repo — larger than
+  layouts + includes + SCSS + JS combined (~6,200 LOC). See `testing.md`
   for the overlap clusters and follow-up #297.
 - `assets/img/` holds 4.2MB of the 6MB budget (`script/check-images`);
   the largest single file is 236KB against the 500KB limit.
@@ -65,8 +65,9 @@ All `risk-low` except #294. None is implemented here.
 
 - `docs/architecture/` records the tree as it is; behavior changes go
   through normal PRs, one per issue.
-- Generated paths (`_site/`, `.jekyll-cache/`, `robots.txt`, `sitemap.xml`,
-  `llms.txt`) are never hand-edited and never specified here beyond their
-  generators.
+- `_site/` and `.jekyll-cache/` outputs are never hand-edited and never
+  specified here beyond their generators. `sitemap.xml` and `llms.txt`
+  are Liquid sources (hreflang alternates, bilingual link map) edited
+  like other pages; `robots.txt` is static.
 - `AGENTS.md` and `.opencode/` stay excluded from the built site
   (`_config.yml` `exclude:`, leak-checked on every build).
