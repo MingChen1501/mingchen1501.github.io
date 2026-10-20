@@ -552,7 +552,15 @@ The Jekyll builds (3.9 and 4.2 via `script/cibuild`), the link crawl /
 sitemap+feed XML validation, and `script/check-images` (+ external-image
 and alt-text checks) in `ci.yaml` always run, including on content-only
 PRs. Lighthouse (`.github/workflows/lighthouse.yml`) is skipped on
-content-only PRs with its own `Lighthouse suite result` aggregator.
+content-only PRs with its own `Lighthouse suite result` aggregator. On
+full runs it builds the site once and runs two passes against the shared
+`_site/` artifact: `Lighthouse CI (desktop)` (`lighthouserc.json`,
+`preset: desktop`) and `Lighthouse CI (mobile)`
+(`lighthouserc.mobile.json`, default mobile emulation, `numberOfRuns: 3`
+with median assertion). The mobile pass covers `/`, the photo-heavy Tet
+2023 posts (EN/VI), and `/tags/`; both passes assert performance
+warn-only at 0.85 and accessibility/best-practices/SEO as errors at 0.90,
+so a mobile regression is visible per PR without blocking on noise.
 
 ### Content-only classification (#229)
 
