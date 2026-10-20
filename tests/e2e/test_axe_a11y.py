@@ -34,6 +34,10 @@ owner/UX decision tracked in the follow-up issue instead of a drive-by fix):
 - `object-alt` on `/portfolio/` `<object>`: the resume PDF embed has no
   title/`aria-label` (it does ship an in-element fallback link). Fixing the
   markup needs an owner decision (label the object vs. replace the embed).
+  The waiver is scoped to Chromium/Firefox: axe's `object-is-loaded`
+  matcher only applies when the fallback renders zero boxes, and headless
+  WebKit (no PDF plugin intercept) renders the fallback inline, so the
+  rule never fires there (#209).
 
 Strictness: an unexpected serious/critical violation fails the run, and an
 accepted exception that no longer reproduces *also* fails (stale exceptions
@@ -46,6 +50,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
+
+import conftest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AXE_JS = REPO_ROOT / "tests" / "e2e" / "axe-core" / "axe.min.js"
@@ -106,6 +112,13 @@ ACCEPTED = [
     {
         "rule": "object-alt",
         "target": "object",
+        # No "engines" key means every engine; this waiver is scoped because
+        # axe's `object-is-loaded` matcher only applies when the <object>
+        # fallback renders zero boxes. Chromium/Firefox hide the fallback
+        # behind the PDF plugin area (the rule fires); headless WebKit has
+        # no PDF plugin intercept, so it renders the in-element fallback
+        # link inline and the rule never applies there (#209).
+        "engines": ("chromium", "firefox"),
         "reason": (
             "the /portfolio/ resume PDF <object> has no title/aria-label "
             "(it ships an in-element fallback link); labelling vs. "
@@ -248,7 +261,7 @@ def test_axe_no_unexpected_serious_or_critical_violations(
         context.close()
 
 
-def test_accepted_exceptions_match_this_build(built_site):
+def test_accepted_exceptions_match_this_build(built_site, browser_name):
     """The waiver list above must describe the real build (no silent drift).
 
     Without Ruby there is no build to judge, so this needs the session build;
@@ -257,7 +270,8 @@ def test_accepted_exceptions_match_this_build(built_site):
     or rename the waived nodes without touching axe. On a full module run it
     additionally fails on accepted exceptions the browser cases never
     observed, so fixed issues cannot linger as waivers (partial `-k` runs
-    skip that half: not every case executed).
+    skip that half: not every case executed). Waivers scoped to a subset of
+    engines (the ``engines`` key, #209) are only required on those engines.
     """
     selector_snippets = {
         (entry["rule"], entry["target"]): False for entry in ACCEPTED
@@ -302,7 +316,8 @@ def test_accepted_exceptions_match_this_build(built_site):
     stale = [
         entry
         for entry in ACCEPTED
-        if (entry["rule"], entry["target"]) not in _OBSERVED
+        if browser_name in entry.get("engines", conftest.BROWSER_NAMES)
+        and (entry["rule"], entry["target"]) not in _OBSERVED
     ]
     assert not stale, (
         "accepted axe exceptions that no longer reproduce — remove them "

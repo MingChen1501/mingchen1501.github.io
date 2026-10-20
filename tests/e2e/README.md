@@ -187,6 +187,11 @@ E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
   read-backs skip on WebKit — headless WebKit denies
   `navigator.clipboard` (`NotAllowedError`) and Playwright grants no
   clipboard permission there. Each skip carries its reason inline.
+- `test_axe_a11y.py` scopes the `object-alt` waiver to Chromium/Firefox:
+  axe only flags the `/portfolio/` PDF `<object>` when its fallback
+  renders zero boxes (the PDF plugin area covers it); headless WebKit has
+  no PDF plugin intercept, renders the fallback link inline, and the rule
+  never fires there. The waiver stays enforced where it applies.
 - Measured local runtime for `-m "not static"` (one shared Jekyll build
   plus 194 browser tests): Chromium ~2m20s, Firefox ~3m10s, WebKit ~2m50s.
   The three CI jobs run in parallel, so PR wall-clock is the slowest
