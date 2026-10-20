@@ -107,5 +107,12 @@ giscus:
   emit_metadata: "0"
   input_position: bottom
   theme: preferred_color_scheme
+  # Giscus theme sync (#258): the site theme (light/dark from the #220 toggle)
+  # is pushed into the Giscus iframe at runtime via `setConfig`, so the saved
+  # `theme` above is only the pre-JS/no-JS fallback. These two name the Giscus
+  # themes the site light/dark modes map to (any theme from
+  # https://giscus.app works, e.g. `light_high_contrast`).
+  light_theme: light
+  dark_theme: dark
   lang: vi
   loading: lazy

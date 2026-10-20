@@ -22,11 +22,27 @@
         data-emit-metadata="{{ site.giscus.emit_metadata | default: '0' }}"
         data-input-position="{{ site.giscus.input_position | default: 'bottom' }}"
         data-theme="{{ site.giscus.theme | default: 'preferred_color_scheme' }}"
+        data-light-theme="{{ site.giscus.light_theme | default: 'light' }}"
+        data-dark-theme="{{ site.giscus.dark_theme | default: 'dark' }}"
         data-lang="{{ page.lang | default: site.giscus.lang | default: 'en' }}"
         data-loading="{{ site.giscus.loading | default: 'lazy' }}"
         crossorigin="anonymous"
         async>
       </script>
+      {%- comment -%}
+        Giscus theme sync (#258): the embed above boots with `data-theme`
+        (OS setting, the no-JS fallback that matches the `auto` skin), then
+        this deferred first-party script repaints it to the reader's explicit
+        site choice. It primes `data-theme` before the lazy iframe boots and
+        re-sends the Giscus `setConfig` postMessage on every theme flip and
+        iframe load — no reload, no extra third-party request. Without JS,
+        or when the postMessage API is unavailable, the `data-theme`
+        fallback simply stays. Like every fixed-URL asset it carries the
+        build token, so a warm browser never pairs new markup with an old
+        copy (#61). Loads only here, so non-comment pages fetch nothing.
+      {%- endcomment -%}
+      {%- assign giscus_sync_version = site.time | date: '%s' -%}
+      <script src="/assets/js/giscus-theme.js?v={{ giscus_sync_version }}" defer></script>
     {%- else -%}
       <p class="comments-unavailable">Comments are temporarily unavailable.</p>
     {%- endif -%}
