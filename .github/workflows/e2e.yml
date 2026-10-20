@@ -89,15 +89,45 @@ jobs:
       - name: Run static guards (images, comments/tag markup)
         run: python -m pytest tests/e2e -v -m static
 
-  # The slow half: one shared Jekyll build, one shared Playwright browser
-  # (`tests/e2e/conftest.py`), and the browser guards that use them — once
-  # per engine (#209). The three jobs run in parallel, so PR wall-clock is
-  # the slowest engine, not the sum (measured runtimes per engine live in
-  # `tests/e2e/README.md`, "Browser matrix"). Skipped on content-only PRs
-  # (#229): new posts cannot break layout, JS, or Sass.
+  # The slow half: one shared Jekyll build served to the three browser
+  # engines (#209, #266). The `build-site` job below builds once and shares
+  # the `_site/` artifact; each `browser-e2e` job downloads it and points
+  # the suite at it via `$E2E_PREBUILT_SITE` instead of rebuilding (the
+  # `built_site` fixture reuses the directory as-is, so the engines assert
+  # against the identical tree). The three jobs run in parallel, so PR
+  # wall-clock is the slowest engine, not the sum (measured runtimes per
+  # engine live in `tests/e2e/README.md`, "Browser matrix"). Skipped on
+  # content-only PRs (#229): new posts cannot break layout, JS, or Sass.
+  # Savings vs one build per engine (#266): two fewer Jekyll builds and
+  # two fewer Ruby/bundler setups per full run -- billed minutes drop by
+  # roughly twice one engine's build+setup slice, with identical assertions.
+  build-site:
+    name: "E2E build site once (#266)"
+    needs: classify
+    if: needs.classify.outputs.content_only != 'true'
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set Up Ruby 3.3
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Build site with Jekyll
+        run: bundle exec jekyll build
+      - name: Verify build output
+        run: test -f _site/index.html
+      - name: Upload built site
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-site
+          path: _site/
+          retention-days: 1
+
   browser-e2e:
     name: "E2E browser (${{ matrix.browser }}): comments, layout, tag chips"
-    needs: classify
+    needs: [classify, build-site]
     if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
     strategy:
@@ -108,6 +138,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+      - name: Download built site (#266)
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-site
+          path: _site/
       - name: Set Up Python
         uses: actions/setup-python@v5
         with:
@@ -133,14 +168,12 @@ jobs:
             ${{ runner.os }}-playwright-
       - name: Install Playwright browser (${{ matrix.browser }})
         run: python -m playwright install --with-deps ${{ matrix.browser }}
-      - name: Set Up Ruby 3.3
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
       - name: Run browser E2E, layout overflow and tag-chip guards
         env:
           E2E_BROWSER: ${{ matrix.browser }}
+          # Shared build from the build-site job (#266): the suite serves
+          # this directory instead of running its own `jekyll build`.
+          E2E_PREBUILT_SITE: ${{ github.workspace }}/_site
           # Harvest CI-rendered captures on failure: screenshot bytes depend
           # on the machine, so the canonical visual baselines (#208) are
           # collected from this runner, never generated locally.
@@ -161,7 +194,7 @@ jobs:
   e2e-summary:
     name: "E2E suite result"
     runs-on: "ubuntu-latest"
-    needs: [classify, static-guards, browser-e2e]
+    needs: [classify, static-guards, build-site, browser-e2e]
     if: always()
     steps:
       - name: Report suite result
@@ -171,5 +204,6 @@ jobs:
             [ "${{ needs.static-guards.result }}" = "success" ]
           else
             [ "${{ needs.static-guards.result }}" = "success" ] && \
+            [ "${{ needs.build-site.result }}" = "success" ] && \
             [ "${{ needs.browser-e2e.result }}" = "success" ]
           fi

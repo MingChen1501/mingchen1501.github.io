@@ -9,7 +9,10 @@ or relaunches them on its own:
   ``bundle exec jekyll build`` into a temp directory (``built_site``), served
   over loopback HTTP (``built_site_url``) and driven by one Playwright browser
   (``browser``; engine via ``--browser-name``/``$E2E_BROWSER``, #209) for the
-  layout/overflow and home tag-chip guards.
+  layout/overflow and home tag-chip guards. In CI the E2E workflow builds
+  once in a setup job and shares the ``_site/`` artifact via
+  ``$E2E_PREBUILT_SITE`` (#266), so the per-engine jobs reuse it instead of
+  rebuilding.
 
 The build fixture logs its one invocation to stderr (and to ``$E2E_BUILD_LOG``
 when set), so a run can prove the suite builds once instead of once per module.
@@ -155,7 +158,29 @@ def built_site(tmp_path_factory):
 
     Every guard that needs the real site shares this single ``jekyll build``
     (dev environment: the external giscus embed is never fetched).
+
+    CI's E2E workflow builds once in a setup job and shares the ``_site/``
+    artifact with the three browser-engine jobs via ``$E2E_PREBUILT_SITE``
+    (#266): when that variable points at a directory containing an
+    ``index.html``, the fixture reuses it instead of rebuilding, so the
+    engines assert against the identical tree they would have built.
     """
+    prebuilt = os.environ.get("E2E_PREBUILT_SITE")
+    if prebuilt:
+        candidate = Path(prebuilt)
+        invocation = f"[e2e] reusing prebuilt site at {candidate} (#266)"
+        print(invocation, file=sys.stderr)
+        build_log = os.environ.get("E2E_BUILD_LOG")
+        if build_log:
+            with open(build_log, "a", encoding="utf-8") as handle:
+                handle.write(invocation + "\n")
+        if not candidate.is_dir():
+            pytest.fail(f"$E2E_PREBUILT_SITE is not a directory: {candidate}")
+        if not (candidate / "index.html").is_file():
+            pytest.fail(
+                f"$E2E_PREBUILT_SITE produced no index.html in {candidate}"
+            )
+        return candidate
     bundle = _bundle()
     if bundle is None:
         pytest.skip(
