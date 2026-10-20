@@ -39,6 +39,7 @@ EXPECTED_ORDER = (
     "utilities",
     "tap-targets",
     "legibility",
+    "theme-toggle",
 )
 
 # The exact literals the variables replaced (#174 evidence).
@@ -54,7 +55,14 @@ EXPECTED_VARIABLES = {
 # SHA-256 of the built `assets/css/style.css` from the pre-split sources
 # (dev and production builds emit identical bytes). See the module docstring
 # before updating.
-EXPECTED_CSS_SHA256 = "5bc337ed2e04a14d027d2a620777e505eca4d6602aeb88b6035a1170c6869a0e"
+#
+# #220 (dark mode): `minima.skin` switched `classic` -> `auto` and the
+# `theme-toggle` partial was appended. Diffed old vs new before bumping: the
+# only substitutions are static colours -> `var(--minima-*)` resolving to the
+# identical light values (the skin's light `:root` confirms each one), so
+# light mode renders unchanged; everything else is pure addition (dark
+# variables, dark syntax tokens, the `data-theme` layer, toggle styles).
+EXPECTED_CSS_SHA256 = "0c4fbbd74e46afa7159a163453906bf563c49fa8267b37b4bb546dbeb8273851"
 
 
 def _imported_partials():

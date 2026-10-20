@@ -135,7 +135,9 @@ def test_blockquote_color_meets_aa_contrast():
 
     The override lives in custom styles (``$brand-color`` itself is
     untouched), so this parses the winning `blockquote` colour and checks
-    the ratio directly instead of re-running a browser.
+    the ratio directly instead of re-running a browser. Dark mode (#220)
+    restores the skin value via `custom/_theme-toggle.scss`; the dark ratio
+    is pinned by `test_blockquote_dark_color_meets_aa_contrast` below.
     """
     scss = _read(CUSTOM_SCSS)
     matches = re.findall(
@@ -152,6 +154,43 @@ def test_blockquote_color_meets_aa_contrast():
     assert ratio >= 4.5, (
         f"blockquote {colour.group(1)} on #fdfdfd is {ratio:.2f}:1 "
         "(needs 4.5:1, #213)"
+    )
+
+
+@pytest.mark.static
+def test_blockquote_dark_color_meets_aa_contrast():
+    """The #220 dark blockquote must keep 4.5:1 on the dark background.
+
+    The #213 light fix (`#616161`) would drop to ~2:1 on the dark skin
+    background, so `custom/_theme-toggle.scss` restores `$dm-brand-color`
+    for dark themes. This resolves both Sass values from the `auto` skin
+    and checks the ratio directly instead of re-running a browser.
+    """
+    skin = _read(REPO_ROOT / "_sass" / "minima" / "skins" / "auto.scss")
+
+    def skin_value(name):
+        match = re.search(
+            r"^\s*\$" + re.escape(name) + r":\s*(#[0-9a-fA-F]{6})",
+            skin,
+            re.M,
+        )
+        assert match, f"the auto skin defines no {name} to judge (#220)"
+        return match.group(1)
+
+    text = _read(
+        REPO_ROOT / "_sass" / "minima" / "custom" / "_theme-toggle.scss"
+    )
+    assert re.search(
+        r"blockquote\s*\{\s*color:\s*\$dm-brand-color;", text
+    ), "the dark theme must restore $dm-brand-color for blockquotes (#220)"
+    background = skin_value("dm-background-color")
+    foreground = skin_value("dm-brand-color")
+    peak = max(_relative_luminance(background), _relative_luminance(foreground))
+    base = min(_relative_luminance(background), _relative_luminance(foreground))
+    ratio = (peak + 0.05) / (base + 0.05)
+    assert ratio >= 4.5, (
+        f"dark blockquote {foreground} on {background} is {ratio:.2f}:1 "
+        "(needs 4.5:1, #220)"
     )
 
 
