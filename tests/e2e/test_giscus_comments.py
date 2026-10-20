@@ -790,10 +790,9 @@ def test_giscus_eager_boot_is_corrected_without_reload(
 ):
     """A client that beats the deferred prime still lands on the site theme.
 
-    With ``__giscusEager`` the stub boots during parsing on the shipped
-    ``preferred_color_scheme`` fallback; the sync script's on-load
-    ``setConfig`` must still repaint it to the stored site theme, and the
-    toggle must keep working — all without replacing the iframe.
+    With ``__giscusEager`` the stub boots during parsing; the sync script's
+    on-load ``setConfig`` must still repaint it to the stored site theme, and
+    the toggle must keep working — all without replacing the iframe.
     """
     context = browser.new_context(
         viewport={"width": 1280, "height": 800}, color_scheme="dark"
@@ -813,9 +812,15 @@ def test_giscus_eager_boot_is_corrected_without_reload(
         test_page.wait_for_function(
             "() => window.__giscusBooted === true", timeout=10_000
         )
-        assert test_page.evaluate("() => window.__giscusBootTheme") == (
-            "preferred_color_scheme"
-        ), "the eager boot must use the shipped OS fallback"
+        # Two legal interleavings of the eager race (async stub vs deferred
+        # prime): the stub may read the shipped ``preferred_color_scheme``
+        # fallback (Chromium/Firefox) or the already-primed ``light``
+        # (WebKit runs the deferred prime first). Either way the page must
+        # converge on the site theme through ``setConfig`` below.
+        assert test_page.evaluate("() => window.__giscusBootTheme") in (
+            "preferred_color_scheme",
+            "light",
+        ), "the eager boot must read the shipped fallback or the primed theme"
         test_page.wait_for_function(
             "() => window.__giscusMessages.length > 0", timeout=10_000
         )
