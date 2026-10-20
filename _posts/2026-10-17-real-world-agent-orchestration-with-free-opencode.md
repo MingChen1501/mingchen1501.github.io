@@ -5,6 +5,7 @@ ref: agent-orchestration-opencode-free
 author: Ming Chen
 title: "Orchestration in Production: Blogging from the Beach with Free OpenCode"
 tags: [ai-agent]
+image: /assets/img/2026-10-14-setup-ai-coding-agent-orchestration/orchestration-og.jpg
 description: "Putting AI coding-agent orchestration to real use with free OpenCode: the orchestrator picks up the work, I just press merge — even from the beach."
 ---
 

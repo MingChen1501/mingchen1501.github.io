@@ -5,6 +5,7 @@ ref: setup-ai-coding-agent-orchestration
 author: Ming Chen
 title: "Trying Out Orchestration for AI Coding Agents"
 tags: [ai-agent]
+image: /assets/img/2026-10-14-setup-ai-coding-agent-orchestration/orchestration-og.jpg
 description: "Trying out an orchestration setup for AI coding agents to coordinate multiple sessions more tidily, and sketching the next step for my coding flow."
 ---
 

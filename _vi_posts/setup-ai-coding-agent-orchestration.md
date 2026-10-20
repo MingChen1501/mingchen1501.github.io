@@ -6,6 +6,7 @@ date: 2026-10-14
 author: Ming Chen
 title: "Thử setup orchestration cho AI coding agent"
 tags: [ai-agent]
+image: /assets/img/2026-10-14-setup-ai-coding-agent-orchestration/orchestration-og.jpg
 description: "Thử setup hệ thống orchestration cho AI coding agent để điều phối nhiều session gọn gàng hơn và định hướng tối ưu luồng code tiếp theo."
 redirect_from:
   - /2026/10/14/setup-ai-coding-agent-orchestration.html

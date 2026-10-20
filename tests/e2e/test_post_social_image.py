@@ -232,7 +232,10 @@ def test_imageless_posts_emit_no_broken_image_tags(built_site):
     """Image-less posts stay tag-free: no `og:image` / `twitter:image`
     (empty or otherwise), no JSON-LD `image` key, `summary` card."""
     posts = _imageless_posts()
-    assert posts, "no image-less posts found; the guard measures nothing"
+    if not posts:
+        pytest.skip(
+            "no image-less posts: every published post declares `image:` (#310)"
+        )
     for path in posts:
         html = _built_file(built_site, f"{SITE_URL}{_post_url(path)}").read_text(
             encoding="utf-8"
