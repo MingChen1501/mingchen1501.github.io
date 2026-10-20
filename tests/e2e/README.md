@@ -185,6 +185,35 @@ Guard for #207. The pinned, vendored axe-core scanner
   the `/portfolio/` PDF `<object>`. An exception that stops reproducing
   fails the run so fixed issues cannot linger as waivers.
 
+## Visual regression baselines (`test_visual_regression.py`)
+
+Guard for #208. Markup and layout-math guards cannot see a page *looking*
+broken, so this module screenshots a fixed page set at 375/768/1280px and
+fails when a fresh capture differs from the committed baseline beyond a small
+threshold: the home list, one EN post with its VI twin, the `/tags/` index
+with its VI twin, one tag page with its VI twin, about with its VI twin, and
+portfolio with its VI twin (12 pages x 3 viewports = 36 captures in
+`tests/e2e/visual/baseline/`).
+
+- Determinism: the shared dev build (no giscus embed, no analytics), the
+  light colour scheme with reduced motion, third-party requests blocked,
+  animations/transitions/caret blinking disabled via injected CSS, and a
+  settle step (`document.fonts.ready`, every image decoded after one scroll
+  through the page) before each full-page screenshot.
+- Comparison: captures are downscaled to half size (Lanczos) and stored as
+  JPEG quality 60, so all 36 baselines stay under the 2 MB budget (currently
+  ~1.8 MB; `test_baseline_budget` pins the ceiling and the per-case file
+  list). A pixel counts as changed when any channel differs by more than 12,
+  and the capture fails past 1% changed pixels — a 30px layout shift measures
+  ~18%, while identical renders measure 0%.
+- Update after an intentional visual change (CI never sets this, so drifts
+  fail there):
+
+```sh
+script/update-visual-baselines
+# i.e. UPDATE_BASELINES=1 python -m pytest tests/e2e/test_visual_regression.py -q
+```
+
 ## Run locally
 
 ```sh

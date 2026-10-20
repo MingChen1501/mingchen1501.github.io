@@ -4,3 +4,5 @@ playwright>=1.44
 # `_data_highlights()` in test_sidebar_layout.py reads `_data/highlights.yml`
 # (#64); without PyYAML the guard would silently read an empty list.
 PyYAML>=6.0
+# test_visual_regression.py compares screenshots with Pillow (#208).
+Pillow>=10.0
