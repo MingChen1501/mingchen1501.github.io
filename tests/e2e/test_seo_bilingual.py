@@ -280,6 +280,15 @@ def test_llms_txt_has_two_language_sections_with_resolving_urls(built_site):
     for path in _published_posts(REPO_ROOT / "_vi_posts"):
         assert f"{SITE_URL}{_post_url(path)}" in vi_urls
 
+    # Non-section site URLs (the `Canonical:` header) must resolve too;
+    # owned here so every llms.txt URL has exactly one build guard (#297).
+    content = llms_path.read_text(encoding="utf-8")
+    canonical = re.search(r"^Canonical:\s*(https?://\S+)", content, re.M)
+    assert canonical, "llms.txt must declare its `Canonical:` header URL"
+    assert _file_for(built_site, canonical.group(1).rstrip(".,)")).is_file(), (
+        f"llms.txt Canonical URL {canonical.group(1)} is not in the build"
+    )
+
 
 def test_feeds_split_by_language(built_site):
     """`/feed.xml` carries the English posts, `/vi/feed.xml` the Vietnamese

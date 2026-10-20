@@ -41,8 +41,15 @@ def test_robots_txt_exists_and_has_required_content(built_site):
     assert f"Sitemap: {SITE_URL}/sitemap.xml" in lines
 
 
-def test_sitemap_xml_parses_and_urls_match_site_files(built_site):
-    """sitemap.xml parses as XML, has unique locs, and every loc is a build file."""
+def test_sitemap_xml_parses_with_unique_covering_urls(built_site):
+    """sitemap.xml parses as XML with unique locs and full page coverage.
+
+    Every loc resolving to a built file is owned by
+    `test_seo_bilingual.py::test_sitemap_alternates_resolve_and_match_head`,
+    which asserts it for every entry together with the hreflang alternates
+    (#297); this guard keeps the structural contract (parse, uniqueness,
+    exclusions, paginated coverage).
+    """
     sitemap_path = built_site / "sitemap.xml"
     assert sitemap_path.exists(), f"sitemap.xml must exist in {built_site}"
 
@@ -98,11 +105,6 @@ def test_sitemap_xml_parses_and_urls_match_site_files(built_site):
             f"paginated page /vi/{page_dir}/ exists in the build but is missing from sitemap.xml"
         )
 
-    # Check each loc resolves to a file in the build
-    for loc in locs:
-        file_path = _file_for(built_site, loc)
-        assert file_path.exists(), f"sitemap loc {loc} should correspond to {file_path}"
-
 
 def test_sitemap_post_count_matches(built_site):
     """Post URLs in sitemap match published posts in both languages (#98).
@@ -146,23 +148,3 @@ def test_sitemap_post_count_matches(built_site):
 
     assert len(en_locs) == len(en_files), f"sitemap has {len(en_locs)} English post URLs but there are {len(en_files)} published posts"
     assert len(vi_locs) == len(vi_files), f"sitemap has {len(vi_locs)} Vietnamese post URLs but there are {len(vi_files)} published Vietnamese posts"
-
-
-def test_llms_txt_exists_and_urls_resolve(built_site):
-    """llms.txt exists and every URL-like token resolves to a file in the build."""
-    llms_path = built_site / "llms.txt"
-    assert llms_path.exists(), f"llms.txt must exist in {built_site}"
-
-    content = llms_path.read_text(encoding="utf-8")
-    # Look for URLs
-    urls = re.findall(r"https?://[^\s:]+", content)
-
-    assert urls, "llms.txt should contain URLs"
-
-    for url in urls:
-        # Clean trailing punctuation
-        url_clean = url.rstrip(".,)")
-        if not url_clean.startswith(("https://mingchen.id.vn", "http://mingchen.id.vn")):
-            continue  # Skip non-site URLs
-        file_path = _file_for(built_site, url_clean)
-        assert file_path.exists(), f"llms.txt URL {url_clean} should resolve to {file_path}"

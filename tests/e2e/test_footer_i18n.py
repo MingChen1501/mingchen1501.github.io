@@ -82,6 +82,13 @@ def _footer_author_name(page_html, url):
     return html_lib.unescape(names[0].strip())
 
 
+def _first_post_rel(home_html, url):
+    """The first listed post of a built home page, as a build-relative path."""
+    post_href = re.search(r'class="post-link" href="([^"]+)"', home_html)
+    assert post_href, f"{url} lists no posts"
+    return post_href.group(1).lstrip("/")
+
+
 # --- static guards (no Ruby, no browser) ------------------------------------
 
 
@@ -142,14 +149,10 @@ def test_footer_description_matches_the_page_language(built_site):
     vi = _config_value("description")
 
     en_home = (built_site / "index.html").read_text(encoding="utf-8")
-    en_post_href = re.search(r'class="post-link" href="([^"]+)"', en_home)
-    assert en_post_href, "the English home lists no posts"
-    en_post_rel = en_post_href.group(1).lstrip("/")
+    en_post_rel = _first_post_rel(en_home, "/")
 
     vi_home = (built_site / "vi" / "index.html").read_text(encoding="utf-8")
-    vi_post_href = re.search(r'class="post-link" href="([^"]+)"', vi_home)
-    assert vi_post_href, "the Vietnamese home lists no posts"
-    vi_post_rel = vi_post_href.group(1).lstrip("/")
+    vi_post_rel = _first_post_rel(vi_home, "/vi/")
 
     en_pages = [
         "index.html",
@@ -196,14 +199,10 @@ def test_footer_author_name_matches_the_page_language(built_site):
     vi = _author_value("name")
 
     en_home = (built_site / "index.html").read_text(encoding="utf-8")
-    en_post_href = re.search(r'class="post-link" href="([^"]+)"', en_home)
-    assert en_post_href, "the English home lists no posts"
-    en_post_rel = en_post_href.group(1).lstrip("/")
+    en_post_rel = _first_post_rel(en_home, "/")
 
     vi_home = (built_site / "vi" / "index.html").read_text(encoding="utf-8")
-    vi_post_href = re.search(r'class="post-link" href="([^"]+)"', vi_home)
-    assert vi_post_href, "the Vietnamese home lists no posts"
-    vi_post_rel = vi_post_href.group(1).lstrip("/")
+    vi_post_rel = _first_post_rel(vi_home, "/vi/")
 
     en_pages = [
         "index.html",
