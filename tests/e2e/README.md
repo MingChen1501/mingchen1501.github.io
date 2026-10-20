@@ -214,6 +214,14 @@ script/update-visual-baselines
 # i.e. UPDATE_BASELINES=1 python -m pytest tests/e2e/test_visual_regression.py -q
 ```
 
+  Baselines are canonical on the CI runner (`ubuntu-latest`): screenshot
+  bytes depend on the machine's font rasterization and JPEG encoder, so
+  locally generated captures fail on CI. To refresh them, push the branch
+  (or run the `Visual baselines` dispatch workflow once merged) and
+  download the `visual-fresh` artifact from the failed browser-E2E run
+  into `tests/e2e/visual/baseline/` — never commit locally rendered
+  captures.
+
 ## Run locally
 
 ```sh

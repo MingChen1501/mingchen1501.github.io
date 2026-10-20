@@ -79,3 +79,15 @@ jobs:
           bundler-cache: true
       - name: Run browser E2E, layout overflow and tag-chip guards
         run: python -m pytest tests/e2e -v -m "not static"
+        env:
+          # Harvest CI-rendered captures on failure: screenshot bytes depend
+          # on the machine, so the canonical visual baselines (#208) are
+          # collected from this runner, never generated locally.
+          SAVE_FRESH_DIR: tests/e2e/visual/fresh
+      - name: Upload fresh visual captures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-fresh
+          path: tests/e2e/visual/fresh/
+          if-no-files-found: error

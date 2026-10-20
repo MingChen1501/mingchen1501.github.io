@@ -156,6 +156,22 @@ def _stable_page(browser, site_url, width):
         context.close()
 
 
+def _save_fresh(stem, width, data):
+    """Keep CI-rendered captures for download when `$SAVE_FRESH_DIR` is set.
+
+    Screenshot bytes depend on the machine (font rasterization, JPEG
+    encoder), so the canonical baselines are harvested from the CI runner
+    itself (#208): the browser E2E job sets this variable and uploads the
+    directory as an artifact on failure.
+    """
+    directory = os.environ.get("SAVE_FRESH_DIR")
+    if not directory:
+        return
+    path = Path(directory) / f"{stem}@{width}.jpg"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+
+
 def _process(raw_png):
     """Downscale a full-page capture and encode the stored/compared bytes.
 
@@ -211,6 +227,7 @@ def test_visual_baseline(stem, path, width, built_site_url, browser, tmp_path):
         )
     with _stable_page(browser, built_site_url, width) as page:
         fresh = _capture(page, built_site_url, path)
+    _save_fresh(stem, width, fresh)
     if update:
         baseline.parent.mkdir(parents=True, exist_ok=True)
         baseline.write_bytes(fresh)
