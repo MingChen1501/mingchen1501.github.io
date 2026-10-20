@@ -25,8 +25,9 @@ Guarded here:
   post as the top result on both language paths (including a diacritics-free
   Vietnamese query); empty query shows guidance; a nonsense query shows the
   localized no-results state with the count announced via the live region;
-  the control is keyboard-operable (autofocus, Enter, Escape); neither page
-  scrolls sideways at 375px or 1280px.
+  the control is keyboard-operable (desktop-only autofocus, Enter, Escape
+  (#243)); neither page scrolls sideways at 375px or 1280px; typing mirrors
+  `?q=` into the URL and reopening it reproduces the results (#243).
 
 The browser guards use the session's shared `built_site`/`built_site_url`
 fixtures from `conftest.py` (one `bundle exec jekyll build` for the whole
@@ -219,6 +220,34 @@ def test_search_script_stays_vanilla_tiny_and_offline():
     assert "data-loaded" in text, (
         "the script must flag the index load so tests can wait on it"
     )
+
+
+@pytest.mark.static
+def test_search_243_shareable_url_and_conditional_focus():
+    """#243: typed queries mirror into ?q=; focus stays desktop-only."""
+    text = _read(SEARCH_SCRIPT)
+    # Shareable filtered views without history spam: replaceState on every
+    # keystroke/submit, cleared on empty; the language path never changes.
+    assert "replaceState" in text, (
+        "typing must mirror the query into the URL with history.replaceState"
+    )
+    assert "pushState" not in text, (
+        "the query mirror must not grow the session history"
+    )
+    assert "searchParams" in text
+    assert re.search(r"searchParams\.set\(\s*['\"]q['\"]", text), (
+        "the script must write the live query into ?q="
+    )
+    assert re.search(r"searchParams\.delete\(\s*['\"]q['\"]", text), (
+        "clearing the query must drop ?q= so no stale deep link remains"
+    )
+    # No mobile keyboard-pop: coarse pointers and narrow screens skip the
+    # initial focus; the Escape refocus (explicit user intent) stays.
+    assert "(pointer: coarse)" in text
+    assert "max-width" in text
+    assert re.search(
+        r"if\s*\(.*[Aa]utofocus.*\)\s*input\.focus\(\)", text
+    ), "the initial focus must be conditional, not unconditional"
 
 
 @pytest.mark.static
@@ -465,7 +494,7 @@ def test_search_is_keyboard_operable(built_site_url, browser):
             "() => (document.querySelectorAll('#site-search-results .search__item').length || 0) > 0",
             timeout=10_000,
         )
-        assert page.url.endswith(EN_PATH), (
+        assert urlparse(page.url).path == EN_PATH, (
             "Enter must filter in place, not navigate away"
         )
         assert _top_href(page) == EN_FEDORA_POST
@@ -495,3 +524,114 @@ def test_search_page_never_scrolls_sideways(path, width, built_site_url, browser
         assert page.evaluate(
             "() => document.documentElement.scrollWidth <= window.innerWidth"
         ), f"{path} scrolls sideways at {width}px"
+
+
+# --- #243 guards: shareable ?q= + desktop-only focus ------------------------
+
+
+def _touch_viewport(browser, built_site_url, width=375, height=800):
+    """A narrow touch context (phone-like): coarse pointer, small screen."""
+    context = browser.new_context(
+        viewport={"width": width, "height": height},
+        has_touch=True,
+        is_mobile=True,
+    )
+    try:
+        page = context.new_page()
+        origin = urlparse(built_site_url).netloc
+        page.route(
+            "**/*",
+            lambda route: route.continue_()
+            if urlparse(route.request.url).netloc == origin
+            else route.abort(),
+        )
+        yield page
+    finally:
+        context.close()
+
+
+def _active_element_id(page):
+    return page.evaluate(
+        "() => (document.activeElement && document.activeElement.id) || ''"
+    )
+
+
+@pytest.mark.parametrize(
+    "path,expected",
+    [(EN_PATH, EN_FEDORA_POST), (VI_PATH, VI_FEDORA_POST)],
+)
+def test_typing_mirrors_query_and_deep_link_reproduces_results(
+    path, expected, built_site_url, browser
+):
+    """#243: typing writes ?q= (same language path); reopening replays it."""
+    for page in _viewport(browser, built_site_url, 1280):
+        _open(page, built_site_url, path)
+        _search(page, "fedora")
+        page.wait_for_function(
+            "() => window.location.search.indexOf('q=fedora') !== -1",
+            timeout=10_000,
+        )
+        assert urlparse(page.url).path == path.rstrip("/") + "/", (
+            f"{path}: the ?q= mirror must keep the language path"
+        )
+        assert _top_href(page) == expected
+        # The live region keeps announcing through the mirror.
+        assert page.locator("#site-search-status").inner_text().strip()
+        # A shared link reproduces the same filtered view (incl. no-JS
+        # shape: the query arrives as ?q= and prefills the input).
+        shared_url = page.url
+        reloaded = page.goto(shared_url, wait_until="load")
+        assert reloaded is not None and reloaded.status == 200
+        page.wait_for_selector("#site-search[data-loaded]", timeout=10_000)
+        page.wait_for_function(
+            "() => (document.querySelectorAll('#site-search-results .search__item').length || 0) > 0",
+            timeout=10_000,
+        )
+        assert page.locator("#site-search-input").input_value() == "fedora"
+        assert _top_href(page) == expected
+
+
+def test_escape_clears_query_guidance_and_url(built_site_url, browser):
+    """#243: Escape restores guidance and removes ?q= (no stale link)."""
+    for page in _viewport(browser, built_site_url, 1280):
+        _open(page, built_site_url, EN_PATH)
+        _search(page, "fedora")
+        page.wait_for_function(
+            "() => window.location.search.indexOf('q=fedora') !== -1",
+            timeout=10_000,
+        )
+        page.locator("#site-search-input").focus()
+        page.keyboard.press("Escape")
+        assert page.locator("#site-search-input").input_value() == ""
+        assert page.locator("#site-search-guidance").is_visible()
+        assert "q=" not in urlparse(page.url).query, (
+            "Escape must remove ?q= from the address bar"
+        )
+        # Clearing the field by hand drops ?q= the same way.
+        _search(page, "fedora")
+        page.wait_for_function(
+            "() => window.location.search.indexOf('q=fedora') !== -1",
+            timeout=10_000,
+        )
+        page.locator("#site-search-input").fill("")
+        page.wait_for_function(
+            "() => window.location.search.indexOf('q=') === -1",
+            timeout=10_000,
+        )
+        assert page.locator("#site-search-guidance").is_visible()
+
+
+def test_initial_focus_is_desktop_only(built_site_url, browser):
+    """#243: desktop focuses the field; a narrow touch screen does not."""
+    for page in _viewport(browser, built_site_url, 1280):
+        _open(page, built_site_url, EN_PATH)
+        page.wait_for_function(
+            "() => document.activeElement && document.activeElement.id === 'site-search-input'",
+            timeout=10_000,
+        )
+    for page in _touch_viewport(browser, built_site_url):
+        _open(page, built_site_url, EN_PATH)
+        page.wait_for_selector("#site-search[data-loaded]", timeout=10_000)
+        assert _active_element_id(page) != "site-search-input", (
+            "a phone-sized touch screen must not steal focus on load"
+        )
