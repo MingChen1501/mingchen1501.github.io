@@ -1,8 +1,10 @@
 # End-to-end (browser) test dependencies for the comments feature.
 pytest>=8.0
-playwright>=1.44
+# Pinned exact versions (#208): screenshot bytes must be reproducible, so the
+# browser (Playwright/Chromium) and the JPEG encoder (Pillow) cannot float.
+playwright==1.64.0
 # `_data_highlights()` in test_sidebar_layout.py reads `_data/highlights.yml`
 # (#64); without PyYAML the guard would silently read an empty list.
 PyYAML>=6.0
 # test_visual_regression.py compares screenshots with Pillow (#208).
-Pillow>=10.0
+Pillow==13.0.0
