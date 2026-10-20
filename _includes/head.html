@@ -62,18 +62,14 @@
   {%- endcomment -%}
   {%- assign asset_version = site.time | date: '%s' -%}
   {%- comment -%}
-    Font preconnect / DNS prefetch (#86). The only third-party origin the
-    templates load is the Font Awesome stylesheet (linked from
-    `_includes/footer.html`, id="fa-stylesheet"). Opening the connection to
-    `cdn.jsdelivr.net` here - in the head, before the browser discovers the
-    stylesheet at the end of the body - saves the round trips that would
-    otherwise happen while the document is still parsing.
-    No other external font origin is used by the templates: the site ships no
-    webfont (the system font stack is used) and no Google Fonts link exists
-    outside the standalone `fullmonth/` page, which brings its own preconnect.
+    No third-party origins (#254): the footer social icons used to come
+    from the Font Awesome stylesheet over `cdn.jsdelivr.net` (74KB CSS plus
+    the two tags below for ~5 icons). They are inline SVGs now
+    (`_includes/social.html`), so the preconnect/dns-prefetch are gone and
+    reader pages make zero third-party requests. The site ships no webfont
+    (the system font stack is used) and no Google Fonts link exists outside
+    the standalone `fullmonth/` page, which brings its own preconnect.
   {%- endcomment -%}
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
   {%- comment -%}
     Theme bootstrap (#220): a stored `localStorage` choice wins, otherwise the
     OS `prefers-color-scheme` applies. It runs inline BEFORE the stylesheet

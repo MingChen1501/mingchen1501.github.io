@@ -9,9 +9,10 @@ Unlike the comments suite, this guard needs the *real* site, so it uses the
 session-wide `built_site`/`built_site_url` fixtures from `conftest.py` (one
 `bundle exec jekyll build`, served once over loopback HTTP). The dev
 environment is used deliberately: it skips the external giscus embed, keeping
-the run hermetic. Requests to third-party origins (only the Font Awesome CDN
-stylesheet) are aborted for the same reason - they cannot affect layout, which
-is fully defined by the local `style.css`.
+the run hermetic. Requests to third-party origins (none on reader pages
+since #254 — the Font Awesome CDN stylesheet is gone) are aborted for the
+same reason - they cannot affect layout, which is fully defined by the local
+`style.css`.
 
 Covered page kinds (acceptance from #50): a post page, the home list, the
 `/tags/` index, and every `/tags/<tag>/` page present in the build — each in

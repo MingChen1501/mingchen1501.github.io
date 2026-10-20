@@ -57,8 +57,8 @@ FIXED_SELECTORS = [
     ".post-toc__item a",
     ".tag-page__back a",
     ".contact-list .u-email",
-    # Icon-font dependent: collapses to the 22px padding box when the font
-    # fails to load, so the minimum is pinned on the link itself.
+    # The minimum is pinned on the link itself, independent of the glyph
+    # inside (inline SVG since #254, icon font before it).
     ".social-media-list a",
 ]
 
