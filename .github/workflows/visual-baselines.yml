@@ -8,6 +8,11 @@ on:
         required: false
         default: "true"
 
+# Least privilege (#282): read-only by default. The regenerate job uploads
+# the baselines artifact, so it declares its own `actions` scope below.
+permissions:
+  contents: read
+
 # Baselines are canonical on the CI runner (#208): font rasterization differs
 # between machines, so captures generated locally fail here on page height and
 # pixel diffs. Regenerate via this workflow, download the artifact, commit it.
@@ -15,6 +20,12 @@ jobs:
   regenerate:
     name: "Regenerate visual baselines"
     runs-on: "ubuntu-latest"
+    # `actions: write` for the "Upload baselines" step (actions/upload-artifact).
+    # `contents: read` is restated because a job-level `permissions` block
+    # replaces (not merges with) the top-level block.
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4

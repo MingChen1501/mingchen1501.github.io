@@ -6,6 +6,12 @@ on:
   pull_request:
     branches:
       - master
+
+# Least privilege (#282): read-only by default. This workflow only checks
+# out code, runs scripts, and builds Jekyll -- no job needs more.
+permissions:
+  contents: read
+
 jobs:
   build:
     name: "Test with Jekyll ${{ matrix.jekyll }}"

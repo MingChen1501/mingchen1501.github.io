@@ -8,9 +8,19 @@ on:
   # Run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Least privilege (#282): read-only by default. The deploy job pushes the
+# built site to the gh-pages branch, so it declares its own `contents`
+# scope below.
+permissions:
+  contents: read
+
 jobs:
   deploy_demo_site:
     runs-on: "ubuntu-latest"
+    # `contents: write` for the "Deploy to GitHub Pages" step, which pushes
+    # to gh-pages with GITHUB_TOKEN.
+    permissions:
+      contents: write
     env:
       BUNDLE_PATH: "vendor/bundle"
       BUNDLE_JOBS: 4

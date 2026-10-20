@@ -16,6 +16,11 @@ on:
         required: false
         default: "true"
 
+# Least privilege (#282): read-only by default. Jobs that upload or
+# download workflow artifacts declare their own `actions` scope below.
+permissions:
+  contents: read
+
 # A superseded push cancels its in-flight run instead of letting a whole
 # duplicate run finish (#56).
 concurrency:
@@ -106,6 +111,13 @@ jobs:
     needs: classify
     if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
+    # `actions: write` for the "Upload built site" step
+    # (actions/upload-artifact; write covers the same-run download too).
+    # `contents: read` is restated because a job-level `permissions` block
+    # replaces (not merges with) the top-level block.
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -130,6 +142,14 @@ jobs:
     needs: [classify, build-site]
     if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
+    # `actions: write` for the "Download built site" step
+    # (actions/download-artifact) and the "Upload fresh visual captures"
+    # step (actions/upload-artifact; write covers both).
+    # `contents: read` is restated because a job-level `permissions` block
+    # replaces (not merges with) the top-level block.
+    permissions:
+      contents: read
+      actions: write
     strategy:
       # One engine failing must not hide the others' results.
       fail-fast: false
