@@ -277,8 +277,9 @@ def test_built_list_items_contain_only_fixed_size_thumbnails(built_site):
     Before #226 this guard asserted list items contain no ``<img>`` at all
     (the #113 excerpt rule). Reintroducing thumbnails keeps the #113 intent —
     no full-size content image may load inside a list item — while allowing
-    exactly one ``post-thumb`` image per item: the small variant (or the
-    placeholder, or an external attachment URL kept inside the fixed CSS box).
+    exactly one ``post-thumb`` thumbnail per item: the small variant (or the
+    placeholder pair — light plus dark ``img`` in one anchor, #245 — or an
+    external attachment URL kept inside the fixed CSS box).
     """
     problems = []
     checked = 0
@@ -291,7 +292,7 @@ def test_built_list_items_contain_only_fixed_size_thumbnails(built_site):
                 attrs, body = item.group(1), item.group(2)
                 checked += 1
                 thumbs = re.findall(
-                    r'<a class="post-thumb"[^>]*><img\b[^>]*>', body
+                    r'<a class="post-thumb[^"]*"[^>]*><img\b[^>]*>', body
                 )
                 if len(thumbs) != 1:
                     problems.append(
@@ -300,7 +301,7 @@ def test_built_list_items_contain_only_fixed_size_thumbnails(built_site):
                     )
                     continue
                 for original in re.finditer(
-                    r'src="(/assets/img/(?!thumbs/|placeholder\.svg)[^"]*)"',
+                    r'src="(/assets/img/(?!thumbs/|placeholder(-dark)?\.svg)[^"]*)"',
                     body,
                 ):
                     problems.append(

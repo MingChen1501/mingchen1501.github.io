@@ -5,7 +5,9 @@
 
   Source chain per post: front matter `thumbnail`, else front matter `image`,
   else the first image of the post body, else the fixed built-in placeholder
-  (`assets/img/placeholder.svg`) for posts with no image. `post.content` here
+  (light `assets/img/placeholder.svg` plus its dark twin
+  `assets/img/placeholder-dark.svg`, swapped via `html[data-theme]` like the
+  theme-toggle icons, #245) for posts with no image. `post.content` here
   is the rendered HTML, so the body fallback splits on `<img` exactly like
   `_includes/site-sidebar.html` does.
 
@@ -35,12 +37,15 @@
 {%- endif -%}
 {%- if thumb_src == '' -%}
   {%- assign thumb_src = '/assets/img/placeholder.svg' -%}
+  {%- assign thumb_is_placeholder = true -%}
+{%- else -%}
+  {%- assign thumb_is_placeholder = false -%}
 {%- endif -%}
 {%- if thumb_src contains '://' -%}
   {%- assign thumb_url = thumb_src -%}
 {%- else -%}
   {%- assign thumb_url = thumb_src -%}
-  {%- if thumb_src contains '/assets/img/' and thumb_src != '/assets/img/placeholder.svg' -%}
+  {%- if thumb_src contains '/assets/img/' and thumb_is_placeholder == false -%}
     {%- assign thumb_url = thumb_src | replace: '/assets/img/', '/assets/img/thumbs/' -%}
     {%- assign thumb_url = thumb_url | replace: '.jpeg', '-240.webp' | replace: '.jpg', '-240.webp' | replace: '.png', '-240.webp' | replace: '.gif', '-240.webp' -%}
     {%- if thumb_url contains '.webp' -%}
@@ -53,4 +58,17 @@
   {%- assign thumb_version = site.time | date: '%s' -%}
   {%- assign thumb_url = thumb_url | append: '?v=' | append: thumb_version -%}
 {%- endif -%}
-<a class="post-thumb" href="{{ include.post.url | relative_url }}" tabindex="-1" aria-hidden="true"><img src="{{ thumb_url }}" width="120" height="90" alt="" loading="lazy" decoding="async"></a>
+{%- comment -%}
+  Placeholder items (#245) render a light/dark `img` pair in the same fixed
+  box: the dark tile stays hidden in light mode, and
+  `_sass/minima/custom/_list-thumbs.scss` swaps the pair via
+  `html[data-theme]` (stored choice wins) with the OS
+  `prefers-color-scheme` fallback for no-JS readers — the same layering as
+  the theme-toggle icons. Both tiles carry identical 120x90 dimensions and
+  lazy decoding, so the swap never moves layout; the `?v=` build token rides
+  on both fixed URLs like every other cache-versioned asset.
+{%- endcomment -%}
+{%- if thumb_is_placeholder -%}
+  {%- assign thumb_dark_url = '/assets/img/placeholder-dark.svg' | relative_url | append: '?v=' | append: thumb_version -%}
+{%- endif -%}
+<a class="post-thumb{% if thumb_is_placeholder %} post-thumb--placeholder{% endif %}" href="{{ include.post.url | relative_url }}" tabindex="-1" aria-hidden="true"><img class="post-thumb__img post-thumb__img--light" src="{{ thumb_url }}" width="120" height="90" alt="" loading="lazy" decoding="async">{%- if thumb_is_placeholder -%}<img class="post-thumb__img post-thumb__img--dark" src="{{ thumb_dark_url }}" width="120" height="90" alt="" loading="lazy" decoding="async">{%- endif -%}</a>

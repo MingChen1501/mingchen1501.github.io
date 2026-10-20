@@ -51,20 +51,29 @@ list never shifts while images load.
 
 - Source chain per post: front matter `thumbnail`, else front matter `image`,
   else the first image of the post body, else the fixed built-in placeholder
-  (`assets/img/placeholder.svg`) for posts with no image.
+  for posts with no image: the light tile (`assets/img/placeholder.svg`) plus
+  its dark twin (`assets/img/placeholder-dark.svg`), swapped per theme via
+  `html[data-theme]` with the OS `prefers-color-scheme` fallback (#245).
 - Local sources map to small 240x180 cover-cropped WebP variants
   (`assets/img/thumbs/...`, from `script/generate-thumbnails` — rerun it
   after adding or changing a post image and commit the variants), so lists
   never download the 1600px originals. External issue-attachment URLs cannot
   be resized and keep the same fixed CSS box.
 - Static (no Ruby, no browser): the chain order, the 120x90 attributes, the
-  `object-fit: cover` box, and the freshness of every expected variant.
+  `object-fit: cover` box, and the freshness of every expected variant; the
+  dark twin keeps the 120x90 box in a dark neutral palette while the light
+  tile is pinned unchanged (#245).
 - Built HTML: every list item on the EN/VI homes and tag pages carries exactly
-  one sized thumbnail resolving to a file in the build; the three source cases
+  one sized thumbnail resolving to a file in the build (placeholder items
+  carry the light/dark pair in one anchor); the three source cases
   hold (front matter wins, else first body image, else placeholder).
 - Browser: every thumbnail box renders at an identical 120x90 CSS px at
   375/768/1280px on the EN/VI homes and tag pages — including with images
   blocked, so the reserved box alone already has the final size (no CLS).
+  The placeholder pair swaps visibility by theme while the visible tile keeps
+  the box, and the dark tile meters comfortably darker than the light one
+  (#245). Dark mode has no visual baselines: `test_visual_regression.py`
+  pins the light colour scheme, so dark-only changes never touch baselines.
 
 ## Layout overflow guard (`test_layout_overflow.py`)
 

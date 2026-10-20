@@ -48,7 +48,10 @@ item (`_sass/minima/custom/_list-thumbs.scss`: `width`/`height` 120x90,
 
 - Source chain per post: front matter `thumbnail`, else front matter `image`,
   else the first image of the post body, else the fixed built-in placeholder
-  (`assets/img/placeholder.svg`). The include emits `width="120" height="90"`
+  (`assets/img/placeholder.svg`). Placeholder items render a second dark tile
+  (`assets/img/placeholder-dark.svg`, #245) in the same box; the stylesheet
+  shows one tile per theme via `html[data-theme]` (OS `prefers-color-scheme`
+  fallback), so light mode is unchanged. The include emits `width="120" height="90"`
   so the box is reserved before the first byte (no CLS).
 - Local sources never load the original: `script/generate-thumbnails`
   pre-generates 240x180 cover-cropped WebP variants

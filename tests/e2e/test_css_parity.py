@@ -117,7 +117,13 @@ EXPECTED_VARIABLES = {
 # plain-URL link). Diffed old vs new before bumping: the only change is
 # that additive hunk; no existing rule moved, so every render stays
 # identical.
-EXPECTED_CSS_SHA256 = "dd8c9cf993f5f657aa44cda808b2098792e25d51f6855f776d1782c1c2bd0ded"
+# #245 (dark-aware placeholder): five additive rules in the `list-thumbs`
+# partial (default-hide the dark tile, the `html[data-theme="dark"]`
+# show/hide pair, and the `prefers-color-scheme` no-JS fallback pair).
+# Diffed old vs new before bumping: pure addition, no existing rule moved,
+# so light mode is pixel-identical (the light tile keeps its base rules and
+# the dark tile is `display: none`).
+EXPECTED_CSS_SHA256 = "40faa78d657b337c8efd41840588ec671c20565e710690d3a7c252a124c50c02"
 
 
 def _imported_partials():

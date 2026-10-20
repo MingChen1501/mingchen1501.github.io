@@ -53,3 +53,31 @@
   border-radius: 0;
   object-fit: cover;
 }
+
+// #245: dark-aware placeholder. Placeholder items render a light/dark `img`
+// pair (`post-thumbnail.html`); the dark tile stays hidden by default so
+// light mode paints exactly the same single tile as before. The swap mirrors
+// the theme-toggle icons: the stored `html[data-theme]` choice wins, and the
+// OS `prefers-color-scheme` fallback covers no-JS readers. Both tiles share
+// the fixed box above, so flipping themes never moves layout.
+.post-thumb img.post-thumb__img--dark {
+  display: none;
+}
+
+html[data-theme="dark"] .post-thumb--placeholder img.post-thumb__img--light {
+  display: none;
+}
+
+html[data-theme="dark"] .post-thumb--placeholder img.post-thumb__img--dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .post-thumb--placeholder img.post-thumb__img--light {
+    display: none;
+  }
+
+  html:not([data-theme="light"]) .post-thumb--placeholder img.post-thumb__img--dark {
+    display: block;
+  }
+}

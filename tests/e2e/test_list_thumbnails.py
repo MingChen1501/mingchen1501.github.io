@@ -28,15 +28,23 @@ Guarded here:
   variant exist at 240x180 WebP within budget (`script/check-images` still
   passes); both list layouts render the include inside the loop while
   `_layouts/post.html` stays thumbnail-free;
-- (built HTML) every `ul.post-list > li` on the EN/VI homes and every tag page
-  carries exactly one thumbnail with numeric 120x90 dimensions, local thumbs
+- (static, #245) the dark placeholder twin exists with the same 120x90 box
+  in a dark neutral palette while the light tile is byte-identical, the
+  include emits the light/dark `img` pair only for placeholder items, and
+  the stylesheet swaps the pair via `html[data-theme]` with the OS
+  `prefers-color-scheme` fallback;
+- (built HTML) every `ul.post-list > li` on the EN/VI homes and every tag
+  page carries exactly one thumbnail anchor with numeric 120x90 dimensions, local thumbs
   resolve to a file in the build, and the three source cases hold: front
   matter wins over the first body image (EN coffee post), else the first body
-  image (VI coffee post), else the placeholder (imageless orchestration
-  posts);
+  image (VI coffee post), else the placeholder light/dark pair (imageless
+  orchestration posts, #245);
 - (browser) every thumbnail box renders at an identical size at 375px and
   1280px on the EN/VI homes and tag pages — including with images blocked, so
-  the reserved box alone (no CLS) already has the final size.
+  the reserved box alone (no CLS) already has the final size;
+- (browser, #245) the placeholder pair swaps visibility by theme while the
+  visible tile keeps the 120x90 box, and the dark tile meters comfortably
+  darker than the unchanged light tile (no glare).
 """
 
 import contextlib
@@ -55,6 +63,7 @@ POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 THUMB_INCLUDE = REPO_ROOT / "_includes" / "post-thumbnail.html"
 LIST_THUMBS_SCSS = REPO_ROOT / "_sass" / "minima" / "custom" / "_list-thumbs.scss"
 PLACEHOLDER = REPO_ROOT / "assets" / "img" / "placeholder.svg"
+PLACEHOLDER_DARK = REPO_ROOT / "assets" / "img" / "placeholder-dark.svg"
 GENERATE_SCRIPT = REPO_ROOT / "script" / "generate-thumbnails"
 THUMBS_DIR = REPO_ROOT / "assets" / "img" / "thumbs"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
@@ -229,7 +238,12 @@ def test_placeholder_and_variants_exist_and_are_fresh():
 
 
 def _list_thumbs(built_site):
-    """`(page_rel, item_html, img_tag)` for every list-item thumbnail."""
+    """`(page_rel, item_html, img_tags)` for every list-item thumbnail anchor.
+
+    Placeholder items (#245) carry a light/dark `img` pair inside their one
+    anchor, so this collects every `img` in the anchor: one tag for real
+    thumbnails, two (light then dark) for the placeholder.
+    """
     found = []
     for path in sorted(built_site.rglob("*.html")):
         text = _read(path)
@@ -239,10 +253,18 @@ def _list_thumbs(built_site):
             for item in re.finditer(
                 r"<li[^>]*>(.*?)</li>", match.group(1), re.S
             ):
-                thumbs = re.findall(
-                    r'<a class="post-thumb"[^>]*><img\b[^>]*>', item.group(1)
+                anchors = re.findall(
+                    r'<a class="post-thumb[^"]*"[^>]*>((?:<img\b[^>]*>)+)</a>',
+                    item.group(1),
+                    re.S,
                 )
-                found.append((path.relative_to(built_site), item.group(1), thumbs))
+                if len(anchors) != 1:
+                    found.append(
+                        (path.relative_to(built_site), item.group(1), [])
+                    )
+                    continue
+                tags = re.findall(r"<img\b[^>]*>", anchors[0])
+                found.append((path.relative_to(built_site), item.group(1), tags))
     return found
 
 
@@ -256,23 +278,34 @@ def test_built_list_items_render_one_sized_thumbnail(built_site):
     assert thumbs, "no post-list items found in the built site"
     problems = []
     for page_rel, _item, tags in thumbs:
-        if len(tags) != 1:
+        if len(tags) == 2 and (
+            "placeholder.svg" in tags[0]
+            and "placeholder-dark" not in tags[0]
+            and "placeholder-dark.svg" in tags[1]
+        ):
+            pair = tags  # the #245 placeholder light/dark pair in one anchor
+        elif len(tags) == 1:
+            pair = tags
+        else:
             problems.append(
-                f"{page_rel}: list item has {len(tags)} thumbnails, want 1"
+                f"{page_rel}: list item has {len(tags)} thumbnail images, "
+                "want 1 (or the #245 placeholder pair)"
             )
             continue
-        tag = tags[0]
-        if _thumb_attr(tag, "width") != str(THUMB_WIDTH) or _thumb_attr(
-            tag, "height"
-        ) != str(THUMB_HEIGHT):
-            problems.append(f"{page_rel}: thumbnail without 120x90 dims: {tag[:120]}")
-        src = _thumb_attr(tag, "src") or ""
-        if src.startswith("/assets/"):
-            local = src.split("?", 1)[0].lstrip("/")
-            if not (built_site / local).is_file():
-                problems.append(f"{page_rel}: thumbnail {src} not in the build")
-        elif "://" not in src:
-            problems.append(f"{page_rel}: unexpected thumbnail src: {src}")
+        for tag in pair:
+            if _thumb_attr(tag, "width") != str(THUMB_WIDTH) or _thumb_attr(
+                tag, "height"
+            ) != str(THUMB_HEIGHT):
+                problems.append(
+                    f"{page_rel}: thumbnail without 120x90 dims: {tag[:160]}"
+                )
+            src = _thumb_attr(tag, "src") or ""
+            if src.startswith("/assets/"):
+                local = src.split("?", 1)[0].lstrip("/")
+                if not (built_site / local).is_file():
+                    problems.append(f"{page_rel}: thumbnail {src} not in the build")
+            elif "://" not in src:
+                problems.append(f"{page_rel}: unexpected thumbnail src: {src}")
     assert not problems, "built list thumbnails:\n" + "\n".join(problems)
 
 
@@ -414,3 +447,287 @@ def test_list_thumbnail_box_needs_no_image_bytes(
                 THUMB_WIDTH,
                 THUMB_HEIGHT,
             ), f"{path} at {width}px: box is {item['box']} with images blocked"
+
+
+# --- #245 guards: the placeholder stays quiet in dark mode --------------------
+
+
+def _svg_geometry(svg_text):
+    """`(width, height, viewBox-w, viewBox-h)` of a placeholder tile."""
+    match = re.search(
+        r'<svg\b[^>]*\bwidth="(\d+)"[^>]*\bheight="(\d+)"'
+        r"[^>]*\bviewBox=\"0 0 (\d+) (\d+)\"",
+        svg_text,
+    )
+    assert match, "the placeholder SVG must carry width/height/viewBox"
+    return tuple(int(group) for group in match.groups())
+
+
+def _relative_luminance(hex_color):
+    """WCAG relative luminance of an `#rrggbb` fill."""
+    channels = [int(hex_color[i : i + 2], 16) / 255 for i in (1, 3, 5)]
+    linearized = [
+        channel / 12.92 if channel <= 0.03928 else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return 0.2126 * linearized[0] + 0.7152 * linearized[1] + 0.0722 * linearized[2]
+
+
+def _svg_fills(svg_text):
+    return set(re.findall(r'fill="(#[0-9a-fA-F]{6})"', svg_text))
+
+
+@pytest.mark.static
+def test_placeholder_dark_twin_matches_the_light_box():
+    """The dark tile is the same 120x90 tile in a dark neutral palette.
+
+    Geometry must match the light tile exactly (same box, no CLS delta),
+    the light tile keeps its `#e8e8e8`/`#9a9a9a` palette (light mode
+    unchanged), and the dark tile pairs a dark neutral surface with a
+    subtle — visible but nowhere near glaring — icon.
+    """
+    assert PLACEHOLDER.is_file(), "the fixed placeholder is missing"
+    assert PLACEHOLDER_DARK.is_file(), "the dark placeholder twin is missing"
+    light = _read(PLACEHOLDER)
+    dark = _read(PLACEHOLDER_DARK)
+    assert _svg_geometry(light) == (THUMB_WIDTH, THUMB_HEIGHT, 120, 90)
+    assert _svg_geometry(dark) == (THUMB_WIDTH, THUMB_HEIGHT, 120, 90), (
+        "the dark twin must keep the exact 120x90 box (no CLS delta)"
+    )
+    assert _svg_fills(light) == {"#e8e8e8", "#9a9a9a"}, (
+        "the light tile palette is pinned: light mode must not change"
+    )
+    assert _svg_fills(dark) == {"#262626", "#8c8c8c"}, (
+        "the dark twin must pair a dark neutral surface with one subtle icon tone"
+    )
+    assert 'stroke="#3a3a3a"' in dark, (
+        "the dark tile needs a hairline border to sit on the dark page"
+    )
+    tile_luminance = _relative_luminance("#262626")
+    icon_luminance = _relative_luminance("#8c8c8c")
+    assert tile_luminance < 0.03, (
+        f"the dark surface must stay near the page background, got {tile_luminance:.3f}"
+    )
+    assert 0.2 < icon_luminance < 0.45, (
+        "the dark icon must stay subtle but visible, "
+        f"got {icon_luminance:.3f}"
+    )
+    contrast = (icon_luminance + 0.05) / (tile_luminance + 0.05)
+    assert contrast >= 3.0, (
+        f"the dark icon must read against its tile, got {contrast:.2f}:1"
+    )
+
+
+@pytest.mark.static
+def test_thumbnail_include_emits_a_theme_aware_placeholder_pair():
+    """Only placeholder items get the light/dark `img` pair (#245)."""
+    html = _read(THUMB_INCLUDE)
+    assert "placeholder-dark.svg" in html, (
+        "the include must reference the dark placeholder twin"
+    )
+    assert "thumb_is_placeholder" in html, (
+        "the include must track placeholder items separately from real sources"
+    )
+    assert "thumb_is_placeholder == false" in html, (
+        "real local sources must keep mapping to small variants, "
+        "never to the dark twin"
+    )
+    assert (
+        'class="post-thumb{% if thumb_is_placeholder %} '
+        'post-thumb--placeholder{% endif %}"' in html
+    ), "only placeholder anchors may carry the swap hook class"
+    light = html.index("post-thumb__img--light")
+    dark = html.index("post-thumb__img--dark")
+    assert light < dark, "the light tile stays first so no-JS readers keep it"
+    for snippet in ('width="120" height="90"', 'loading="lazy"', 'decoding="async"', 'alt=""'):
+        assert html.count(snippet) >= 2, (
+            f"both tiles of the pair need {snippet} (fixed box, no CLS)"
+        )
+    assert html.count("append: '?v='") >= 2, (
+        "both fixed-URL tiles carry the build token like every cached asset"
+    )
+
+
+@pytest.mark.static
+def test_stylesheet_swaps_the_placeholder_pair_by_theme():
+    """Dark mode shows the dark tile; light mode paints exactly one tile."""
+    scss = _read(LIST_THUMBS_SCSS)
+    assert ".post-thumb img.post-thumb__img--dark" in scss, (
+        "the dark tile needs a rule specific enough to beat the base img rule"
+    )
+    assert 'html[data-theme="dark"]' in scss, (
+        "the stored theme choice must flip the pair"
+    )
+    assert "@media (prefers-color-scheme: dark)" in scss, (
+        "the OS preference must flip the pair for no-JS readers"
+    )
+    assert "html:not([data-theme=\"light\"])" in scss, (
+        "the OS fallback must yield to a stored light choice"
+    )
+    for hidden, shown in (
+        ("post-thumb__img--light", "post-thumb__img--dark"),
+        ("post-thumb__img--dark", "post-thumb__img--light"),
+    ):
+        assert scss.count(hidden) >= 2 and scss.count(shown) >= 2, (
+            "each theme layer must hide one tile and show the other"
+        )
+    assert 'html[data-theme="light"]' not in scss, (
+        "light mode needs no override: the base rules already paint one tile"
+    )
+
+
+def test_built_placeholder_items_render_the_light_dark_pair(built_site):
+    """Imageless posts carry both tiles with matching dims and tokens."""
+    hrefs = (
+        "/2026/10/14/setting-up-ai-coding-agent-orchestration.html",
+        "/2026/10/17/real-world-agent-orchestration-with-free-opencode.html",
+    )
+    problems = []
+    for href in hrefs:
+        tags = None
+        anchor_placeholder = False
+        for _page_rel, item, item_tags in _list_thumbs(built_site):
+            if f'href="{href}"' in item and item_tags:
+                tags = item_tags
+                anchor_placeholder = 'post-thumb--placeholder"' in item
+                break
+        if not tags:
+            problems.append(f"{href} missing from every list")
+            continue
+        if not anchor_placeholder:
+            problems.append(f"{href}: placeholder anchor lacks the swap hook class")
+        if len(tags) != 2:
+            problems.append(
+                f"{href}: placeholder must render the light/dark pair, "
+                f"got {len(tags)} images"
+            )
+            continue
+        light_src = _thumb_attr(tags[0], "src") or ""
+        dark_src = _thumb_attr(tags[1], "src") or ""
+        if "placeholder.svg" not in light_src or "placeholder-dark" in light_src:
+            problems.append(f"{href}: first tile must be the light one, got {light_src}")
+        if "placeholder-dark.svg" not in dark_src:
+            problems.append(f"{href}: second tile must be the dark one, got {dark_src}")
+        for tag in tags:
+            if _thumb_attr(tag, "width") != str(THUMB_WIDTH) or _thumb_attr(
+                tag, "height"
+            ) != str(THUMB_HEIGHT):
+                problems.append(f"{href}: pair tile without 120x90 dims: {tag[:160]}")
+            if _thumb_attr(tag, "loading") != "lazy" or (
+                _thumb_attr(tag, "decoding") != "async"
+            ):
+                problems.append(f"{href}: pair tile must stay lazy: {tag[:160]}")
+            src = _thumb_attr(tag, "src") or ""
+            local = src.split("?", 1)[0].lstrip("/")
+            if not (built_site / local).is_file():
+                problems.append(f"{href}: tile {src} not in the build")
+        light_token = light_src.split("?v=", 1)[1] if "?v=" in light_src else None
+        dark_token = dark_src.split("?v=", 1)[1] if "?v=" in dark_src else None
+        if not light_token or light_token != dark_token:
+            problems.append(
+                f"{href}: both tiles must share the build token, "
+                f"got {light_src} vs {dark_src}"
+            )
+    assert not problems, "built placeholder pairs:\n" + "\n".join(problems)
+
+
+_PLACEHOLDER_THEME_JS = """
+() => Array.from(document.querySelectorAll('ul.post-list > li')).map((li) => {
+  const anchor = li.querySelector('a.post-thumb');
+  const light = anchor ? anchor.querySelector('img.post-thumb__img--light') : null;
+  const dark = anchor ? anchor.querySelector('img.post-thumb__img--dark') : null;
+  const state = (el) => {
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    return {
+      display: getComputedStyle(el).display,
+      width: rect.width,
+      height: rect.height,
+    };
+  };
+  return {
+    placeholder: anchor ? anchor.classList.contains('post-thumb--placeholder') : false,
+    light: state(light),
+    dark: state(dark),
+  };
+})
+"""
+
+
+@pytest.mark.parametrize("path", ["/", "/vi/"])
+@pytest.mark.parametrize("width", [PHONE_WIDTH, DESKTOP_WIDTH])
+@pytest.mark.parametrize(
+    "color_scheme,expected_theme", [("light", "light"), ("dark", "dark")]
+)
+def test_placeholder_pair_swaps_visibility_and_tone_by_theme(
+    browser, built_site_url, path, width, color_scheme, expected_theme
+):
+    """The visible placeholder tile fits the theme: 120x90, no glare (#245)."""
+    from io import BytesIO
+
+    from PIL import Image, ImageStat
+
+    context = browser.new_context(
+        viewport={"width": width, "height": 900}, color_scheme=color_scheme
+    )
+    try:
+        page = context.new_page()
+        page.goto(f"{built_site_url}{path}", wait_until="load")
+        page.locator("ul.post-list").wait_for(state="visible", timeout=10_000)
+        page.wait_for_function(
+            "() => {"
+            " const rendered = Array.from(document.querySelectorAll("
+            " 'a.post-thumb--placeholder img')).filter("
+            " (img) => img.getClientRects().length > 0);"
+            " return rendered.length > 0 && rendered.every("
+            " (img) => img.complete && img.naturalWidth > 0); }",
+            timeout=10_000,
+        )
+        theme = page.evaluate(
+            "() => document.documentElement.getAttribute('data-theme')"
+        )
+        assert theme == expected_theme, (
+            f"{path}: a {color_scheme} OS must paint {expected_theme}, got {theme}"
+        )
+        rows = page.evaluate(_PLACEHOLDER_THEME_JS)
+        placeholders = [row for row in rows if row["placeholder"]]
+        assert placeholders, f"{path} at {width}px renders no placeholder tiles"
+        for row in placeholders:
+            visible = row["dark"] if expected_theme == "dark" else row["light"]
+            hidden = row["light"] if expected_theme == "dark" else row["dark"]
+            assert hidden["display"] == "none", (
+                f"{path} at {width}px in {expected_theme} mode must hide "
+                f"one tile, got {row}"
+            )
+            assert visible["display"] != "none", (
+                f"{path} at {width}px in {expected_theme} mode hides both tiles"
+            )
+            assert (round(visible["width"], 1), round(visible["height"], 1)) == (
+                THUMB_WIDTH,
+                THUMB_HEIGHT,
+            ), (
+                f"{path} at {width}px in {expected_theme} mode: "
+                f"visible tile is {visible}, want 120x90"
+            )
+        shown = (
+            "post-thumb__img--dark"
+            if expected_theme == "dark"
+            else "post-thumb__img--light"
+        )
+        shot = (
+            page.locator(f"a.post-thumb--placeholder img.{shown}")
+            .first.screenshot()
+        )
+        mean = ImageStat.Stat(Image.open(BytesIO(shot)).convert("L")).mean[0]
+        if expected_theme == "light":
+            assert mean > 170, (
+                f"{path} at {width}px: the light tile meters {mean:.0f}, "
+                "it must stay the unchanged bright tile"
+            )
+        else:
+            assert mean < 110, (
+                f"{path} at {width}px: the dark tile meters {mean:.0f}, "
+                "it must sit quietly on the dark page"
+            )
+    finally:
+        context.close()
