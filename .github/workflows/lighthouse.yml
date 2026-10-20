@@ -59,8 +59,8 @@ jobs:
             echo "content_only=false" >> "$GITHUB_OUTPUT"
           fi
 
-  lighthouse:
-    name: Lighthouse CI
+  lighthouse-build:
+    name: "Lighthouse build site once (#273)"
     needs: classify
     if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
@@ -74,6 +74,31 @@ jobs:
           bundler-cache: true
       - name: Build site with Jekyll
         run: bundle exec jekyll build
+      - name: Verify build output
+        run: test -f _site/index.html
+      - name: Upload built site
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-site
+          path: _site/
+          retention-days: 1
+
+  # Desktop pass (#273): unchanged thresholds (performance warn-only at
+  # 0.85, accessibility/best-practices/SEO error at 0.90) served from the
+  # shared build above, so adding the mobile pass costs no extra build.
+  lighthouse-desktop:
+    name: "Lighthouse CI (desktop)"
+    needs: [classify, lighthouse-build]
+    if: needs.classify.outputs.content_only != 'true'
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download built site (#273)
+        uses: actions/download-artifact@v4
+        with:
+          name: lighthouse-site
+          path: _site/
       # NOTE (#195): pages embedding external attachment images
       # (`https://github.com/user-attachments/assets/...`) are measured as-is;
       # no origin is blocked. Attachment-hosted bytes are exempt from the local
@@ -90,7 +115,41 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lighthouse-report
+          name: lighthouse-report-desktop
+          path: .lighthouseci/
+          retention-days: 7
+
+  # Mobile-emulation pass (#273): default (mobile) emulation, no `desktop`
+  # preset, over `/`, the photo-heavy Tet 2023 posts (EN/VI, full-size
+  # portrait phone photos that dominate mobile LCP and are invisible to the
+  # desktop pass), and `/tags/`. `numberOfRuns: 3` damps single-run noise
+  # (assert uses the median); performance stays warn-only at 0.85 so mobile
+  # noise never blocks a PR, matching desktop. Fixing whatever this flags is
+  # follow-up work -- this job only makes the signal visible.
+  lighthouse-mobile:
+    name: "Lighthouse CI (mobile)"
+    needs: [classify, lighthouse-build]
+    if: needs.classify.outputs.content_only != 'true'
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download built site (#273)
+        uses: actions/download-artifact@v4
+        with:
+          name: lighthouse-site
+          path: _site/
+      - name: Set Up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run Lighthouse CI (mobile)
+        run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.mobile.json
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-mobile
           path: .lighthouseci/
           retention-days: 7
 
@@ -98,7 +157,7 @@ jobs:
   lighthouse-summary:
     name: "Lighthouse suite result"
     runs-on: "ubuntu-latest"
-    needs: [classify, lighthouse]
+    needs: [classify, lighthouse-desktop, lighthouse-mobile]
     if: always()
     steps:
       - name: Report suite result
@@ -107,4 +166,5 @@ jobs:
             echo "Content-only PR: Lighthouse skipped by design (#229)."
             exit 0
           fi
-          [ "${{ needs.lighthouse.result }}" = "success" ]
+          [ "${{ needs.lighthouse-desktop.result }}" = "success" ] && \
+          [ "${{ needs.lighthouse-mobile.result }}" = "success" ]
