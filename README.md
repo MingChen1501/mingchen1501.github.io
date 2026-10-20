@@ -468,8 +468,13 @@ The home list and the tag pages show post imagery again, but every item shares
 one fixed 120x90 (4:3) box, so the list never shifts while images load:
 
 - Source chain per post: front matter `thumbnail`, else front matter `image`,
-  else the first image of the post body, else the fixed built-in placeholder
-  (`assets/img/placeholder.svg`) for posts with no image. All of it renders
+  else the first image of the post body, else a single theme-aware
+  placeholder tile for posts with no image. Imageless posts render one
+  `post-thumb__placeholder` div (#245, never an `img`, so no hidden lazy twin
+  can break image decoding) in the same box, and
+  `_sass/minima/custom/_list-thumbs.scss` repaints the tile per theme via
+  `html[data-theme]` (OS `prefers-color-scheme` fallback) — light mode paints
+  exactly the same single tile as before. All of it renders
   through `_includes/post-thumbnail.html` with `width="120" height="90"` and
   `object-fit: cover` (see `_sass/minima/custom/_list-thumbs.scss`) — do not
   hand-size list images anywhere else.

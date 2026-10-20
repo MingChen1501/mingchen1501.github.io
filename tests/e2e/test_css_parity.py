@@ -117,7 +117,16 @@ EXPECTED_VARIABLES = {
 # plain-URL link). Diffed old vs new before bumping: the only change is
 # that additive hunk; no existing rule moved, so every render stays
 # identical.
-EXPECTED_CSS_SHA256 = "dd8c9cf993f5f657aa44cda808b2098792e25d51f6855f776d1782c1c2bd0ded"
+# #245 (dark-aware placeholder): the pair-swap rules in the `list-thumbs`
+# partial became single-tile rules (`.post-thumb__placeholder` with the
+# light tile inlined, plus the `html[data-theme="dark"]` and
+# `prefers-color-scheme` repaints with the dark tile inlined).
+# Diffed old vs new before bumping: the only change is that hunk (the hidden
+# twin is gone with its `display` rules); no other rule moved. Light mode is
+# pixel-identical (the light tile inlines the exact old SVG bytes), and the
+# placeholder stays out of `document.images`, so the visual-regression
+# settle check goes green.
+EXPECTED_CSS_SHA256 = "defc38c9eb9afe56551531a1e7260f9372377c40f430c0599037643c131eca34"
 
 
 def _imported_partials():

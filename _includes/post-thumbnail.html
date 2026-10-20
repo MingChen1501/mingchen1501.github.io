@@ -4,8 +4,12 @@
   this include, so every item gets an identical 120x90 (4:3) box.
 
   Source chain per post: front matter `thumbnail`, else front matter `image`,
-  else the first image of the post body, else the fixed built-in placeholder
-  (`assets/img/placeholder.svg`) for posts with no image. `post.content` here
+  else the first image of the post body, else a single theme-aware
+  placeholder tile (a `post-thumb__placeholder` div — never an `img`, so a
+  hidden twin can never sit in `document.images` undecodable and break the
+  visual-regression settle check — painted light `#e8e8e8` by default and
+  dark `#262626` under `html[data-theme]` like the theme-toggle icons, #245)
+  for posts with no image. `post.content` here
   is the rendered HTML, so the body fallback splits on `<img` exactly like
   `_includes/site-sidebar.html` does.
 
@@ -34,23 +38,38 @@
   {%- endif -%}
 {%- endif -%}
 {%- if thumb_src == '' -%}
-  {%- assign thumb_src = '/assets/img/placeholder.svg' -%}
-{%- endif -%}
-{%- if thumb_src contains '://' -%}
-  {%- assign thumb_url = thumb_src -%}
+  {%- assign thumb_is_placeholder = true -%}
 {%- else -%}
-  {%- assign thumb_url = thumb_src -%}
-  {%- if thumb_src contains '/assets/img/' and thumb_src != '/assets/img/placeholder.svg' -%}
-    {%- assign thumb_url = thumb_src | replace: '/assets/img/', '/assets/img/thumbs/' -%}
-    {%- assign thumb_url = thumb_url | replace: '.jpeg', '-240.webp' | replace: '.jpg', '-240.webp' | replace: '.png', '-240.webp' | replace: '.gif', '-240.webp' -%}
-    {%- if thumb_url contains '.webp' -%}
-      {%- unless thumb_url contains '-240.webp' -%}
-        {%- assign thumb_url = thumb_url | replace: '.webp', '-240.webp' -%}
-      {%- endunless -%}
-    {%- endif -%}
-  {%- endif -%}
-  {%- assign thumb_url = thumb_url | relative_url -%}
-  {%- assign thumb_version = site.time | date: '%s' -%}
-  {%- assign thumb_url = thumb_url | append: '?v=' | append: thumb_version -%}
+  {%- assign thumb_is_placeholder = false -%}
 {%- endif -%}
-<a class="post-thumb" href="{{ include.post.url | relative_url }}" tabindex="-1" aria-hidden="true"><img src="{{ thumb_url }}" width="120" height="90" alt="" loading="lazy" decoding="async"></a>
+{%- if thumb_is_placeholder == false -%}
+  {%- if thumb_src contains '://' -%}
+    {%- assign thumb_url = thumb_src -%}
+  {%- else -%}
+    {%- assign thumb_url = thumb_src -%}
+    {%- if thumb_src contains '/assets/img/' -%}
+      {%- assign thumb_url = thumb_src | replace: '/assets/img/', '/assets/img/thumbs/' -%}
+      {%- assign thumb_url = thumb_url | replace: '.jpeg', '-240.webp' | replace: '.jpg', '-240.webp' | replace: '.png', '-240.webp' | replace: '.gif', '-240.webp' -%}
+      {%- if thumb_url contains '.webp' -%}
+        {%- unless thumb_url contains '-240.webp' -%}
+          {%- assign thumb_url = thumb_url | replace: '.webp', '-240.webp' -%}
+        {%- endunless -%}
+      {%- endif -%}
+    {%- endif -%}
+    {%- assign thumb_url = thumb_url | relative_url -%}
+    {%- assign thumb_version = site.time | date: '%s' -%}
+    {%- assign thumb_url = thumb_url | append: '?v=' | append: thumb_version -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment -%}
+  Placeholder items (#245) render one `post-thumb__placeholder` div in the
+  fixed box instead of an `img`: the tile artwork lives in
+  `_sass/minima/custom/_list-thumbs.scss` as inline SVG backgrounds (light
+  by default, dark under `html[data-theme]` with the OS
+  `prefers-color-scheme` fallback for no-JS readers — the same layering as
+  the theme-toggle icons). A second hidden lazy-loading img would never
+  decode, which trips the visual-regression settle check
+  (`document.images` must fully decode), so the placeholder stays out of
+  the image pipeline entirely while keeping the identical 120x90 box.
+{%- endcomment -%}
+<a class="post-thumb{% if thumb_is_placeholder %} post-thumb--placeholder{% endif %}" href="{{ include.post.url | relative_url }}" tabindex="-1" aria-hidden="true">{%- if thumb_is_placeholder -%}<div class="post-thumb__placeholder" aria-hidden="true" role="presentation"></div>{%- else -%}<img class="post-thumb__img" src="{{ thumb_url }}" width="120" height="90" alt="" loading="lazy" decoding="async">{%- endif -%}</a>

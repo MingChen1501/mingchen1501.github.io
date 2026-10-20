@@ -50,21 +50,32 @@ shares one fixed 120x90 (4:3) box (`_includes/post-thumbnail.html`), so the
 list never shifts while images load.
 
 - Source chain per post: front matter `thumbnail`, else front matter `image`,
-  else the first image of the post body, else the fixed built-in placeholder
-  (`assets/img/placeholder.svg`) for posts with no image.
+  else the first image of the post body, else a single theme-aware
+  placeholder tile for posts with no image: a `post-thumb__placeholder` div
+  (never an `img`, so no hidden lazy twin can break image decoding), painted
+  light (`#e8e8e8`/`#9a9a9a`) by default and dark (`#262626`/`#8c8c8c` with a
+  `#3a3a3a` hairline) under `html[data-theme]` with the OS
+  `prefers-color-scheme` fallback (#245).
 - Local sources map to small 240x180 cover-cropped WebP variants
   (`assets/img/thumbs/...`, from `script/generate-thumbnails` — rerun it
   after adding or changing a post image and commit the variants), so lists
   never download the 1600px originals. External issue-attachment URLs cannot
   be resized and keep the same fixed CSS box.
 - Static (no Ruby, no browser): the chain order, the 120x90 attributes, the
-  `object-fit: cover` box, and the freshness of every expected variant.
+  `object-fit: cover` box, and the freshness of every expected variant; the
+  tile artwork stays byte-identical to `assets/img/placeholder(-dark).svg`
+  and repaints per theme while light mode stays unchanged (#245).
 - Built HTML: every list item on the EN/VI homes and tag pages carries exactly
-  one sized thumbnail resolving to a file in the build; the three source cases
+  one thumbnail resolving to a file in the build (placeholder items carry
+  the single CSS tile and no `img`); the three source cases
   hold (front matter wins, else first body image, else placeholder).
 - Browser: every thumbnail box renders at an identical 120x90 CSS px at
   375/768/1280px on the EN/VI homes and tag pages — including with images
   blocked, so the reserved box alone already has the final size (no CLS).
+  The single placeholder tile keeps the box in both themes, and the dark tile
+  meters comfortably darker than the light one
+  (#245). Dark mode has no visual baselines: `test_visual_regression.py`
+  pins the light colour scheme, so dark-only changes never touch baselines.
 
 ## Layout overflow guard (`test_layout_overflow.py`)
 
