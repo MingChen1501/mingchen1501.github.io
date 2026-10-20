@@ -88,3 +88,11 @@ def test_single_shared_classify_step():
 def test_ci_jekyll_matrix_kept():
     matrix = load(CI_WORKFLOW)["jobs"]["build"]["strategy"]["matrix"]
     assert matrix["jekyll"] == ["~> 3.9", "~> 4.2"]
+
+
+def test_aggregator_display_names_pinned():
+    # Branch protection matches these display names; a rename would
+    # silently unsatisfy the required checks, so pin them verbatim.
+    jobs = load(WORKFLOW)["jobs"]
+    assert jobs["e2e-summary"]["name"] == "E2E suite result"
+    assert jobs["lighthouse-summary"]["name"] == "Lighthouse suite result"
