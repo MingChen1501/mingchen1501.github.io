@@ -173,9 +173,15 @@ def test_no_button_is_rendered_without_js(built_site):
 
 
 @pytest.fixture()
-def page(browser):
+def page(browser, browser_name):
     context = browser.new_context(viewport={"width": 1280, "height": 900})
-    context.grant_permissions(["clipboard-read", "clipboard-write"])
+    if browser_name == "chromium":
+        # Chromium needs explicit clipboard grants for the read-back below.
+        # Firefox allows clipboard over loopback HTTP with no grant (and
+        # rejects the grant call); WebKit grants neither clipboard-read nor
+        # clipboard-write, and headless WebKit denies navigator.clipboard
+        # outright, so the two click-to-copy tests skip there (#209).
+        context.grant_permissions(["clipboard-read", "clipboard-write"])
     browser_page = context.new_page()
     # Only the site's own files are fetched: third-party requests are aborted
     # so the run stays offline-safe.
@@ -215,8 +221,16 @@ def _enhance(page, built_site_url, path):
 
 
 def test_only_fenced_blocks_get_a_button_and_clicking_copies(
-    built_site_url, page
+    built_site_url, page, browser_name
 ):
+    if browser_name == "webkit":
+        pytest.skip(
+            "headless WebKit denies navigator.clipboard (NotAllowedError) and "
+            "Playwright grants no clipboard permission on WebKit, so the "
+            "clipboard read-back cannot run there (#209); the button, its "
+            "localization and the copied feedback still run on "
+            "Chromium/Firefox"
+        )
     _enhance(page, built_site_url, "/")
 
     buttons = page.get_by_role("button", name=COPY_EN)
@@ -238,7 +252,15 @@ def test_only_fenced_blocks_get_a_button_and_clicking_copies(
     assert button.get_attribute("aria-label") == DONE_EN
 
 
-def test_the_button_label_follows_the_vietnamese_page(built_site_url, page):
+def test_the_button_label_follows_the_vietnamese_page(
+    built_site_url, page, browser_name
+):
+    if browser_name == "webkit":
+        pytest.skip(
+            "headless WebKit denies navigator.clipboard (NotAllowedError) and "
+            "Playwright grants no clipboard permission on WebKit, so the "
+            "clipboard read-back cannot run there (#209)"
+        )
     _enhance(page, built_site_url, "/vi/")
 
     buttons = page.get_by_role("button", name=COPY_VI)
@@ -258,11 +280,14 @@ def test_the_button_label_follows_the_vietnamese_page(built_site_url, page):
 
 
 def test_the_button_keeps_its_target_focus_and_layout(
-    built_site_url, browser
+    built_site_url, browser, browser_name
 ):
     """44px touch target at 375px, visible focus, no horizontal overflow."""
     context = browser.new_context(viewport={"width": 375, "height": 800})
-    context.grant_permissions(["clipboard-read", "clipboard-write"])
+    if browser_name == "chromium":
+        # See the `page` fixture above: only Chromium needs (and accepts)
+        # the clipboard grants; this guard never touches the clipboard.
+        context.grant_permissions(["clipboard-read", "clipboard-write"])
     narrow = context.new_page()
     try:
         origin = urlparse(built_site_url).netloc

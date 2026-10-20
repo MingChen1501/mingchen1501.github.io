@@ -40,10 +40,18 @@ jobs:
         run: python -m pytest tests/e2e -v -m static
 
   # The slow half: one shared Jekyll build, one shared Playwright browser
-  # (`tests/e2e/conftest.py`), and the browser guards that use them.
+  # (`tests/e2e/conftest.py`), and the browser guards that use them — once
+  # per engine (#209). The three jobs run in parallel, so PR wall-clock is
+  # the slowest engine, not the sum (measured runtimes per engine live in
+  # `tests/e2e/README.md`, "Browser matrix").
   browser-e2e:
-    name: "E2E browser: comments, layout, tag chips"
+    name: "E2E browser (${{ matrix.browser }}): comments, layout, tag chips"
     runs-on: "ubuntu-latest"
+    strategy:
+      # One engine failing must not hide the others' results.
+      fail-fast: false
+      matrix:
+        browser: ["chromium", "firefox", "webkit"]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -70,14 +78,16 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
           restore-keys: |
             ${{ runner.os }}-playwright-
-      - name: Install Playwright Chromium
-        run: python -m playwright install --with-deps chromium
+      - name: Install Playwright browser (${{ matrix.browser }})
+        run: python -m playwright install --with-deps ${{ matrix.browser }}
       - name: Set Up Ruby 3.3
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"
           bundler-cache: true
       - name: Run browser E2E, layout overflow and tag-chip guards
+        env:
+          E2E_BROWSER: ${{ matrix.browser }}
         run: python -m pytest tests/e2e -v -m "not static"
         env:
           # Harvest CI-rendered captures on failure: screenshot bytes depend

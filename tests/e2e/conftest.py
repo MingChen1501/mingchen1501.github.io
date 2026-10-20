@@ -8,7 +8,8 @@ or relaunches them on its own:
 - the *real* site, built exactly once per session with
   ``bundle exec jekyll build`` into a temp directory (``built_site``), served
   over loopback HTTP (``built_site_url``) and driven by one Playwright browser
-  (``browser``) for the layout/overflow and home tag-chip guards.
+  (``browser``; engine via ``--browser-name``/``$E2E_BROWSER``, #209) for the
+  layout/overflow and home tag-chip guards.
 
 The build fixture logs its one invocation to stderr (and to ``$E2E_BUILD_LOG``
 when set), so a run can prove the suite builds once instead of once per module.
@@ -61,6 +62,23 @@ def custom_styles_text():
 
 BUILD_TIMEOUT_S = 300
 
+#: Browser engines the E2E suite can run on (#209). CI runs one job per
+#: engine (``E2E_BROWSER``); locally ``--browser-name`` (or ``E2E_BROWSER``)
+#: selects the engine. Chromium stays the default because it is the only
+#: engine with a system-Chrome fallback and the fastest install.
+BROWSER_NAMES = ("chromium", "firefox", "webkit")
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--browser-name",
+        action="store",
+        default=os.environ.get("E2E_BROWSER", "chromium"),
+        choices=BROWSER_NAMES,
+        help="browser engine to drive the browser guards with "
+        "(also via $E2E_BROWSER; #209)",
+    )
+
 
 def pytest_configure(config):
     config.addinivalue_line(
@@ -105,13 +123,23 @@ def _bundle():
     return None
 
 
-def _launch_browser(playwright):
-    """Launch headless Chromium, preferring a system Chrome install."""
-    args = ["--no-sandbox", "--disable-dev-shm-usage"]
-    try:
-        return playwright.chromium.launch(channel="chrome", headless=True, args=args)
-    except Exception:
-        return playwright.chromium.launch(headless=True, args=args)
+def _launch_browser(playwright, name):
+    """Launch headless ``name`` (one of ``BROWSER_NAMES``) for the session.
+
+    Chromium prefers a system Chrome install and falls back to Playwright's
+    bundled Chromium, so ``playwright install`` can be skipped on machines
+    that already have Chrome. Firefox and WebKit always use Playwright's
+    bundled builds (``python -m playwright install firefox webkit``).
+    """
+    engine = getattr(playwright, name)
+    if name == "chromium":
+        args = ["--no-sandbox", "--disable-dev-shm-usage"]
+        try:
+            return engine.launch(channel="chrome", headless=True, args=args)
+        except Exception:
+            return engine.launch(headless=True, args=args)
+    # Firefox/WebKit reject Chromium's sandbox flags, so launch with defaults.
+    return engine.launch(headless=True)
 
 
 @pytest.fixture(scope="session")
@@ -175,10 +203,20 @@ def built_site_url(built_site):
 
 
 @pytest.fixture(scope="session")
-def browser():
-    """One headless Chromium shared by every browser test in the session."""
+def browser_name(request):
+    """Engine under test (``chromium``/``firefox``/``webkit``; #209).
+
+    Browser guards that cannot run on an engine skip with an explicit reason,
+    e.g. ``if browser_name == "webkit": pytest.skip("...")``.
+    """
+    return request.config.getoption("--browser-name")
+
+
+@pytest.fixture(scope="session")
+def browser(browser_name):
+    """One headless browser shared by every browser test in the session."""
     with sync_playwright() as playwright:
-        browser = _launch_browser(playwright)
+        browser = _launch_browser(playwright, browser_name)
         try:
             yield browser
         finally:
