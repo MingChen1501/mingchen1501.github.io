@@ -5,23 +5,28 @@ collections, cross-language links, taxonomy, comments, and search.
 
 ## Current structure
 
-Layouts (`_layouts/`, 5 files, 575 LOC):
+Layouts (`_layouts/`, 5 files, 521 LOC):
 
 - `base.html` (29 lines): shell. `head.html` → skip link → `header.html`
   → `{{ content }}` → `footer.html` → `sub-footer.html` (scripts).
-- `home.html` (229 lines, `layout: base`): paginated EN/VI index.
-  Post-card loop (~L90-135) + `site-sidebar.html` (~L226).
+- `home.html` (192 lines, `layout: base`): paginated EN/VI index.
+  Post-card loop renders the shared `post-card.html` (~L90) +
+  `site-sidebar.html` (~L189).
 - `post.html` (202 lines, `layout: base`): article page. Reading-progress
   bar + back-to-top button (~L19-21), `reading-time.html` (~L66),
   `post-toc.html` (~L93), `share.html` (~L104), `post-tags.html` (~L134),
   `comments.html` (~L197).
-- `tag.html` (98 lines, `layout: base`): per-tag listing. Post-card loop
-  (~L60-95) + `site-sidebar.html` (~L95).
+- `tag.html` (81 lines, `layout: base`): per-tag listing. Post-card loop
+  renders the shared `post-card.html` (~L60, `show_tags=false`) +
+  `site-sidebar.html` (~L78).
 - `page.html` (17 lines, `layout: base`): static pages + `vi-fallback-notice.html`.
 
-Includes (`_includes/`, 22 files, 1,290 LOC). Largest: `site-sidebar.html`
+Includes (`_includes/`, 23 files, 1,328 LOC). Largest: `site-sidebar.html`
 (242 lines), `head.html` (120 lines). Every include has at least one caller
-outside itself (no orphan includes, 2026-10-20).
+outside itself (no orphan includes, 2026-10-20). `post-card.html`
+(38 lines, #293) is the single home/tag list-item markup
+(`post-thumbnail.html` + `reading-time.html` + description-first excerpt +
+home chips); both list layouts call it with `post` + `lang`.
 
 ## Bilingual `lang` / `ref` pipeline
 
@@ -68,8 +73,9 @@ Known wart: the lifestyle pillar key is `doi-song` while the EN page file is
 ## Boundaries
 
 - List rendering belongs in includes, not layouts: `post-thumbnail.html`,
-  `reading-time.html`, `post-tags.html` are shared; the card *loop* is not
-  (see findings).
+  `reading-time.html`, `post-tags.html` are shared, and since #293 the
+  card itself is too (`post-card.html`, called with `post` + `lang`;
+  tag pages pass `show_tags=false` to keep tag cards chipless).
 - `ref-urls.html` owns cross-language resolution; nothing else may scan
   both collections for a `ref`.
 - Taxonomy labels/slugs belong in `_data/tag_labels.yml`, never hardcoded
@@ -81,14 +87,16 @@ Known wart: the lifestyle pillar key is `doi-song` while the EN page file is
   `nav-items` + `lang-switcher` → `ref-urls`; `sub-footer` owns all global
   `<script>` tags with post-only gating (`page.layout == 'post'`,
   `sub-footer.html:65`).
-- `home.html` ↔ `tag.html` coupling is copy-paste, not structural (see
-  findings) — the worst coupling hotspot in the Liquid layer.
+- `home.html` and `tag.html` both render list items through the shared
+  `post-card.html` (#293), which in turn calls `post-thumbnail.html`,
+  `reading-time.html`, and (home only) `post-tags.html`.
 
 ## Known findings
 
-- #293 — duplicate post-card block (`home.html` ~L90-135 vs `tag.html`
-  ~L60-95): same three includes, same `.post-list__item` box, differing
-  only in comments and `home_lang` vs `tag_lang`.
+- #293 — implemented: the duplicate post-card block is extracted into the
+  shared `post-card.html` (home passes `post` + `lang`, tag adds
+  `show_tags=false`); the pre/post `_site` list output is DOM-identical
+  (whitespace-only byte diff from the single canonical indentation).
 - #294 — orphan published pages: `gift.html` (209 lines, zero inbound
   refs), `fullmonth/` (2.4MB).
 - I18n switches and `vi_posts` nil-guards are scattered, not hoisted

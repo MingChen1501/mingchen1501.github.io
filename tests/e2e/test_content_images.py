@@ -188,15 +188,19 @@ def test_titled_images_outside_blockquotes_became_figures():
 
 @pytest.mark.static
 def test_home_list_prefers_description_over_raw_excerpt():
-    html = _read(HOME_LAYOUT)
-    loop = html.index("{%- for post in posts -%}")
-    desc = html.index("{{ post.description", loop)
-    excerpt = html.index("{{ post.excerpt }}", loop)
-    # The description branch comes first (same pattern as `_layouts/tag.html`);
-    # the raw excerpt survives only as the fallback for pre-taxonomy posts.
+    # The card lives in the shared include (#293): the home layout only
+    # renders it.
+    assert "include post-card.html" in _read(HOME_LAYOUT)
+    card = _read(REPO_ROOT / "_includes" / "post-card.html")
+    desc = card.index("{{ include.post.description")
+    excerpt = card.index("{{ include.post.excerpt }}")
+    # The description branch comes first (the tag list renders this same
+    # card); the raw excerpt survives only as the fallback for
+    # pre-taxonomy posts.
     assert desc < excerpt, (
-        "the home list must render post.description before falling back to "
-        "post.excerpt, so list items never embed full-size content images"
+        "the shared post card must render post.description before falling "
+        "back to post.excerpt, so list items never embed full-size content "
+        "images"
     )
 
 

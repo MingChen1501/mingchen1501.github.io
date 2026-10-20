@@ -1,0 +1,38 @@
+{%- comment -%}
+  Shared post card (#293): the single list-item markup for the home list
+  (`_layouts/home.html`) and the tag list (`_layouts/tag.html`), in both
+  languages. Change the card here — markup, a11y, CLS — instead of in both
+  layouts, so the two lists cannot drift apart again.
+
+  Params: `post` (the post to render) and `lang` (the caller language,
+  `home_lang` / `tag_lang`, passed through to `reading-time.html` for the
+  label language). `show_tags` defaults to on: the home chips
+  (`post-tags.html` with `tag-chip-list--home`, #47). Tag pages pass
+  `show_tags=false` because tag cards never repeated the chips — kept
+  as-is, no visual change.
+
+  Expects `date_format` in scope (both callers assign it before the loop).
+  The card renders through the shared partials: `post-thumbnail.html` for
+  the fixed 120x90 box (#226), `reading-time.html` estimated from the full
+  `post.content` so the list figure agrees with the post page (#124),
+  inside `.post-meta` for the meta font and divider style, and the
+  `description`-first excerpt (#113) so list items never download
+  full-size body images.
+{%- endcomment -%}
+<li class="post-list__item">
+{%- include post-thumbnail.html post=include.post -%}
+<div class="post-list__body">
+<span class="post-meta">{{ include.post.date | date: date_format }}{%- include reading-time.html content=include.post.content lang=include.lang -%}</span>
+<h2>
+<a class="post-link" href="{{ include.post.url | relative_url }}">{{ include.post.title | escape }}</a>
+</h2>
+{%- if include.post.description -%}
+<p class="post-description">{{ include.post.description | escape }}</p>
+{%- elsif site.minima.show_excerpts -%}
+{{ include.post.excerpt }}
+{%- endif -%}
+{%- if include.show_tags != false -%}
+{%- include post-tags.html tags=include.post.tags class="tag-chip-list--home" -%}
+{%- endif -%}
+</div>
+</li>
