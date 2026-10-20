@@ -98,9 +98,5 @@
     var link = document.querySelector('.lang-switcher');
     if (link) enhance(link);
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
-  } else {
-    run();
-  }
+  window.SiteUtils.onReady(run);
 })();

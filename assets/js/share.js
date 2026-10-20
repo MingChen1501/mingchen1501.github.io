@@ -4,29 +4,17 @@
  * - copy: the `data-share-copy-item` row ships `hidden` and is revealed
  *   here, so without JS there is no dead control (a `noscript` fallback
  *   shows the canonical URL as a plain link instead). Copying uses the
- *   Clipboard API with a textarea + execCommand fallback (same shape
- *   as `assets/js/copy-code.js`), then the localized confirmation from
+ *   Clipboard API with a textarea + execCommand fallback (shared
+ *   `site-utils.js` helper, #246), then the localized confirmation from
  *   `data-copied-label` on the button and in the `role="status"` line;
  * - native share: the `data-share-native-item` row stays `hidden` unless
  *   `navigator.share` exists, so browsers without it never see a dead
  *   control. A dismissed sheet (AbortError) stays silent.
  */
 (function () {
-  function fallbackCopy(text, done) {
-    var area = document.createElement('textarea');
-    area.value = text;
-    area.readOnly = true;
-    area.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(area);
-    area.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(area);
-    done();
-  }
+  var Utils = window.SiteUtils;
   function writeText(text, done) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
-    } else { fallbackCopy(text, done); }
+    Utils.copyText(text, done);
   }
   function run() {
     document.querySelectorAll('.share').forEach(function (section) {
@@ -68,7 +56,5 @@
       }
     });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
-  } else { run(); }
+  Utils.onReady(run);
 })();

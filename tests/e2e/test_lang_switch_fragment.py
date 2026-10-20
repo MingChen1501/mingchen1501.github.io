@@ -100,8 +100,8 @@ def test_the_script_carries_the_section_and_falls_back_to_top():
     assert "location.href =" not in text and "location.assign" not in text
     assert "location.replace" not in text and "window.open" not in text
     assert "replaceState" in text
-    # Defer-safe like the other fixed-URL scripts.
-    assert "DOMContentLoaded" in text and "readyState" in text
+    # Defer-safe like the other fixed-URL scripts, via the shared helper.
+    assert "SiteUtils" in text and "onReady" in text
 
 
 @pytest.mark.static

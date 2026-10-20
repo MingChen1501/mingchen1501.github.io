@@ -567,6 +567,30 @@ Residual manual step for #61: after the fix is deployed, a visitor whose browser
 already cached the old stylesheet may need one hard refresh (Ctrl+Shift+R); the
 fix can only take effect from the next deploy onward.
 
+## Shared JS helpers (#246)
+
+The deferred scripts share one tiny first-party helper instead of
+re-implementing the same primitives inline: `assets/js/site-utils.js`
+publishes `window.SiteUtils` with `copyText` (Clipboard API plus a textarea
++ `execCommand` fallback), `onReady` (run now or on `DOMContentLoaded`) and
+`isVietnamese` (`<html lang>` sniff for localized labels). No dependency, no
+build step — it runs as it is served, like every other `assets/js/*` file.
+
+Rules for future edits:
+
+- A new deferred script must reuse the helper instead of re-implementing one
+  of the three primitives; the helper stays smaller than the duplication it
+  replaces, so total `assets/js` bytes shrink.
+- The helper must load before its users (deferred scripts run in document
+  order): it is the first script in `_includes/sub-footer.html`, and
+  `_includes/search.html` links it ahead of `search.js` because the search
+  page content runs before the sub-footer scripts. It carries the same `?v=`
+  build token as every other fixed-URL asset.
+- Guard: `tests/e2e/test_site_utils.py` (helper API, no leftover inline
+  copies, load order, token, total bytes); the per-script suites
+  (`test_copy_code.py`, `test_share_buttons.py`, `test_lightbox.py`,
+  `test_lang_switch_fragment.py`) cover the shared paths through the helper.
+
 ## Site search (#221)
 
 > Site-specific section (not part of upstream Minima docs).

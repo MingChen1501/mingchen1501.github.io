@@ -40,6 +40,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "assets" / "js" / "lightbox.js"
+HELPER = REPO_ROOT / "assets" / "js" / "site-utils.js"
 SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
 PARTIAL = REPO_ROOT / "_sass" / "minima" / "custom" / "_lightbox.scss"
 STYLES_INDEX = REPO_ROOT / "_sass" / "minima" / "custom-styles.scss"
@@ -119,11 +120,14 @@ def test_the_lightbox_labels_are_localized():
         TRIGGER_VI,
     ):
         assert label in text, f"the script never renders the label {label!r}"
-    assert "document.documentElement" in text and "lang" in text, (
-        "the labels must be derived from the page language (`<html lang>`)"
-    )
     assert "aria-label" in text, (
         "the dialog and its controls must expose accessible names"
+    )
+    # The page language comes from the shared helper (#246); the labels
+    # themselves still live here.
+    assert "SiteUtils" in text and "isVietnamese" in text, (
+        "the labels must follow the page language via the shared "
+        "SiteUtils helper (#246)"
     )
 
 
@@ -509,6 +513,8 @@ def test_single_image_set_hides_prev_next(built_site_url, page):
             + ' width="120" height="90"></div>');
         }"""
     )
+    # The viewer reads DOM-ready/lang from the shared helper (#246).
+    page.add_script_tag(path=str(HELPER))
     page.add_script_tag(path=str(SCRIPT))
     page.wait_for_selector(
         "#lb-single img.lightbox-trigger", state="attached", timeout=10_000
@@ -537,6 +543,8 @@ def test_external_attachment_url_opens_like_a_local_image(
         }""",
         external,
     )
+    # The viewer reads DOM-ready/lang from the shared helper (#246).
+    page.add_script_tag(path=str(HELPER))
     page.add_script_tag(path=str(SCRIPT))
     page.wait_for_selector(
         "#lb-external img.lightbox-trigger", state="attached", timeout=10_000

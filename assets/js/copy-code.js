@@ -1,30 +1,17 @@
 /* Copy-code button (#126): wraps each `pre > code`, adds a localized button.
- * No JS means no button. Clipboard API with a textarea fallback.
+ * No JS means no button. Copy, DOM-ready and lang sniff via `site-utils.js`.
  */
 (function () {
-  var lang = (document.documentElement.lang || 'en').toLowerCase();
-  var vi = lang === 'vi' || lang.indexOf('vi-') === 0;
+  var Utils = window.SiteUtils;
+  var vi = Utils.isVietnamese();
   var COPY = vi ? 'Sao chép mã' : 'Copy code';
   var DONE = vi ? 'Đã sao chép' : 'Copied';
   function setLabel(btn, label) {
     btn.textContent = label;
     btn.setAttribute('aria-label', label);
   }
-  function fallback(text, done) {
-    var area = document.createElement('textarea');
-    area.value = text;
-    area.readOnly = true;
-    area.style.cssText = 'position:fixed;opacity:0';
-    document.body.appendChild(area);
-    area.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(area);
-    done();
-  }
   function write(text, done) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
-    } else { fallback(text, done); }
+    Utils.copyText(text, done);
   }
   function enhance(code) {
     var pre = code.parentNode;
@@ -48,7 +35,5 @@
     });
   }
   function run() { document.querySelectorAll('pre > code').forEach(enhance); }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
-  } else { run(); }
+  Utils.onReady(run);
 })();

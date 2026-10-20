@@ -29,6 +29,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "assets" / "js" / "copy-code.js"
+HELPER = REPO_ROOT / "assets" / "js" / "site-utils.js"
 SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
 
 SCRIPT_PATH = "/assets/js/copy-code.js"
@@ -91,8 +92,12 @@ def test_the_copy_label_is_localized():
     text = _read(SCRIPT)
     for label in (COPY_EN, COPY_VI, DONE_EN, DONE_VI):
         assert label in text, f"the script never renders the label {label!r}"
-    assert "document.documentElement" in text and "lang" in text, (
-        "the label must be derived from the page language (`<html lang>`)"
+    assert "SiteUtils" in text and "isVietnamese" in text, (
+        "the label must be derived from the page language via the shared "
+        "SiteUtils helper (#246)"
+    )
+    assert "document.documentElement" in _read(HELPER) and "lang" in _read(HELPER), (
+        "the shared helper must read the page language from `<html lang>`"
     )
     assert "aria-label" in text, (
         "the button must expose its label as an accessible name"
@@ -103,11 +108,15 @@ def test_the_copy_label_is_localized():
 def test_the_script_copies_with_a_fallback():
     """Clipboard API first, textarea + execCommand where it is missing."""
     text = _read(SCRIPT)
-    assert "navigator.clipboard" in text and "writeText" in text, (
-        "the script must copy through the Clipboard API"
+    helper = _read(HELPER)
+    assert "SiteUtils" in text and "copyText" in text, (
+        "the script must copy through the shared SiteUtils helper (#246)"
     )
-    assert "textarea" in text and "execCommand" in text, (
-        "the script must fall back to a textarea + execCommand copy"
+    assert "navigator.clipboard" in helper and "writeText" in helper, (
+        "the shared helper must copy through the Clipboard API"
+    )
+    assert "textarea" in helper and "execCommand" in helper, (
+        "the shared helper must fall back to a textarea + execCommand copy"
     )
 
 
@@ -216,6 +225,9 @@ def _enhance(page, built_site_url, path):
     """Load a real page, inject code samples, run the real script file."""
     page.goto(built_site_url.rstrip("/") + path, wait_until="load")
     page.evaluate(_INJECT_JS, _FIXTURE_HTML)
+    # The script reads its clipboard/DOM-ready helpers from `site-utils.js`
+    # (#246), loaded first like the deferred tags in `sub-footer.html`.
+    page.add_script_tag(path=str(HELPER))
     page.add_script_tag(path=str(SCRIPT))
     page.wait_for_selector(".copy-code__button", state="attached", timeout=10_000)
 
