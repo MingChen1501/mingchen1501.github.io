@@ -97,8 +97,9 @@ Known wart: the lifestyle pillar key is `doi-song` while the EN page file is
   shared `post-card.html` (home passes `post` + `lang`, tag adds
   `show_tags=false`); the pre/post `_site` list output is DOM-identical
   (whitespace-only byte diff from the single canonical indentation).
-- #294 — orphan published pages: `gift.html` (209 lines, zero inbound
-  refs), `fullmonth/` (2.4MB).
+- #294 — implemented: orphan one-offs removed per owner decision
+  (2026-10-21, delete all, no redirects) — `gift.html`, `fullmonth/`
+  (2.4MB), and the two stale root PDFs; kept the live resume PDF.
 - I18n switches and `vi_posts` nil-guards are scattered, not hoisted
   (no issue filed; below the #293-#297 bar, noted for the next audit).
 

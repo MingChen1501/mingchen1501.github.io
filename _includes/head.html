@@ -67,8 +67,9 @@
     the two tags below for ~5 icons). They are inline SVGs now
     (`_includes/social.html`), so the preconnect/dns-prefetch are gone and
     reader pages make zero third-party requests. The site ships no webfont
-    (the system font stack is used) and no Google Fonts link exists outside
-    the standalone `fullmonth/` page, which brings its own preconnect.
+    (the system font stack is used) and no Google Fonts link exists
+    anywhere (the standalone `fullmonth/` page, which brought its own
+    preconnect, was removed in #294).
   {%- endcomment -%}
   {%- comment -%}
     Theme bootstrap (#220): a stored `localStorage` choice wins, otherwise the

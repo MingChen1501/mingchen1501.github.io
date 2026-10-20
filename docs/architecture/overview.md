@@ -36,9 +36,14 @@ with `--safe`.
   for the overlap clusters and follow-up #297.
 - `assets/img/` holds 4.2MB of the 6MB budget (`script/check-images`);
   the largest single file is 236KB against the 500KB limit.
-- Unbudgeted published weight: `fullmonth/` (2.4MB standalone page),
-  three PDFs at `assets/` root (~1.4MB), `gift.html` (209 lines, zero
-  inbound references). Follow-up: #294.
+- Unbudgeted published weight is gone (#294, owner decision 2026-10-21:
+  delete all, no redirects, 404 acceptable): `gift.html` (209-line
+  standalone page, zero inbound refs), `fullmonth/` (2.4MB standalone
+  invitation page for the Nov 2025 event + images), and the two stale
+  PDFs at `assets/` root (`CV-Tran-Cong-Minh-14-5-23.pdf`,
+  `resume-26-5-23.pdf`, 656KB each, unreferenced) were removed —
+  ~3.7MB freed. Kept: `assets/resume-tran-cong-minh.pdf` (72KB, live
+  on `portfolio.md` / `vi/portfolio.md`).
 - Unreachable code: the three solarized skins (no importer while
   `minima.skin: auto`). Follow-up: #296.
 
@@ -46,8 +51,10 @@ with `--safe`.
 
 1. #293 — shared post-card include for home/tag lists (duplicated card
    markup in `_layouts/home.html` / `_layouts/tag.html`).
-2. #294 — decide fate of orphan one-offs (`gift.html`, `fullmonth/`,
-   stale PDFs). `risk-medium` (reader-visible URLs).
+2. #294 — implemented: orphan one-offs removed per owner decision
+   (2026-10-21, delete all, no redirects) — `gift.html`, `fullmonth/`,
+   and the two stale root PDFs; kept `assets/resume-tran-cong-minh.pdf`
+   (live on portfolio pages). `risk-medium` (reader-visible URLs).
 3. #295 — hoist the thrice-pasted `asset_version` token into one include.
 4. #296 — delete the unreachable solarized skins.
 5. #297 — map and consolidate overlapping E2E guards.
