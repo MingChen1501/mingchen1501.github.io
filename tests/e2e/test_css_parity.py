@@ -45,6 +45,7 @@ EXPECTED_ORDER = (
     "theme-toggle",
     "list-thumbs",
     "search",
+    "print",
 )
 
 # The exact literals the variables replaced (#174 evidence).
@@ -95,7 +96,12 @@ EXPECTED_VARIABLES = {
 # `.reading-progress__bar` / `.back-to-top` block (fixed 4px bar with a
 # transparent track, fixed 44px pill, `hidden`-wins rules, reduced-motion
 # pin); no existing rule moved, so every other page renders unchanged.
-EXPECTED_CSS_SHA256 = "efc2dbc967dbc320651659598e30b1b9a0c449560db5ac35346fba4cbc1eb8d5"
+# #225 (print stylesheet): the `print` partial was appended last. Diffed old
+# vs new before bumping: the only change is the additive `@media print`
+# block (chrome hidden, single-column article, print typography, outbound
+# link URLs, break-inside avoid, bounded images); no existing rule moved
+# and screen media is untouched, so every screen render stays identical.
+EXPECTED_CSS_SHA256 = "5b417de9e39cd979817e43d792c0c68a28eb11aa32dcbbf1ba4189617aab6161"
 
 
 def _imported_partials():
