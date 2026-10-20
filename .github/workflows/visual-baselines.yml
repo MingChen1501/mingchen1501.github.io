@@ -1,0 +1,54 @@
+name: Visual baselines
+
+on:
+  workflow_dispatch:
+    inputs:
+      verify:
+        description: "Re-run the suite after regenerating (proves determinism)"
+        required: false
+        default: "true"
+
+# Baselines are canonical on the CI runner (#208): font rasterization differs
+# between machines, so captures generated locally fail here on page height and
+# pixel diffs. Regenerate via this workflow, download the artifact, commit it.
+jobs:
+  regenerate:
+    name: "Regenerate visual baselines"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('tests/e2e/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install E2E dependencies
+        run: pip install -r tests/e2e/requirements.txt
+      - name: Install Playwright Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Set Up Ruby 3.3
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Regenerate baselines
+        run: UPDATE_BASELINES=1 python -m pytest tests/e2e/test_visual_regression.py -q -k test_visual_baseline
+      - name: Verify regenerated baselines
+        if: ${{ inputs.verify == 'true' }}
+        run: python -m pytest tests/e2e/test_visual_regression.py -q
+      - name: Upload baselines
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: tests/e2e/visual/baseline/
+          if-no-files-found: error
