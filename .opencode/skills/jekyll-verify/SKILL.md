@@ -15,6 +15,8 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
      `assets/img/` total <= 6MB).
 2. Build: `bundle exec jekyll build --trace` (run `bundle install` first if gems are missing).
 3. Test: `python -m pytest tests/e2e -v` (first time: `pip install -r tests/e2e/requirements.txt`).
+   Visual pixel compares skip locally by default and always run in CI —
+   opt in locally with `E2E_VISUAL=1` (#265).
    Scope matrix — run the matching guard when you touch:
    - Image sizing, layout wrappers, `_sass/` → `tests/e2e/test_layout_overflow.py`
      (builds the site, asserts no horizontal scroll at 375px on a post page, the
