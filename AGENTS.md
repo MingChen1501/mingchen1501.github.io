@@ -29,6 +29,13 @@ theme, deployed with GitHub Pages from the `master` branch.
   comments, code comments); Vietnamese only for internal AO reporting.
 - `robots.txt`, `sitemap.xml`, `llms.txt` are generated — never hand-edit.
   `AGENTS.md` and `.opencode/` stay excluded from the built site.
+- CI content-only rule (#229): PRs touching only `_posts/**`,
+  `_vi_posts/**`, `assets/img/**`, `_data/highlights.yml` skip the browser
+  matrix, visual baselines, and Lighthouse; anything else runs the full
+  suite. Content-only PRs never regenerate visual baselines. Force the full
+  suite via workflow_dispatch (`full=true`). Classifier:
+  `script/classify-content-only`; table + override docs in
+  `tests/e2e/README.md` ("CI").
 
 ## When you need X, read Y
 

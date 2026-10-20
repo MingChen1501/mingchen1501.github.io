@@ -198,9 +198,9 @@ E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
 - Measured runtime for `-m "not static"` (one shared Jekyll build
   plus 230 browser tests): locally ~2-3 min per engine; CI job durations
   (build + `install --with-deps` + suite) also ~2-3 min per engine.
-  The three CI jobs run in parallel, so PR wall-clock is the slowest
-  engine, not the sum — cheap enough that every PR runs the full matrix
-  (no smoke/nightly split).
+  The three CI jobs run in parallel, so a full-run PR wall-clock is the
+  slowest engine, not the sum. Content-only PRs skip this matrix entirely
+  (#229, see "CI" below) instead of a smoke/nightly split.
 
 Local WebKit runs need the system libraries (`python -m playwright
 install --with-deps webkit`, requires sudo); without them the WebKit
@@ -259,6 +259,12 @@ script/update-visual-baselines
   into `tests/e2e/visual/baseline/` — never commit locally rendered
   captures.
 
+  Content-only PRs never need baseline regeneration (#229): adding a post
+  changes the home list, so pixel captures drift by design, and the
+  browser matrix (including this module) is skipped for content-only
+  change sets. If a content-only PR touches baselines, that alone forces
+  the full run.
+
 ## Run locally
 
 ```sh
@@ -286,14 +292,63 @@ without a `bundle` executable they skip themselves with an explicit reason.
 `.github/workflows/e2e.yml` runs (Python 3.12, with pip and Playwright
 browser caches, and Ruby 3.3 with `bundler-cache`):
 
-- `E2E static guards` - `pytest tests/e2e -m static`: no Ruby, no browser;
+- `Classify content-only vs full run` (`script/classify-content-only`,
+  #229) — see the classification table below;
+- `E2E static guards` - `pytest tests/e2e -m static`: no Ruby, no browser.
+  Always runs, including on content-only PRs;
 - `E2E browser (<engine>)` - one job per engine (`chromium`, `firefox`,
   `webkit`, `fail-fast: false` so one engine never hides the others):
   `E2E_BROWSER=<engine> pytest tests/e2e -m "not static"`, each with the
-  shared session build (one Jekyll build) and browser. The three jobs run
-  in parallel; measured runtimes per engine are documented under
-  "Browser matrix" above, which is why every PR runs the full matrix
-  instead of a smoke/nightly split.
+  shared session build (one Jekyll build) and browser. Skipped on
+  content-only PRs;
+- `E2E suite result` - aggregator for branch protection: passes when the
+  full matrix passed, or when a content-only PR skipped the matrix with
+  green static guards. Protect this job, not the matrix jobs (a skipped
+  job reports "skipped", never "success").
+
+The Jekyll builds (3.9 and 4.2 via `script/cibuild`), the link crawl /
+sitemap+feed XML validation, and `script/check-images` (+ external-image
+and alt-text checks) in `ci.yaml` always run, including on content-only
+PRs. Lighthouse (`.github/workflows/lighthouse.yml`) is skipped on
+content-only PRs with its own `Lighthouse suite result` aggregator.
+
+### Content-only classification (#229)
+
+`content_only=true` only when **every** changed file matches the left
+column. Any changed file in the right column — or any unknown path, or
+an unavailable diff — forces the full run. No silent skip.
+
+| `content_only=true` (content paths) | Forces full run (code paths) |
+|---|---|
+| `_posts/**` | `_layouts/**` |
+| `_vi_posts/**` | `_includes/**` |
+| `assets/img/**` (content images) | `_sass/**` |
+| `_data/highlights.yml` (sidebar highlight list) | `assets/js/**` |
+| | `_config.yml`, `_config*.yml` |
+| | `tests/**` |
+| | `script/**` |
+| | `.github/**` |
+| | Any other path not in the left column |
+
+Rules:
+
+- A new post (Markdown/content only, e.g. the #228 article files) cannot
+  break layout, JS, or Sass, so content-only PRs run fast and green
+  **without regenerating visual baselines** — baseline files
+  (`tests/e2e/visual/baseline/**`) are code paths, so committing them
+  forces the full run.
+- When classification is uncertain (diff unavailable, empty change list),
+  the workflows default to the full matrix exactly as before.
+- Local check: `git diff --name-only <base>...<head> |
+  script/classify-content-only`, pinned by
+  `tests/e2e/test_content_only_classification.py` (static).
+
+### Full-run override
+
+To force the full suite on a content-only PR, dispatch the workflow
+manually with `full=true` (the default): the Actions tab → `E2E` (or
+`Lighthouse CI`) → `Run workflow` on the PR branch. `full=false` on a
+dispatch re-runs classification against the branch instead.
 
 Both run on pushes and pull requests to `master`; a superseded push cancels its
 in-flight run (`concurrency` with `cancel-in-progress`).
