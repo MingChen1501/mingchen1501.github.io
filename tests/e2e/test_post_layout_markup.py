@@ -41,6 +41,7 @@ HOME_LAYOUT = REPO_ROOT / "_layouts" / "home.html"
 BASE_LAYOUT = REPO_ROOT / "_layouts" / "base.html"
 TAG_LAYOUT = REPO_ROOT / "_layouts" / "tag.html"
 POST_TAGS_INCLUDE = REPO_ROOT / "_includes" / "post-tags.html"
+POST_CARD_INCLUDE = REPO_ROOT / "_includes" / "post-card.html"
 TAGS_INDEX = REPO_ROOT / "tags.md"
 TAG_PAGES_DIR = REPO_ROOT / "tags"
 VI_TAGS_INDEX = REPO_ROOT / "vi" / "tags.md"
@@ -324,21 +325,25 @@ def test_post_tags_include_takes_an_optional_extra_class():
 
 
 def test_home_list_renders_the_shared_tag_chips():
+    # The card lives in the shared include (#293): the home layout only
+    # renders it.
     html = _read(HOME_LAYOUT)
-    assert "include post-tags.html" in html
-    assert "tags=post.tags" in html
-    assert 'class="tag-chip-list--home"' in html
+    assert "include post-card.html" in html
     # No forked chip markup: the chips come from the shared include.
+    assert "include post-tags.html" not in html
     assert 'class="tag-chip"' not in html
     assert "'/tags/' | append" not in html
+    card = _read(POST_CARD_INCLUDE)
+    assert "include post-tags.html" in card
+    assert "tags=include.post.tags" in card
+    assert 'class="tag-chip-list--home"' in card
 
 
 def test_home_list_chips_come_after_the_excerpt_inside_the_item():
-    html = _read(HOME_LAYOUT)
-    loop = html.index("{%- for post in posts -%}")
-    excerpt = html.index("{{ post.excerpt }}", loop)
-    chips = html.index("include post-tags.html", loop)
-    item_end = html.index("</li>", loop)
+    card = _read(POST_CARD_INCLUDE)
+    excerpt = card.index("{{ include.post.excerpt }}")
+    chips = card.index("include post-tags.html")
+    item_end = card.index("</li>")
     # Date/title/excerpt stay where they were; the chips are appended last.
     assert excerpt < chips < item_end
     # The include itself renders nothing without tags, so untagged posts keep

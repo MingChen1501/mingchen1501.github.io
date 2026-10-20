@@ -59,29 +59,12 @@ layout: base
       {%- if tag_posts.size > 0 -%}
       <ul class="post-list">
         {%- for post in tag_posts -%}
-        <li class="post-list__item">
-          {%- comment -%}
-            Fixed-size thumbnail (#226): identical 120x90 box for every
-            item, shared with the home list through
-            `_includes/post-thumbnail.html`.
-          {%- endcomment -%}
-          {%- include post-thumbnail.html post=post -%}
-          <div class="post-list__body">
-          {%- comment -%}
-            Reading time (#124): same estimate as the post page and the
-            home list (see `_layouts/home.html`).
-          {%- endcomment -%}
-          <span class="post-meta">{{ post.date | date: date_format }}{%- include reading-time.html content=post.content lang=tag_lang -%}</span>
-          <h2>
-            <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
-          </h2>
-          {%- if post.description -%}
-          <p class="post-description">{{ post.description | escape }}</p>
-          {%- elsif site.minima.show_excerpts -%}
-          {{ post.excerpt }}
-          {%- endif -%}
-          </div>
-        </li>
+        {%- comment -%}
+          Post card (#293): the single shared `_includes/post-card.html` —
+          the same card the home list renders. Tag cards keep no chips
+          (`show_tags=false`), as before: no visual change.
+        {%- endcomment -%}
+        {%- include post-card.html post=post lang=tag_lang show_tags=false -%}
         {%- endfor -%}
       </ul>
       {%- endif -%}

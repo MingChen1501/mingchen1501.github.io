@@ -183,13 +183,19 @@ def test_list_layouts_share_the_thumbnail_include():
     for layout in (HOME_LAYOUT, TAG_LAYOUT):
         html = _read(layout)
         loop = html.index("{%- for post in ")
-        include = html.index("include post-thumbnail.html", loop)
+        include = html.index("include post-card.html", loop)
         endloop = html.index("endfor", loop)
         assert include < endloop, (
-            f"{layout.name} must render the thumbnail include inside the loop"
+            f"{layout.name} must render the shared post card inside the loop"
         )
-        assert 'class="post-list__item"' in html
-        assert 'class="post-list__body"' in html
+        # The card lives in exactly one place: no forked copy in the layouts.
+        assert "include post-thumbnail.html" not in html
+        assert 'class="post-list__item"' not in html
+        assert 'class="post-list__body"' not in html
+    card = _read(REPO_ROOT / "_includes" / "post-card.html")
+    assert "include post-thumbnail.html post=include.post" in card
+    assert 'class="post-list__item"' in card
+    assert 'class="post-list__body"' in card
     post = _read(POST_LAYOUT)
     assert "post-thumbnail" not in post, (
         "the post layout is explicitly out of scope for #226"

@@ -248,10 +248,14 @@ def test_home_list_does_not_scroll_sideways_at_phone_widths(page, home_url, widt
 
 @pytest.mark.static
 def test_home_layout_renders_the_chips_from_the_shared_include():
-    """Static backstop: no forked chip markup in the home layout."""
-    html = HOME_LAYOUT.read_text(encoding="utf-8")
+    """Static backstop: no forked chip markup in the home layout (#293)."""
+    card = (REPO_ROOT / "_includes" / "post-card.html").read_text(encoding="utf-8")
     assert (
-        '{%- include post-tags.html tags=post.tags class="tag-chip-list--home" -%}' in html
+        '{%- include post-tags.html tags=include.post.tags class="tag-chip-list--home" -%}'
+        in card
     )
+    html = HOME_LAYOUT.read_text(encoding="utf-8")
+    assert "include post-card.html" in html
     assert 'class="tag-chip"' not in html
+    assert "include post-tags.html" not in html
     assert "'/tags/' | append" not in html

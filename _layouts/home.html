@@ -87,49 +87,12 @@ layout: base
         {%- endif -%}
         <ul class="post-list">
           {%- for post in posts -%}
-          <li class="post-list__item">
-            {%- comment -%}
-              Fixed-size thumbnail (#226): identical 120x90 box for every
-              item, shared with the tag list through
-              `_includes/post-thumbnail.html` (front matter
-              `thumbnail`/`image`, else first body image, else placeholder).
-            {%- endcomment -%}
-            {%- include post-thumbnail.html post=post -%}
-            <div class="post-list__body">
-            {%- comment -%}
-              Reading time (#124): estimated from the full post content, so
-              the list figure always agrees with the post page. Inside
-              `.post-meta`, so it inherits the meta font and divider style.
-            {%- endcomment -%}
-            <span class="post-meta">{{ post.date | date: date_format }}{%- include reading-time.html content=post.content lang=home_lang -%}</span>
-            <h2>
-              <a class="post-link" href="{{ post.url | relative_url }}">
-                {{ post.title | escape }}
-              </a>
-            </h2>
-            {%- comment -%}
-              List excerpt (#113): prefer the translated `description`
-              front matter (same as the tag pages) over `post.excerpt`.
-              The Jekyll excerpt is the first paragraph of the body, which
-              embeds the full-size content image for posts that open with
-              one — rendering it here would download that image in every
-              list item and shift the list while it loads. `description`
-              is mandatory per the taxonomy, so the excerpt fallback below
-              only serves posts that predate it.
-            {%- endcomment -%}
-            {%- if post.description -%}
-              <p class="post-description">{{ post.description | escape }}</p>
-            {%- elsif site.minima.show_excerpts -%}
-              {{ post.excerpt }}
-            {%- endif -%}
-            {%- comment -%}
-              Tag chips (#47): the same chips the post page shows, linking to
-              `/tags/<tag>/`. The include renders nothing without tags, so the
-              date/title/excerpt order and spacing above stay untouched.
-            {%- endcomment -%}
-            {%- include post-tags.html tags=post.tags class="tag-chip-list--home" -%}
-            </div>
-          </li>
+          {%- comment -%}
+            Post card (#293): the single shared `_includes/post-card.html`
+            (thumbnail, reading time, description-first excerpt, home tag
+            chips) — the same card the tag list renders.
+          {%- endcomment -%}
+          {%- include post-card.html post=post lang=home_lang -%}
           {%- endfor -%}
         </ul>
 

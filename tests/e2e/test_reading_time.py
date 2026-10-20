@@ -104,14 +104,18 @@ def test_post_header_renders_reading_time_from_page_content():
 @pytest.mark.parametrize("layout", [HOME_LAYOUT, TAG_LAYOUT], ids=["home", "tag"])
 def test_list_layouts_render_reading_time_from_full_post_content(layout):
     html = _read(layout)
-    assert "include reading-time.html" in html
+    # The card lives in the shared include (#293): the layout only renders it.
+    assert "include post-card.html" in html
+    assert "include reading-time.html" not in html
+    card = _read(REPO_ROOT / "_includes" / "post-card.html")
+    assert "include reading-time.html" in card
     # The full content — not the excerpt — so the list figure always agrees
     # with the post page.
-    assert "content=post.content" in html
-    assert "reading-time.html" in html
+    assert "content=include.post.content" in card
+    assert "reading-time.html" in card
     # Inside the list item's `.post-meta` line, next to the date.
-    assert '<span class="post-meta">' in html
-    assert html.index('<span class="post-meta">') < html.index(
+    assert '<span class="post-meta">' in card
+    assert card.index('<span class="post-meta">') < card.index(
         "include reading-time.html"
     )
 
