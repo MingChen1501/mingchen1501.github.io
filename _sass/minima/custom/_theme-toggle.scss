@@ -58,7 +58,8 @@
   // it under the OS media query, so a stored dark choice on a light-OS
   // machine would otherwise keep light tokens on the dark code background.
   // Nested here, the dark tokens outrank the global light ones.
-  @include dm-highlight;
+  // (Token rules ship in `assets/css/syntax.css`, linked only on pages
+  // with code, #275; this mixin keeps the non-highlight overrides only.)
 
   // Blockquote contrast (#220): the #213 light fix below (`_a11y.scss`,
   // `#616161` for 6.1:1 on `#fdfdfd`) drops to ~2:1 on the dark background.
@@ -134,8 +135,9 @@ html[data-theme="light"] {
   color-scheme: light;
 
   // A stored light choice on a dark-OS machine must also pin the code
-  // tokens back to light (mirrors the dark branch above).
-  @include lm-highlight;
+  // tokens back to light (mirrors the dark branch above). The light token
+  // rules ship in `assets/css/syntax.css`, linked only on pages with code
+  // (#275); nothing highlight-related stays in this block.
 }
 
 html[data-theme="dark"] {

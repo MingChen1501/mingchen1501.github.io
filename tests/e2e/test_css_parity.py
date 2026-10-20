@@ -126,7 +126,23 @@ EXPECTED_VARIABLES = {
 # pixel-identical (the light tile inlines the exact old SVG bytes), and the
 # placeholder stays out of `document.images`, so the visual-regression
 # settle check goes green.
-EXPECTED_CSS_SHA256 = "defc38c9eb9afe56551531a1e7260f9372377c40f430c0599037643c131eca34"
+# #275 (syntax-split): the Rouge token rules left the main stylesheet for
+# the conditional `assets/css/syntax.css` companion. Diffed old vs new
+# before bumping with a rule-multiset compare (old single-file rules ==
+# new main + companion rules, order-insensitive): zero rules lost, zero
+# gained — the split moved the 319 screen `.highlight*` token rules
+# (light, OS-preference dark, and both `data-theme` layers) verbatim into
+# the companion, keeping the structural `div.highlight` /
+# `code.highlighter-rouge` rules and the `@media print` repins in the main
+# sheet. Code pages load both sheets (same token, same relative order),
+# code-free pages load the slimmed main sheet only; every screen render
+# stays identical, so no visual baseline changes.
+EXPECTED_CSS_SHA256 = "77ee592f0b0b874bccea02aa05491f95232df63e4914a2d48287f34e41baa0af"
+
+# SHA-256 of the built `assets/css/syntax.css` companion from the same
+# sources (dev and production builds emit identical bytes). See the #275
+# note above before updating.
+EXPECTED_SYNTAX_CSS_SHA256 = "d88cd5ea93eb1012cab1505ffa1f5d6ead7485bd7467e350f98e2f8ed0828370"
 
 
 def _imported_partials():
@@ -188,4 +204,15 @@ def test_built_stylesheet_is_byte_identical_to_the_pre_split_build(built_site):
     assert digest == EXPECTED_CSS_SHA256, (
         "the compiled stylesheet changed — diff it against the pre-split "
         "build before updating this hash"
+    )
+
+
+def test_built_syntax_stylesheet_is_byte_identical_to_the_split_build(built_site):
+    """The #275 companion sheet is pinned too: any token drift shows here."""
+    css = built_site / "assets" / "css" / "syntax.css"
+    assert css.is_file(), "the build emitted no assets/css/syntax.css"
+    digest = hashlib.sha256(css.read_bytes()).hexdigest()
+    assert digest == EXPECTED_SYNTAX_CSS_SHA256, (
+        "the compiled syntax companion changed — diff it against the "
+        "split build before updating this hash"
     )

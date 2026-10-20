@@ -1,0 +1,43 @@
+---
+# Only the main Sass file needs front matter (the dashes are enough)
+---
+
+// Syntax-highlight companion stylesheet (#275, CSS analogue of the #253
+// post-only JS gating). The Rouge `.highlight` token rules (~12.4KB, ~25%
+// of the render-blocking CSS) ship here instead of in `style.css`, and
+// `_includes/head.html` links this file only on pages whose rendered
+// content contains Rouge output (`class="highlight"`), so code-free pages
+// (home, search, tag index) skip it.
+//
+// Emission order mirrors the old single-file cascade exactly: light tokens,
+// the no-JS OS-preference dark tokens, then the `data-theme` explicit-choice
+// layers from `minima/custom/_theme-toggle.scss` (dark, OS fallback, light).
+// Code-bearing pages load `style.css` + this file and render identically to
+// the old single stylesheet (no selector crosses the split: the structural
+// `div.highlight`/`code.highlighter-rouge` rules stay in `style.css`, and
+// the `@media print` repins stay in `minima/custom/_print.scss`).
+// Like every fixed-URL asset, the link carries the `?v=site.time` build
+// token (see AGENTS.md, "Asset cache versioning").
+
+@import
+  "minima/syntax-highlight";
+
+@include lm-highlight;
+
+@media (prefers-color-scheme: dark) {
+  @include dm-highlight;
+}
+
+html[data-theme="dark"] {
+  @include dm-highlight;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    @include dm-highlight;
+  }
+}
+
+html[data-theme="light"] {
+  @include lm-highlight;
+}

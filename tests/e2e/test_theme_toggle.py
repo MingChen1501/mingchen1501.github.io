@@ -181,8 +181,17 @@ def test_theme_partial_defines_the_data_theme_layer():
     assert "color-scheme" in scss, (
         "scrollbars and form controls must match the theme (#220)"
     )
-    assert "dm-highlight" in scss and "lm-highlight" in scss, (
-        "code tokens must follow the explicit choice, not just the OS (#220)"
+    # Code tokens follow the explicit choice too, but since #275 they live
+    # in the conditional `assets/css/syntax.css` companion (same layers,
+    # same order) instead of this partial: the structural layer stays here.
+    toggle = _read(REPO_ROOT / "_sass" / "minima" / "custom" / "_theme-toggle.scss")
+    assert "@include dm-highlight" not in toggle, (
+        "dark token rules must ship only in the syntax companion, linked "
+        "on code pages (#275)"
+    )
+    assert "@include lm-highlight" not in toggle, (
+        "light token rules must ship only in the syntax companion, linked "
+        "on code pages (#275)"
     )
     assert "prefers-reduced-motion" in scss, (
         "the theme transition must respect reduced motion (#220)"

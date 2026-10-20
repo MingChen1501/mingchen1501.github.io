@@ -566,6 +566,7 @@ an unavailable diff — forces the full run. No silent skip.
 | `_vi_posts/**` | `_includes/**` |
 | `assets/img/**` (content images) | `_sass/**` |
 | `_data/highlights.yml` (sidebar highlight list) | `assets/js/**` |
+| | `assets/css/**` |
 | | `_config.yml`, `_config*.yml` |
 | | `tests/**` |
 | | `script/**` |

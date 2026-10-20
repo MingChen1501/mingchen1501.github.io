@@ -5,13 +5,15 @@ gated the post-only scripts (non-post pages went from 9 to 7 sub-footer
 scripts) and #254 replaced the Font Awesome CDN with inline SVGs. With no
 budget, any new global script silently regrows every page: ``test_post_only_js.py``
 pins script *count* per page kind but not *bytes*, and ``test_css_parity.py``
-pins an exact SHA of the built CSS instead of a budget.
+pins an exact SHA of the built CSS instead of a budget. #275 then split the
+Rouge token rules out of the main stylesheet into the conditional
+``syntax.css`` companion (code pages only), so CSS has two ceilings now.
 
 Guarded here, with the ceilings in ``script/asset-budget.sh`` (single source
 of truth; the tests below pin the documented policy values, so a bump touches
 both files deliberately):
 
-- the budget file holds the four documented ceilings (static);
+- the budget file holds the five documented ceilings (static);
 - the pinned script sets match the templates exactly: any added, removed,
   or relocated tag fails statically, even inside the byte headroom, and
   the post-only scripts stay gated to post pages (the #253 win, locked
@@ -20,8 +22,10 @@ both files deliberately):
   CSS bytes, stay under their ceilings — statically from the source files
   (production worst case for posts, which alone render the comments sync
   script) and again from the real build output (needs Ruby, no browser);
-- the head links exactly one first-party stylesheet, so no second global
-  sheet can appear without tripping a static guard.
+- the head links the main stylesheet unconditionally plus the syntax
+  companion only inside its Rouge-output conditional, both with the same
+  build token, so no third global sheet can appear without tripping a
+  static guard.
 
 Page kinds follow the ``test_post_only_js.py`` split: home, post, tag,
 about/portfolio (``page`` layout), search. Failure messages name the
@@ -46,11 +50,14 @@ SUB_FOOTER = test_post_only_js.SUB_FOOTER
 # Documented policy (#267): ceilings sit ~10% above the 2026-10-20 measured
 # totals (see script/asset-budget.sh for the per-kind measurements). Bump a
 # ceiling only with an intentional change, in both files at once.
+# (#275 re-measured after the syntax split: the main sheet dropped to
+# ~45.1KB, the conditional companion to ~17.5KB.)
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
     "MAX_JS_POST_BYTES": 32768,
     "MAX_JS_SEARCH_BYTES": 32256,
-    "MAX_CSS_BYTES": 69632,
+    "MAX_CSS_BYTES": 50176,
+    "MAX_SYNTAX_CSS_BYTES": 19456,
 }
 
 SEARCH_PATH = "/assets/js/search.js"
@@ -215,13 +222,29 @@ def test_js_bytes_per_page_kind_within_budget():
 
 
 @pytest.mark.static
-def test_head_links_exactly_one_first_party_stylesheet():
-    """No second global stylesheet without tripping this guard (#267)."""
+def test_head_links_the_expected_stylesheets():
+    """The main sheet is global; the syntax sheet is conditional (#275).
+
+    #267 pinned a single global sheet; #275 adds the Rouge companion, so
+    the guard now pins the pair: exactly one unconditional first-party
+    stylesheet (the main one every page needs) plus the syntax sheet gated
+    on Rouge output, both with the same build token. A third sheet — or an
+    unconditional syntax sheet — trips this guard.
+    """
     text = HEAD_INCLUDE.read_text(encoding="utf-8")
     links = re.findall(r"(/assets/css/[^\"'?]+)", text)
-    assert links == [STYLESHEET_PATH], (
-        f"expected exactly one first-party stylesheet ({STYLESHEET_PATH}), "
-        f"got {links} (#267)"
+    assert links == [STYLESHEET_PATH, "/assets/css/syntax.css"], (
+        f"expected the main sheet plus the conditional syntax companion, "
+        f"got {links} (#267, #275)"
+    )
+    gate = re.search(r"\{%-?\s*if content contains ", text)
+    assert gate, "the syntax stylesheet must stay gated on page content (#275)"
+    assert text.index("/assets/css/syntax.css") > gate.start(), (
+        "the syntax stylesheet must live inside the content gate (#275)"
+    )
+    head_before_gate = text[:gate.start()]
+    assert STYLESHEET_PATH in head_before_gate, (
+        "the main stylesheet must stay unconditional: every page needs it"
     )
 
 
@@ -287,4 +310,16 @@ def test_built_css_within_budget(built_site):
     assert total <= ceiling, (
         f"built style.css is {total} bytes, over "
         f"{_budget_label('MAX_CSS_BYTES')} (#267)"
+    )
+
+
+def test_built_syntax_css_within_budget(built_site):
+    """The conditional companion sheet stays small too (#275)."""
+    css = built_site / "assets" / "css" / "syntax.css"
+    assert css.is_file(), "the build emitted no assets/css/syntax.css"
+    total = css.stat().st_size
+    ceiling = _read_budget()["MAX_SYNTAX_CSS_BYTES"]
+    assert total <= ceiling, (
+        f"built syntax.css is {total} bytes, over "
+        f"{_budget_label('MAX_SYNTAX_CSS_BYTES')} (#275)"
     )

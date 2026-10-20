@@ -59,7 +59,8 @@ VI_LINK_POST_PATH = "/vi/2026/01/01/migrate-windows-11-to-fedora.html"
 # light (`lm-highlight`) set for #242: token class -> expected print colour.
 # Covers comments, errors, keywords, names, operators, numbers, strings and
 # the line-number/marker helpers, i.e. every coloured token group in
-# `lm-highlight` (`_sass/minima/skins/auto.scss`).
+# `lm-highlight` (`_sass/minima/_syntax-highlight.scss`, moved there from
+# the auto skin by #275).
 EXPECTED_PRINT_TOKEN_COLORS = {
     "c": "#9c9996",
     "cm": "#9c9996",
