@@ -18,6 +18,9 @@ Guarded here:
 - the button keeps a 44px minimum touch target and a visible keyboard focus,
   and never adds horizontal overflow at 375px (static + browser);
 - without JS no button is rendered at all (built markup).
+- success feedback is announced through a per-block polite live region in
+  EN and VI, cleared on revert, exactly once per copy (#257) (static +
+  browser);
 """
 
 import re
@@ -102,6 +105,43 @@ def test_the_copy_label_is_localized():
     assert "aria-label" in text, (
         "the button must expose its label as an accessible name"
     )
+
+
+@pytest.mark.static
+def test_the_copied_confirmation_is_announced_via_a_polite_live_region():
+    """#257: success feedback must reach screen readers, not just sighted users."""
+    text = _read(SCRIPT)
+    assert "copy-code__status" in text, (
+        "each enhanced block needs its own status node for the announcement"
+    )
+    assert "visually-hidden" in text, (
+        "the status node must stay visually hidden so there is no visual change"
+    )
+    assert "'status'" in text or '"status"' in text, (
+        "the status node must carry role=status, like the share row (#257)"
+    )
+    assert "aria-live" in text and "polite" in text, (
+        "the announcement must go through a polite live region"
+    )
+    assert "status.textContent = DONE" in text, (
+        "the live region must announce the localized DONE strings"
+    )
+    assert "status.textContent = ''" in text or 'status.textContent = ""' in text, (
+        "the live region must clear on revert so a repeat copy announces again"
+    )
+
+
+@pytest.mark.static
+def test_one_copy_announces_exactly_once():
+    """#257: a single copy must produce a single announcement."""
+    text = _read(SCRIPT)
+    assert text.count("aria-live") == 1, (
+        "exactly one polite live region per block: the button's own 2s label "
+        "flip stays visual-only so screen readers hear the confirmation once"
+    )
+    assert "status.setAttribute('aria-live', 'polite')" in text or (
+        'status.setAttribute("aria-live", "polite")' in text
+    ), "only the status node may be a live region, never the button"
 
 
 @pytest.mark.static
@@ -289,6 +329,70 @@ def test_the_button_label_follows_the_vietnamese_page(
         timeout=10_000,
     )
     assert page.evaluate("() => navigator.clipboard.readText()") == "puts 'hello'"
+
+
+def test_copy_success_is_announced_through_a_live_region(
+    built_site_url, page, browser_name
+):
+    """#257: the EN confirmation surfaces through role=status, then clears."""
+    if browser_name == "webkit":
+        pytest.skip(
+            "headless WebKit denies navigator.clipboard (NotAllowedError) and "
+            "Playwright grants no clipboard permission on WebKit, so the "
+            "clipboard read-back cannot run there (#209)"
+        )
+    _enhance(page, built_site_url, "/")
+
+    status = page.locator("#copy-fixture .copy-code__status")
+    # One status node for the one fenced block: bare `pre` and inline `code`
+    # stay announcement-free.
+    assert status.count() == 1
+    assert status.get_attribute("role") == "status"
+    assert status.get_attribute("aria-live") == "polite"
+    assert status.text_content() == ""
+
+    page.get_by_role("button", name=COPY_EN).first.click()
+    page.wait_for_function(
+        "() => document.querySelector('#copy-fixture .copy-code__status')"
+        f".textContent === {DONE_EN!r}",
+        timeout=10_000,
+    )
+    # The visual button feedback is unchanged alongside the announcement.
+    assert page.locator(".copy-code__button").first.get_attribute("aria-label") == DONE_EN
+
+    # The revert clears both the label and the region, so a repeat copy
+    # announces the confirmation again instead of going silent.
+    page.wait_for_function(
+        "() => document.querySelector('.copy-code__button')"
+        f".textContent === {COPY_EN!r}",
+        timeout=10_000,
+    )
+    assert status.text_content() == ""
+
+
+def test_copy_success_is_announced_in_vietnamese(
+    built_site_url, page, browser_name
+):
+    """#257: the VI confirmation surfaces through the same live region."""
+    if browser_name == "webkit":
+        pytest.skip(
+            "headless WebKit denies navigator.clipboard (NotAllowedError) and "
+            "Playwright grants no clipboard permission on WebKit, so the "
+            "clipboard read-back cannot run there (#209)"
+        )
+    _enhance(page, built_site_url, "/vi/")
+
+    status = page.locator("#copy-fixture .copy-code__status")
+    assert status.count() == 1
+    assert status.get_attribute("role") == "status"
+    assert status.get_attribute("aria-live") == "polite"
+
+    page.get_by_role("button", name=COPY_VI).first.click()
+    page.wait_for_function(
+        "() => document.querySelector('#copy-fixture .copy-code__status')"
+        f".textContent === {DONE_VI!r}",
+        timeout=10_000,
+    )
 
 
 def test_the_button_keeps_its_target_focus_and_layout(
