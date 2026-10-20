@@ -16,7 +16,7 @@ coverage overlaps.
   `asset-budget.sh` (JS/CSS byte ceilings), `generate-thumbnails` (#226),
   `article-intake`, `cibuild`, `update-visual-baselines`, plus thin
   `bootstrap`/`build`/`server` wrappers.
-- `.github/workflows/` (5 files, 554 LOC): `ci.yaml` (Jekyll matrix +
+- `.github/workflows/` (5 files, 597 LOC): `ci.yaml` (Jekyll matrix +
   image guards + `cibuild`), `e2e.yml` (content-only classifier → static
   guards → one shared build → browser matrix), `lighthouse.yml`,
   `visual-baselines.yml`, `demo_site.yml` (legacy upstream-minima demo

@@ -23,11 +23,13 @@ with `--safe`.
 | SCSS layers | `styling.md` | 27 files, ~3,200 LOC |
 | Vanilla JS modules | `javascript.md` | 11 files, 1,079 LOC |
 | Data files + taxonomy | `data-model.md` | 3 files, 80 LOC |
-| Tests + scripts + CI | `testing.md` | 62 e2e files (~19,500 LOC), 14 scripts, 5 workflows (554 LOC) |
+| Tests + scripts + CI | `testing.md` | 62 e2e files (~19,500 LOC), 14 scripts, 5 workflows (597 LOC) |
 | Content (posts) | `content-pipeline.md` | 7 EN files (6 published + 1 unpublished sample) + 6 VI posts |
 | Decisions | `decisions/` | ADR template + first ADRs |
 
 348 tracked files total (`git ls-files`, excluding `_site/`).
+
+Counting convention: raw `wc -l` per area; the E2E headline counts `test_*.py` lines.
 
 ## Bloat headline numbers
 
