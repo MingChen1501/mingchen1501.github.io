@@ -101,7 +101,12 @@ EXPECTED_VARIABLES = {
 # block (chrome hidden, single-column article, print typography, outbound
 # link URLs, break-inside avoid, bounded images); no existing rule moved
 # and screen media is untouched, so every screen render stays identical.
-EXPECTED_CSS_SHA256 = "5b417de9e39cd979817e43d792c0c68a28eb11aa32dcbbf1ba4189617aab6161"
+# #241 (dark contrast): three additive rules in the `theme-toggle` dark
+# layer (lightbox-trigger focus outline, share/back-to-top hover border,
+# share status color, all `$dm-brand-color-light`). Diffed old vs new
+# before bumping: pure addition in both dark layers (`data-theme` and the
+# no-JS fallback), no existing rule moved, so light mode is pixel-identical.
+EXPECTED_CSS_SHA256 = "6ea76610cf2c78c0d51b865a389d26c43e3d14c1332f3fd2f872bf84d4f2e7ba"
 
 
 def _imported_partials():
