@@ -38,3 +38,11 @@
   only owns the button from there on.
 {%- endcomment -%}
 <script src="/assets/js/theme-toggle.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  Accessible image lightbox (#223). Progressive enhancement only: it turns
+  informative `.post-content` images into keyboard-operable viewer triggers
+  at runtime and builds the dialog on demand, so without JS the page ships
+  no overlay markup at all. A fixed-URL asset like the scripts above, so it
+  carries the same build token.
+{%- endcomment -%}
+<script src="/assets/js/lightbox.js?v={{ asset_version }}" defer></script>
