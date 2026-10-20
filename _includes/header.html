@@ -10,7 +10,7 @@
     {%- assign header_lang = page.lang | default: site.lang | default: 'en' -%}
     {%- if header_lang == 'vi' -%}
       {%- assign header_home = '/vi/' -%}
-      {%- assign page_paths = "vi/about.md,vi/portfolio.md,vi/tags.md" | split: "," -%}
+      {%- assign page_paths = "vi/about.md,vi/portfolio.md,vi/tags.md,vi/search.md" | split: "," -%}
     {%- else -%}
       {%- assign header_home = '/' -%}
       {%- assign default_paths = site.pages | map: "path" -%}

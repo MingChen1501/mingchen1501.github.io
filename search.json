@@ -1,0 +1,49 @@
+---
+layout: null
+permalink: /search.json
+sitemap: false
+---
+{%- comment -%}
+  Offline client-side search index (#221). A build-time JSON array over every
+  published post in both languages — title, description, URL, lang, tags and
+  date only, never the post body — so the file stays small and the site needs
+  no plugin (GitHub Pages builds with `--safe`), no external service and no
+  SDK. The search page (`search.md`, `vi/search.md`) lazy-loads this file
+  through `assets/js/search.js` only when a reader opens it.
+
+  Sources: `site.posts` (English, `_posts/`) plus the `site.vi_posts`
+  collection (Vietnamese, `_vi_posts/`). Drafts stay out via the same
+  `where_exp` guard as `vi/feed.xml`; generated pages (tag pages, feeds,
+  sitemap) are excluded by construction — only the two post collections are
+  iterated. `site.vi_posts` is nil when the collection is undefined (the
+  upstream `_config_theme-dev.yml` CI build in `script/cibuild`), so the
+  collection is read through a nil-guarded variable first and the index
+  renders with the English entries only. Every string goes through `jsonify`,
+  so quotes and Unicode in titles/descriptions cannot break the JSON.
+{%- endcomment -%}
+{%- assign search_en = site.posts -%}
+{%- unless site.show_drafts -%}
+  {%- assign search_en = search_en | where_exp: "post", "post.draft != true" -%}
+{%- endunless -%}
+{%- assign search_vi_source = site.vi_posts -%}
+{%- if search_vi_source == nil -%}
+  {%- assign search_vi = "" | split: "" -%}
+{%- else -%}
+  {%- assign search_vi = search_vi_source -%}
+  {%- unless site.show_drafts -%}
+    {%- assign search_vi = search_vi | where_exp: "post", "post.draft != true" -%}
+  {%- endunless -%}
+{%- endif -%}
+{%- assign search_first = true -%}
+[
+{%- for post in search_en -%}
+{%- unless search_first -%},{% endunless -%}
+{%- assign search_first = false %}
+{"title":{{ post.title | jsonify }},"description":{{ post.description | strip_newlines | default: "" | jsonify }},"url":"{{ post.url }}","lang":{{ post.lang | default: "en" | jsonify }},"tags":{% if post.tags %}{{ post.tags | jsonify }}{% else %}[]{% endif %},"date":"{{ post.date | date: "%Y-%m-%d" }}"}
+{%- endfor -%}
+{%- for post in search_vi -%}
+{%- unless search_first -%},{% endunless -%}
+{%- assign search_first = false %}
+{"title":{{ post.title | jsonify }},"description":{{ post.description | strip_newlines | default: "" | jsonify }},"url":"{{ post.url }}","lang":{{ post.lang | default: "vi" | jsonify }},"tags":{% if post.tags %}{{ post.tags | jsonify }}{% else %}[]{% endif %},"date":"{{ post.date | date: "%Y-%m-%d" }}"}
+{%- endfor %}
+]

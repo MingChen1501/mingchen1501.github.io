@@ -110,6 +110,41 @@ widths instead of pushing the page sideways.
   is deliberately no CSS change: desktop rendering is untouched and this
   guard pins the existing containment against future regressions.
 
+## Offline search (`test_search.py`)
+
+Guard for #221. A build-time JSON index (`search.json`, emitted by Liquid
+over `site.posts` + `site.vi_posts` — title, description, URL, lang, tags,
+date; drafts and generated pages excluded) plus a vanilla-JS page pair
+(`/search/` + `/vi/tim-kiem/`, shared `ref: search`) that filters the index
+in the reader's browser. No plugin, no external service, no SDK.
+
+- Static (no Ruby, no browser): the index template emits exactly the six
+  metadata fields (never the body) with the `site.vi_posts` nil-guard the
+  upstream theme-dev build needs; both pages carry lang/ref/permalink and
+  include the shell; the shell wires label/input/landmark/`aria-live`
+  status/results plus the `?v=` build token on the script and the index URL
+  (#61); the script stays vanilla, tiny and offline; nothing outside the
+  shell loads either asset (the index is fetched only on the search page);
+  both navs link the page; the SCSS partial joins the cascade.
+- Build (needs Ruby, no browser): `search.json` parses, holds one entry per
+  published post per language with all six fields, and every URL resolves
+  to a built file; both pages render with a numeric version token and
+  switch to each other.
+- Browser (needs Ruby + a browser): a fixture query returns the expected
+  post first on both paths — including a diacritics-free Vietnamese query
+  (`bai bien` finds `bãi biển`) and the shared `fedora` query, which ranks
+  the same-language post top; empty query shows guidance, nonsense query
+  shows the localized no-results state announced via the live region; the
+  control is keyboard-operable (autofocus, Enter filters in place, Tab
+  reaches results, Escape clears); neither page scrolls sideways at 375px
+  or 1280px.
+
+The search pages are deliberately outside the visual-baseline set below:
+the baselines already use ~1.9 of the 2 MB budget, and the page is a simple
+form covered by the guards above. Adding the search link to both navs still
+changes the header on every baselined page, so the full set regenerates
+with any search/header change.
+
 ## Shared fixtures (#56)
 
 `tests/e2e/conftest.py` owns the plumbing every module reuses, so a suite run
@@ -234,8 +269,9 @@ process fails to start or flakes on page creation.
 Guard for #207. The pinned, vendored axe-core scanner
 (`tests/e2e/axe-core/axe.min.js`, version/source/hash/license in
 `tests/e2e/axe-core/AXE_PIN.md` — no CDN, offline-capable) is injected into
-`/`, one EN post plus its VI counterpart, `/tags/`, `/vi/`, `/about/` and
-`/portfolio/`, each at 375px and 1280px in the light colour scheme.
+`/`, one EN post plus its VI counterpart, `/tags/`, `/vi/`, `/about/`,
+`/portfolio/` and the `/search/` + `/vi/tim-kiem/` pair (#221), each at
+375px and 1280px in the light colour scheme.
 
 - Fails on any `serious`/`critical` violation: the four #207 exceptions
   were resolved for real in #213, so `ACCEPTED` is empty (a future waiver

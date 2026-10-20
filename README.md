@@ -562,6 +562,42 @@ Residual manual step for #61: after the fix is deployed, a visitor whose browser
 already cached the old stylesheet may need one hard refresh (Ctrl+Shift+R); the
 fix can only take effect from the next deploy onward.
 
+## Site search (#221)
+
+> Site-specific section (not part of upstream Minima docs).
+
+Finding a post used to mean paging through tag pages and the home list. The
+header now links a search page in both languages — `/search/` (English) and
+`/vi/tim-kiem/` (Vietnamese) — that filters a build-time JSON index entirely
+in the reader's browser.
+
+How it works:
+
+- `search.json` is a Liquid template (no plugin, so GitHub Pages `--safe`
+  is happy) emitting one entry per published post in both languages: title,
+  description, URL, lang, tags and date. Drafts and generated pages are
+  excluded, and post bodies never enter the index, so it stays small.
+- `assets/js/search.js` is vanilla JS with no dependency, loaded only on
+  the two search pages, and it fetches the index lazily — no other page
+  pays for either. Matching is diacritics-insensitive (`ca phe` finds
+  `cà phê`), every query word must match, title hits outrank
+  description/tag hits, and same-language results rank first. `?q=`
+  deep-links a query and preserves a no-JS form submit.
+- Accessibility: a real `<form role="search">` with an associated label,
+  result counts and the localized no-results state announced through an
+  `aria-live="polite"` region, autofocus on load, Enter to filter in place,
+  Escape to clear, and plain-link results reachable by Tab.
+- Cache versioning follows the rules above: the script and the index URL
+  both carry the `?v=` build token.
+
+Rules for future edits: keep the index metadata-only, keep the script
+dependency-free and small, and keep both navs (English `minima.nav_pages`
+plus the hardcoded Vietnamese list in `_includes/header.html`) pointing at
+the page. Guard: `tests/e2e/test_search.py` (index completeness per
+language, versioned assets, both-language browser search, keyboard, no
+sideways scroll at 375/1280px). The search pages ride the axe smoke set but
+stay out of the visual-baseline set (budget — see `tests/e2e/README.md`).
+
 ## Clone size
 
 This repository's git history intentionally retains large binary blobs

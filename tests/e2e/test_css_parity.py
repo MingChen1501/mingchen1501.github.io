@@ -41,6 +41,7 @@ EXPECTED_ORDER = (
     "legibility",
     "theme-toggle",
     "list-thumbs",
+    "search",
 )
 
 # The exact literals the variables replaced (#174 evidence).
@@ -68,7 +69,11 @@ EXPECTED_VARIABLES = {
 # `.post-list__body` / `.post-thumb` block above (fixed 120x90 box with
 # `object-fit: cover`); no existing rule moved, so every other page renders
 # unchanged.
-EXPECTED_CSS_SHA256 = "55ac3f794a920ec727b785bcef3d7c13a01753fe28b943890be45f9bf9ad9bc9"
+# #221 (offline search): the `search` partial was appended. Diffed old vs new
+# before bumping: the only change is the additive `.search` / `.search__*`
+# block at the end (form, input, results list, language badge); no existing
+# rule moved, so every other page renders unchanged.
+EXPECTED_CSS_SHA256 = "252b0ed3bc14de27558b6529306f3f765c4807336886c2a8cd12621a10ff8fa7"
 
 
 def _imported_partials():
