@@ -95,8 +95,9 @@ does the expensive work once:
 - `built_site` - one `bundle exec jekyll build` per session, into a temp dir
   (the fixture logs its invocation to stderr, and to `$E2E_BUILD_LOG` when set);
 - `built_site_url` - one loopback HTTP server for that build;
-- `browser` - one headless Chromium for every browser test (each test still
-  gets a fresh context/page);
+- `browser` - one headless browser for every browser test (each test still
+  gets a fresh context/page); the engine is Chromium by default and
+  `--browser-name firefox|webkit` (or `$E2E_BROWSER`) selects another (#209);
 - `e2e_server` - the `tests/e2e/fixtures/` server for the comments tests.
 
 Guards that need neither Ruby nor a browser are marked `static`; they run first
@@ -167,6 +168,44 @@ not run in its `--safe` build; a per-build token changes on a superset of the
 cases where the CSS changes, which is why it can never pair stale CSS with fresh
 HTML.
 
+## Browser matrix (#209)
+
+The browser guards run on Chromium, Firefox and WebKit. The engine is
+Chromium by default; `--browser-name firefox|webkit` (or `$E2E_BROWSER`)
+selects another:
+
+```sh
+E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
+```
+
+- Pixel comparison (`test_visual_regression.py`, #208) runs Chromium-only:
+  the committed baselines are Chromium renders, and other engines
+  rasterize differently, so the case skips on Firefox/WebKit with an
+  explicit reason. Every other browser guard runs unmodified on all three
+  engines (layout and style assertions read geometry and computed styles
+  through the DOM, never pixels).
+- `test_copy_code.py` narrows two things per engine: the clipboard grants
+  run on Chromium only (Firefox allows clipboard over loopback HTTP with
+  no grant and rejects the grant call), and the two click-to-copy
+  read-backs skip on WebKit — headless WebKit denies
+  `navigator.clipboard` (`NotAllowedError`) and Playwright grants no
+  clipboard permission there. Each skip carries its reason inline.
+- `test_axe_a11y.py` scopes the `object-alt` waiver to Chromium/Firefox:
+  axe only flags the `/portfolio/` PDF `<object>` when its fallback
+  renders zero boxes (the PDF plugin area covers it); headless WebKit has
+  no PDF plugin intercept, renders the fallback link inline, and the rule
+  never fires there. The waiver stays enforced where it applies.
+- Measured runtime for `-m "not static"` (one shared Jekyll build
+  plus 230 browser tests): locally ~2-3 min per engine; CI job durations
+  (build + `install --with-deps` + suite) also ~2-3 min per engine.
+  The three CI jobs run in parallel, so PR wall-clock is the slowest
+  engine, not the sum — cheap enough that every PR runs the full matrix
+  (no smoke/nightly split).
+
+Local WebKit runs need the system libraries (`python -m playwright
+install --with-deps webkit`, requires sudo); without them the WebKit
+process fails to start or flakes on page creation.
+
 ## Accessibility smoke (`test_axe_a11y.py`)
 
 Guard for #207. The pinned, vendored axe-core scanner
@@ -218,7 +257,7 @@ script/update-visual-baselines
   bytes depend on the machine's font rasterization and JPEG encoder, so
   locally generated captures fail on CI. To refresh them, push the branch
   (or run the `Visual baselines` dispatch workflow once merged) and
-  download the `visual-fresh` artifact from the failed browser-E2E run
+  download the `visual-fresh-chromium` artifact from the failed browser-E2E run
   into `tests/e2e/visual/baseline/` — never commit locally rendered
   captures.
 
@@ -226,28 +265,37 @@ script/update-visual-baselines
 
 ```sh
 pip install -r tests/e2e/requirements.txt
-python -m playwright install chromium   # or reuse system Chrome automatically
+python -m playwright install chromium firefox webkit   # or reuse system Chrome automatically
 python -m pytest tests/e2e -v
 ```
 
 `-m static` runs only the fast browser-free guards, `-m "not static"` only the
-browser ones.
+browser ones. Append `--browser-name firefox` (or `webkit`) to run the
+browser guards on another engine; `$E2E_BROWSER` does the same (this is how
+CI selects the engine per job).
 
 The browser tests prefer the local system Chrome (`channel="chrome"`) and
 fall back to Playwright's bundled Chromium, so the `playwright install`
-step can be skipped on machines that already have Chrome.
+step can be skipped on machines that already have Chrome. Firefox and
+WebKit always use Playwright's bundled builds, and WebKit additionally
+needs its system libraries (`install --with-deps`, requires sudo).
 
 The guards that need the real site additionally need Ruby + `bundle install`;
 without a `bundle` executable they skip themselves with an explicit reason.
 
 ## CI
 
-`.github/workflows/e2e.yml` runs two jobs (Python 3.12, with pip and Playwright
+`.github/workflows/e2e.yml` runs (Python 3.12, with pip and Playwright
 browser caches, and Ruby 3.3 with `bundler-cache`):
 
-- `E2E static guards` - `pytest tests/e2e -m static`: no Ruby, no Chromium;
-- `E2E browser: comments, layout, tag chips` - `pytest tests/e2e -m "not static"`:
-  uses the shared session build (one Jekyll build) and browser.
+- `E2E static guards` - `pytest tests/e2e -m static`: no Ruby, no browser;
+- `E2E browser (<engine>)` - one job per engine (`chromium`, `firefox`,
+  `webkit`, `fail-fast: false` so one engine never hides the others):
+  `E2E_BROWSER=<engine> pytest tests/e2e -m "not static"`, each with the
+  shared session build (one Jekyll build) and browser. The three jobs run
+  in parallel; measured runtimes per engine are documented under
+  "Browser matrix" above, which is why every PR runs the full matrix
+  instead of a smoke/nightly split.
 
 Both run on pushes and pull requests to `master`; a superseded push cancels its
 in-flight run (`concurrency` with `cancel-in-progress`).

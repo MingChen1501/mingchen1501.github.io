@@ -27,6 +27,11 @@ Update the baselines after an intentional visual change:
 or `script/update-visual-baselines`. CI never sets `UPDATE_BASELINES`, so an
 above-threshold diff fails there; a missing baseline also fails with the
 update command in the message instead of passing silently.
+
+Chromium-only (#209): the baselines are Chromium renders, and other engines
+rasterize text and plugins differently, so `test_visual_baseline` skips on
+Firefox/WebKit with an explicit reason while the rest of the browser suite
+runs on all three engines.
 """
 
 from __future__ import annotations
@@ -216,7 +221,13 @@ def _case_ids():
     [(stem, path, width) for stem, path in CASES for width in VIEWPORT_WIDTHS],
     ids=_case_ids(),
 )
-def test_visual_baseline(stem, path, width, built_site_url, browser, tmp_path):
+def test_visual_baseline(stem, path, width, built_site_url, browser, browser_name, tmp_path):
+    if browser_name != "chromium":
+        pytest.skip(
+            "visual baselines are Chromium renders canonical on the CI "
+            "runner (#208); other engines rasterize differently, so the "
+            "pixel comparison only runs on Chromium (#209)"
+        )
     baseline = _baseline_path(stem, width)
     update = os.environ.get("UPDATE_BASELINES") == "1"
     if not baseline.is_file() and not update:
