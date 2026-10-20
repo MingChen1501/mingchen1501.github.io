@@ -30,6 +30,12 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
      `_includes/sub-footer.html`, `assets/js/`, or the nav rules in `_sass/` →
      `tests/e2e/test_nav_a11y.py` (button disclosure: accessible name,
      aria-expanded toggling, keyboard/Escape; link-free summaries).
+    - Theme toggle (`_includes/header.html` `.theme-toggle`,
+      `_includes/head.html` bootstrap, `assets/js/theme-toggle.js`,
+      `_sass/minima/custom/_theme-toggle.scss`, `minima.skin`) →
+      `tests/e2e/test_theme_toggle.py` (OS default, persistence, localized
+      names, keyboard, 44px target, axe contrast in both modes) plus the
+      dark blockquote pin in `tests/e2e/test_axe_a11y.py`.
    - New post only → a build smoke test is enough; verify front matter matches
      the 4-pillar taxonomy template (`tags`, `description`) — see the
      `jekyll-post` skill.
