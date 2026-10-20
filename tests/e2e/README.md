@@ -195,6 +195,8 @@ does the expensive work once:
 
 - `built_site` - one `bundle exec jekyll build` per session, into a temp dir
   (the fixture logs its invocation to stderr, and to `$E2E_BUILD_LOG` when set);
+  when `$E2E_PREBUILT_SITE` points at a built tree (CI's shared `e2e-site`
+  artifact, #266), the fixture serves that directory instead of rebuilding;
 - `built_site_url` - one loopback HTTP server for that build;
 - `browser` - one headless browser for every browser test (each test still
   gets a fresh context/page); the engine is Chromium by default and
@@ -297,8 +299,10 @@ E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
   no PDF plugin intercept, renders the fallback link inline, and the rule
   never fires there. The waiver stays enforced where it applies.
 - Measured runtime for `-m "not static"` (one shared Jekyll build
-  plus 230 browser tests): locally ~2-3 min per engine; CI job durations
-  (build + `install --with-deps` + suite) also ~2-3 min per engine.
+  plus 230 browser tests): locally ~2-3 min per engine; CI engine-job
+  durations (shared-build download + `install --with-deps` + suite) also
+  ~2-3 min per engine, with the single shared build in its own job
+  (#266).
   The three CI jobs run in parallel, so a full-run PR wall-clock is the
   slowest engine, not the sum. Content-only PRs skip this matrix entirely
   (#229, see "CI" below) instead of a smoke/nightly split.
@@ -415,15 +419,29 @@ browser caches, and Ruby 3.3 with `bundler-cache`):
   #229) — see the classification table below;
 - `E2E static guards` - `pytest tests/e2e -m static`: no Ruby, no browser.
   Always runs, including on content-only PRs;
+- `E2E build site once` (#266) - one `bundle exec jekyll build` shared by
+  the whole workflow, uploaded as the `e2e-site` artifact. Skipped on
+  content-only PRs;
 - `E2E browser (<engine>)` - one job per engine (`chromium`, `firefox`,
   `webkit`, `fail-fast: false` so one engine never hides the others):
-  `E2E_BROWSER=<engine> pytest tests/e2e -m "not static"`, each with the
-  shared session build (one Jekyll build) and browser. Skipped on
-  content-only PRs;
+  downloads the `e2e-site` artifact and runs
+  `E2E_BROWSER=<engine> E2E_PREBUILT_SITE=<artifact> pytest tests/e2e
+  -m "not static"`, so no engine rebuilds the site or sets up Ruby (the
+  `built_site` fixture serves the shared directory as-is; assertions are
+  unchanged). Skipped on content-only PRs;
 - `E2E suite result` - aggregator for branch protection: passes when the
-  full matrix passed, or when a content-only PR skipped the matrix with
-  green static guards. Protect this job, not the matrix jobs (a skipped
-  job reports "skipped", never "success").
+  shared build plus the full matrix passed, or when a content-only PR
+  skipped the build and matrix with green static guards. Protect this
+  job, not the matrix jobs (a skipped job reports "skipped", never
+  "success").
+
+Runtime savings (#266): a full run previously built the identical site
+three times (once per engine, each with its own Ruby/bundler setup) and
+now builds it once — two fewer Jekyll builds and two fewer Ruby setups
+per full-run PR. Billed minutes drop by roughly twice one engine's
+build+setup slice; wall-clock is unchanged (the engines still run in
+parallel), and no guard is weakened: same tests, same engines, same
+thresholds.
 
 The Jekyll builds (3.9 and 4.2 via `script/cibuild`), the link crawl /
 sitemap+feed XML validation, and `script/check-images` (+ external-image
