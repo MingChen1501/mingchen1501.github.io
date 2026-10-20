@@ -6,6 +6,7 @@ author: Ming Chen
 title: "Switching from Windows 11 to Fedora"
 tags: [linux-tooling]
 toc: false
+image: /assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg
 description: "Moving my old laptop from glitchy Windows 11 drivers to Fedora Linux: installing it, tuning the touchpad and typing Vietnamese with Bamboo."
 ---
 

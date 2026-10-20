@@ -5,7 +5,7 @@ ref: cach-pha-ca-phe
 author: Ming Chen
 title: "Brewing Vietnamese Phin Coffee"
 tags: [doi-song]
-thumbnail: /assets/img/2022-10-27-cach-pha-ca-phe/b1.jpg
+image: /assets/img/2022-10-27-cach-pha-ca-phe/b1.jpg
 description: "How to brew pure Vietnamese phin coffee at home: add grounds to the filter, press gently, bloom with boiling water and wait for the slow drip."
 ---
 

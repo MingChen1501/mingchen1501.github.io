@@ -6,6 +6,7 @@ date: 2023-01-31
 author: Ming Chen
 title: "Tết Quý Mão 2023"
 tags: [doi-song]
+image: /assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar-new-year-greatings-2.webp
 description: "Nhật ký Tết Quý Mão 2023: làm tóc đón Tết, tất niên và chúc Tết cùng bạn bè, gia đình — những khoảnh khắc sum vầy đầu xuân."
 redirect_from:
   - /2023/01/31/tet-nguyen-dan-quy-mao-2023-cua-toi.html
