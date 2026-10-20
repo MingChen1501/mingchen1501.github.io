@@ -23,6 +23,10 @@ Guarded here:
   anywhere (static + built + browser);
 - the native-share row stays hidden without ``navigator.share`` and shares
   through it where present (browser, stubbed);
+- the copy-link item ships hidden and is revealed by the script, with a
+  ``noscript`` fallback showing the canonical post URL as a plain visible
+  link, so no-JS pages have zero dead controls (#244)
+  (static + built + browser);
 - the script is a tiny dependency-free first-party asset linked through the
   ``?v=`` build token like every other fixed-URL asset (#61)
   (static + rendered);
@@ -56,6 +60,8 @@ COPY_EN = "Copy link"
 COPY_VI = "Sao chép liên kết"
 DONE_EN = "Copied"
 DONE_VI = "Đã sao chép"
+POST_LINK_EN = "Post link"
+POST_LINK_VI = "Liên kết bài viết"
 NATIVE_EN = "Share…"
 NATIVE_VI = "Chia sẻ…"
 X_EN = "Share on X"
@@ -108,6 +114,7 @@ def test_the_share_labels_are_localized():
     text = _read(SHARE_INCLUDE)
     for label in (
         HEADING_EN, HEADING_VI, COPY_EN, COPY_VI, DONE_EN, DONE_VI,
+        POST_LINK_EN, POST_LINK_VI,
         NATIVE_EN, NATIVE_VI, X_EN, X_VI,
     ):
         assert label in text, f"the include never renders the label {label!r}"
@@ -157,6 +164,24 @@ def test_no_external_script_is_added():
         assert not re.search(r'<script[^>]+src="https?://', _read(path)), (
             f"{path.relative_to(REPO_ROOT)} must not add an external script"
         )
+
+
+@pytest.mark.static
+def test_the_copy_button_is_enhancement_only_with_a_noscript_fallback():
+    """No-JS post pages show no dead copy control (#244)."""
+    text = _read(SHARE_INCLUDE)
+    assert "data-share-copy-item" in text and "hidden" in text, (
+        "the copy-link item must ship hidden (JS reveals it), like the "
+        "native-share row"
+    )
+    script = _read(SCRIPT)
+    assert "data-share-copy-item" in script, (
+        "the share script must reveal the copy-link item where JS runs"
+    )
+    assert "<noscript>" in text and "share__fallback" in text, (
+        "no-JS readers need a visible fallback (the canonical post URL as "
+        "a plain link) instead of the copy button"
+    )
 
 
 @pytest.mark.static
@@ -319,6 +344,35 @@ def test_the_intent_links_work_without_js(built_site):
         assert 'data-share-native-item hidden' in section, (
             "the native-share row must ship hidden (JS reveals it)"
         )
+        assert 'data-share-copy-item hidden' in section, (
+            "the copy-link item must ship hidden (JS reveals it, #244)"
+        )
+
+
+def test_the_built_row_falls_back_to_a_visible_post_link(built_site):
+    """No-JS readers get the canonical URL as a plain link (#244)."""
+    for rel, label in (
+        (EN_POST_REL, POST_LINK_EN),
+        (VI_POST_REL, POST_LINK_VI),
+    ):
+        section = _share_section(_read(built_site / rel))
+        canonical = _canonical_url(rel)
+        assert "<noscript>" in section, (
+            f"{rel}: the share row must ship a noscript fallback"
+        )
+        assert f">{label}:" in section, (
+            f"{rel}: the fallback must carry the localized label {label!r}"
+        )
+        match = re.search(
+            r'<a class="share__fallback-link" href="([^"]+)">([^<]+)</a>',
+            section,
+        )
+        assert match, f"{rel}: the fallback must link the post URL"
+        assert match.group(1) == canonical and match.group(2) == canonical, (
+            f"{rel}: the fallback link must show the canonical URL "
+            f"{canonical}, got href={match.group(1)!r} "
+            f"text={match.group(2)!r}"
+        )
 
 
 # --- browser guards (need Ruby + a browser) ---------------------------------
@@ -364,6 +418,41 @@ def _needs_clipboard(browser_name):
             "localization and the copied feedback still run on "
             "Chromium/Firefox"
         )
+
+
+def test_without_js_no_copy_button_but_intents_and_fallback(
+    built_site_url, browser
+):
+    """JS disabled: no dead copy control, intents + URL fallback work (#244)."""
+    context = browser.new_context(java_script_enabled=False)
+    try:
+        plain = context.new_page()
+        for rel, copy_label, link_label in (
+            (EN_POST_REL, COPY_EN, POST_LINK_EN),
+            (VI_POST_REL, COPY_VI, POST_LINK_VI),
+        ):
+            plain.goto(
+                built_site_url.rstrip("/") + _post_path(rel),
+                wait_until="load",
+            )
+            assert plain.locator("[data-share-copy-item]").is_hidden(), (
+                f"{rel}: the copy-link item must stay hidden without JS"
+            )
+            assert plain.get_by_role("button", name=copy_label).count() == 0, (
+                f"{rel}: no dead {copy_label!r} button without JS"
+            )
+            fallback = plain.get_by_role("link", name=_canonical_url(rel))
+            assert fallback.count() == 1 and fallback.first.is_visible(), (
+                f"{rel}: the canonical URL must stay visible without JS"
+            )
+            assert (
+                link_label in (plain.locator(".share__fallback").text_content() or "")
+            ), f"{rel}: the fallback must carry the label {link_label!r}"
+            assert plain.locator(".share__link").count() == 3, (
+                f"{rel}: the three intent links must work without JS"
+            )
+    finally:
+        context.close()
 
 
 def test_copy_writes_the_canonical_url_and_confirms(built_site_url, page, browser_name):

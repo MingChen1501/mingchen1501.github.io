@@ -77,3 +77,15 @@
   font-size: $small-font-size;
   color: $brand-color-dark;
 }
+
+// No-JS fallback (#244): the `noscript` block shows the canonical post URL
+// as a plain visible link, so readers without JS can still copy or open it
+// manually. Long URLs wrap instead of overflowing the post column.
+.share__fallback {
+  margin: 8px 0 0;
+  font-size: $small-font-size;
+}
+
+.share__fallback-link {
+  overflow-wrap: anywhere;
+}

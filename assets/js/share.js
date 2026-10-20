@@ -1,7 +1,10 @@
-/* Share row (#222): copy-link plus the Web Share API where supported.
+/* Share row (#222, #244): copy-link plus the Web Share API where supported.
  * The X / Facebook / LinkedIn intent links are plain anchors and work
  * without JS. This script only wires the two buttons:
- * - copy: Clipboard API with a textarea + execCommand fallback (same shape
+ * - copy: the `data-share-copy-item` row ships `hidden` and is revealed
+ *   here, so without JS there is no dead control (a `noscript` fallback
+ *   shows the canonical URL as a plain link instead). Copying uses the
+ *   Clipboard API with a textarea + execCommand fallback (same shape
  *   as `assets/js/copy-code.js`), then the localized confirmation from
  *   `data-copied-label` on the button and in the `role="status"` line;
  * - native share: the `data-share-native-item` row stays `hidden` unless
@@ -28,8 +31,10 @@
   function run() {
     document.querySelectorAll('.share').forEach(function (section) {
       var status = section.querySelector('.share__status');
+      var copyItem = section.querySelector('[data-share-copy-item]');
       var copy = section.querySelector('.share__copy');
-      if (copy) {
+      if (copyItem && copy) {
+        copyItem.hidden = false;
         var url = copy.getAttribute('data-share-url');
         var idle = copy.textContent;
         var doneLabel = copy.getAttribute('data-copied-label') || 'Copied';
