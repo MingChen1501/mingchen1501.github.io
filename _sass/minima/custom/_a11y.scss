@@ -1,4 +1,4 @@
-// #174: skip link and visible focus (#87). Cascade slot 5 of 10.
+// #174: skip link and visible focus (#87). Cascade slot 5 of 11.
 // ---------------------------------------------------------------------------
 // Accessibility (#87): skip link + visible focus styles.
 //
@@ -64,8 +64,9 @@ textarea:focus-visible {
 // 3.8:1 on the `#fdfdfd` background, below the 4.5:1 WCAG AA minimum for
 // body-size text. Only the blockquote colour is deepened (to 6.1:1) —
 // `$brand-color` itself is untouched, so borders, titles and the rest of
-// the site keep their design. Classic-skin scope: this build has no dark
-// mode (static light palette), so a single static colour is correct here.
+// the site keep their design. Light-mode scope: under the #220 dark mode
+// this static colour would drop to ~2:1, so `custom/_theme-toggle.scss`
+// restores `$dm-brand-color` for dark themes (see its blockquote rule).
 blockquote {
   color: #616161;
 }
