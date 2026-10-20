@@ -12,7 +12,7 @@ redirect_from:
   - /2026/10/17/agent-orchestration-opencode-free.html
 ---
 
->Đợt trước mình mới thử setup orchestration cho AI coding agent. Đợt này mình đem ra dùng thật, và có một chuyện mình không nghĩ tới: mình đang viết bài này từ bãi biển, chỉ bấm merge là xong.
+>[Đợt trước mình mới thử setup orchestration cho AI coding agent](/vi/2026/10/14/setup-ai-coding-agent-orchestration.html). Đợt này mình đem ra dùng thật, và có một chuyện mình không nghĩ tới: mình đang viết bài này từ bãi biển, chỉ bấm merge là xong.
 
 ## Lần này không còn là "thử"
 

@@ -23,7 +23,7 @@ description: "Trying out an orchestration setup for AI coding agents to coordina
 
 ## Next steps
 - Try more complex workflows (multiple workers, review, CI).
-- Hook it into personal projects to see if it actually saves time.
+- Hook it into personal projects to see if it actually saves time ([here's how that went](/2026/10/17/real-world-agent-orchestration-with-free-opencode.html)).
 - If it works out, I might standardize it as my default workflow.
 
 Short version: today's orchestration setup for AI coding agents was well worth trying, and there's probably plenty more to build and fine-tune ahead.

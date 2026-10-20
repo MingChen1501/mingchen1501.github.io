@@ -26,7 +26,7 @@ redirect_from:
 
 ## Next steps
 - Mò thêm các workflow phức tạp hơn (nhiều worker, review, CI).
-- Thử gắn vào các project cá nhân để xem có thực sự tiết kiệm thời gian không.
+- Thử gắn vào các project cá nhân để xem có thực sự tiết kiệm thời gian không ([xem đợt mình đem ra dùng thật](/vi/2026/10/17/agent-orchestration-opencode-free.html)).
 - Nếu ổn thì có thể chuẩn hóa luôn thành quy trình làm việc mặc định.
 
 Tổng kết ngắn gọn: setup orchestration cho AI coding agent hôm nay khá đáng thử, và thời gian tới có lẽ sẽ còn nhiều thứ để làm và tinh chỉnh.
