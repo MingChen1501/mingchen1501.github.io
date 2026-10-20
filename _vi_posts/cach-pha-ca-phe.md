@@ -6,6 +6,7 @@ date: 2022-10-27
 author: Ming Chen
 title: "Cách pha cà phê"
 tags: [doi-song]
+image: /assets/img/2022-10-27-cach-pha-ca-phe/b1.jpg
 description: "Cách pha cà phê phin nguyên chất tại nhà: cho cà phê vào phin, nén vừa phải, ủ nước sôi và chờ nhỏ giọt cho ly cà phê thơm ngon."
 redirect_from:
   - /2022/10/27/cach-pha-ca-phe.html

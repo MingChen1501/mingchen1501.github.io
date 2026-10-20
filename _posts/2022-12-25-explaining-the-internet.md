@@ -5,6 +5,7 @@ ref: gioi-thieu-ve-internet
 author: Ming Chen
 title: "Explaining the Internet"
 tags: [backend-production]
+image: /assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg
 description: "What the Internet is and how it works — the last mile, data centers and the backbone — plus applications like the web and email."
 ---
 
