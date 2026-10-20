@@ -59,7 +59,7 @@ May 2021 – May 2024 · Hanoi, Vietnam
 
 ## Resume (PDF)
 
-<object data="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}" type="application/pdf" width="100%" height="800px">
+<object data="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}" type="application/pdf" width="100%" height="800px" title="Resume of Tran Cong Minh (PDF)" aria-label="Resume of Tran Cong Minh (PDF)">
   <p>
     Trình duyệt của bạn không xem được PDF trực tiếp.
     <a href="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}">Tải resume (PDF)</a>

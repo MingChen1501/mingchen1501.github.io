@@ -54,7 +54,7 @@ EXPECTED_VARIABLES = {
 # SHA-256 of the built `assets/css/style.css` from the pre-split sources
 # (dev and production builds emit identical bytes). See the module docstring
 # before updating.
-EXPECTED_CSS_SHA256 = "734ca666f028e6f5310193fcaa9add717a86c7fdcc7c88f95e85abcccd8c1543"
+EXPECTED_CSS_SHA256 = "5bc337ed2e04a14d027d2a620777e505eca4d6602aeb88b6035a1170c6869a0e"
 
 
 def _imported_partials():

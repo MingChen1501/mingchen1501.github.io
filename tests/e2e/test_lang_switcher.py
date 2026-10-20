@@ -8,9 +8,11 @@ semantics beyond `hreflang`.
 Guarded here:
 
 - the pill ships a globe icon (inline SVG, `aria-hidden`) + short target
-  code (`EN` / `VI`); the full language name stays the accessible name
-  (`aria-label`) and `title`, with `lang` on the code and `hreflang` on the
-  link (static + rendered on `/` and `/vi/`);
+  code (`EN` / `VI`); the full language name stays available to assistive
+  technology as visually-hidden text inside the link (so the visible code
+  is part of the accessible name, WCAG 2.5.3, #213) plus a `title`
+  tooltip, with `lang` on the code and `hreflang` on the link (static +
+  rendered on `/` and `/vi/`);
 - the ref/fallback link logic is untouched (first-match wins, paginated URLs
   skipped, other-language home fallback) — spot-checked on the build;
 - the control renders in the header row, never inside `.site-nav` / the
@@ -62,8 +64,18 @@ def test_switcher_markup_is_a_pill_with_an_accessible_name():
     assert "'EN'" in html or '"EN"' in html or ">EN<" in html or "EN" in html
     assert "switch_code" in html
     assert "EN" in html and "VI" in html
-    # Full language name as the accessible name + title, localized per side.
-    assert 'aria-label="{{ switch_name }}"' in html
+    # Full language name as visually-hidden text inside the link (#213):
+    # an `aria-label` would override the contents and reintroduce the WCAG
+    # 2.5.3 mismatch (visible code not in the accessible name), so the link
+    # carries no `aria-label` and the name comes from its contents instead.
+    assert "aria-label" not in html, (
+        "the switcher must not carry aria-label: it would hide the visible "
+        "code from the accessible name (WCAG 2.5.3, #213)"
+    )
+    assert re.search(
+        r'<span class="visually-hidden">\s*\{\{\s*switch_name\s*\}\}\s*</span>',
+        html,
+    ), "the full language name must ship as visually-hidden link text (#213)"
     assert 'title="{{ switch_name }}"' in html
     assert "View this page in English" in html
     assert "Xem trang này bằng tiếng Việt" in html
@@ -146,17 +158,47 @@ def test_switcher_points_at_the_counterpart_with_polite_markup(built_site):
     en = _switcher_on(built_site, "index.html")
     assert 'hreflang="vi"' in en
     assert 'href="/vi/"' in en
-    assert 'aria-label="Xem trang này bằng tiếng Việt"' in en
+    assert "aria-label" not in en, (
+        "/ renders the switcher with aria-label (WCAG 2.5.3, #213)"
+    )
     assert 'title="Xem trang này bằng tiếng Việt"' in en
     assert 'lang="vi"' in en and ">VI<" in en
+    assert "Xem trang này bằng tiếng Việt</span>" in en, (
+        "/ must expose the full action as visually-hidden link text (#213)"
+    )
     assert 'aria-hidden="true"' in en
     vi = _switcher_on(built_site, "vi/index.html")
     assert 'hreflang="en"' in vi
     assert 'href="/"' in vi
-    assert 'aria-label="View this page in English"' in vi
+    assert "aria-label" not in vi, (
+        "/vi/ renders the switcher with aria-label (WCAG 2.5.3, #213)"
+    )
     assert 'title="View this page in English"' in vi
     assert 'lang="en"' in vi and ">EN<" in vi
+    assert "View this page in English</span>" in vi, (
+        "/vi/ must expose the full action as visually-hidden link text (#213)"
+    )
     assert 'aria-hidden="true"' in vi
+
+
+@pytest.mark.static
+def test_visually_hidden_utility_is_clipped_not_display_none():
+    """The `.visually-hidden` spans above must stay in the accessible name.
+
+    `display: none` (or `hidden`) would remove the text from the accessible
+    name and reintroduce the #213 mismatch, so the utility must use the clip
+    pattern instead.
+    """
+    scss = conftest.custom_styles_text()
+    match = re.search(r"\.visually-hidden\s*\{(.*?)\}", scss, re.S)
+    assert match, "custom styles define no `.visually-hidden` utility (#213)"
+    body = match.group(1)
+    assert "clip:" in body and "rect(" in body, (
+        "`.visually-hidden` must use the clip pattern, not display:none (#213)"
+    )
+    assert "display: none" not in body and "display:none" not in body, (
+        "`.visually-hidden` must not use display:none (#213)"
+    )
 
 
 # --- browser guards (need Ruby + a browser) ---------------------------------
@@ -199,7 +241,10 @@ def test_mobile_pill_clears_the_hamburger_without_overflow(
         _open(page, built_site_url, path)
         switcher = page.locator(".lang-switcher")
         assert switcher.count() == 1, f"{path}: expected one switcher"
-        assert (switcher.text_content() or "").strip() == code
+        # The pill also carries visually-hidden full-name text (#213), so
+        # only the code span — not the whole link text — must equal the code.
+        code_text = switcher.locator(".lang-switcher__code").text_content()
+        assert (code_text or "").strip() == code
         box = switcher.bounding_box()
         assert box is not None, f"{path}: the switcher has no box at {width}px"
         assert box["width"] >= 44, f"{path}: too narrow ({box['width']})"
