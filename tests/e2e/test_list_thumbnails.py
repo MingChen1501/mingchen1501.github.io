@@ -38,8 +38,10 @@ Guarded here:
   page carries exactly one thumbnail anchor with numeric 120x90 dimensions, local thumbs
   resolve to a file in the build, and the three source cases hold: front
   matter wins over the first body image (EN coffee post), else the first body
-  image (VI coffee post), else the single placeholder tile (imageless
-  orchestration posts, #245);
+  image (VI coffee post), else the single placeholder tile for imageless
+  posts (#245) — every published post currently declares `image:` (#310),
+  so that branch has no live list item and its built-HTML / browser guards
+  skip; the static include guard still covers the tile;
 - (browser) every thumbnail box renders at an identical size at 375px and
   1280px on the EN/VI homes and tag pages — including with images blocked, so
   the reserved box alone (no CLS) already has the final size;
@@ -360,17 +362,20 @@ def test_built_thumbnail_source_chain(built_site):
         f"VI coffee post must use a small body-image variant, got {vi_thumb}"
     )
     assert "placeholder" not in vi_thumb
-    # Else the fixed placeholder: the orchestration posts carry no images,
-    # so their items render the single CSS tile and no thumbnail `img`.
+    # Else front matter `image:` with no body image: the orchestration posts
+    # share one og card (#310), so their items render its small variant.
     for href in (
         "/2026/10/14/setting-up-ai-coding-agent-orchestration.html",
         "/2026/10/17/real-world-agent-orchestration-with-free-opencode.html",
     ):
         src = _list_thumb_by_post(built_site, href)
-        assert src is None, f"{href} must not render a thumbnail img, got {src}"
+        assert src is not None, f"{href} renders no thumbnail img"
+        assert "orchestration-og-240.webp" in src, (
+            f"{href} must use the shared og variant, got {src}"
+        )
         has_div, has_img = _list_placeholder_by_post(built_site, href)
-        assert has_div and not has_img, (
-            f"{href} must render the single placeholder tile with no img"
+        assert (has_div, has_img) == (False, False), (
+            f"{href} must not render the placeholder tile"
         )
 
 
@@ -644,11 +649,22 @@ def test_stylesheet_inlines_the_placeholder_artwork():
 
 
 def test_built_placeholder_items_render_a_single_tile(built_site):
-    """Imageless posts carry one CSS tile and no thumbnail `img`."""
-    hrefs = (
-        "/2026/10/14/setting-up-ai-coding-agent-orchestration.html",
-        "/2026/10/17/real-world-agent-orchestration-with-free-opencode.html",
+    """Imageless posts carry one CSS tile and no thumbnail `img`.
+
+    Every published post currently declares `image:` (#310), so this
+    guard skips until an imageless post exists again; the static
+    include guard still covers the tile itself.
+    """
+    hrefs = sorted(
+        {
+            href
+            for _page_rel, item, _tags, _divs in _list_thumbs(built_site)
+            for href in re.findall(r'href="([^"]+)"', item)
+            if 'post-thumb--placeholder"' in item
+        }
     )
+    if not hrefs:
+        pytest.skip("no placeholder items: every published post has an image")
     problems = []
     for href in hrefs:
         divs = None
@@ -703,12 +719,22 @@ _PLACEHOLDER_THEME_JS = """
     "color_scheme,expected_theme", [("light", "light"), ("dark", "dark")]
 )
 def test_placeholder_tile_follows_the_theme(
-    browser, built_site_url, path, width, color_scheme, expected_theme
+    browser, built_site, built_site_url, path, width, color_scheme,
+    expected_theme,
 ):
     """The single placeholder tile fits the theme: 120x90, no glare (#245)."""
     from io import BytesIO
 
     from PIL import Image, ImageStat
+
+    built_page = built_site / (path.lstrip("/") or "index.html")
+    if "index.html" not in built_page.name:
+        built_page = built_page / "index.html"
+    if "post-thumb--placeholder" not in built_page.read_text(encoding="utf-8"):
+        pytest.skip(
+            f"{path} renders no placeholder tiles: "
+            "every published post has an image (#310)"
+        )
 
     context = browser.new_context(
         viewport={"width": width, "height": 900}, color_scheme=color_scheme

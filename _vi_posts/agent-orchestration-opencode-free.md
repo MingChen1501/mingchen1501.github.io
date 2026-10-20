@@ -6,6 +6,7 @@ date: 2026-10-17
 author: Ming Chen
 title: "Áp dụng orchestration thật: viết bài từ bãi biển với OpenCode bản free"
 tags: [ai-agent]
+image: /assets/img/2026-10-14-setup-ai-coding-agent-orchestration/orchestration-og.jpg
 description: "Đem orchestration cho AI coding agent ra xài thật với OpenCode bản free: orchestrator tự nhặt việc, mình chỉ bấm merge nên viết bài được cả từ bãi biển."
 redirect_from:
   - /2026/10/17/agent-orchestration-opencode-free.html
