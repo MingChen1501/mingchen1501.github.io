@@ -18,6 +18,9 @@
  *   with an accessible name; Esc closes and returns focus to the invoking
  *   image; Left/Right arrows move prev/next within the post (hidden for a
  *   single image); Tab is trapped inside while open; body scroll is locked.
+ *   The viewer `<img>` itself is created on first open only (when a real
+ *   source is available), so the page never carries a src-less image that
+ *   would stall load/decoding checks and screenshot settling.
  * - Touch: a horizontal swipe moves prev/next (optional nicety, same code
  *   path as the arrow keys). No animation anywhere, so there is nothing
  *   for `prefers-reduced-motion` to disable — the stylesheet only removes
@@ -46,6 +49,7 @@
 
   var triggers = [];
   var overlay = null;
+  var dialogFigure = null;
   var dialogImage = null;
   var dialogCaption = null;
   var dialogCounter = null;
@@ -101,6 +105,7 @@
   function open(index, invoking) {
     currentIndex = index;
     invokingTrigger = invoking || null;
+    ensureImage();
     render();
     overlay.hidden = false;
     savedBodyOverflow = document.body.style.overflow;
@@ -193,11 +198,7 @@
     var figure = document.createElement('figure');
     figure.className = 'lightbox__figure';
     dialog.appendChild(figure);
-
-    dialogImage = document.createElement('img');
-    dialogImage.className = 'lightbox__image';
-    dialogImage.setAttribute('alt', '');
-    figure.appendChild(dialogImage);
+    dialogFigure = figure;
 
     dialogCaption = document.createElement('figcaption');
     dialogCaption.className = 'lightbox__caption';
@@ -225,6 +226,18 @@
     });
     backdrop.addEventListener('click', close);
     overlay.addEventListener('keydown', onDialogKeyDown);
+
+    document.body.appendChild(overlay);
+  }
+
+  function ensureImage() {
+    // The viewer image is created on first open only, when a real source
+    // is available: a src-less `<img>` in the DOM would count toward
+    // `document.images` while never decoding and stall settle checks.
+    if (dialogImage) return;
+    dialogImage = document.createElement('img');
+    dialogImage.className = 'lightbox__image';
+    dialogImage.setAttribute('alt', '');
     dialogImage.addEventListener('touchstart', function (event) {
       if (event.touches.length === 1) {
         touchStartX = event.touches[0].clientX;
@@ -238,8 +251,7 @@
       if (delta <= -SWIPE_MIN_PX) move(1);
       else if (delta >= SWIPE_MIN_PX) move(-1);
     });
-
-    document.body.appendChild(overlay);
+    dialogFigure.insertBefore(dialogImage, dialogCaption);
   }
 
   function enhance(img, index) {

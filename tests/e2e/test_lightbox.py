@@ -325,6 +325,33 @@ def _open_first(page, built_site_url, path):
     page.wait_for_selector(".lightbox:not([hidden])", timeout=10_000)
 
 
+def test_unopened_overlay_adds_no_pending_image(built_site_url, page):
+    """The viewer `<img>` is created on first open: before any interaction
+    every image in the document must carry a source and decode, so settle
+    checks (e.g. the visual-baseline `_SETTLE_JS`, #208) see exactly the
+    content images and never stall on a src-less placeholder."""
+    page.goto(built_site_url.rstrip("/") + EN_POST, wait_until="load")
+    page.wait_for_selector(
+        ".post-content img.lightbox-trigger", state="attached", timeout=10_000
+    )
+    # Walk the page so lazy-loaded images decode, mirroring the settle.
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    page.wait_for_timeout(400)
+    page.evaluate("window.scrollTo(0, 0)")
+    page.wait_for_function(
+        "() => Array.from(document.images).every("
+        "(img) => img.complete && img.naturalWidth > 0)",
+        timeout=15_000,
+    )
+    srcs = page.evaluate(
+        "() => Array.from(document.images).map((img) => img.getAttribute('src'))"
+    )
+    assert srcs, "the post page must contain content images to judge"
+    assert all(srcs), (
+        "the unopened overlay must not leave a src-less `<img>` in the DOM"
+    )
+
+
 def _run_axe(page):
     page.add_script_tag(path=str(AXE_JS))
     page.wait_for_function("() => !!window.axe", timeout=15_000)
