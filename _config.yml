@@ -12,8 +12,13 @@ description_en: >
 
 # Minima-specific settings
 minima:
-  # Minima skin selection.
-  skin: classic
+  # Minima skin selection. `auto` is the adaptive skin built on the classic
+  # (light) and dark palettes: readers without JS follow their OS
+  # `prefers-color-scheme` via CSS alone, and the #220 theme toggle pins an
+  # explicit choice through the `data-theme` layer in
+  # `_sass/minima/custom/_theme-toggle.scss`. Light values are identical to
+  # `classic` (same `$lm-*` defaults), so light mode renders unchanged.
+  skin: auto
   date_format: "Bài viết được đăng lúc: %d-%m-%Y."
   show_excerpts: true
 

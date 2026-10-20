@@ -30,3 +30,11 @@
   carries the same build token.
 {%- endcomment -%}
 <script src="/assets/js/lang-switch.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  Theme toggle (#220). A fixed-URL asset like the scripts above, so it
+  carries the same build token: a warm browser must never pair new header
+  markup with an older copy of the toggle. The first-paint theme itself is
+  set by the inline bootstrap in `_includes/head.html`; this deferred script
+  only owns the button from there on.
+{%- endcomment -%}
+<script src="/assets/js/theme-toggle.js?v={{ asset_version }}" defer></script>

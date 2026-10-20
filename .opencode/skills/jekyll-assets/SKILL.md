@@ -50,7 +50,7 @@ deploy.
   in `_includes/head.html`: `/assets/css/style.css?v={{ asset_version }}` and
   `/assets/img/favicon.ico?v={{ asset_version }}`, plus the deferred scripts
   in `_includes/sub-footer.html` (`lazy-load.js`, `nav-toggle.js`,
-  `copy-code.js`, `lang-switch.js`). A new fixed-URL asset needs
+  `copy-code.js`, `lang-switch.js`, `theme-toggle.js`). A new fixed-URL asset needs
   the same `?v=` token.
 - The token is `site.time` (epoch seconds). No plugin, works with GitHub Pages
   `--safe`, `bundle exec jekyll serve` and the E2E build; it changes on every

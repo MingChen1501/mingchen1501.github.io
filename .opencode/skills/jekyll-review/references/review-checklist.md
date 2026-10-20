@@ -41,6 +41,11 @@
 - Only change colors via the skin (`minima.skin`) or the 2 official hooks:
   `_sass/minima/custom-variables.scss` (variables), `_sass/minima/custom-styles.scss`
   (styles). Do not fork a whole partial just to change a few lines.
+- Dark mode (#220): the `auto` skin carries the dark palette as CSS variables;
+  an explicit choice goes through the `html[data-theme]` layer in
+  `_sass/minima/custom/_theme-toggle.scss` (last import), never by editing a
+  skin file. Light-mode rules stay var-identical; new dark rules need the axe
+  contrast guard in both modes (`tests/e2e/test_theme_toggle.py`).
 - Old variable names changed in minima 3.0 (`$brand-color` → `$link-base-color`...),
   using an old name silently applies no style.
 
