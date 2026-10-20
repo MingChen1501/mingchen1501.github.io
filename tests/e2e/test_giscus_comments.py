@@ -467,6 +467,36 @@ def test_production_build_localizes_giscus_lang(prod_site):
     )
 
 
+def test_production_build_localizes_comments_heading(prod_site):
+    """The comments heading follows the page language in production (#142).
+
+    Moved here from ``test_post_chrome_i18n.py`` (#297): this module already
+    owns a production build, so the heading build guard reuses it instead of
+    paying for a second identical production build. The template-branch
+    contract (both the giscus and disqus branches) stays in
+    ``test_post_chrome_i18n.py``.
+    """
+    en_html = (prod_site / EN_POST_REL).read_text(encoding="utf-8")
+    en_title = re.search(
+        r'class="comments__title"[^>]*>(.*?)</h2>', en_html
+    )
+    assert en_title, "the production English post renders no comments heading"
+    assert en_title.group(1).strip() == "Comments", (
+        "the English post comments heading must stay `Comments`"
+    )
+
+    vi_html = (prod_site / VI_POST_REL).read_text(encoding="utf-8")
+    vi_title = re.search(
+        r'class="comments__title"[^>]*>(.*?)</h2>', vi_html
+    )
+    assert vi_title, (
+        "the production Vietnamese post renders no comments heading"
+    )
+    assert vi_title.group(1).strip() == "Bình luận", (
+        "the Vietnamese post comments heading must read `Bình luận`"
+    )
+
+
 def test_production_build_links_the_theme_sync_script(prod_site):
     """The deferred sync script (#258) ships on comment pages, versioned."""
     for post_rel in (EN_POST_REL, VI_POST_REL):

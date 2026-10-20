@@ -293,6 +293,125 @@ declared `thumbnail:`) now declares root-relative `image:` (the former
 image-less posts declare nothing. Never hand-write a second `BlogPosting`
 block: it would duplicate seo-tag's graph with conflicting entities.
 
+## Guard ownership map (#297)
+
+The suite's overlap clusters: which file owns which assertion area, what is
+deliberately duplicated across layers, and what was merged. Static guards
+(no Ruby, no browser) pin the source contract; build guards (needs Ruby, no
+browser) pin the emitted site; browser guards pin runtime behavior. No
+production code changed for this map.
+
+### Comments (`test_comments*.py` + `test_giscus_comments.py`)
+
+Two providers, two owners — the Disqus branch and the Giscus branch are
+separate templates paths, not duplicates of each other:
+
+- Disqus branch template contract (thread div, `disqus_config` URL/ident,
+  embed URL, noscript, per-post and provider-off negatives): static in
+  `test_comments_markup.py`, runtime with stubbed fixtures in
+  `test_comments.py`.
+- Giscus branch template contract (client script + every data attribute,
+  section container, unconfigured branch, theme mapping, sync script tag)
+  plus the production render (section + script, `data-lang`, sync script
+  link, negatives) plus the mocked-client theme-sync behavior: all in
+  `test_giscus_comments.py`, which owns every production build the comments
+  guards need.
+- Comments heading localization (`Bình luận` / `Comments`): the
+  template-branch contract for both branches stays in
+  `test_post_chrome_i18n.py`; the production-render assertion moved to
+  `test_giscus_comments.py`
+  (`test_production_build_localizes_comments_heading`), reusing its
+  production build instead of paying for a second identical one.
+
+Deliberately duplicated (kept): static template guards plus browser/fixture
+behavior guards assert the same invariants at different layers — the markup
+contract versus the runtime behavior. Merged: one duplicate production
+Jekyll build removed (see above); assertion coverage unchanged.
+
+### Footer (`test_footer_*.py`)
+
+Three files, three includes — they read the same built EN/VI homes but
+assert disjoint DOM:
+
+- Description + author-name language (`site.description_en` /
+  `author.name_en` vs the Vietnamese defaults, with cross-language leak
+  checks): `test_footer_i18n.py` (owns `_includes/footer.html` language
+  branching; description walks home/page/tag/post in both languages, author
+  name walks home/post).
+- Email accessible name (#150/#213, visually-hidden span, no `aria-label`,
+  mailto + visible address): `test_footer_email_a11y.py` (owns the
+  `u-email` link only).
+- Social accessible names (#146, `aria-label`, decorative icons) + inline
+  SVG retirement (#254): `test_footer_social_a11y.py` (owns
+  `_includes/social.html` only).
+
+Deliberately duplicated (kept): the static-source plus built-page layering
+inside each file, and the shared EN/VI home reads across files. Merged: the
+repeated first-post discovery preamble in `test_footer_i18n.py` is now one
+`_first_post_rel` helper; assertions unchanged.
+
+### i18n (`test_i18n.py` + `test_seo_bilingual.py` + `test_post_chrome_i18n.py` + `test_footer_i18n.py`)
+
+- Post/collection language plumbing (`lang`/`ref`/pillars, switcher +
+  alternates + fallback notice, canonicals, sidebar/tag language, EN/VI
+  pagination): `test_i18n.py`.
+- Bilingual SEO surface (sitemap alternates per entry + head agreement,
+  llms.txt language sections + URL resolution, feed language split, feed
+  discovery link per language): `test_seo_bilingual.py`.
+- Sitemap structure (parses, unique locs, exclusions, paginated coverage)
+  + `robots.txt`: `test_robots_sitemap_llms.py`.
+- Post chrome headings (sidebar tags heading, comments heading branches):
+  `test_post_chrome_i18n.py` (static); comments heading production render in
+  `test_giscus_comments.py` (see above).
+- Footer description/author language: `test_footer_i18n.py` (footer-only,
+  not `test_i18n.py`); feed language split: `test_seo_bilingual.py` (not
+  `test_i18n.py`).
+
+Deliberately duplicated (kept): sidebar/tag language (`test_i18n.py`, list
+pages) versus footer language (`test_footer_i18n.py`) versus chrome
+headings (`test_post_chrome_i18n.py`) assert different DOM on different page
+kinds. Merged: per-loc file resolution removed from
+`test_robots_sitemap_llms.py` (every sitemap entry's loc resolution is
+asserted, strictly stronger, by the seo alternates guard together with head
+agreement); llms.txt URL resolution consolidated in the seo guard, including
+the `Canonical:` header — the robots-module llms test is deleted with no
+assertion lost.
+
+### Images (`test_check_images.py` + `test_content_images.py` + `test_external_images.py` + `test_vi_alt_text.py`)
+
+- Local budgets (500KB/file, 6MB total, lowercase-hyphen names, dimension
+  ceilings) via `script/check-images`: `test_check_images.py` — the single
+  source of the budget values. (`test_asset_budget.py` owns the JS/CSS byte
+  budgets, a different budget file, not images.)
+- Content-image dimensions/captions/figures (intrinsic `width`/`height`,
+  titled images as figures, excerpt preference, aspect-ratio box):
+  `test_content_images.py`.
+- External attachment URLs (allowlisted hosts from `_data/image_hosts.yml`,
+  no network I/O, alt + dimensions required) via
+  `script/check-external-images`: `test_external_images.py`, including the
+  boundary pin that `script/check-images` still owns only the local budgets.
+- Vietnamese alt meaningfulness (beyond merely non-empty):
+  `test_vi_alt_text.py`.
+
+Deliberately duplicated (kept): intrinsic dimensions (local Markdown,
+`test_content_images.py`) versus external dimensions
+(`test_external_images.py`, different guard + script) versus VI
+meaningfulness (`test_vi_alt_text.py`, qualitative) are three scopes, one
+per image kind. Nothing merged in this cluster.
+
+### Consolidation tally (#297)
+
+- Test count: 751 collected before → 750 after (one llms test deleted as
+  subsumed, one comments-heading test moved — net one fewer module-level
+  production build per run).
+- Assertion coverage is preserved: the per-loc sitemap resolution, every
+  llms.txt URL (bullets + `Canonical:`), and the EN/VI comments heading in
+  production are still asserted, now each in exactly one owner file (see the
+  clusters above for where).
+- Runtime: one fewer full production Jekyll build per suite run (the
+  `test_post_chrome_i18n.py` production build is gone; the shared dev build
+  plus the `test_giscus_comments.py` production builds remain).
+
 ## Shared fixtures (#56)
 
 `tests/e2e/conftest.py` owns the plumbing every module reuses, so a suite run
