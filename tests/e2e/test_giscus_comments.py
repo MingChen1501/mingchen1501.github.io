@@ -48,6 +48,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMMENTS_INCLUDE = REPO_ROOT / "_includes" / "comments.html"
@@ -180,6 +181,25 @@ def _intercept_giscus(browser_page, requests):
 
     browser_page.route("**://giscus.app/**", handler)
     browser_page.route("**://*.giscus.app/**", handler)
+
+
+def _wait_for_network_quiet(browser_page, timeout=5_000):
+    """Bounded settle before asserting that no (further) request arrives.
+
+    A page that must contact *nothing* — or must not retry an aborted load
+    — offers no event to wait on, so the old fixed sleeps could only flake
+    on slow runners (a stray request can arrive after the sleep) or stall
+    fast ones. ``networkidle`` returns as soon as the page is quiet —
+    typically after ~500ms of silence — and the short bound keeps a stray
+    late request from hanging the suite. A bounded wait is unavoidable for
+    a negative network assertion; the recorded route-log assertion that
+    follows is what guards the behavior, and this wait only gives a stray
+    request its chance to show up first (#276).
+    """
+    try:
+        browser_page.wait_for_load_state("networkidle", timeout=timeout)
+    except PlaywrightTimeoutError:
+        pass
 
 
 # --- static guards (no Ruby, no browser) -----------------------------------
@@ -502,7 +522,12 @@ def test_enabled_post_attempts_giscus_load_without_real_network(
     requests = []
     _intercept_giscus(page, requests)
 
-    page.goto(f"{prod_site_url}/{EN_POST_REL}")
+    # Event wait (#276): resolve the moment the stubbed route observes the
+    # client load instead of sleeping a fixed second for it.
+    with page.expect_request(
+        lambda request: "giscus.app" in request.url, timeout=10_000
+    ):
+        page.goto(f"{prod_site_url}/{EN_POST_REL}")
     script = page.locator('script[src="https://giscus.app/client.js"]')
     assert script.count() == 1, (
         "the enabled post must embed exactly one Giscus client script"
@@ -517,9 +542,10 @@ def test_enabled_post_attempts_giscus_load_without_real_network(
         assert script.first.get_attribute(attribute) == value
     assert script.first.get_attribute("data-lang") == "en"
 
-    # Give the page a moment: the aborted client load must not retry off-page
-    # and no other Giscus request may slip past the interception.
-    page.wait_for_timeout(1_000)
+    # Settle on quiet instead of sleeping: the aborted client load must not
+    # retry off-page, and no other Giscus request may slip past the
+    # interception before the log assertions below.
+    _wait_for_network_quiet(page)
     assert requests, "expected the page to attempt the Giscus client load"
     assert all("giscus.app" in url for url in requests), (
         f"every Giscus-bound request must go through the aborting "
@@ -543,7 +569,9 @@ def test_disabled_post_shows_message_and_makes_no_giscus_requests(
     assert (
         page.locator('script[src*="giscus.app"]').count() == 0
     ), "the disabled post must embed no Giscus script"
-    page.wait_for_timeout(1_000)
+    # Settle on quiet instead of sleeping: a stray request shows up in the
+    # recorded log before the emptiness assertion below.
+    _wait_for_network_quiet(page)
     assert requests == [], (
         f"disabled post must not contact Giscus, saw: {requests}"
     )
@@ -561,7 +589,9 @@ def test_comments_off_post_makes_no_giscus_requests(
     assert (
         page.locator('script[src*="giscus.app"]').count() == 0
     ), "the post with comments switched off must embed no Giscus script"
-    page.wait_for_timeout(1_000)
+    # Settle on quiet instead of sleeping: a stray request shows up in the
+    # recorded log before the emptiness assertion below.
+    _wait_for_network_quiet(page)
     assert requests == [], (
         f"page with comments switched off must not contact Giscus, saw: "
         f"{requests}"
@@ -715,9 +745,20 @@ def test_giscus_theme_matches_the_site_theme_and_follows_the_toggle(
 
         test_page.goto(f"{prod_site_url}/{post_rel}")
         test_page.locator("#comments").wait_for(state="attached", timeout=10_000)
-        # Lazy parity: below the fold the client must not boot yet, so the
-        # deferred sync script always primes `data-theme` first.
-        test_page.wait_for_timeout(500)
+        # Lazy parity, without a fixed sleep (#276): first wait for the stub
+        # client to execute (it sets `__giscusBooted = false` on boot-up, so
+        # the assertion below cannot pass trivially before the script runs),
+        # then settle two animation frames to give the lazy
+        # IntersectionObserver its chance to fire. Below the fold it must
+        # not boot yet, so the deferred sync script always primes
+        # `data-theme` first.
+        test_page.wait_for_function(
+            "() => window.__giscusBooted !== undefined", timeout=10_000
+        )
+        test_page.evaluate(
+            "() => new Promise((resolve) => requestAnimationFrame("
+            "() => requestAnimationFrame(resolve)))"
+        )
         assert test_page.evaluate("() => window.__giscusBooted") is False, (
             f"{post_rel}: the lazy client must not boot above the fold"
         )

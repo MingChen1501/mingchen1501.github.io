@@ -7,6 +7,7 @@ without depending on the external disqus.com service.
 """
 
 import pytest
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 E2E_SHORTNAME = "e2e-test-shortname"
 POST_PATH = "/2026/01/01/e2e-sample-post.html"
@@ -44,6 +45,24 @@ def _stub_disqus(browser_page, requests):
             )
 
     browser_page.route("**://*.disqus.com/**", handler)
+
+
+def _wait_for_network_quiet(browser_page, timeout=5_000):
+    """Bounded settle before asserting that no request was made (#276).
+
+    A page that must contact *nothing* offers no event to wait on, so the
+    old fixed sleep could only flake on slow runners (a stray embed can
+    arrive after the sleep) or stall fast ones. ``networkidle`` returns as
+    soon as the page is quiet — typically after ~500ms of silence — and
+    the short bound keeps a stray late request from hanging the suite. A
+    bounded wait is unavoidable for a negative network assertion; the
+    recorded route-log assertion that follows is what guards the behavior,
+    and this wait only gives a stray injection its chance to show up first.
+    """
+    try:
+        browser_page.wait_for_load_state("networkidle", timeout=timeout)
+    except PlaywrightTimeoutError:
+        pass
 
 
 def test_enabled_post_renders_disqus_thread(page, e2e_server):
@@ -119,8 +138,9 @@ def test_disabled_post_shows_message_and_makes_no_disqus_requests(page, e2e_serv
 
     assert "Comments have been disabled for this post." in message.inner_text()
     assert page.locator("#disqus_thread").count() == 0
-    # Give the page a moment: a stray embed injection would show up here.
-    page.wait_for_timeout(1_000)
+    # Settle on quiet instead of sleeping: a stray embed injection shows up
+    # in the recorded log before the emptiness assertion below.
+    _wait_for_network_quiet(page)
     assert [url for url in requests if "disqus.com" in url] == [], (
         f"disabled post must not contact Disqus, saw: {requests}"
     )
@@ -135,7 +155,9 @@ def test_unconfigured_shortname_renders_no_comment_thread(page, e2e_server):
 
     assert page.locator("#disqus_thread").count() == 0
     assert page.locator(".comments-disabled-message").count() == 0
-    page.wait_for_timeout(1_000)
+    # Settle on quiet instead of sleeping: a stray embed injection shows up
+    # in the recorded log before the emptiness assertion below.
+    _wait_for_network_quiet(page)
     assert [url for url in requests if "disqus.com" in url] == [], (
         f"page without a Disqus shortname must not contact Disqus, saw: {requests}"
     )

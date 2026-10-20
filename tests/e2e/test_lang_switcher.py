@@ -227,7 +227,19 @@ def _open(page, built_site_url, path):
         f"{path} did not load (status {response.status if response else 'none'})"
     )
     page.wait_for_selector(".lang-switcher", state="visible", timeout=10_000)
-    page.wait_for_timeout(300)
+    # Deterministic settle (#276): webfonts can shift the pill's box after
+    # paint, so wait for the font set and then two animation frames — the
+    # geometry reads below then observe the painted layout instead of a
+    # mid-layout frame. Resolves in ~2 frames instead of a fixed 300ms on
+    # every engine.
+    page.wait_for_function(
+        "() => !document.fonts || document.fonts.status === 'loaded'",
+        timeout=10_000,
+    )
+    page.evaluate(
+        "() => new Promise((resolve) => requestAnimationFrame("
+        "() => requestAnimationFrame(resolve)))"
+    )
     return page
 
 
