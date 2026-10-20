@@ -1,0 +1,58 @@
+{%- comment -%}
+  Share row (#222): tracker-free sharing for post pages only. Rendered from
+  `_layouts/post.html` at the end of the post column (below the content).
+
+  - The copy-link button carries the canonical post URL in `data-share-url`;
+    `assets/js/share.js` copies it through the Clipboard API with a
+    textarea + execCommand fallback and announces the localized confirmation
+    ("Copied" / "Đã sao chép") in the `role="status"` line below.
+  - The native-share button stays `hidden` until the same script finds
+    `navigator.share`, so browsers without the Web Share API never show a
+    dead control.
+  - The X / Facebook / LinkedIn links are plain share-intent URLs (no
+    third-party SDK or tracker): they work with JS disabled.
+  - Labels follow the page language (`Share` / `Chia sẻ`, `Copy link` /
+    `Sao chép liên kết`); the visible text is the accessible name.
+{%- endcomment -%}
+{%- assign share_lang = page.lang | default: site.lang | default: 'en' -%}
+{%- if share_lang == 'vi' -%}
+  {%- assign share_heading = 'Chia sẻ' -%}
+  {%- assign share_copy = 'Sao chép liên kết' -%}
+  {%- assign share_copied = 'Đã sao chép' -%}
+  {%- assign share_native = 'Chia sẻ…' -%}
+  {%- assign share_x = 'Chia sẻ lên X' -%}
+  {%- assign share_facebook = 'Chia sẻ lên Facebook' -%}
+  {%- assign share_linkedin = 'Chia sẻ lên LinkedIn' -%}
+{%- else -%}
+  {%- assign share_heading = 'Share' -%}
+  {%- assign share_copy = 'Copy link' -%}
+  {%- assign share_copied = 'Copied' -%}
+  {%- assign share_native = 'Share…' -%}
+  {%- assign share_x = 'Share on X' -%}
+  {%- assign share_facebook = 'Share on Facebook' -%}
+  {%- assign share_linkedin = 'Share on LinkedIn' -%}
+{%- endif -%}
+{%- assign share_url = page.url | absolute_url -%}
+{%- assign share_url_encoded = share_url | uri_escape -%}
+{%- assign share_title_encoded = page.title | uri_escape -%}
+<section class="share" aria-labelledby="share-heading">
+  <h2 class="share__heading" id="share-heading">{{ share_heading }}</h2>
+  <ul class="share__list">
+    <li class="share__item">
+      <button type="button" class="share__button share__copy" data-share-url="{{ share_url }}" data-copied-label="{{ share_copied }}">{{ share_copy }}</button>
+    </li>
+    <li class="share__item" data-share-native-item hidden>
+      <button type="button" class="share__button share__native" data-share-url="{{ share_url }}" data-share-title="{{ page.title | escape }}">{{ share_native }}</button>
+    </li>
+    <li class="share__item">
+      <a class="share__link" href="https://twitter.com/intent/tweet?url={{ share_url_encoded }}&amp;text={{ share_title_encoded }}" target="_blank" rel="noopener noreferrer">{{ share_x }}</a>
+    </li>
+    <li class="share__item">
+      <a class="share__link" href="https://www.facebook.com/sharer/sharer.php?u={{ share_url_encoded }}" target="_blank" rel="noopener noreferrer">{{ share_facebook }}</a>
+    </li>
+    <li class="share__item">
+      <a class="share__link" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url_encoded }}" target="_blank" rel="noopener noreferrer">{{ share_linkedin }}</a>
+    </li>
+  </ul>
+  <p class="share__status" role="status" aria-live="polite"></p>
+</section>

@@ -32,6 +32,7 @@ EXPECTED_ORDER = (
     "layout",
     "tags",
     "post",
+    "share",
     "lightbox",
     "sidebar",
     "a11y",
@@ -81,7 +82,13 @@ EXPECTED_VARIABLES = {
 # unchanged. It sits before (not after) the legibility partial because the
 # #148 guard scans everything past its own marker for height budgets, and
 # the dialog image needs `max-height` to fit the viewport.
-EXPECTED_CSS_SHA256 = "5e5c30eca6d9aec2b90854d50ba82466c559bba1391a85b2d31242bd2e5f84f1"
+# #222 (share row): the `share` partial was inserted after `post` (the row
+# lives at the end of the post column). Diffed old vs new before bumping:
+# the only change is the additive `.share` / `.share__*` block (heading,
+# wrapping control list, 44px pill buttons/links, `hidden`-wins rule for the
+# native-share row, reserved-height status line); no existing rule moved,
+# so every other page renders unchanged.
+EXPECTED_CSS_SHA256 = "72502a11ec42a0c4cacf5c3ff433fc57aaec6ea9e42fd749fb80a5208ea5342e"
 
 
 def _imported_partials():
