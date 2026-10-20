@@ -45,6 +45,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 import yaml
 
@@ -197,7 +198,7 @@ def test_search_shell_is_accessible_and_versioned():
     # the build token, and no external origin is ever touched.
     assert "/assets/js/search.js?v=" in html
     assert "/search.json" in html and "?v=" in html
-    assert re.search(r"site\.time", html)
+    assert re.search(r"site\.time", conftest.template_with_includes(SEARCH_INCLUDE))
     assert "http://" not in html and "https://" not in html, (
         "the search shell must not reference any external origin"
     )

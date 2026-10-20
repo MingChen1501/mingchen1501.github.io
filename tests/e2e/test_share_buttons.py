@@ -39,6 +39,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -236,7 +237,7 @@ def test_the_share_script_is_linked_with_the_cache_version_token():
         f"{SUB_FOOTER.relative_to(REPO_ROOT)} must link {SCRIPT_PATH} with the "
         "`?v=` build token, like every other fixed-URL asset (#61)"
     )
-    assert re.search(r"site\.time", html), (
+    assert re.search(r"site\.time", conftest.template_with_includes(SUB_FOOTER)), (
         "the version token must be derived from the build"
     )
 

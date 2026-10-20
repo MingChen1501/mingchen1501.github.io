@@ -10,7 +10,7 @@
   AGENTS.md, "Asset cache versioning"): a warm browser must never pair new
   scripts with an older copy of the helper.
 {%- endcomment -%}
-{%- assign asset_version = site.time | date: '%s' -%}
+{%- include asset-version.html -%}
 <script src="/assets/js/site-utils.js?v={{ asset_version }}" defer></script>
 {%- comment -%}
   Lazy-loading of the content images (#86). The script is a fixed-URL asset, so

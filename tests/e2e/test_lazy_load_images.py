@@ -31,6 +31,7 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -88,13 +89,15 @@ def test_the_script_is_linked_with_the_cache_version_token():
     assert token, "the version token of the script link is missing"
     expression = token.group(1)
     if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", expression):
-        # `{%- assign <token> = <build expression> -%}` in the same include.
+        # `{%- assign <token> = <build expression> -%}` in the same
+        # include or in a shared include it pulls in (#295).
         assign = re.search(
-            rf"assign\s+{re.escape(expression)}\s*=\s*(.+?)\s*-?%\}}", html
+            rf"assign\s+{re.escape(expression)}\s*=\s*(.+?)\s*-?%\}}",
+            conftest.template_with_includes(SUB_FOOTER),
         )
         assert assign, (
             f"the version {expression!r} is never assigned in "
-            f"{SUB_FOOTER.relative_to(REPO_ROOT)}"
+            f"{SUB_FOOTER.relative_to(REPO_ROOT)} or an include it pulls in"
         )
         expression = assign.group(1).strip()
     assert re.search(r"\bsite\.time\b|\bsite\.github\.build_revision\b", expression), (
