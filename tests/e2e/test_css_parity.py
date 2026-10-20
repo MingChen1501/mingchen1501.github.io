@@ -106,7 +106,13 @@ EXPECTED_VARIABLES = {
 # share status color, all `$dm-brand-color-light`). Diffed old vs new
 # before bumping: pure addition in both dark layers (`data-theme` and the
 # no-JS fallback), no existing rule moved, so light mode is pixel-identical.
-EXPECTED_CSS_SHA256 = "6ea76610cf2c78c0d51b865a389d26c43e3d14c1332f3fd2f872bf84d4f2e7ba"
+# #242 (dark-mode print legibility): additive rules inside the existing
+# `@media print` block only (`color-scheme: light`, black plain code text,
+# every Rouge token repinned to its readable light colour). Diffed old vs
+# new before bumping: the only change is that additive print hunk; no
+# existing rule moved and screen media is untouched, so every screen render
+# stays identical.
+EXPECTED_CSS_SHA256 = "a479b0f2c3f9afe6484f57e9db13f4996548dccefa5cbb86bfea30e9ddfeb4f1"
 
 
 def _imported_partials():
