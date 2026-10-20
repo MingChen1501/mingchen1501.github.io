@@ -27,7 +27,9 @@ Guarded here:
   localized no-results state with the count announced via the live region;
   the control is keyboard-operable (desktop-only autofocus, Enter, Escape
   (#243)); neither page scrolls sideways at 375px or 1280px; typing mirrors
-  `?q=` into the URL and reopening it reproduces the results (#243).
+  `?q=` into the URL and reopening it reproduces the results (#243);
+  single-character queries miss with the no-results announcement while
+  longer diacritics queries rank exactly as before (#274).
 
 The browser guards use the session's shared `built_site`/`built_site_url`
 fixtures from `conftest.py` (one `bundle exec jekyll build` for the whole
@@ -75,6 +77,11 @@ VI_FEDORA_POST = "/vi/2026/01/01/migrate-windows-11-to-fedora.html"
 EN_BEACH_POST = "/2026/10/17/real-world-agent-orchestration-with-free-opencode.html"
 VI_BEACH_POST = "/vi/2026/10/17/agent-orchestration-opencode-free.html"
 NONSENSE_QUERY = "zzzqqqxk"
+# #274 fixtures: "agent" ranks the AI-agent setup posts top per language;
+# "ca phe" (diacritics-free) matches only the coffee pair's VI post.
+EN_AGENT_POST = "/2026/10/14/setting-up-ai-coding-agent-orchestration.html"
+VI_AGENT_POST = "/vi/2026/10/14/setup-ai-coding-agent-orchestration.html"
+VI_COFFEE_POST = "/vi/2022/10/27/cach-pha-ca-phe.html"
 
 REQUIRED_FIELDS = ("title", "description", "url", "lang", "tags", "date")
 
@@ -219,6 +226,22 @@ def test_search_script_stays_vanilla_tiny_and_offline():
     assert "fetch(" in text
     assert "data-loaded" in text, (
         "the script must flag the index load so tests can wait on it"
+    )
+
+
+@pytest.mark.static
+def test_search_274_short_tokens_never_score():
+    """#274: one letter occurs in every entry, so tokens under 2 chars never
+    score; a query of only such tokens takes the no-results path (blank
+    input keeps the guidance state)."""
+    text = _read(SEARCH_SCRIPT)
+    assert "w.length > 1" in text, (
+        "tokens() must drop single characters: one letter matches every entry"
+    )
+    assert "tokens(query)" in text
+    assert "showGuidance()" in text, "blank input must keep the guidance state"
+    assert "fill(noResults" in text, (
+        "too-short-only queries must reuse the no-results announcement"
     )
 
 
@@ -635,3 +658,86 @@ def test_initial_focus_is_desktop_only(built_site_url, browser):
         assert _active_element_id(page) != "site-search-input", (
             "a phone-sized touch screen must not steal focus on load"
         )
+
+
+# --- #274 guards: single characters miss, longer queries rank unchanged ----
+
+
+@pytest.mark.parametrize(
+    "path,no_results",
+    [
+        (EN_PATH, "No posts match"),
+        (VI_PATH, "Không có bài nào khớp"),
+    ],
+)
+@pytest.mark.parametrize("query", ["a", "đ"])
+def test_single_character_query_shows_no_results(
+    path, no_results, query, built_site_url, browser
+):
+    """#274: one letter occurs in every entry (even after `đ` folds to `d`),
+    so it must miss with the live-region announcement instead of listing
+    the whole index — while still mirroring into `?q=` for deep links."""
+    for page in _viewport(browser, built_site_url, 1280):
+        _open(page, built_site_url, path)
+        _search(page, query)
+        assert page.locator("#site-search-results .search__item").count() == 0, (
+            f"{path} query {query!r}: a single character must match nothing"
+        )
+        empty = page.locator("#site-search-empty")
+        assert empty.is_visible(), (
+            f"{path} query {query!r}: the no-results state never showed"
+        )
+        assert no_results in empty.inner_text()
+        status = page.locator("#site-search-status").inner_text().strip()
+        assert no_results in status
+        # The miss stays shareable: the query mirrors into ?q= and reopening
+        # the link reproduces the same no-results state.
+        page.wait_for_function(
+            "() => window.location.search.indexOf('q=') !== -1",
+            timeout=10_000,
+        )
+        shared_url = page.url
+        reloaded = page.goto(shared_url, wait_until="load")
+        assert reloaded is not None and reloaded.status == 200
+        page.wait_for_selector("#site-search[data-loaded]", timeout=10_000)
+        page.wait_for_function(
+            "() => !document.getElementById('site-search-empty').hidden",
+            timeout=10_000,
+        )
+        assert no_results in page.locator("#site-search-empty").inner_text()
+
+
+@pytest.mark.parametrize(
+    "path,query,expected",
+    [
+        (EN_PATH, "ca phe", VI_COFFEE_POST),
+        (VI_PATH, "ca phe", VI_COFFEE_POST),
+        (EN_PATH, "agent", EN_AGENT_POST),
+        (VI_PATH, "agent", VI_AGENT_POST),
+    ],
+)
+def test_274_longer_queries_rank_unchanged(
+    path, query, expected, built_site_url, browser
+):
+    """#274: ignoring 1-char tokens changes nothing for longer queries —
+    diacritics folding (`ca phe`), AND ranking and language order intact."""
+    for page in _viewport(browser, built_site_url, 1280):
+        _open(page, built_site_url, path)
+        _search(page, query)
+        assert _top_href(page) == expected, (
+            f"{path} query {query!r}: top result is {_top_href(page)!r}, "
+            f"expected {expected!r}"
+        )
+
+
+@pytest.mark.parametrize("path", [EN_PATH, VI_PATH])
+def test_two_character_query_still_searches(path, built_site_url, browser):
+    """#274: the 2-char floor drops only single characters — `ai` (10 hits
+    across the index) still returns results with an announced count."""
+    for page in _viewport(browser, built_site_url, 1280):
+        _open(page, built_site_url, path)
+        _search(page, "ai")
+        assert page.locator("#site-search-results .search__item").count() > 0, (
+            f"{path}: a 2-char query must still search, not show no-results"
+        )
+        assert page.locator("#site-search-status").inner_text().strip()

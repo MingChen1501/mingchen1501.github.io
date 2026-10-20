@@ -6,7 +6,8 @@
  * other page pays for either.
  *
  * Matching is diacritics-insensitive (Vietnamese tones and `đ` fold to their
- * ASCII base), so `ca phe` finds `cà phê`. Every query word must occur
+ * ASCII base), so `ca phe` finds `cà phê`. Tokens under 2 chars never
+ * score (#274). Every query word must occur
  * somewhere (AND); a title hit scores above a description/tag hit, and
  * results in the page language rank above the other language. Counts and the
  * no-results state are announced through the `role="status"` region in the
@@ -28,7 +29,7 @@
   }
 
   function tokens(query) {
-    return norm(query).split(/[^a-z0-9]+/).filter(function (w) { return w; });
+    return norm(query).split(/[^a-z0-9]+/).filter(function (w) { return w.length > 1; });
   }
 
   function entryText(entry) {
@@ -121,7 +122,16 @@
     function run(query) {
       var words = tokens(query);
       if (!words.length) {
-        showGuidance();
+        // #274: blank keeps guidance; only too-short tokens is no-results.
+        if (!query.trim()) {
+          showGuidance();
+          return;
+        }
+        guidance.hidden = true;
+        list.textContent = '';
+        empty.textContent = fill(noResults, '{q}', query.trim());
+        empty.hidden = false;
+        status.textContent = empty.textContent;
         return;
       }
       guidance.hidden = true;
