@@ -83,9 +83,16 @@ Follow the `jekyll-post` skill (read its SKILL.md and
 
 Use issue attachment URLs
 (`https://github.com/user-attachments/assets/...`) directly in the post
-body. Never download, convert, or commit them into `assets/img/`. If a
+body. Never download, convert, or commit them into `assets/img/`.
+Scope split: attachment images are covered by the `article-writer`
+skill; committed local images are covered by the `jekyll-assets`
+skill — never mix the two flows. If a
 local image is genuinely required, follow the `jekyll-assets` skill (each
 file <= 500KB, `assets/img/` total <= 6MB) and run `script/check-images`.
+
+Any image generated or created for the post uses ENGLISH text only,
+for both the EN and the VI version (alt text stays localized to the
+page language). The owner may override this per post.
 
 ## Verification
 

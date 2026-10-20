@@ -112,9 +112,13 @@ Check by eye after build + tests are green, since some bugs only appear in produ
   `risk-high`, `risk-very-high`, or a missing label => explicit owner approval.
 - If the reviewer raises the risk above the planned label, the orchestrator
   escalates to the owner instead of merging.
-- Review flow: review happens after the PR is up (never before); reviewers are
-  dedicated AO worker sessions; verdicts posted as COMMENT (self-approval
-  blocked); role separation issue-writer/dev/reviewer/fixer.
+- Review flow: review happens after the PR is up (never before);
+  reviewers are dedicated manual worker sessions targeting the PR of
+  the owning worker session (native reviewer broken/disabled — never
+  `ao review trigger`); verdicts posted as GitHub COMMENT carrying
+  APPROVE/CHANGES_REQUESTED (self-approval blocked); merge gate is
+  COMMENT APPROVE + green CI + risk-low/medium; role separation
+  issue-writer/dev/reviewer/fixer.
 - CI/review routing: send failing output and review findings to the responsible
   worker; do not resolve conflicts or make code changes in the orchestrator.
 - Model separation (#76): workers and reviewers run on a model different from
