@@ -40,10 +40,14 @@
   `site.minima.date_format` (the verbose Vietnamese string used on the home
   list and post pages) does not fit a 300px column.
 
-  Thumbnail resolution: `post.image`, else the first image of the post body,
-  else no thumbnail at all (no placeholder art). No `thumb-*` files are
-  generated: `assets/img/` runs close to its 6MB budget
-  (see `script/check-images`).
+  Thumbnail resolution (#308): `post.image`, else the first image of the post
+  body, else no thumbnail at all (no placeholder art). Local sources never
+  load the original: the URL is mapped to the small cover-cropped variant
+  from `script/generate-thumbnails` (`/assets/img/` -> `/assets/img/thumbs/`,
+  `-240.webp`, 240x180) with the same `?v=` build token as the list
+  thumbnails in `_includes/post-thumbnail.html`, and the `img` carries
+  matching `width="120" height="90"` so the browser reserves the box before
+  the first byte arrives (no CLS).
 
   List, post and tag-page chips come from the shared include, the single
   source of the chip markup (#45/#47). The summary label below reuses only
@@ -161,14 +165,33 @@
           {%- if sidebar_thumb contains '://' -%}
             {%- assign sidebar_thumb_url = sidebar_thumb -%}
           {%- else -%}
-            {%- assign sidebar_thumb_url = sidebar_thumb | relative_url -%}
+            {%- comment -%}
+              Local sources never load the original (#308): the same
+              `/assets/img/` -> `/assets/img/thumbs/` plus `-240.webp`
+              mapping as `_includes/post-thumbnail.html`, so the sidebar
+              reuses the small cover-cropped variant the list already
+              downloads instead of the full-size file a second time.
+            {%- endcomment -%}
+            {%- assign sidebar_thumb_url = sidebar_thumb -%}
+            {%- if sidebar_thumb contains '/assets/img/' -%}
+              {%- assign sidebar_thumb_url = sidebar_thumb_url | replace: '/assets/img/', '/assets/img/thumbs/' -%}
+              {%- assign sidebar_thumb_url = sidebar_thumb_url | replace: '.jpeg', '-240.webp' | replace: '.jpg', '-240.webp' | replace: '.png', '-240.webp' | replace: '.gif', '-240.webp' -%}
+              {%- if sidebar_thumb_url contains '.webp' -%}
+                {%- unless sidebar_thumb_url contains '-240.webp' -%}
+                  {%- assign sidebar_thumb_url = sidebar_thumb_url | replace: '.webp', '-240.webp' -%}
+                {%- endunless -%}
+              {%- endif -%}
+            {%- endif -%}
+            {%- assign sidebar_thumb_url = sidebar_thumb_url | relative_url -%}
+            {%- assign sidebar_thumb_version = site.time | date: '%s' -%}
+            {%- assign sidebar_thumb_url = sidebar_thumb_url | append: '?v=' | append: sidebar_thumb_version -%}
           {%- endif -%}
           {%- comment -%}
             The thumbnail repeats the title link next to it, so it is hidden
             from screen readers and skipped by the tab order.
           {%- endcomment -%}
           <a class="sidebar-post__thumb" href="{{ sidebar_post.url | relative_url }}" tabindex="-1" aria-hidden="true">
-            <img src="{{ sidebar_thumb_url }}" alt="" loading="lazy" decoding="async">
+            <img src="{{ sidebar_thumb_url }}" width="120" height="90" alt="" loading="lazy" decoding="async">
           </a>
         {%- endif -%}
         <div class="sidebar-post__body">

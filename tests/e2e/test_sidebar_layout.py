@@ -436,10 +436,18 @@ def test_sidebar_thumbnail_falls_back_to_the_first_body_image():
     assert "sidebar_post.image" in html
     assert "split: '<img'" in html
     assert """split: 'src="'""" in html
-    # No placeholder art and no new image files: a post without an image simply
-    # renders without a thumbnail (`assets/img/` runs close to its budget).
-    assert "/assets/img/" not in html
-    assert not re.search(r"thumb-[a-z0-9-]+\.(jpg|jpeg|png|webp)", html)
+    # #308: local sources reuse the small cover-cropped variants from
+    # `script/generate-thumbnails` (the same mapping as the list
+    # thumbnails), never the full-size originals — with explicit dimensions
+    # so the browser reserves the box (no CLS).
+    assert "/assets/img/thumbs/" in html
+    assert "-240.webp" in html
+    assert 'width="120" height="90"' in html
+    assert "?v=" in html
+    # No placeholder art and no sidebar-specific image files: a post without
+    # an image simply renders without a thumbnail.
+    assert "post-thumb__placeholder" not in html
+    assert "placeholder.svg" not in html
 
 
 @pytest.mark.static
