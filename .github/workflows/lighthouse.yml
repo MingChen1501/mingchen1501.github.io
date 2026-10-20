@@ -138,6 +138,10 @@ jobs:
           name: lighthouse-report-desktop
           path: .lighthouseci/
           retention-days: 7
+          # .lighthouseci/ is a dot-directory, skipped by default (#319).
+          include-hidden-files: true
+          # Fail loudly on a future miss instead of warning (#319).
+          if-no-files-found: error
 
   # Mobile-emulation pass (#273): default (mobile) emulation, no `desktop`
   # preset, over `/`, the photo-heavy Tet 2023 posts (EN/VI, full-size
@@ -180,6 +184,10 @@ jobs:
           name: lighthouse-report-mobile
           path: .lighthouseci/
           retention-days: 7
+          # .lighthouseci/ is a dot-directory, skipped by default (#319).
+          include-hidden-files: true
+          # Fail loudly on a future miss instead of warning (#319).
+          if-no-files-found: error
 
   # Stable aggregator for branch protection (#229): see E2E suite result.
   lighthouse-summary:
