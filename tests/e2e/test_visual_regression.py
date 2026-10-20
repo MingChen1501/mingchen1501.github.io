@@ -107,7 +107,7 @@ CASES = (
     ("post-vi", "/vi/2022/10/27/cach-pha-ca-phe.html"),
     ("tags-index-en", "/tags/index.html"),
     ("tags-index-vi", "/vi/tags/index.html"),
-    ("tag-page-en", "/tags/doi-song/index.html"),
+    ("tag-page-en", "/tags/life/index.html"),
     ("tag-page-vi", "/vi/tags/doi-song/index.html"),
     ("about-en", "/about/index.html"),
     ("about-vi", "/vi/about/index.html"),
