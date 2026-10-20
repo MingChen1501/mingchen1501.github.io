@@ -10,25 +10,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SITE_URL = "https://mingchen.id.vn"
 
 
-def _file_for(site_dir: Path, url: str) -> Path:
-    """Map a site URL onto the file that serves it inside the built site."""
-    if url.startswith(SITE_URL):
-        path = url[len(SITE_URL):]
-    elif url.startswith("http://mingchen.id.vn"):
-        path = url[len("http://mingchen.id.vn"):]
-    else:
-        path = url
-
-    if path in ("", "/"):
-        return site_dir / "index.html"
-    path_clean = path.lstrip("/")
-    if path_clean.endswith("/"):
-        return site_dir / path_clean / "index.html"
-    if (site_dir / path_clean).suffix == "":
-        return site_dir / path_clean / "index.html"
-    return site_dir / path_clean
-
-
 def test_robots_txt_exists_and_has_required_content(built_site):
     """robots.txt exists in the build with the required directives verbatim."""
     robots_path = built_site / "robots.txt"

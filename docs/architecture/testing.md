@@ -52,7 +52,9 @@ skill maps each touch area to its guard test.
 
 ## Known findings
 
-- #297 — overlap clusters with no documented owner: comments
+- #297 — overlap clusters with no documented owner (resolved by #302, which
+  recorded per-guard ownership in the sitemap/seo/comments/footer/i18n/image
+  docstrings and merged strict dupes): comments
   (`test_comments.py` + `test_comments_markup.py` + `test_giscus_comments.py`),
   footer (`test_footer_email_a11y.py` + `test_footer_i18n.py` +
   `test_footer_social_a11y.py`), i18n (`test_i18n.py` +
