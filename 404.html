@@ -1,24 +1,33 @@
 ---
 layout: base
+title: "Page not found | Không tìm thấy trang"
 ---
 
-<style type="text/css" media="screen">
-  .container {
-    margin: 10px auto;
-    max-width: 600px;
-    text-align: center;
-  }
-  h1 {
-    margin: 30px 0;
-    font-size: 4em;
-    line-height: 1;
-    letter-spacing: -1px;
-  }
-</style>
+<article class="post">
+  <header class="post-header">
+    <h1 class="post-title">404</h1>
+    <p class="post-meta"><span lang="en">Page not found</span> · <span lang="vi">Không tìm thấy trang</span></p>
+  </header>
 
-<div class="container">
-  <h1>404</h1>
+  <div class="post-content">
+    <section lang="en" aria-labelledby="not-found-en-heading">
+      <h2 id="not-found-en-heading">Page not found</h2>
+      <p><strong>Sorry!</strong> The page you are looking for does not exist or has moved.</p>
+      <ul>
+        <li><a href="{{ '/' | relative_url }}">Home</a></li>
+        <li><a href="{{ '/search/' | relative_url }}">Search posts</a></li>
+        <li><a href="{{ '/tags/' | relative_url }}">Tags</a></li>
+      </ul>
+    </section>
 
-  <p><strong>Page not found :(</strong></p>
-  <p>The requested page could not be found.</p>
-</div>
+    <section lang="vi" aria-labelledby="not-found-vi-heading">
+      <h2 id="not-found-vi-heading">Không tìm thấy trang</h2>
+      <p><strong>Rất tiếc!</strong> Trang bạn tìm không tồn tại hoặc đã được di chuyển.</p>
+      <ul>
+        <li><a href="{{ '/vi/' | relative_url }}">Trang chủ</a></li>
+        <li><a href="{{ '/vi/tim-kiem/' | relative_url }}">Tìm kiếm bài viết</a></li>
+        <li><a href="{{ '/tags/' | relative_url }}" hreflang="en">Tags</a></li>
+      </ul>
+    </section>
+  </div>
+</article>
