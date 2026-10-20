@@ -7,6 +7,14 @@ on:
   pull_request:
     branches:
       - master
+  # Full-run override (#229): dispatch with full=true (the default) forces
+  # the browser matrix even on a content-only change set.
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Force the full browser matrix (true) or classify the branch diff (false)"
+        required: false
+        default: "true"
 
 # A superseded push cancels its in-flight run instead of letting a whole
 # duplicate run finish (#56).
@@ -15,8 +23,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Content-only classification (#229): a PR that touches only content paths
+  # (_posts/**, _vi_posts/**, assets/img/**, _data/highlights.yml) sets
+  # content_only=true and skips the heavy browser matrix. Any code path --
+  # or any uncertain diff -- defaults to the full suite. No silent skip.
+  classify:
+    name: "Classify content-only vs full run"
+    runs-on: "ubuntu-latest"
+    outputs:
+      content_only: ${{ steps.classify.outputs.content_only }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: classify
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.full }}" = "true" ]; then
+            echo "workflow_dispatch full=true override: forcing full run."
+            echo "content_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="origin/${{ github.base_ref }}...HEAD"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            RANGE="${{ github.event.before }} ${{ github.sha }}"
+          else
+            echo "No base available for diff: defaulting to the full suite."
+            echo "content_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # shellcheck disable=SC2086
+          if FILES=$(git diff --name-only $RANGE 2>/dev/null); then
+            echo "Changed files:"
+            echo "$FILES"
+            echo "$FILES" | script/classify-content-only >> "$GITHUB_OUTPUT"
+          else
+            echo "Diff unavailable: defaulting to the full suite."
+            echo "content_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # Fast, browser-free guards (image budget, comments/tag markup): no Ruby, no
-  # Chromium, no Jekyll build, so they report in seconds (#56).
+  # Chromium, no Jekyll build, so they report in seconds (#56). Always run,
+  # including on content-only PRs (#229).
   static-guards:
     name: "E2E static guards"
     runs-on: "ubuntu-latest"
@@ -43,9 +93,12 @@ jobs:
   # (`tests/e2e/conftest.py`), and the browser guards that use them — once
   # per engine (#209). The three jobs run in parallel, so PR wall-clock is
   # the slowest engine, not the sum (measured runtimes per engine live in
-  # `tests/e2e/README.md`, "Browser matrix").
+  # `tests/e2e/README.md`, "Browser matrix"). Skipped on content-only PRs
+  # (#229): new posts cannot break layout, JS, or Sass.
   browser-e2e:
     name: "E2E browser (${{ matrix.browser }}): comments, layout, tag chips"
+    needs: classify
+    if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
     strategy:
       # One engine failing must not hide the others' results.
@@ -100,3 +153,23 @@ jobs:
           name: visual-fresh-${{ matrix.browser }}
           path: tests/e2e/visual/fresh/
           if-no-files-found: error
+
+  # Stable aggregator for branch protection (#229): a skipped browser matrix
+  # reports "skipped", which never satisfies a required check, so protect
+  # THIS job instead. It passes when the full matrix passed, or when a
+  # content-only PR skipped the matrix with green static guards.
+  e2e-summary:
+    name: "E2E suite result"
+    runs-on: "ubuntu-latest"
+    needs: [classify, static-guards, browser-e2e]
+    if: always()
+    steps:
+      - name: Report suite result
+        run: |
+          if [ "${{ needs.classify.outputs.content_only }}" = "true" ]; then
+            echo "Content-only PR: browser matrix skipped by design (#229)."
+            [ "${{ needs.static-guards.result }}" = "success" ]
+          else
+            [ "${{ needs.static-guards.result }}" = "success" ] && \
+            [ "${{ needs.browser-e2e.result }}" = "success" ]
+          fi

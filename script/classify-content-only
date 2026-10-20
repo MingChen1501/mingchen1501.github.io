@@ -1,0 +1,55 @@
+#!/bin/sh
+# Classify a PR's changed files as content-only or full-run (issue #229).
+#
+# content_only=true only when EVERY changed file matches a content path:
+#   _posts/**, _vi_posts/**, assets/img/**, _data/highlights.yml
+# Any other path (layouts, includes, sass, JS, config, tests, script,
+# .github, or anything unknown) -- or an empty/uncertain file list --
+# means content_only=false (run the full suite). Never silently skip.
+#
+# Usage:
+#   git diff --name-only <base>...<head> | script/classify-content-only
+#   script/classify-content-only <file> [<file> ...]
+# Prints "content_only=true|false" (suitable for >> "$GITHUB_OUTPUT").
+set -u
+
+classify_path() {
+  case "$1" in
+    _posts/*|_vi_posts/*|assets/img/*|_data/highlights.yml)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+content_only=true
+saw_file=false
+
+if [ "$#" -gt 0 ]; then
+  for f in "$@"; do
+    saw_file=true
+    if ! classify_path "$f"; then
+      content_only=false
+      break
+    fi
+  done
+else
+  while IFS= read -r f || [ -n "$f" ]; do
+    # Skip blank lines (e.g. trailing newline).
+    [ -z "$f" ] && continue
+    saw_file=true
+    if ! classify_path "$f"; then
+      content_only=false
+      break
+    fi
+  done
+fi
+
+# Empty or unreadable input means classification is uncertain: run everything.
+if [ "$saw_file" = false ]; then
+  content_only=false
+fi
+
+echo "content_only=$content_only"
