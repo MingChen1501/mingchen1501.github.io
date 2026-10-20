@@ -10,6 +10,9 @@ trigger: "Adding site images, touching assets/, or changing asset serving/cachin
 
 Site images live under `assets/img/<post-slug>/` (matching the post filename
 slug) and are committed to git (compress-local by default; no CDN or Git LFS).
+Scope split (canonical: `article-writer` skill): article issue attachment
+images stay at direct attachment URLs and are never committed here —
+this section covers committed local images only.
 
 - Location: `assets/img/<post-slug>/`.
 - Naming: lowercase, hyphen-separated, no spaces, quotes, diacritics, or

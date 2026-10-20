@@ -93,6 +93,9 @@ Issue attachment images are embedded DIRECTLY by URL — never
 downloaded, converted, or committed into `assets/img/`. This is an
 explicit workaround (no dedicated image host available; see #193
 "Workaround status / migration"), not the long-term architecture.
+Scope split (canonical): attachment images live at direct URLs and are
+covered here; committed local images live under `assets/img/` and are
+covered by the `jekyll-assets` skill — never mix the two flows.
 
 Validate each URL before embedding; every one must pass all checks:
 
@@ -101,7 +104,12 @@ Validate each URL before embedding; every one must pass all checks:
    (`github.com/user-attachments/assets/...` or the equivalent
    `user-attachments` host shown on the issue).
 3. The URL is public (renders logged-out / in an incognito window).
-4. Every image has descriptive alt text.
+4. Every image has descriptive alt text (localized to the page language:
+   Vietnamese alt on VI pages, English alt on EN pages).
+5. Any image generated or created for the post (cover images, diagrams,
+   annotated screenshots, social cards) uses ENGLISH text only, for
+   both the EN and the VI version. Do not generate Vietnamese text
+   inside images. The owner may override this per post.
 
 Embed with standard Markdown image syntax carrying the alt text. If a
 URL fails any check, stop and ask the owner for a replacement — do not

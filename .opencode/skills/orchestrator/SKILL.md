@@ -6,6 +6,12 @@ trigger: "Coordinating AO sessions for mingchen-site: wake cues, pool sizing, ro
 
 # Standing orchestration rules (mingchen-site)
 
+Precedence (canonical: `AGENTS.md`): owner instruction > project cues >
+`AGENTS.md` > skills > agent files. This skill is the canonical home
+for wake cadence, pool, spawning, review/merge flow, risk labels, and
+publishing scope; `jekyll-review` / `jekyll-verify` reference checklists
+link here for orchestration rules instead of restating them.
+
 This skill codifies the automation cues and standing rules that the orchestrator
 follows. A fresh orchestrator reading this can reproduce the wake/pool/review/
 merge behaviour without prior session context. Details for site-specific review
@@ -94,10 +100,12 @@ Spawning:
 
 ## Pool
 
-- At most **one task worker at a time**, plus **one buffer worker** reserved
-  only for creating issues/tasks when the owner asks.
-- A "task worker" is any session doing implementation, a fix, a PR update, a
-  review, or a merge.
+- At most **one task worker at a time**, plus **one buffer worker**
+  reserved only for creating issues/tasks when the owner asks (owner
+  rule, supersedes the older 2-worker pool texts still present in
+  project cues/config — owner update pending, see Related).
+- A "task worker" is any session doing implementation, a fix, a PR
+  update, a review, or a merge.
 - Never spawn a second task worker for independent queued work; queue it and
   start it only when the active task worker finishes.
 - The buffer worker must not run implementation, fix, review, or merge work.
@@ -171,15 +179,19 @@ not a guarantee of provider behaviour.
 
 ## Review flow
 
-- Reviewers are **dedicated AO worker sessions** because the native AO reviewer
-  is broken/disabled for this project.
-- Review verdicts are posted as a GitHub **COMMENT** (GitHub blocks
-  self-approval; an APPROVE from the same account is not possible).
-- Review happens **after the PR is up**, never before. Never review a diff that
-  has no PR yet.
+- Reviews use the **AO native reviewer** (`ao review trigger` / `ao
+  review ls` on the owning worker session) — it is canonical. A
+  dedicated worker review session is the fallback only when the native
+  reviewer stalls (the old "native broken, manual only" note is stale
+  pending owner confirmation — see Related).
+- Native review verdicts are internal: an AO approval is not a GitHub
+  approval and does not satisfy required/independent-account reviews
+  or branch protection.
+- Review happens **after the PR is up**, never before. Never review a
+  diff that has no PR yet.
 - A review session counts as a task worker (see Pool).
-- Route review findings to the responsible worker; do not fix code in the
-  orchestrator.
+- Route review findings to the responsible worker; do not fix code in
+  the orchestrator.
 
 ## Merge method
 
@@ -285,4 +297,20 @@ Checklist (each review starts from the pinned baseline, never re-derived):
   `references/review-checklist.md`.
 - Site verify rules: `.opencode/skills/jekyll-verify/SKILL.md` and
   `references/checklist.md`.
+- Worker role: `.opencode/skills/worker/SKILL.md` (scope, branching,
+  PR workflow, report contract). Buffer role:
+  `.opencode/agents/buffer-worker.md`.
 - AO CLI catalog: `.opencode/skills/using-ao/SKILL.md`.
+- Pending owner cue/config updates (CLI cannot edit/delete cues —
+  apply via desktop/project settings): retire or rewrite
+  `native-review-broken-manual` (stale "native broken" claim vs
+  native-first flow above); align pool texts to one task worker +
+  buffer (`enforce-pool-before-spawn`, `pool-3-watcher-5min`,
+  `continuous-improvement-loop`, `buffer-worker-issue-first`,
+  `worker-lifecycle-guard`, `ops-levels-day-night`, project config
+  `orchestratorRules` still says 2 workers); align merge/approval
+  texts to autonomous low/medium merge (`standing-build-authority`
+  and `publish-and-review` currently require human approval for
+  every merge); fix `worker-report-contract` ("auto-swap model" —
+  a worker cannot swap its own model, rotation is the
+  orchestrator's job).

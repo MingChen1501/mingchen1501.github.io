@@ -3,6 +3,20 @@
 Ming's personal site (https://mingchen.id.vn), forked from the Jekyll minima
 theme, deployed with GitHub Pages from the `master` branch.
 
+Precedence: owner instruction > project cues > `AGENTS.md` > skills >
+agent files. One rule lives normatively in exactly one place; other
+files link to it instead of restating it.
+
+## Roles (each role starts from its file)
+
+| Role | Read |
+|---|---|
+| Orchestrator (spawn, pool, review/merge flow) | `orchestrator` skill |
+| Worker/implementer (scope, branch, PR, report) | `worker` skill |
+| Reviewer (checklist, risk label, verdict) | `.opencode/agents/site-reviewer.md` + `jekyll-review` skill |
+| Article writer (EN+VI pair, one PR) | `.opencode/agents/article-writer.md` + `article-writer` skill |
+| Buffer (file issues only, no implementation) | `.opencode/agents/buffer-worker.md` |
+
 ## Commands (every task)
 
 - Preview real content: `bundle exec jekyll serve` (uses `_config.yml`;

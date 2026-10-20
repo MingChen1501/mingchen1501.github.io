@@ -104,8 +104,9 @@ analysis files). Do not rewrite historical artifacts.
 
 - Review happens **after the PR is up**, never before. Do not review a diff that
   has no PR yet.
-- Reviewers are **dedicated AO worker sessions** (the native AO reviewer is
-  broken/disabled for this project); one worker = one small task = one PR.
+- Reviews use the **AO native reviewer** (canonical); a dedicated worker
+  review session is the fallback when the native reviewer stalls (one
+  worker = one small task = one PR).
 - Role separation: issue-writer / dev / reviewer / fixer are separate sessions.
   When a user-created ticket's PR is up, kill that session and spawn a dedicated
   review worker (create follow-up issues if any). Do not let one session both

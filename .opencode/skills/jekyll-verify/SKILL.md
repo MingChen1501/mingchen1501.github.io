@@ -48,6 +48,7 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
    alive until the child merges. See `references/checklist.md` "Merge and
    orchestration".
 10. Concurrency: a verify session is part of task-worker work — do not run it
-    alongside another task worker; queue it (see `references/checklist.md`
-    "Concurrency").
+    alongside another task worker; queue it. Pool (canonical:
+    `orchestrator` skill): one task worker at a time plus one buffer
+    worker (see `references/checklist.md` "Concurrency").
 11. On a failure at any step → fix it, then rerun from that step. Do not open a PR while red.
