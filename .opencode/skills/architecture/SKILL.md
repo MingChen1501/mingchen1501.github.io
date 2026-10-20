@@ -34,6 +34,11 @@ belongs where), coupling notes (who includes/imports whom),
 known findings (linked issues), and open questions. Keep specs
 short; link out instead of restating.
 
+Current spec set (see `docs/architecture/overview.md` for the map):
+`content-pipeline.md`, `styling.md`, `javascript.md`, `testing.md`,
+`data-model.md`, `decisions/` (ADR template + ADRs). Update the spec
+when a PR changes the structure it describes.
+
 ## Issue-filing format
 
 One small issue per refactor (one worker = one PR downstream),
