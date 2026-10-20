@@ -192,8 +192,10 @@ E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
   renders zero boxes (the PDF plugin area covers it); headless WebKit has
   no PDF plugin intercept, renders the fallback link inline, and the rule
   never fires there. The waiver stays enforced where it applies.
-- Measured local runtime for `-m "not static"` (one shared Jekyll build
-  plus 194 browser tests): Chromium ~2m20s, Firefox ~3m10s, WebKit ~2m50s.
+- Measured runtime for `-m "not static"` (one shared Jekyll build
+  plus 194 browser tests): locally Chromium ~2m20s, Firefox ~3m10s,
+  WebKit ~2m50s; CI job durations (build + `install --with-deps` + suite)
+  Chromium 2m09s, Firefox 1m58s, WebKit 1m48s.
   The three CI jobs run in parallel, so PR wall-clock is the slowest
   engine, not the sum — cheap enough that every PR runs the full matrix
   (no smoke/nightly split).
