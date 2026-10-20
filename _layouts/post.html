@@ -3,6 +3,23 @@ layout: base
 ---
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
+  {%- comment -%}
+    Reading progress + back-to-top (#224): post pages only. Both controls
+    ship with the `hidden` attribute, so readers without JS render neither
+    a dead 0% bar nor a dead button; `assets/js/reading-progress.js`
+    (deferred, `sub-footer.html`) reveals the bar and drives both at
+    runtime (0-100% width + `aria-valuenow`, button past ~600px of scroll).
+    Both are `position: fixed` (`custom/_reading-progress.scss`), so they
+    float above the page and never shift layout. Labels follow the page
+    language (`Reading progress` / `Tiến độ đọc`, `Back to top` /
+    `Về đầu trang`) like `post_lang` below.
+  {%- endcomment -%}
+  {%- assign rp_lang = page.lang | default: site.lang | default: 'en' -%}
+  <div class="reading-progress" hidden>
+    <div class="reading-progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="{% if rp_lang == 'vi' %}Tiến độ đọc{% else %}Reading progress{% endif %}"></div>
+  </div>
+  <button type="button" class="back-to-top" hidden>{% if rp_lang == 'vi' %}Về đầu trang{% else %}Back to top{% endif %}</button>
+
   <div class="post-layout">
     <div class="post-main">
 
