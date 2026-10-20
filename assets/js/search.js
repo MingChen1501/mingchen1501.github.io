@@ -10,7 +10,10 @@
  * somewhere (AND); a title hit scores above a description/tag hit, and
  * results in the page language rank above the other language. Counts and the
  * no-results state are announced through the `role="status"` region in the
- * markup; `?q=` deep-links a query (and preserves a no-JS form submit).
+ * markup; `?q=` deep-links a query (and preserves a no-JS form submit),
+ * mirrored back on input via `history.replaceState` (cleared when empty)
+ * so filtered views stay shareable. Focus stays desktop-only: coarse
+ * pointers / narrow screens skip it, no mobile keyboard-pop.
  */
 (function () {
   var TITLE_HIT = 3;
@@ -148,17 +151,42 @@
       status.textContent = message;
     }
 
+    // Mirror the query into `?q=` with replaceState (shareable, no
+    // history spam); empty clears it. Path (EN/VI) is untouched.
+    function syncUrl(query) {
+      try {
+        var url = new URL(window.location.href);
+        var q = (query || '').trim();
+        if (q) url.searchParams.set('q', q);
+        else url.searchParams.delete('q');
+        history.replaceState(null, '', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+
+    // Desktop-only focus: coarse pointers / narrow screens skip it, so
+    // phones never get a keyboard-pop on load.
+    function shouldAutofocus() {
+      try {
+        var mm = window.matchMedia;
+        if (mm && (mm('(pointer: coarse)').matches || mm('(max-width: 768px)').matches)) return false;
+      } catch (e) {}
+      return true;
+    }
+
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       run(input.value);
+      syncUrl(input.value);
     });
     input.addEventListener('input', function () {
       run(input.value);
+      syncUrl(input.value);
     });
     input.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && input.value) {
         input.value = '';
         run('');
+        syncUrl('');
         input.focus();
       }
     });
@@ -189,7 +217,7 @@
         status.textContent = loadError;
       });
 
-    input.focus();
+    if (shouldAutofocus()) input.focus();
   }
 
   if (document.readyState === 'loading') {

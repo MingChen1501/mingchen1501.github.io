@@ -12,8 +12,12 @@
   reloads the page with `?q=`); the result count / no-results state is
   announced through the `role="status"` + `aria-live="polite"` region; every
   result is a plain link, so Tab reaches them in order. The script focuses
-  the input on load (a dedicated search page, like a browser find box) and
-  Escape clears the query back to the guidance state.
+  the input on load on desktop only (coarse-pointer / narrow viewports skip
+  it so phones never get a keyboard-pop) and Escape clears the query back
+  to the guidance state while dropping `?q=` from the URL. Typing mirrors
+  the live query into `?q=` via `history.replaceState` (#243, no history
+  spam) so every filtered view is shareable; the page path (EN/VI) never
+  changes, only the query string.
 
   Asset cache versioning (#61): the script and the lazily fetched index both
   carry the `site.time` build token, like every other fixed-URL asset — the
