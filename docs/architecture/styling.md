@@ -18,7 +18,7 @@ Layers, in cascade order:
 
 1. Upstream minima: `_base.scss` (306 lines), `_layout.scss` (458 lines),
    `initialize.scss` (50 lines) — forked, rarely touched.
-2. Skins (`skins/`, 6 files): `auto.scss` (active) builds on `classic` +
+2. Skins (`skins/`, 3 files): `auto.scss` (active) builds on `classic` +
    `dark`; `classic.scss` / `dark.scss` re-export `auto`.
 3. Site partials (`custom/`, 17 files + `_variables.scss`): one scope per
    file, imported in fixed order by `custom-styles.scss` (last import
@@ -61,10 +61,12 @@ single-concern and healthy.
 - #295 — implemented: the `asset_version` assignment lives once in
   `_includes/asset-version.html`, included by `head.html`,
   `sub-footer.html`, and `search.html`.
-- #296 — `skins/solarized.scss`, `solarized-light.scss`,
-  `solarized-dark.scss` have no importer while the skin is `auto`
-  (grep over `.scss`/`.yml`/`.html` finds only self-references);
-  `style.css` is unaffected by their removal.
+- #296 — implemented: `skins/solarized.scss`, `solarized-light.scss`,
+  `solarized-dark.scss` had no importer while the skin is `auto`
+  (grep over `.scss`/`.yml`/`.html` found only self-references), so they
+  were deleted; `test_skin_reachability.py` fails if an unreachable skin
+  file reappears. A future skin switch re-adds the wanted file instead of
+  keeping dead ones.
 
 ## Open questions
 
