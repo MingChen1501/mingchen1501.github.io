@@ -1,0 +1,56 @@
+{%- comment -%}
+  Fixed-size list thumbnail (#226): every item on the list pages
+  (`_layouts/home.html`, `_layouts/tag.html`, both languages) renders through
+  this include, so every item gets an identical 120x90 (4:3) box.
+
+  Source chain per post: front matter `thumbnail`, else front matter `image`,
+  else the first image of the post body, else the fixed built-in placeholder
+  (`assets/img/placeholder.svg`) for posts with no image. `post.content` here
+  is the rendered HTML, so the body fallback splits on `<img` exactly like
+  `_includes/site-sidebar.html` does.
+
+  Local sources never load the original: the URL is mapped to the small
+  cover-cropped variant from `script/generate-thumbnails`
+  (`/assets/img/` -> `/assets/img/thumbs/`, `-240.webp`, 240x180) and carries
+  the same `?v=` build token as the other fixed-URL assets (see the cache
+  rules in the `jekyll-assets` skill). External issue-attachment URLs cannot
+  be resized — those keep this CSS fixed box and the bandwidth note lives in
+  the README image conventions and the #226 PR body.
+
+  `width`/`height` match the CSS box so the browser reserves the space before
+  the first byte arrives (no CLS); `object-fit: cover` in
+  `_sass/minima/custom/_list-thumbs.scss` crops inside that box without
+  stretching it. The link repeats the title link next to it, so — like the
+  sidebar thumbnails — it is hidden from screen readers and skipped by the tab
+  order (`tabindex="-1"`, `aria-hidden`, empty `alt`).
+
+  Locals are `thumb_*`-prefixed so nothing here collides with the caller.
+{%- endcomment -%}
+{%- assign thumb_src = include.post.thumbnail | default: include.post.image | default: '' -%}
+{%- if thumb_src == '' -%}
+  {%- assign thumb_body_parts = include.post.content | split: '<img' -%}
+  {%- if thumb_body_parts.size > 1 -%}
+    {%- assign thumb_src = thumb_body_parts[1] | split: 'src="' | last | split: '"' | first -%}
+  {%- endif -%}
+{%- endif -%}
+{%- if thumb_src == '' -%}
+  {%- assign thumb_src = '/assets/img/placeholder.svg' -%}
+{%- endif -%}
+{%- if thumb_src contains '://' -%}
+  {%- assign thumb_url = thumb_src -%}
+{%- else -%}
+  {%- assign thumb_url = thumb_src -%}
+  {%- if thumb_src contains '/assets/img/' and thumb_src != '/assets/img/placeholder.svg' -%}
+    {%- assign thumb_url = thumb_src | replace: '/assets/img/', '/assets/img/thumbs/' -%}
+    {%- assign thumb_url = thumb_url | replace: '.jpeg', '-240.webp' | replace: '.jpg', '-240.webp' | replace: '.png', '-240.webp' | replace: '.gif', '-240.webp' -%}
+    {%- if thumb_url contains '.webp' -%}
+      {%- unless thumb_url contains '-240.webp' -%}
+        {%- assign thumb_url = thumb_url | replace: '.webp', '-240.webp' -%}
+      {%- endunless -%}
+    {%- endif -%}
+  {%- endif -%}
+  {%- assign thumb_url = thumb_url | relative_url -%}
+  {%- assign thumb_version = site.time | date: '%s' -%}
+  {%- assign thumb_url = thumb_url | append: '?v=' | append: thumb_version -%}
+{%- endif -%}
+<a class="post-thumb" href="{{ include.post.url | relative_url }}" tabindex="-1" aria-hidden="true"><img src="{{ thumb_url }}" width="120" height="90" alt="" loading="lazy" decoding="async"></a>

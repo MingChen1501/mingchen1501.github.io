@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Generate small WebP variants for the fixed-size list thumbnails (#226).
+
+List pages (`_layouts/home.html`, `_layouts/tag.html`) render every item with
+the same 120x90 box through `_includes/post-thumbnail.html`, whose source
+chain is: front matter `thumbnail`/`image`, else the first image of the post
+body, else the built-in `assets/img/placeholder.svg`. Loading the original
+files there would download 1600px images for a 120px box, so this script
+pre-generates a small cover-cropped variant for every local thumbnail source:
+
+    /assets/img/<slug>/<name>.jpg  ->  assets/img/thumbs/<slug>/<name>-240.webp
+
+The variant is 240x180 (exactly 4:3, 2x the 120x90 CSS box for retina) and the
+include maps the original URL to it with the same rule, so the two must never
+drift: the mapping lives here (`variant_relpath`) and in
+`_includes/post-thumbnail.html` (`/assets/img/` -> `/assets/img/thumbs/` plus
+`-240.webp`). External issue-attachment URLs cannot be resized — those keep
+the CSS fixed box and are left untouched by this script (bandwidth note in the
+PR and in the README image conventions).
+
+Usage:
+    script/generate-thumbnails          # (re)generate every variant
+    script/generate-thumbnails --check  # fail when a variant is missing/stale
+
+Run it after adding or changing a post image, then commit the variants (they
+are plain files under `assets/img/`, covered by the `script/check-images`
+budget). The `#226` E2E guard fails with this command in its message when a
+variant is missing.
+"""
+import os
+import re
+import sys
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+POSTS_DIRS = ("_posts", "_vi_posts")
+THUMBS_PREFIX = "assets/img/thumbs/"
+VARIANT_SUFFIX = "-240.webp"
+VARIANT_SIZE = (240, 180)
+WEBP_QUALITY = 70
+
+FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
+FRONT_MATTER_IMG_RE = re.compile(r"^(?:thumbnail|image):\s*([^\s#]+)\s*$", re.M)
+MD_IMG_RE = re.compile(r"!\[[^\]]*\]\((/assets/[^\s)]+)(?:\s+\"[^\"]*\")?\)")
+HTML_IMG_RE = re.compile(r'<img\b[^>]*\bsrc="([^"]+)"', re.S)
+
+
+def post_sources():
+    """Yield (post_path, original_site_path) for every local thumbnail source."""
+    seen = {}
+    for posts_dir in POSTS_DIRS:
+        directory = os.path.join(REPO_ROOT, posts_dir)
+        if not os.path.isdir(directory):
+            continue
+        for name in sorted(os.listdir(directory)):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(directory, name)
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read()
+            match = FRONT_MATTER_RE.match(text)
+            front_matter = match.group(1) if match else ""
+            body = text[match.end():] if match else text
+            if re.search(r"^published:\s*false\s*$", front_matter, re.M):
+                continue
+            src = None
+            fm_match = FRONT_MATTER_IMG_RE.search(front_matter)
+            if fm_match:
+                candidate = fm_match.group(1).strip("\"'")
+                if candidate.startswith("/assets/"):
+                    src = candidate
+            if src is None:
+                candidates = []
+                for found in MD_IMG_RE.finditer(body):
+                    candidates.append((found.start(), found.group(1)))
+                for found in HTML_IMG_RE.finditer(body):
+                    candidates.append((found.start(), found.group(1)))
+                candidates.sort()
+                for _, candidate in candidates:
+                    if candidate.startswith("/assets/"):
+                        src = candidate
+                        break
+            if src is not None and "://" not in src:
+                seen.setdefault(src, path)
+    return seen
+
+
+def variant_relpath(src):
+    """Map a `/assets/...` site path to its variant repo-relative path."""
+    rel = src.lstrip("/")
+    base, _ext = os.path.splitext(rel)
+    variant = base + VARIANT_SUFFIX
+    return variant.replace("assets/img/", THUMBS_PREFIX, 1)
+
+
+def generate(src):
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        print(
+            "ERROR: Pillow is required (pip install Pillow) to generate "
+            "thumbnail variants.",
+            file=sys.stderr,
+        )
+        return False
+    original = os.path.join(REPO_ROOT, src.lstrip("/"))
+    variant = os.path.join(REPO_ROOT, variant_relpath(src))
+    if not os.path.isfile(original):
+        print(f"ERROR: thumbnail source not found: {src}", file=sys.stderr)
+        return False
+    os.makedirs(os.path.dirname(variant), exist_ok=True)
+    with Image.open(original) as im:
+        im = ImageOps.exif_transpose(im)
+        if im.mode in ("RGBA", "LA"):
+            background = Image.new("RGB", im.size, (255, 255, 255))
+            background.paste(im, mask=im.split()[-1])
+            im = background
+        elif im.mode != "RGB":
+            im = im.convert("RGB")
+        cover = ImageOps.fit(im, VARIANT_SIZE, Image.LANCZOS)
+        cover.save(variant, "WEBP", quality=WEBP_QUALITY, method=6)
+    size = os.path.getsize(variant)
+    print(f"wrote {os.path.relpath(variant, REPO_ROOT)} ({size} bytes)")
+    return True
+
+
+def check(src):
+    variant = os.path.join(REPO_ROOT, variant_relpath(src))
+    original = os.path.join(REPO_ROOT, src.lstrip("/"))
+    if not os.path.isfile(variant):
+        print(f"MISSING: {os.path.relpath(variant, REPO_ROOT)} (from {src})")
+        return False
+    if os.path.getmtime(variant) < os.path.getmtime(original):
+        print(f"STALE: {os.path.relpath(variant, REPO_ROOT)} is older than {src}")
+        return False
+    try:
+        from PIL import Image
+    except ImportError:
+        return True
+    with Image.open(variant) as im:
+        if im.size != VARIANT_SIZE or im.format != "WEBP":
+            print(
+                f"BAD: {os.path.relpath(variant, REPO_ROOT)} is "
+                f"{im.format} {im.size}, want WEBP {VARIANT_SIZE}"
+            )
+            return False
+    return True
+
+
+def main(argv):
+    check_only = "--check" in argv
+    sources = post_sources()
+    if not sources:
+        print("no local thumbnail sources found")
+        return 0
+    ok = True
+    for src in sorted(sources):
+        if check_only:
+            ok = check(src) and ok
+        else:
+            ok = generate(src) and ok
+    if check_only:
+        if ok:
+            print(f"OK: {len(sources)} thumbnail variants fresh.")
+        else:
+            print("Run script/generate-thumbnails and commit the variants.")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

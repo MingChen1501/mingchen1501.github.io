@@ -38,6 +38,30 @@ this section covers committed local images only.
   rewrite it in place (image URLs are content-addressed, not versioned).
 - Optimize with imagemin/squoosh before commit.
 
+## List thumbnails (#226)
+
+The home list and the tag pages (`_layouts/home.html`, `_layouts/tag.html`,
+both languages) show post imagery again through one shared include,
+`_includes/post-thumbnail.html`, with a fixed 120x90 (4:3) box for every
+item (`_sass/minima/custom/_list-thumbs.scss`: `width`/`height` 120x90,
+`object-fit: cover`, load-bearing `padding: 0` against the base `img` rule).
+
+- Source chain per post: front matter `thumbnail`, else front matter `image`,
+  else the first image of the post body, else the fixed built-in placeholder
+  (`assets/img/placeholder.svg`). The include emits `width="120" height="90"`
+  so the box is reserved before the first byte (no CLS).
+- Local sources never load the original: `script/generate-thumbnails`
+  pre-generates 240x180 cover-cropped WebP variants
+  (`assets/img/thumbs/<slug>/<name>-240.webp`) committed inside the 6MB
+  budget — rerun it after adding or changing a post image. The URL mapping
+  lives in both the script and the include; keep them in sync.
+- External attachment URLs cannot be resized: they keep the same fixed CSS
+  box at full attachment bytes (documented bandwidth trade-off).
+- Guards: `tests/e2e/test_list_thumbnails.py` (chain order, identical
+  rendered box at 375/768/1280px, placeholder for imageless posts, box
+  reserved with images blocked). Never touch `_layouts/post.html` for list
+  thumbnails.
+
 ## Asset cache versioning (#61)
 
 GitHub Pages serves `assets/**` (via Cloudflare) with `cache-control:

@@ -517,11 +517,21 @@ def test_custom_styles_define_the_sidebar_grid():
         scss,
     ), "the post sidebar must keep its own sticky rule at the two-column breakpoint"
     # The thumbnail keeps the source ratio (the #50 guard measures real rects):
-    # capped in a box, never cropped and never upscaled.
+    # capped in a box, never cropped and never upscaled. List-item thumbnails
+    # (#226) intentionally differ: they crop inside a fixed 120x90 box, so the
+    # no-crop rule below is scoped to the sidebar rule only.
     assert re.search(
         r"\.sidebar-post__thumb img\s*\{[^}]*max-width: 96px;[^}]*max-height: 60px;", scss
     )
-    assert "object-fit" not in scss, "thumbnails are not cropped to a fixed ratio"
+    sidebar_thumb_rule = re.search(
+        r"\.sidebar-post__thumb img\s*\{[^}]*\}", scss
+    ).group(0)
+    assert "object-fit" not in sidebar_thumb_rule, (
+        "sidebar thumbnails are not cropped to a fixed ratio"
+    )
+    assert re.search(
+        r"\.post-thumb img\s*\{[^}]*object-fit: cover;", scss
+    ), "list thumbnails crop inside the fixed 120x90 box (#226)"
     # `_sass/minima/_base.scss` gives every `img` 20px of padding inside its
     # border box, which would distort a two-`max-*` box (see the comment there);
     # the thumbnail resets it.

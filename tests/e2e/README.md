@@ -43,6 +43,29 @@ third-party requests are aborted).
   measured image overhang while the tracked #50 image regression is present
   (PR #51 owns that fix) and becomes strict once images stop overhanging.
 
+## List thumbnails (`test_list_thumbnails.py`)
+
+Guard for #226. The home/tag lists show post imagery again, but every item
+shares one fixed 120x90 (4:3) box (`_includes/post-thumbnail.html`), so the
+list never shifts while images load.
+
+- Source chain per post: front matter `thumbnail`, else front matter `image`,
+  else the first image of the post body, else the fixed built-in placeholder
+  (`assets/img/placeholder.svg`) for posts with no image.
+- Local sources map to small 240x180 cover-cropped WebP variants
+  (`assets/img/thumbs/...`, from `script/generate-thumbnails` — rerun it
+  after adding or changing a post image and commit the variants), so lists
+  never download the 1600px originals. External issue-attachment URLs cannot
+  be resized and keep the same fixed CSS box.
+- Static (no Ruby, no browser): the chain order, the 120x90 attributes, the
+  `object-fit: cover` box, and the freshness of every expected variant.
+- Built HTML: every list item on the EN/VI homes and tag pages carries exactly
+  one sized thumbnail resolving to a file in the build; the three source cases
+  hold (front matter wins, else first body image, else placeholder).
+- Browser: every thumbnail box renders at an identical 120x90 CSS px at
+  375/768/1280px on the EN/VI homes and tag pages — including with images
+  blocked, so the reserved box alone already has the final size (no CLS).
+
 ## Layout overflow guard (`test_layout_overflow.py`)
 
 Regression guard for #50. `img { max-width: 100%; padding: 20px }` used the
