@@ -9,7 +9,7 @@ image: /assets/img/2026-10-14-setup-ai-coding-agent-orchestration/orchestration-
 description: "Putting AI coding-agent orchestration to real use with free OpenCode: the orchestrator picks up the work, I just press merge — even from the beach."
 ---
 
->Last time I just tried setting up orchestration for AI coding agents. This time I put it to real use — and something happened I didn't expect: I'm writing this post from the beach, and all I have to do is press merge.
+>Last time I [just tried setting up orchestration for AI coding agents](/2026/10/14/setting-up-ai-coding-agent-orchestration.html). This time I put it to real use — and something happened I didn't expect: I'm writing this post from the beach, and all I have to do is press merge.
 
 ## This time it's not a "trial" anymore
 
