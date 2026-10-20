@@ -34,6 +34,7 @@ EXPECTED_ORDER = (
     "post",
     "share",
     "lightbox",
+    "reading-progress",
     "sidebar",
     "a11y",
     "header",
@@ -88,7 +89,13 @@ EXPECTED_VARIABLES = {
 # wrapping control list, 44px pill buttons/links, `hidden`-wins rule for the
 # native-share row, reserved-height status line); no existing rule moved,
 # so every other page renders unchanged.
-EXPECTED_CSS_SHA256 = "72502a11ec42a0c4cacf5c3ff433fc57aaec6ea9e42fd749fb80a5208ea5342e"
+# #224 (reading progress): the `reading-progress` partial was inserted after
+# `lightbox` (post-page enhancement cluster). Diffed old vs new before
+# bumping: the only change is the additive `.reading-progress` /
+# `.reading-progress__bar` / `.back-to-top` block (fixed 4px bar with a
+# transparent track, fixed 44px pill, `hidden`-wins rules, reduced-motion
+# pin); no existing rule moved, so every other page renders unchanged.
+EXPECTED_CSS_SHA256 = "efc2dbc967dbc320651659598e30b1b9a0c449560db5ac35346fba4cbc1eb8d5"
 
 
 def _imported_partials():

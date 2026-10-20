@@ -1,0 +1,85 @@
+// #174: reading progress + back-to-top (#224). Follows `custom/_share.scss`
+// and `custom/_lightbox.scss` (post-page progressive enhancement) and stays
+// before the #148 legibility pass, whose guard scans everything after its
+// own marker.
+// ---------------------------------------------------------------------------
+// Reading progress (#224): a thin fixed bar pinned to the top of the
+// viewport plus a back-to-top pill floating above the content's bottom-right
+// corner. Both render on post pages only (`_layouts/post.html`), both ship
+// with the `hidden` attribute so readers without JS never see a dead 0%
+// bar or a dead button, and `assets/js/reading-progress.js` reveals and
+// drives them at runtime.
+//
+// Layout-shift discipline: both controls are `position: fixed` with
+// `pointer-events: none` on the bar (it never intercepts taps) — they float
+// above the page and occupy no in-flow box, so revealing, growing or hiding
+// them moves nothing. The bar container is transparent (no visible track),
+// so at 0% width — the state every visual-baseline capture (#208) rests in
+// — it paints zero pixels and the post baselines stay byte-identical.
+// ---------------------------------------------------------------------------
+
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  height: 4px;
+  pointer-events: none;
+  background: transparent;
+}
+
+// `hidden` must win so the no-JS/at-rest page shows no bar at all (the UA
+// `[hidden]` style alone is reliable here — no display rule competes — but
+// the explicit rule keeps the promise next to the markup, like `.share`).
+.reading-progress[hidden] {
+  display: none;
+}
+
+.reading-progress__bar {
+  height: 100%;
+  width: 0;
+  background: $brand-color;
+  transition: width 0.1s linear;
+}
+
+.back-to-top {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 900;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid $border-color-01;
+  border-radius: 8px;
+  background: $background-color;
+  color: $text-color;
+  font-size: $small-font-size;
+  line-height: 1.4;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+// `hidden` must win over the pill layout above (same reason as
+// `.share__item[hidden]`), so pre-threshold and no-JS readers are never
+// offered a dead control.
+.back-to-top[hidden] {
+  display: none;
+}
+
+.back-to-top:hover {
+  border-color: $brand-color-dark;
+}
+
+// Keyboard focus uses the global `:focus-visible` rule
+// (`custom/_a11y.scss`), which already covers buttons — no local override,
+// so the button never goes dark.
+
+// Smooth width/filter changes are motion: readers who asked for reduced
+// motion get the state change with no transition.
+@media (prefers-reduced-motion: reduce) {
+  .reading-progress__bar {
+    transition: none;
+  }
+}

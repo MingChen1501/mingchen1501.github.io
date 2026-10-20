@@ -54,3 +54,11 @@
   so it carries the same build token.
 {%- endcomment -%}
 <script src="/assets/js/share.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  Reading progress + back-to-top (#224). Progressive enhancement only: both
+  controls ship `hidden` in `_layouts/post.html` (post pages only), so
+  without JS neither renders; this script reveals the bar and drives both
+  at runtime. A fixed-URL asset like the scripts above, so it carries the
+  same build token.
+{%- endcomment -%}
+<script src="/assets/js/reading-progress.js?v={{ asset_version }}" defer></script>
