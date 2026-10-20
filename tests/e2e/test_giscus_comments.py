@@ -14,6 +14,15 @@ closes that gap. Comments stay gated off in development builds
 - negative cases: ``comments: false`` renders the disabled message with no
   embed, and a build whose comments provider is off renders no embed at all.
 
+Theme sync (#258) rides on top: ``assets/js/giscus-theme.js`` primes the
+embed's ``data-theme`` to the site-mapped Giscus theme before the lazy iframe
+boots and re-sends the Giscus ``setConfig`` postMessage on every theme flip
+and iframe load, without reloading. The guards below pin the template wiring
+(mapping attributes, deferred versioned script tag), the script contract
+(postMessage shape/origin, iframe query, silent fallback) and the runtime
+behavior with a mocked Giscus client (initial paint + toggle flip in all
+four OS x site combos, EN + VI, zero real network, no iframe replacement).
+
 Static guards (no Ruby, no browser) pin the template contract; build guards
 (need Ruby, no browser) pin the emitted markup; browser guards drive the
 production pages with the Giscus routes aborted.
@@ -61,6 +70,10 @@ EXPECTED_ATTRS = {
     "data-category-id": "DIC_kwDOHBJg8M4DIbBW",
     "data-mapping": "pathname",
     "data-theme": "preferred_color_scheme",
+    # The site-to-Giscus theme map (#258): the page default stays the OS
+    # setting, and the sync script swaps it for one of these at runtime.
+    "data-light-theme": "light",
+    "data-dark-theme": "dark",
 }
 DISABLED_MESSAGE = "Comments have been disabled for this post."
 UNAVAILABLE_MESSAGE = "Comments are temporarily unavailable."
@@ -215,6 +228,113 @@ def test_comments_include_has_unconfigured_branch_without_script():
     )
 
 
+@pytest.mark.static
+def test_comments_include_wires_the_giscus_theme_mapping():
+    """The site-to-Giscus theme map (#258) rides on the embed script tag."""
+    html = _read(COMMENTS_INCLUDE)
+    for attribute, liquid in (
+        ("data-light-theme", "site.giscus.light_theme"),
+        ("data-dark-theme", "site.giscus.dark_theme"),
+    ):
+        assert f'{attribute}="{{{{ {liquid}' in html, (
+            f"the Giscus script tag must wire {attribute} from `{liquid}`"
+        )
+
+
+@pytest.mark.static
+def test_comments_include_loads_the_theme_sync_script():
+    """The first-party sync script (#258) ships deferred and versioned."""
+    html = _read(COMMENTS_INCLUDE)
+    match = re.search(
+        r'<script src="(/assets/js/giscus-theme\.js\?v=([^"]+))" defer></script>',
+        html,
+    )
+    assert match, (
+        "comments.html must load giscus-theme.js deferred with the `?v=` "
+        "build token (#61: a warm browser must never pair new markup with "
+        "an old sync script)"
+    )
+    # The token must derive from the build, not from a literal.
+    assert "site.time" in html, (
+        "the sync script version token must be derived from the build"
+    )
+    # Inside the configured branch only: comment-less and unconfigured pages
+    # fetch nothing.
+    branch = html.index("site.giscus.repo != blank")
+    fallback = html.index("comments-unavailable")
+    assert branch < match.start() < fallback, (
+        "the sync script tag must live inside the configured Giscus branch"
+    )
+
+
+SYNC_SCRIPT = REPO_ROOT / "assets" / "js" / "giscus-theme.js"
+
+# Same tiny-script budget as the sibling header scripts (#114, #126, #220):
+# the sync script is fetched on every comment page view.
+MAX_SYNC_SCRIPT_BYTES = 3584
+MAX_SYNC_SCRIPT_CODE_LINES = 80
+
+
+@pytest.mark.static
+def test_giscus_theme_script_exists_and_stays_tiny():
+    assert SYNC_SCRIPT.is_file(), f"{SYNC_SCRIPT.relative_to(REPO_ROOT)} is missing"
+    text = _read(SYNC_SCRIPT)
+    assert len(text.encode("utf-8")) <= MAX_SYNC_SCRIPT_BYTES, (
+        "the Giscus sync script must stay tiny; it is fetched on every "
+        "comment page view"
+    )
+    code = [
+        line
+        for line in text.splitlines()
+        if line.strip() and not line.strip().startswith(("/*", "*", "//"))
+    ]
+    assert len(code) <= MAX_SYNC_SCRIPT_CODE_LINES, (
+        f"the Giscus sync script has {len(code)} code lines, expected at "
+        f"most {MAX_SYNC_SCRIPT_CODE_LINES}"
+    )
+    # No dependency, no build step: the file runs as it is served.
+    assert "import " not in text and "require(" not in text, (
+        "the Giscus sync script must not depend on anything"
+    )
+
+
+@pytest.mark.static
+def test_giscus_theme_script_syncs_via_the_postmessage_api():
+    """The runtime contract (#258): setConfig without reload, silent fallback."""
+    text = _read(SYNC_SCRIPT)
+    assert "iframe.giscus-frame" in text, (
+        "the sync must target the Giscus iframe (never a full reload)"
+    )
+    assert "setConfig" in text and "postMessage" in text, (
+        "theme flips must go through the Giscus `setConfig` postMessage API"
+    )
+    assert "'https://giscus.app'" in text or '"https://giscus.app"' in text, (
+        "the postMessage must be addressed at the Giscus origin"
+    )
+    assert "data-theme" in text, (
+        "the script must prime the embed's `data-theme` before the lazy "
+        "iframe boots and follow `html[data-theme]` afterwards"
+    )
+    assert "MutationObserver" in text, (
+        "later flips (toggle clicks, OS changes) must be observed via the "
+        "`html[data-theme]` attribute the toggle owns"
+    )
+    assert "data-light-theme" in text and "data-dark-theme" in text, (
+        "the site theme must map through the configured Giscus light/dark "
+        "themes, never a hardcoded pair"
+    )
+    assert text.count("try") >= 2 and "catch" in text, (
+        "a missing iframe or an unavailable postMessage API must fall back "
+        "to the page default silently"
+    )
+    # No third-party script beyond the existing embed: the only remote origin
+    # this script may name is Giscus itself.
+    remotes = re.findall(r"https://[A-Za-z0-9.-]+", text)
+    assert remotes and all(url == "https://giscus.app" for url in remotes), (
+        f"the sync script must name no remote origin but Giscus, got {remotes}"
+    )
+
+
 # --- production builds (need Ruby; no browser) ------------------------------
 
 
@@ -327,6 +447,24 @@ def test_production_build_localizes_giscus_lang(prod_site):
     )
 
 
+def test_production_build_links_the_theme_sync_script(prod_site):
+    """The deferred sync script (#258) ships on comment pages, versioned."""
+    for post_rel in (EN_POST_REL, VI_POST_REL):
+        html = (prod_site / post_rel).read_text(encoding="utf-8")
+        match = re.search(
+            r'<script src="(/assets/js/giscus-theme\.js\?v=([^"]+))" defer>'
+            r"</script>",
+            html,
+        )
+        assert match, (
+            f"{post_rel} must link the deferred Giscus theme sync script"
+        )
+        assert re.fullmatch(r"\d+", match.group(2)), (
+            f"{post_rel}: the sync script token must be a non-empty epoch, "
+            f"got {match.group(2)!r}"
+        )
+
+
 def test_comments_off_build_renders_no_embed(prod_site_comments_off):
     for post_rel in (EN_POST_REL, VI_POST_REL):
         html = (prod_site_comments_off / post_rel).read_text(encoding="utf-8")
@@ -369,7 +507,13 @@ def test_enabled_post_attempts_giscus_load_without_real_network(
     assert script.count() == 1, (
         "the enabled post must embed exactly one Giscus client script"
     )
+    # `data-theme` is deliberately skipped here: the #258 sync script reprimes
+    # it at runtime to the site-mapped theme, so the live value depends on the
+    # painted theme. The shipped default stays pinned on the built file in
+    # `test_production_build_renders_giscus_section_and_script`.
     for attribute, value in EXPECTED_ATTRS.items():
+        if attribute == "data-theme":
+            continue
         assert script.first.get_attribute(attribute) == value
     assert script.first.get_attribute("data-lang") == "en"
 
@@ -422,3 +566,343 @@ def test_comments_off_post_makes_no_giscus_requests(
         f"page with comments switched off must not contact Giscus, saw: "
         f"{requests}"
     )
+
+
+# --- browser guards: theme sync with a mocked Giscus client (#258) ----------
+
+
+#: Stand-in for ``https://giscus.app/client.js``: like the real client with
+#: ``data-loading="lazy"`` it boots the ``iframe.giscus-frame`` when the
+#: comments section scrolls into view (or immediately when
+#: ``window.__giscusEager`` is set, modelling a client that wins the race
+#: against the deferred sync script). It records the ``data-theme`` it booted
+#: with, and its same-origin ``postMessage`` calls are observable from the
+#: test. Zero real network.
+GISCUS_CLIENT_STUB = """(function () {
+  var embed = document.currentScript;
+  window.__giscusBootTheme = null;
+  window.__giscusBooted = false;
+  window.__giscusMessages = [];
+  function boot() {
+    if (window.__giscusBooted) return;
+    window.__giscusBooted = true;
+    window.__giscusBootTheme = embed ? embed.getAttribute('data-theme') : null;
+    var frame = document.createElement('iframe');
+    frame.className = 'giscus-frame';
+    frame.setAttribute('title', 'Comments');
+    // An explicit src like the real widget: the initial navigation completes
+    // asynchronously and fires `load`, which is what the sync script listens
+    // for. A bare about:blank iframe loads synchronously with no event.
+    frame.src = 'about:blank';
+    var mount = document.getElementById('comments') || document.body;
+    mount.appendChild(frame);
+  }
+  var mount = document.getElementById('comments');
+  if (window.__giscusEager || !('IntersectionObserver' in window) || !mount) {
+    boot();
+  } else {
+    new IntersectionObserver(function (entries, observer) {
+      for (var i = 0; i < entries.length; i++) {
+        if (entries[i].isIntersecting) {
+          observer.disconnect();
+          boot();
+          break;
+        }
+      }
+    }).observe(mount);
+  }
+})();"""
+
+GISCUS_EMBED_SELECTOR = 'script[src="https://giscus.app/client.js"]'
+
+
+def _stub_giscus_client(browser_page, requests):
+    """Serve the mock client; abort anything else Giscus-bound."""
+
+    def fulfill(route):
+        requests.append(route.request.url)
+        route.fulfill(
+            status=200,
+            content_type="application/javascript",
+            body=GISCUS_CLIENT_STUB,
+        )
+
+    def abort(route):
+        requests.append(route.request.url)
+        route.abort()
+
+    browser_page.route("**://giscus.app/client.js", fulfill)
+    browser_page.route("**://*.giscus.app/**", abort)
+
+
+#: Observes the page's ``postMessage`` calls into the Giscus iframe. Installed
+#: via ``add_init_script`` (before every page script), it wraps
+#: ``document.querySelector`` so the app's ``iframe.giscus-frame`` lookups
+#: resolve to a facade whose ``postMessage`` records every call and then
+#: delegates to the live window. The facade resolves ``contentWindow`` at call
+#: time, so navigations cannot orphan it the way patching the ``Window``
+#: object (or shadowing ``contentWindow``, ``LegacyUnforgeable``) would.
+#: Every other selector delegates to the native lookup untouched.
+GISCUS_POSTMESSAGE_OBSERVER = """(function () {
+  window.__giscusMessages = [];
+  var realQuerySelector = document.querySelector.bind(document);
+  document.querySelector = function (selector) {
+    var el = realQuerySelector(selector);
+    if (selector === 'iframe.giscus-frame' && el) {
+      if (!el.__giscusProxy) {
+        el.__giscusProxy = new Proxy(el, {
+          get: function (target, prop) {
+            if (prop === 'contentWindow') {
+              var win = target.contentWindow;
+              if (!win || !win.postMessage) return win;
+              return {
+                postMessage: function (message, origin) {
+                  window.__giscusMessages.push({
+                    message: message,
+                    origin: origin,
+                  });
+                  return win.postMessage(message, origin);
+                },
+              };
+            }
+            var value = target[prop];
+            return typeof value === 'function' ? value.bind(target) : value;
+          },
+        });
+      }
+      return el.__giscusProxy;
+    }
+    return el;
+  };
+})();"""
+
+
+@pytest.mark.parametrize("post_rel", [EN_POST_REL, VI_POST_REL])
+@pytest.mark.parametrize(
+    "color_scheme,stored,expected",
+    [
+        ("light", None, "light"),
+        ("dark", None, "dark"),
+        ("dark", "light", "light"),
+        ("light", "dark", "dark"),
+    ],
+)
+def test_giscus_theme_matches_the_site_theme_and_follows_the_toggle(
+    browser, prod_site_url, post_rel, color_scheme, stored, expected
+):
+    """All four OS x site combos (EN + VI): paint + flip without reload (#258).
+
+    The stored choice (or the OS preference on first visit) primes the
+    embed's ``data-theme`` before the lazy iframe boots, and the header
+    toggle repaints the live iframe through ``setConfig`` while the iframe
+    element itself stays put.
+    """
+    flipped = "dark" if expected == "light" else "light"
+    context = browser.new_context(
+        viewport={"width": 1280, "height": 800}, color_scheme=color_scheme
+    )
+    context.add_init_script(GISCUS_POSTMESSAGE_OBSERVER)
+    if stored is not None:
+        context.add_init_script(
+            f'window.localStorage.setItem("theme", "{stored}");'
+        )
+    try:
+        test_page = context.new_page()
+        errors = []
+        test_page.on("pageerror", lambda exc: errors.append(exc))
+        requests = []
+        _stub_giscus_client(test_page, requests)
+
+        test_page.goto(f"{prod_site_url}/{post_rel}")
+        test_page.locator("#comments").wait_for(state="attached", timeout=10_000)
+        # Lazy parity: below the fold the client must not boot yet, so the
+        # deferred sync script always primes `data-theme` first.
+        test_page.wait_for_timeout(500)
+        assert test_page.evaluate("() => window.__giscusBooted") is False, (
+            f"{post_rel}: the lazy client must not boot above the fold"
+        )
+        test_page.locator("#comments").scroll_into_view_if_needed()
+        test_page.wait_for_function(
+            "() => window.__giscusBooted === true",
+            timeout=10_000,
+        )
+        assert test_page.evaluate("() => window.__giscusBootTheme") == expected, (
+            f"{post_rel}: a {color_scheme} OS with stored {stored!r} must boot "
+            f"Giscus on {expected}"
+        )
+        test_page.wait_for_function(
+            f"() => document.querySelector('{GISCUS_EMBED_SELECTOR}')"
+            f".getAttribute('data-theme') === '{expected}'",
+            timeout=10_000,
+        )
+        test_page.wait_for_function(
+            "() => window.__giscusMessages.length > 0", timeout=10_000
+        )
+        initial = test_page.evaluate(
+            "() => window.__giscusMessages.map((m) => "
+            "m.message.giscus.setConfig.theme)"
+        )
+        assert initial and all(theme == expected for theme in initial), (
+            f"{post_rel}: every pre-flip setConfig must carry {expected}, "
+            f"saw {initial}"
+        )
+
+        test_page.evaluate(
+            "() => { window.__giscusFrame = "
+            "document.querySelector('iframe.giscus-frame'); }"
+        )
+        test_page.locator(".theme-toggle").click()
+        test_page.wait_for_function(
+            "() => window.__giscusMessages.some((m) => m.message "
+            f"&& m.message.giscus && m.message.giscus.setConfig "
+            f"&& m.message.giscus.setConfig.theme === '{flipped}')",
+            timeout=10_000,
+        )
+        last = test_page.evaluate(
+            "() => window.__giscusMessages[window.__giscusMessages.length - 1]"
+        )
+        assert last == {
+            "message": {"giscus": {"setConfig": {"theme": flipped}}},
+            "origin": "https://giscus.app",
+        }, f"{post_rel}: the flip must post the exact setConfig shape, saw {last}"
+        assert test_page.evaluate(
+            "() => document.querySelector('iframe.giscus-frame') "
+            "=== window.__giscusFrame"
+        ), f"{post_rel}: the toggle must repaint Giscus without reloading it"
+        assert test_page.evaluate(
+            "() => document.documentElement.getAttribute('data-theme')"
+        ) == flipped, f"{post_rel}: the site theme itself must flip"
+
+        assert errors == [], f"{post_rel}: unexpected page errors: {errors}"
+        assert requests, f"{post_rel}: expected the mocked Giscus client load"
+        assert all(
+            "giscus.app" in url and url.endswith("/client.js") for url in requests
+        ), (
+            f"{post_rel}: every Giscus-bound request must be the mocked "
+            f"client (zero real network), saw: {requests}"
+        )
+    finally:
+        context.close()
+
+
+def test_giscus_eager_boot_is_corrected_without_reload(
+    browser, prod_site_url
+):
+    """A client that beats the deferred prime still lands on the site theme.
+
+    With ``__giscusEager`` the stub boots during parsing; the sync script's
+    on-load ``setConfig`` must still repaint it to the stored site theme, and
+    the toggle must keep working — all without replacing the iframe.
+    """
+    context = browser.new_context(
+        viewport={"width": 1280, "height": 800}, color_scheme="dark"
+    )
+    context.add_init_script(GISCUS_POSTMESSAGE_OBSERVER)
+    context.add_init_script(
+        'window.__giscusEager = true; window.localStorage.setItem("theme", "light");'
+    )
+    try:
+        test_page = context.new_page()
+        errors = []
+        test_page.on("pageerror", lambda exc: errors.append(exc))
+        requests = []
+        _stub_giscus_client(test_page, requests)
+
+        test_page.goto(f"{prod_site_url}/{EN_POST_REL}")
+        test_page.wait_for_function(
+            "() => window.__giscusBooted === true", timeout=10_000
+        )
+        # Two legal interleavings of the eager race (async stub vs deferred
+        # prime): the stub may read the shipped ``preferred_color_scheme``
+        # fallback (Chromium/Firefox) or the already-primed ``light``
+        # (WebKit runs the deferred prime first). Either way the page must
+        # converge on the site theme through ``setConfig`` below.
+        assert test_page.evaluate("() => window.__giscusBootTheme") in (
+            "preferred_color_scheme",
+            "light",
+        ), "the eager boot must read the shipped fallback or the primed theme"
+        test_page.wait_for_function(
+            "() => window.__giscusMessages.length > 0", timeout=10_000
+        )
+        corrected = test_page.evaluate(
+            "() => window.__giscusMessages.map((m) => "
+            "m.message.giscus.setConfig.theme)"
+        )
+        assert corrected and all(theme == "light" for theme in corrected), (
+            f"the on-load setConfig must correct the eager boot to light, "
+            f"saw {corrected}"
+        )
+
+        test_page.evaluate(
+            "() => { window.__giscusFrame = "
+            "document.querySelector('iframe.giscus-frame'); }"
+        )
+        test_page.locator(".theme-toggle").click()
+        test_page.wait_for_function(
+            "() => window.__giscusMessages.some((m) => m.message "
+            "&& m.message.giscus && m.message.giscus.setConfig "
+            "&& m.message.giscus.setConfig.theme === 'dark')",
+            timeout=10_000,
+        )
+        last = test_page.evaluate(
+            "() => window.__giscusMessages[window.__giscusMessages.length - 1]"
+        )
+        assert last == {
+            "message": {"giscus": {"setConfig": {"theme": "dark"}}},
+            "origin": "https://giscus.app",
+        }, f"the flip must post the exact setConfig shape, saw {last}"
+        assert test_page.evaluate(
+            "() => document.querySelector('iframe.giscus-frame') "
+            "=== window.__giscusFrame"
+        ), "the toggle must repaint Giscus without reloading it"
+
+        assert errors == [], f"unexpected page errors: {errors}"
+        assert requests, "expected the mocked Giscus client load"
+        assert all(
+            "giscus.app" in url and url.endswith("/client.js") for url in requests
+        ), (
+            "every Giscus-bound request must be the mocked client "
+            f"(zero real network), saw: {requests}"
+        )
+    finally:
+        context.close()
+
+
+def test_theme_toggle_without_the_giscus_iframe_is_a_silent_noop(
+    browser, prod_site_url
+):
+    """Aborted Giscus load: the embed stays primed, the toggle never throws.
+
+    When the ``postMessage`` API has no iframe to talk to, the sync falls
+    back to the page default (the primed ``data-theme``) instead of failing.
+    """
+    context = browser.new_context(viewport={"width": 1280, "height": 800})
+    try:
+        test_page = context.new_page()
+        errors = []
+        test_page.on("pageerror", lambda exc: errors.append(exc))
+        requests = []
+        _intercept_giscus(test_page, requests)
+
+        test_page.goto(f"{prod_site_url}/{EN_POST_REL}")
+        test_page.wait_for_selector(".theme-toggle", state="visible", timeout=10_000)
+        embed = test_page.locator(GISCUS_EMBED_SELECTOR)
+        test_page.wait_for_function(
+            f"() => document.querySelector('{GISCUS_EMBED_SELECTOR}')"
+            ".getAttribute('data-theme') === 'light'",
+            timeout=10_000,
+        )
+        assert test_page.locator("iframe.giscus-frame").count() == 0
+
+        test_page.locator(".theme-toggle").click()
+        assert embed.get_attribute("data-theme") == "dark", (
+            "the primed fallback must follow the toggle even with no iframe"
+        )
+        test_page.locator(".theme-toggle").click()
+        assert embed.get_attribute("data-theme") == "light"
+
+        assert test_page.locator("iframe.giscus-frame").count() == 0
+        assert errors == [], f"unexpected page errors: {errors}"
+        assert requests, "expected the page to attempt the Giscus client load"
+    finally:
+        context.close()
