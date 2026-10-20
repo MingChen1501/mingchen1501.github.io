@@ -46,8 +46,9 @@ single-concern and healthy.
 
 ## Coupling notes
 
-- Every fixed-URL asset link carries `?v={{ asset_version }}` assigned at
-  `head.html:63` (stylesheets, favicon at `head.html:83,99,101`).
+- Every fixed-URL asset link carries `?v={{ asset_version }}`, assigned
+  once in `_includes/asset-version.html` and shared by `head.html`
+  (stylesheets, favicon at `head.html:83,99,101`).
 - The `#220` theme toggle couples four places: `head.html` inline
   bootstrap (~L82), `theme-toggle.js`, `_theme-toggle.scss`, and the
   `minima.skin` setting. Guarded by `test_theme_toggle.py` (536 lines)
@@ -57,9 +58,9 @@ single-concern and healthy.
 
 ## Known findings
 
-- #295 — `asset_version` assigned identically in three files
-  (`head.html:63`, `sub-footer.html:13`, `search.html:77`); hoist to one
-  include.
+- #295 — implemented: the `asset_version` assignment lives once in
+  `_includes/asset-version.html`, included by `head.html`,
+  `sub-footer.html`, and `search.html`.
 - #296 — `skins/solarized.scss`, `solarized-light.scss`,
   `solarized-dark.scss` have no importer while the skin is `auto`
   (grep over `.scss`/`.yml`/`.html` finds only self-references);

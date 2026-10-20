@@ -57,6 +57,9 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HEAD_INCLUDE = REPO_ROOT / "_includes" / "head.html"
+SUB_FOOTER_INCLUDE = REPO_ROOT / "_includes" / "sub-footer.html"
+SEARCH_INCLUDE = REPO_ROOT / "_includes" / "search.html"
+ASSET_VERSION_INCLUDE = REPO_ROOT / "_includes" / "asset-version.html"
 TEMPLATE_DIRS = ("_includes", "_layouts")
 
 STYLESHEET_PATH = "/assets/css/style.css"
@@ -152,11 +155,16 @@ def _token_expression(html):
     )
     token = match.group("token").strip()
     if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", token):
-        # `{%- assign <token> = <build expression> -%}` somewhere in the include.
-        assign = re.search(rf"assign\s+{re.escape(token)}\s*=\s*(.+?)\s*-?%\}}", html)
+        # `{%- assign <token> = <build expression> -%}` in the head
+        # itself or in a shared include it pulls in (#295 hoisted the
+        # assignment into `_includes/asset-version.html`).
+        assign = re.search(
+            rf"assign\s+{re.escape(token)}\s*=\s*(.+?)\s*-?%\}}",
+            conftest.template_with_includes(HEAD_INCLUDE),
+        )
         assert assign, (
             f"the stylesheet version {token!r} is never assigned in "
-            f"{HEAD_INCLUDE.relative_to(REPO_ROOT)}"
+            f"{HEAD_INCLUDE.relative_to(REPO_ROOT)} or an include it pulls in"
         )
         return assign.group(1).strip()
     return token
@@ -219,6 +227,36 @@ def test_head_links_the_uncached_assets_with_the_same_token():
             f"{asset} is served from a fixed URL with a 4-hour max-age and must "
             f"use the same version token as the stylesheet (#61), got no "
             f"`{versioned}` on it"
+        )
+
+
+@pytest.mark.static
+def test_asset_version_assignment_has_a_single_source():
+    """The `?v=` build token is assigned once and shared (#295).
+
+    The `asset_version = site.time | date: '%s'` assignment used to be
+    copy-pasted into the head, the sub-footer, and the search shell, so a
+    change to the versioning scheme needed three matching edits. It now
+    lives in exactly one include; every call site pulls it in instead of
+    assigning it, so the head, the deferred scripts, and the search page
+    can never drift to different tokens.
+    """
+    literal = re.compile(r"assign\s+asset_version\s*=\s*site\.time\s*\|\s*date:")
+    owners = []
+    for directory in TEMPLATE_DIRS:
+        for path in sorted((REPO_ROOT / directory).rglob("*")):
+            if path.is_file() and literal.search(_read(path)):
+                owners.append(path.relative_to(REPO_ROOT).as_posix())
+    assert owners == [ASSET_VERSION_INCLUDE.relative_to(REPO_ROOT).as_posix()], (
+        "the asset_version assignment must live in exactly one file "
+        f"({ASSET_VERSION_INCLUDE.relative_to(REPO_ROOT)}), found in: "
+        f"{owners} (#295)"
+    )
+    for site in (HEAD_INCLUDE, SUB_FOOTER_INCLUDE, SEARCH_INCLUDE):
+        text = _read(site)
+        assert re.search(r"\{%-?\s*include\s+asset-version\.html\s*-?%\}", text), (
+            f"{site.relative_to(REPO_ROOT)} must include asset-version.html "
+            "instead of assigning asset_version itself (#295)"
         )
 
 

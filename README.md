@@ -544,7 +544,7 @@ after the deploy.
 Rules:
 
 - Every fixed-URL asset linked from a template carries the build token that
-  `_includes/head.html` assigns: `/assets/css/style.css?v={{ asset_version }}`
+  `_includes/asset-version.html` assigns: `/assets/css/style.css?v={{ asset_version }}`
   and `/assets/img/favicon.ico?v={{ asset_version }}` (head), plus the
   deferred scripts in `_includes/sub-footer.html`
   (`lazy-load.js`, `nav-toggle.js`, `copy-code.js`, `lang-switch.js`). A new

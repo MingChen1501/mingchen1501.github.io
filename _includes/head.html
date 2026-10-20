@@ -60,7 +60,7 @@
     Jekyll plugin, which GitHub Pages does not run.
     Any new fixed-URL asset served under /assets/ must be versioned the same way.
   {%- endcomment -%}
-  {%- assign asset_version = site.time | date: '%s' -%}
+  {%- include asset-version.html -%}
   {%- comment -%}
     No third-party origins (#254): the footer social icons used to come
     from the Font Awesome stylesheet over `cdn.jsdelivr.net` (74KB CSS plus

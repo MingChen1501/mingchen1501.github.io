@@ -36,7 +36,8 @@ page 21,225 B (7 files), post 29,689 B (10 files, prod), search
   search-only loading owns `_includes/search.html:77-78`. New scripts
   default to the smallest page set that needs them.
 - Every first-party `<script>` is `defer`red with the `?v=` build token
-  (`sub-footer.html:13-14` pattern); the theme bootstrap in `head.html:82`
+  (assigned once in `_includes/asset-version.html`, included at the top
+  of `sub-footer.html`); the theme bootstrap in `head.html:82`
   is the only blocking inline script (must run before first paint).
 
 ## Coupling notes
@@ -53,8 +54,9 @@ page 21,225 B (7 files), post 29,689 B (10 files, prod), search
 
 ## Known findings
 
-- #295 — the `asset_version` token is pasted in `sub-footer.html:13`
-  (plus `head.html:63`, `search.html:77`); hoist to one include.
+- #295 — implemented: the `asset_version` token lives once in
+  `_includes/asset-version.html`, included by `sub-footer.html`
+  (plus `head.html` and `search.html`).
 - `lightbox.js` and `search.js` together are ~48% of all JS bytes; both
   are single-purpose and correctly gated, so size alone is not a finding —
   recorded here so the next audit has a baseline.

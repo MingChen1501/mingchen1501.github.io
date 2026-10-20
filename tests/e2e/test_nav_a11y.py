@@ -154,7 +154,7 @@ def test_the_nav_script_is_linked_with_the_cache_version_token():
         "sub-footer.html must link nav-toggle.js with the `?v=` build token, "
         "like every other fixed-URL asset (#61)"
     )
-    assert re.search(r"site\.time", html), (
+    assert re.search(r"site\.time", conftest.template_with_includes(SUB_FOOTER_INCLUDE)), (
         "the version token must be derived from the build"
     )
 

@@ -24,6 +24,7 @@ Guarded here:
 import re
 from pathlib import Path
 
+import conftest
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -80,7 +81,7 @@ def test_the_post_only_scripts_are_gated_on_the_post_layout():
 def test_the_gated_scripts_keep_token_and_order():
     """Cache versioning and document order survive the gating (#253)."""
     html = _read(SUB_FOOTER)
-    assert re.search(r"site\.time", html), (
+    assert re.search(r"site\.time", conftest.template_with_includes(SUB_FOOTER)), (
         "the version token must still be derived from the build"
     )
     share_pos = html.index(f"{SHARE_PATH}?v=")

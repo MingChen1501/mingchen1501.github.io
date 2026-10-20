@@ -45,7 +45,7 @@
   {%- assign search_no_results = 'No posts match “{q}”. Try another keyword.' -%}
   {%- assign search_load_error = 'Could not load the search index. Check your connection and reload the page.' -%}
 {%- endif -%}
-{%- assign asset_version = site.time | date: '%s' -%}
+{%- include asset-version.html -%}
 {%- comment -%}
   Reader-facing guidance with the live per-language totals (#221): it doubles
   as the empty-query state, so a reader always knows what the search covers.

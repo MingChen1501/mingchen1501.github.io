@@ -63,6 +63,26 @@ def custom_styles_text():
     assert parts, "custom-styles.scss imports no custom partials"
     return "\n".join(parts)
 
+
+def template_with_includes(path):
+    """A template's text plus every include it pulls in directly.
+
+    #295 hoisted the `asset_version` build-token assignment out of
+    `head.html`, `sub-footer.html`, and `search.html` into the shared
+    `_includes/asset-version.html`. Guards pinning "the token derives
+    from the build" read through this helper so they see the assignment
+    through the `{% include %}` indirection instead of requiring the
+    literal in every call site (which the single-source guard in
+    `test_stylesheet_cache_version.py` forbids).
+    """
+    path = Path(path)
+    parts = [path.read_text(encoding="utf-8")]
+    for name in re.findall(r"\{%-?\s*include\s+([^\s%]+)", parts[0]):
+        candidate = REPO_ROOT / "_includes" / name.strip("\"'")
+        if candidate.is_file():
+            parts.append(candidate.read_text(encoding="utf-8"))
+    return "\n".join(parts)
+
 BUILD_TIMEOUT_S = 300
 
 #: Browser engines the E2E suite can run on (#209). CI runs one job per
