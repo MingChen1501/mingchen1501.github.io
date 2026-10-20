@@ -1,0 +1,79 @@
+// #174: share row on post pages (#222). Cascade slot 4 of 11.
+// ---------------------------------------------------------------------------
+// Share row (#222): a small localized row at the end of the post column
+// (heading + wrapping list of copy/share controls). Tracker-free by
+// construction: the intent links are plain anchors to provider share URLs,
+// and the only script is the first-party `assets/js/share.js`.
+//
+// Layout-shift discipline: the row is normal in-flow content below the
+// article body (it only ever grows the page downward), and the confirmation
+// line keeps a reserved `min-height` so the "Copied" / "Đã sao chép"
+// announcement never moves the controls. Every control keeps a 44px minimum
+// touch target; keyboard focus uses the global `:focus-visible` rule
+// (`custom/_a11y.scss`), which already covers links and buttons.
+// ---------------------------------------------------------------------------
+.share {
+  margin: $spacing-unit 0 0;
+  padding-top: $spacing-unit * 0.5;
+  border-top: 1px solid $border-color-01;
+}
+
+.share__heading {
+  margin: 0 0 8px;
+  font-size: $base-font-size;
+}
+
+.share__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.share__item {
+  margin: 0;
+}
+
+.share__button,
+.share__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid $border-color-01;
+  border-radius: 8px;
+  background: transparent;
+  color: $text-color;
+  font-size: $small-font-size;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.share__link:hover,
+.share__button:hover {
+  text-decoration: none;
+  border-color: $brand-color-dark;
+}
+
+// The native-share row is `hidden` until `assets/js/share.js` finds
+// `navigator.share`: `hidden` must win over the `inline-flex` rule above
+// (the UA `[hidden]` style alone loses to it), or unsupported browsers
+// would show a dead control.
+.share__item[hidden] {
+  display: none;
+}
+
+// Reserved confirmation space: announcing "Copied" / "Đã sao chép" swaps
+// text inside this line instead of inserting a box, so the row never
+// shifts when the feedback appears.
+.share__status {
+  margin: 8px 0 0;
+  min-height: 1.5em;
+  font-size: $small-font-size;
+  color: $brand-color-dark;
+}

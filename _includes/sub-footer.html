@@ -46,3 +46,11 @@
   carries the same build token.
 {%- endcomment -%}
 <script src="/assets/js/lightbox.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  Share row (#222). Progressive enhancement only: the intent links are plain
+  anchors that work without JS; this script wires the copy-link button
+  (Clipboard API with a textarea fallback) and reveals the Web Share button
+  where `navigator.share` exists. A fixed-URL asset like the scripts above,
+  so it carries the same build token.
+{%- endcomment -%}
+<script src="/assets/js/share.js?v={{ asset_version }}" defer></script>

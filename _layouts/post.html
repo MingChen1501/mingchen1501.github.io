@@ -79,6 +79,13 @@ layout: base
         {{ content }}
       </div>
 
+      {%- comment -%}
+        Share row (#222): tracker-free sharing for this post (copy link, the
+        Web Share API where supported, plain X/Facebook/LinkedIn intents).
+        Post pages only; the intent links work with JS disabled.
+      {%- endcomment -%}
+      {%- include share.html -%}
+
     </div>
 
     {%- comment -%}
