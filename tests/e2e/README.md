@@ -167,6 +167,24 @@ not run in its `--safe` build; a per-build token changes on a superset of the
 cases where the CSS changes, which is why it can never pair stale CSS with fresh
 HTML.
 
+## Accessibility smoke (`test_axe_a11y.py`)
+
+Guard for #207. The pinned, vendored axe-core scanner
+(`tests/e2e/axe-core/axe.min.js`, version/source/hash/license in
+`tests/e2e/axe-core/AXE_PIN.md` — no CDN, offline-capable) is injected into
+`/`, one EN post plus its VI counterpart, `/tags/`, `/vi/`, `/about/` and
+`/portfolio/`, each at 375px and 1280px in the light colour scheme.
+
+- Fails on `serious`/`critical` violations outside the documented exceptions.
+- `minor`/`moderate` findings are printed but non-blocking.
+- Accepted exceptions (rule + reason, full text in the spec file):
+  `label-content-name-mismatch` on `.lang-switcher` (#122 pill pins the
+  ISO-code visible label) and on `.u-email` (#150 pins the localized
+  recipient label), `color-contrast` on the coffee-post `blockquote`
+  (`#818181` on `#fdfdfd`, brand-colour design decision), `object-alt` on
+  the `/portfolio/` PDF `<object>`. An exception that stops reproducing
+  fails the run so fixed issues cannot linger as waivers.
+
 ## Run locally
 
 ```sh
