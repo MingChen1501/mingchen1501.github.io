@@ -5,7 +5,7 @@ touch.
 
 ## Current structure
 
-`_sass/` holds 30 files (~2,900 LOC). Entry points in `assets/css/`:
+`_sass/` holds 27 files (~3,200 LOC). Entry points in `assets/css/`:
 
 - `style.scss` imports the skin (`minima/skins/{{ site.minima.skin }}`,
   pinned to `auto` in `_config.yml:21`) then `minima/initialize.scss`
@@ -42,7 +42,8 @@ single-concern and healthy.
 - Rouge token rules belong in `syntax.css`, structural highlight rules
   (`div.highlight`, `code.highlighter-rouge`) stay in `style.css` — no
   selector may cross the split (#275).
-- `robots.txt`, `sitemap.xml`, `llms.txt` are generated; never hand-edit.
+- `_site/` outputs are generated; never hand-edit. `sitemap.xml` and
+  `llms.txt` are Liquid sources edited like other pages.
 
 ## Coupling notes
 

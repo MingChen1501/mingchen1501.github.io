@@ -5,24 +5,24 @@ collections, cross-language links, taxonomy, comments, and search.
 
 ## Current structure
 
-Layouts (`_layouts/`, 5 files, 521 LOC):
+Layouts (`_layouts/`, 5 files, 541 LOC):
 
 - `base.html` (29 lines): shell. `head.html` → skip link → `header.html`
   → `{{ content }}` → `footer.html` → `sub-footer.html` (scripts).
 - `home.html` (192 lines, `layout: base`): paginated EN/VI index.
   Post-card loop renders the shared `post-card.html` (~L90) +
   `site-sidebar.html` (~L189).
-- `post.html` (202 lines, `layout: base`): article page. Reading-progress
+- `post.html` (222 lines, `layout: base`): article page. Reading-progress
   bar + back-to-top button (~L19-21), `reading-time.html` (~L66),
-  `post-toc.html` (~L93), `share.html` (~L104), `post-tags.html` (~L134),
-  `comments.html` (~L197).
+  `post-toc.html` (~L93), `share.html` (~L104), `post-tags.html` (~L139),
+  `comments.html` (~L217).
 - `tag.html` (81 lines, `layout: base`): per-tag listing. Post-card loop
   renders the shared `post-card.html` (~L60, `show_tags=false`) +
   `site-sidebar.html` (~L78).
 - `page.html` (17 lines, `layout: base`): static pages + `vi-fallback-notice.html`.
 
-Includes (`_includes/`, 23 files, 1,328 LOC). Largest: `site-sidebar.html`
-(242 lines), `head.html` (120 lines). Every include has at least one caller
+Includes (`_includes/`, 24 files, 1,362 LOC). Largest: `site-sidebar.html`
+(265 lines), `head.html` (121 lines). Every include has at least one caller
 outside itself (no orphan includes, 2026-10-20). `post-card.html`
 (38 lines, #293) is the single home/tag list-item markup
 (`post-thumbnail.html` + `reading-time.html` + description-first excerpt +
@@ -30,7 +30,9 @@ home chips); both list layouts call it with `post` + `lang`.
 
 ## Bilingual `lang` / `ref` pipeline
 
-- Collections: `site.posts` (`_posts/`, 7 EN) + `site.vi_posts`
+- Collections: `site.posts` (`_posts/`, 7 files: 6 published EN posts plus
+  the unpublished `codeblocks-ahoy` sample with no `lang`/`ref`) +
+  `site.vi_posts`
   (`_vi_posts/`, 6 VI; `collections:` in `_config.yml:88-89`). Every post
   sets `lang` + a shared `ref` slug; EN and VI twins share the `ref`.
 - `ref-urls.html` is the single resolver: given a `ref`, it exposes
