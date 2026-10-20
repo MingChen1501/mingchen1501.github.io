@@ -12,7 +12,7 @@ redirect_from:
   - /2022/10/27/cach-pha-ca-phe.html
 ---
 
->Một ly cà phê ngon là phải vừa ngọt vừa đắng ![](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg){: width="506" height="900" aria-hidden="true" }
+>Một ly cà phê ngon là phải vừa ngọt vừa đắng ![Phin cà phê inox cùng đĩa chặn đặt trên bàn gỗ](/assets/img/2022-10-27-cach-pha-ca-phe/b2.jpg){: width="506" height="900" }
 
 * Cho cà phê vào 1/2 phin.
 

@@ -12,7 +12,7 @@ redirect_from:
   - /2023/01/31/tet-nguyen-dan-quy-mao-2023-cua-toi.html
 ---
 
->Nhân dịp đầu xuân năm mới Quý Mão 2023, chúc mọi người một năm mới an lành, may mắn. ![](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar-new-year-greatings-2.webp){: width="900" height="900" aria-hidden="true" }
+>Nhân dịp đầu xuân năm mới Quý Mão 2023, chúc mọi người một năm mới an lành, may mắn. ![Thiệp Tết lấp lánh chúc bình an may mắn bên hoa hồng đỏ trên tay người đàn ông mặc lễ phục](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar-new-year-greatings-2.webp){: width="900" height="900" }
 
 *Năm nay là mình tròn 2 giáp rồi, nhanh thật, chả mấy mà già nhỉ. Sau đây mình xin được chia sẻ về kỳ nghỉ tết của mình.*
 
@@ -68,5 +68,5 @@ Chuyến du xuân ngắn trong 3 ngày khởi động một năm mới, hy vọn
 ![Chụp cùng người yêu dịp đầu năm mới](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/my-bea.webp){: width="675" height="900" }
 Năm nay không được đón tết bên cô người yêu bé bỏng của mình, cũng khá là buồn.
 
-![](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar-new-year-greatings.webp){: width="506" height="900" aria-hidden="true" }
+![Khung cửa dán câu đối Tết đỏ đùa kiểu dân lập trình về một năm mới không bug](/assets/img/2023-01-31-tet-nguyen-dan-quy-mao-2023-cua-toi/lunar-new-year-greatings.webp){: width="506" height="900" }
 Chúc mọi người sang năm mới mạnh khỏe, bình an, may mắn, vạn sự như ý.

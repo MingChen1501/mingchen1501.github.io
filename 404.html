@@ -3,6 +3,25 @@ layout: base
 title: "Page not found | Không tìm thấy trang"
 ---
 
+{%- comment -%}
+  Bilingual failure page (#281, #335): one static file serves both
+  languages with no script redirect and no meta refresh, reusing the
+  site stylesheet so dark mode follows `html[data-theme]` with no
+  page-specific CSS and no third-party request. It links back to `/`,
+  `/vi/`, `/search/`, `/vi/tim-kiem/`, `/tags/` and `/vi/tags/`, plus
+  the newest post per language. Each language section offers the same
+  four doors home: the language home itself (which lists the newest
+  posts), the newest post (looked up at build time, nil-guarded for
+  configs without `site.vi_posts`), the language search page, and the
+  language tag index.
+{%- endcomment -%}
+{%- assign latest_en = site.posts.first -%}
+{%- assign not_found_vi_source = site.vi_posts -%}
+{%- if not_found_vi_source == nil -%}
+  {%- assign not_found_vi_source = "" | split: "" -%}
+{%- endif -%}
+{%- assign latest_vi = not_found_vi_source | sort: "date" | reverse | first -%}
+
 <article class="post">
   <header class="post-header">
     <h1 class="post-title">404</h1>
@@ -15,6 +34,9 @@ title: "Page not found | Không tìm thấy trang"
       <p><strong>Sorry!</strong> The page you are looking for does not exist or has moved.</p>
       <ul>
         <li><a href="{{ '/' | relative_url }}">Home</a></li>
+        {%- if latest_en -%}
+        <li><a href="{{ latest_en.url | relative_url }}">Latest post: {{ latest_en.title | escape }}</a></li>
+        {%- endif -%}
         <li><a href="{{ '/search/' | relative_url }}">Search posts</a></li>
         <li><a href="{{ '/tags/' | relative_url }}">Tags</a></li>
       </ul>
@@ -25,8 +47,11 @@ title: "Page not found | Không tìm thấy trang"
       <p><strong>Rất tiếc!</strong> Trang bạn tìm không tồn tại hoặc đã được di chuyển.</p>
       <ul>
         <li><a href="{{ '/vi/' | relative_url }}">Trang chủ</a></li>
+        {%- if latest_vi -%}
+        <li><a href="{{ latest_vi.url | relative_url }}">Bài mới nhất: {{ latest_vi.title | escape }}</a></li>
+        {%- endif -%}
         <li><a href="{{ '/vi/tim-kiem/' | relative_url }}">Tìm kiếm bài viết</a></li>
-        <li><a href="{{ '/tags/' | relative_url }}" hreflang="en">Tags</a></li>
+        <li><a href="{{ '/vi/tags/' | relative_url }}">Chủ đề</a></li>
       </ul>
     </section>
   </div>

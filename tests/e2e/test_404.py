@@ -5,7 +5,8 @@ The failure page is a reader surface like any other: a single static
 theme bootstrap stay) shows English and Vietnamese guidance inline — one
 static file serves both languages, no JS redirect and no meta refresh
 (#154 stays Cloudflare-only) — and links back to `/`, `/vi/`, `/search/`,
-`/vi/tim-kiem/` and `/tags/`. It reuses the site stylesheet (the minima
+`/vi/tim-kiem/`, `/tags/` and `/vi/tags/`, plus the newest post per
+language (#335). It reuses the site stylesheet (the minima
 `post`/`post-header`/`post-title`/`post-content` classes), so dark mode
 follows `html[data-theme]` with no page-specific `<style>` and no
 third-party request.
@@ -46,7 +47,7 @@ VIEWPORT_HEIGHT = 800
 
 # Every destination the lost reader is offered, as rendered in the build
 # (`baseurl` is empty, so `relative_url` emits these verbatim).
-EXPECTED_LINKS = ("/", "/vi/", "/search/", "/vi/tim-kiem/", "/tags/")
+EXPECTED_LINKS = ("/", "/vi/", "/search/", "/vi/tim-kiem/", "/tags/", "/vi/tags/")
 
 
 def _read(path):
@@ -124,6 +125,22 @@ def test_404_source_links_home_search_and_tags_in_both_languages():
 
 
 @pytest.mark.static
+def test_404_source_suggests_the_newest_post_per_language():
+    """#335: beyond the fixed doors, each language names its newest post
+    (looked up at build time, so the suggestion never goes stale)."""
+    source = _read(NOT_FOUND)
+    for snippet in ("Latest post:", "Bài mới nhất:"):
+        assert snippet in source, f"404.html misses the newest-post copy: {snippet!r}"
+    assert "site.posts.first" in source, (
+        "404.html must look up the newest English post at build time"
+    )
+    assert "site.vi_posts" in source and "== nil" in source, (
+        "404.html must look up the newest Vietnamese post with the "
+        "upstream theme-dev nil-guard"
+    )
+
+
+@pytest.mark.static
 def test_404_source_references_no_remote_origin():
     source = _read(NOT_FOUND)
     assert "http://" not in source and "https://" not in source, (
@@ -160,6 +177,28 @@ def test_built_404_links_every_destination_and_each_resolves(built_site):
         assert _file_for(built_site, target).is_file(), (
             f"built 404.html links {target}, which is not in the build"
         )
+
+
+def test_built_404_section_suggestions_all_resolve(built_site):
+    """#335: every suggestion inside the EN/VI sections resolves — the
+    site-wide link crawl never visits 404.html (documented orphan), so
+    the per-language doors (including the build-time newest posts) are
+    resolved here instead."""
+    html = _built_404(built_site)
+    sections = re.findall(r'<section lang="(?:en|vi)".*?</section>', html, re.S)
+    assert len(sections) == 2, "built 404.html must keep one section per language"
+    checked = 0
+    for section in sections:
+        for href in re.findall(r'href="([^"]+)"', section):
+            if href.startswith(("http", "mailto:")):
+                continue
+            assert _file_for(built_site, href).is_file(), (
+                f"built 404.html links {href}, which is not in the build"
+            )
+            checked += 1
+    assert checked >= 8, (
+        f"built 404.html offers only {checked} section links, expected 4 per language"
+    )
 
 
 def test_built_404_inherits_the_theme_stylesheet_without_inline_style(

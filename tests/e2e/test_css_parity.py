@@ -137,7 +137,12 @@ EXPECTED_VARIABLES = {
 # sheet. Code pages load both sheets (same token, same relative order),
 # code-free pages load the slimmed main sheet only; every screen render
 # stays identical, so no visual baseline changes.
-EXPECTED_CSS_SHA256 = "77ee592f0b0b874bccea02aa05491f95232df63e4914a2d48287f34e41baa0af"
+# #335 (no-JS search fallback): `.search__noscript` joined the muted
+# `.search__guidance` / `.search__status` selector group in the `search`
+# partial (the noscript note reuses the guidance tone). Diffed old vs new
+# before bumping: the only change is that one additive selector line; no
+# existing rule moved, so every render stays identical.
+EXPECTED_CSS_SHA256 = "943bae5f811885259144c84e6ac9a1881c7daeb36333e43067cac4f5e5718196"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275
