@@ -15,9 +15,10 @@ trigger: "Reviewing a site diff or PR (correctness, risk label, merge policy, En
    - **Should fix**: maintainability, a11y, SEO/feed.
    - **Suggestion**: style, spelling, small improvements.
 4. Confirm or update the PR risk label (`risk-low`/`risk-medium`/`risk-high`/`risk-very-high`) and justify it (see `references/review-checklist.md` "Risk label").
-5. Review flow: review only after the PR is up (never before); the AO
-   native reviewer is canonical, a dedicated worker review session is
-   the fallback; post the verdict as a GitHub COMMENT (self-approval is
+5. Review flow: review only after the PR is up (never before); run as a
+   dedicated manual reviewer worker session (the AO native reviewer is
+   broken/disabled — never `ao review trigger`); post the verdict as a
+   GitHub COMMENT carrying APPROVE or CHANGES_REQUESTED (self-approval is
    blocked). See `references/review-checklist.md` "Review flow and merge".
 6. Concurrency: a review session counts as a task worker — do not run it in
    parallel with another task worker; queue it (see `references/review-checklist.md`

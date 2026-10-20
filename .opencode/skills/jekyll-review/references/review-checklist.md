@@ -104,14 +104,18 @@ analysis files). Do not rewrite historical artifacts.
 
 - Review happens **after the PR is up**, never before. Do not review a diff that
   has no PR yet.
-- Reviews use the **AO native reviewer** (canonical); a dedicated worker
-  review session is the fallback when the native reviewer stalls (one
-  worker = one small task = one PR).
+- Reviews are run by **dedicated manual reviewer worker sessions** (the
+  AO native reviewer is broken/disabled for this project — never
+  `ao review trigger`); one worker = one small task = one PR.
+- Each review targets the PR opened by the owning (dev) worker session;
+  no session reviews its own PR.
 - Role separation: issue-writer / dev / reviewer / fixer are separate sessions.
   When a user-created ticket's PR is up, kill that session and spawn a dedicated
   review worker (create follow-up issues if any). Do not let one session both
   implement and review its own PR.
-- Verdicts are posted as a GitHub **COMMENT** (GitHub blocks self-approval).
+- Verdicts are posted as a GitHub **COMMENT** carrying `APPROVE` or
+  `CHANGES_REQUESTED` plus findings by severity (GitHub blocks
+  self-approval).
 - Model separation (#76): the reviewer session must run on a model different
   from the orchestrator's (an explicit `--model` override must not equal it).
   A reviewer stuck on a rate limit (`provider.quota` / 429 /

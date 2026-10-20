@@ -4,8 +4,10 @@ Ming's personal site (https://mingchen.id.vn), forked from the Jekyll minima
 theme, deployed with GitHub Pages from the `master` branch.
 
 Precedence: owner instruction > project cues > `AGENTS.md` > skills >
-agent files. One rule lives normatively in exactly one place; other
-files link to it instead of restating it.
+agent files. Obey-now: a newer owner instruction overrides older cue
+text immediately, even before the cue is edited — this applies to pool
+size, reviewer flow, and merge policy. One rule lives normatively in
+exactly one place; other files link to it instead of restating it.
 
 ## Roles (each role starts from its file)
 
