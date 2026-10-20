@@ -1,25 +1,31 @@
-"""Guards for #112 (reader-UX audit): posts whose primary tag has no
-published siblings still get a sidebar section.
+"""Guards for #112 (reader-UX audit) as constrained by #328: posts whose
+primary tag has no published siblings still get a sidebar section, but an
+older evergreen page must never suggest newer unrelated posts.
 
 Background: the audit found the Internet post (EN + VI) renders no Related
 posts — its pillar-mate stays unpublished, so `site.tags` holds it alone.
-The post layout now falls back to the newest posts of the page's language
-under an honest "Latest posts" / "Bài viết mới nhất" heading (the same
-wording as the sidebar's newest-posts fallback), while posts with real
-tag siblings keep the "Related posts" / "Bài viết cùng chủ đề" section.
+The post layout falls back to the newest posts of the page's language that
+are not newer than the current page (#328: `other.date <= page.date`) under
+an honest "Latest posts" / "Bài viết mới nhất" heading (the same wording as
+the sidebar's newest-posts fallback), while posts with real tag siblings
+keep the "Related posts" / "Bài viết cùng chủ đề" section. When nothing
+that old exists, the section stays suppressed.
 
 Guarded here:
 
 - (static) the layout computes the fallback from the page's language
-  source (`site.posts` / nil-safe `site.vi_posts`), switches the heading
-  only when falling back, and the render loop still skips the current page
-  with at most five entries;
-- (built HTML) the singleton-tag Internet pages (EN + VI) render the
-  fallback section with same-language links that exclude the page itself,
-  and a multi-sibling post keeps the true Related section.
+  source (`site.posts` / nil-safe `site.vi_posts`), filters it to posts
+  not newer than the current page, switches the heading only when falling
+  back, and the render loop still skips the current page with at most five
+  entries;
+- (built HTML) the singleton-tag Internet pages (EN + VI) render either a
+  suppressed section or a fallback section with same-language links that
+  exclude the page itself and every post newer than the page, and a
+  multi-sibling post keeps the true Related section.
 """
 
 import re
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -29,11 +35,43 @@ POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 
 EN_SINGLETON = "2022/12/25/explaining-the-internet.html"
 VI_SINGLETON = "vi/2022/12/25/gioi-thieu-ve-internet.html"
+EN_SINGLETON_DATE = date(2022, 12, 25)
+VI_SINGLETON_DATE = date(2022, 12, 25)
 EN_RELATED = "2026/10/17/real-world-agent-orchestration-with-free-opencode.html"
 
 
 def _read(path):
     return path.read_text(encoding="utf-8")
+
+
+def _en_post_dates():
+    """Published EN post URL -> date, from `_posts` filenames."""
+    posts = {}
+    for path in (REPO_ROOT / "_posts").glob("*.md"):
+        match = re.match(r"(\d{4})-(\d{2})-(\d{2})-(.+)\.md$", path.name)
+        if not match:
+            continue
+        if re.search(r"^published:\s*false", _read(path), re.M):
+            continue
+        year, month, day, slug = match.groups()
+        posts[f"/{year}/{month}/{day}/{slug}.html"] = date(
+            int(year), int(month), int(day)
+        )
+    return posts
+
+
+def _vi_post_dates():
+    """VI post URL -> front-matter date, from `_vi_posts`."""
+    posts = {}
+    for path in (REPO_ROOT / "_vi_posts").glob("*.md"):
+        match = re.search(r"^date:\s*(\d{4})-(\d{2})-(\d{2})", _read(path), re.M)
+        if not match:
+            continue
+        year, month, day = match.groups()
+        posts[f"/vi/{year}/{month}/{day}/{path.stem}.html"] = date(
+            int(year), int(month), int(day)
+        )
+    return posts
 
 
 def _sidebar_sections(html):
@@ -62,6 +100,9 @@ def test_layout_falls_back_to_latest_posts_without_siblings():
     # is the nil-safe collection (upstream CI builds without it).
     assert "latest_source = site.posts" in text
     assert "latest_source = rel_vi_source" in text
+    # #328: the fallback must never suggest posts newer than the page.
+    assert "where_exp" in text
+    assert "<= page.date" in text
     # Honest headings: fallback says Latest, siblings say Related.
     assert "Latest posts" in text
     assert "Bài viết mới nhất" in text
@@ -96,6 +137,30 @@ def test_singleton_posts_render_latest_posts_fallback(built_site):
         assert not any(link.endswith("internet.html") for link in links), (
             f"{page}: fallback must exclude the current page"
         )
+
+
+def test_singleton_fallback_never_suggests_newer_posts(built_site):
+    """#328: the Internet-post fallback lists nothing newer than itself."""
+    for page, page_date, catalog in (
+        (EN_SINGLETON, EN_SINGLETON_DATE, _en_post_dates()),
+        (VI_SINGLETON, VI_SINGLETON_DATE, _vi_post_dates()),
+    ):
+        html = _read(built_site / page)
+        sections = _sidebar_sections(html)
+        assert len(sections) <= 1, f"{page}: want at most one section"
+        if not sections:
+            continue  # Suppressed: nothing that old left to suggest.
+        _, links = sections[0]
+        assert links, f"{page}: a rendered fallback must not be empty"
+        for link in links:
+            target_date = catalog.get(link)
+            assert target_date is not None, (
+                f"{page}: fallback links to unknown post {link}"
+            )
+            assert target_date <= page_date, (
+                f"{page}: fallback must not suggest newer post "
+                f"{link} ({target_date} > {page_date})"
+            )
 
 
 def test_sibling_posts_keep_true_related_section(built_site):

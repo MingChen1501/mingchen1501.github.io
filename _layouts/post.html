@@ -111,8 +111,12 @@ layout: base
       qualifies. When the primary tag has no published siblings (a pillar
       with a single post, e.g. the Internet post while its pillar-mate
       stays unpublished — #112), the section falls back to the newest
-      posts of the page's language under an honest "Latest posts"
-      heading, so the sidebar is never a tags-only dead end. Rendered
+      posts of the page's language not newer than the current page (#328:
+      an older evergreen page must never suggest newer unrelated posts,
+      so the fallback filters to `other.date <= page.date` and the
+      section stays suppressed when nothing that old exists), under an
+      honest "Latest posts" heading, so the sidebar is never a tags-only
+      dead end unless there is genuinely nothing older to show. Rendered
       when the post declares tags or shows a ToC.
       Related posts stay inside the page's language (#93): English from `site.tags`
       (English-only since the Vietnamese posts moved to `site.vi_posts`),
@@ -156,17 +160,20 @@ layout: base
         {%- assign latest_source = site.posts -%}
       {%- endif -%}
       {%- comment -%}
-        Latest-posts fallback (#112): a post whose primary tag has no
-        published siblings (its pillar-mate unpublished, or a lone tag)
-        would otherwise render a tags-only sidebar. Fall back to the
-        newest posts of the page's language — the render loop below skips
-        the current page, so `size > 1` still guarantees a non-empty list
-        in both branches.
+        Latest-posts fallback (#112, constrained by #328): a post whose
+        primary tag has no published siblings (its pillar-mate
+        unpublished, or a lone tag) would otherwise render a tags-only
+        sidebar. Fall back to the newest posts of the page's language
+        that are not newer than the current page, so an older evergreen
+        page never suggests newer unrelated posts. The render loop below
+        skips the current page, so `size > 1` still guarantees a non-empty
+        list in both branches — and suppresses the section when nothing
+        that old exists.
       {%- endcomment -%}
       {%- assign use_latest = false -%}
       {%- if tag_posts.size <= 1 -%}
         {%- assign use_latest = true -%}
-        {%- assign tag_posts = latest_source | sort: "date" | reverse -%}
+        {%- assign tag_posts = latest_source | where_exp: "latest_post", "latest_post.date <= page.date" | sort: "date" | reverse -%}
       {%- endif -%}
       {%- if tag_posts.size > 1 -%}
       <section class="post-sidebar__section">
