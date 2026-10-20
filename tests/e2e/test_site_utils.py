@@ -218,7 +218,7 @@ def test_the_rendered_helper_url_carries_a_non_empty_token(built_site):
         "the version token must be a non-empty epoch, got "
         f"{match.group(2)!r}"
     )
-    assert home.index(match.group(1)) < home.index("copy-code.js?v="), (
+    assert home.index(match.group(1)) < home.index("lazy-load.js?v="), (
         "the rendered helper tag must precede its users"
     )
     search = _read(built_site / "search" / "index.html")

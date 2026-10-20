@@ -245,13 +245,14 @@ colours (`color-scheme: light` + light Rouge tokens).
 
 ## Post-only JS gating (`test_post_only_js.py`)
 
-Guard for #253. `_includes/sub-footer.html` wraps the `share.js` and
-`reading-progress.js` tags (share, then reading-progress, both after
-`site-utils.js`, each with the `?v=` build token) in a single
-`page.layout == 'post'` conditional; the six scripts every page needs stay
-unconditional. Built non-post pages (home EN/VI, tag index + one tag
-page, about, portfolio, search EN/VI) link neither script (9 → 7
-sub-footer requests) while EN/VI post pages still link both.
+Guard for #253, extended by #318. `_includes/sub-footer.html` wraps the
+`copy-code.js`, `lightbox.js`, `share.js` and `reading-progress.js` tags
+(in that order, all after `site-utils.js`, each with the `?v=` build
+token) in a single `page.layout == 'post'` conditional; the five scripts
+every page needs stay unconditional. Built non-post pages (home EN/VI,
+tag index + one tag page, about, portfolio, search EN/VI) link none of
+the four scripts (9 → 5 sub-footer requests) while EN/VI post pages still
+link all four.
 
 ## Shared JS helper (`test_site_utils.py`)
 

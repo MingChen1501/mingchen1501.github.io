@@ -49,7 +49,7 @@ AXE_JS = REPO_ROOT / "tests" / "e2e" / "axe-core" / "axe.min.js"
 SCRIPT_PATH = "/assets/js/lightbox.js"
 
 # The dialog (trap, restore, swipe, i18n) is unavoidably bigger than the
-# copy-code one-liner, but it still ships on every page load: keep it small.
+# copy-code one-liner, but it ships on post pages only (#318): keep it small.
 MAX_SCRIPT_BYTES = 12 * 1024
 MAX_SCRIPT_CODE_LINES = 260
 
@@ -280,9 +280,9 @@ def test_no_overlay_markup_is_shipped_without_js(built_site):
 
 def test_the_rendered_script_url_carries_a_non_empty_token(built_site):
     """The token must render as a real epoch, not as an empty query."""
-    html = _post_html(built_site, "index.html")
+    html = _post_html(built_site, EN_POST)
     match = re.search(r'<script src="(/assets/js/lightbox\.js\?v=([^"]+))"', html)
-    assert match, "the home page does not link the lightbox script"
+    assert match, "the post page does not link the lightbox script (#318)"
     assert re.fullmatch(r"\d+", match.group(2)), (
         "the version token must be a non-empty epoch, got "
         f"{match.group(2)!r}"
