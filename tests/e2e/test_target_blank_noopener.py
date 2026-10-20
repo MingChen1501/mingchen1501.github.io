@@ -8,15 +8,16 @@ feed subscribe link had no `rel` at all. The share-intent links in
 
 Guarded here:
 
-- static (no Ruby): every `target="_blank"` anchor in `_includes/`,
-  `_layouts/`, and the tracked standalone `fullmonth/` invitation page
-  carries `noopener` in its `rel` token list;
+- static (no Ruby): every `target="_blank"` anchor in `_includes/`
+  and `_layouts/` carries `noopener` in its `rel` token list
+  (the tracked standalone `fullmonth/` invitation page was removed
+  in #294, so it is no longer guarded here);
 - static: the social profile links keep `rel="me"` (combined as
   `rel="me noopener"`) and the feed link keeps opening in a new tab with
   `rel="noopener"` (no `noreferrer`, so no referrer-policy change);
-- built (needs Ruby, no browser): the rendered EN/VI homes, a post page per
-  language, and the copied `fullmonth/` page open their blank targets
-  without an opener reference, and the footer links still open in a new tab.
+- built (needs Ruby, no browser): the rendered EN/VI homes and a post
+  page per language open their blank targets without an opener
+  reference, and the footer links still open in a new tab.
 """
 
 from __future__ import annotations
@@ -31,7 +32,6 @@ SOCIAL_INCLUDE = REPO_ROOT / "_includes" / "social.html"
 SHARE_INCLUDE = REPO_ROOT / "_includes" / "share.html"
 
 SOURCE_HTML_DIRS = (REPO_ROOT / "_includes", REPO_ROOT / "_layouts")
-STANDALONE_HTML_FILES = (REPO_ROOT / "fullmonth" / "index.html",)
 
 ANCHOR_RE = re.compile(r"<a\b[^>]*>", re.IGNORECASE | re.DOTALL)
 BLANK_TARGET_RE = re.compile(r"""target\s*=\s*(["']?)_blank\1""", re.IGNORECASE)
@@ -59,7 +59,6 @@ def _source_html_files():
     files = []
     for directory in SOURCE_HTML_DIRS:
         files.extend(sorted(directory.glob("*.html")))
-    files.extend(STANDALONE_HTML_FILES)
     return files
 
 
@@ -189,11 +188,3 @@ def test_built_footer_links_still_open_in_a_new_tab(built_site):
             f"{url} footer feed link must keep its label {feed_label!r}"
         )
 
-
-def test_built_invitation_page_opens_the_map_without_an_opener(built_site):
-    path = built_site / "fullmonth" / "index.html"
-    if not path.is_file():
-        pytest.skip("the fullmonth invitation page is not in the built site")
-    _assert_blank_targets_have_noopener(
-        path.read_text(encoding="utf-8"), "/fullmonth/"
-    )
