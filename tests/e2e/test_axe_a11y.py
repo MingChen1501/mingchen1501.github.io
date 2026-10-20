@@ -67,7 +67,8 @@ VIEWPORT_HEIGHT = 800
 EN_POST = "/2022/10/27/brewing-vietnamese-coffee.html"
 VI_POST = "/vi/2022/10/27/cach-pha-ca-phe.html"
 
-PAGES = ["/", EN_POST, VI_POST, "/tags/", "/vi/", "/about/", "/portfolio/"]
+PAGES = ["/", EN_POST, VI_POST, "/tags/", "/vi/", "/about/", "/portfolio/",
+         "/search/", "/vi/tim-kiem/"]
 VIEWPORTS = (PHONE_WIDTH, DESKTOP_WIDTH)
 
 # Rule ids whose `serious`/`critical` findings fail the suite outright.

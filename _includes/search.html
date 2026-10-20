@@ -1,0 +1,69 @@
+{%- comment -%}
+  Offline search page shell (#221). Rendered by both `search.md` (English,
+  `/search/`) and `vi/search.md` (Vietnamese, `/vi/tim-kiem/`), linked by the
+  shared `ref: search` so the header switcher, hreflang alternates and the
+  sitemap alternates treat them as counterparts. All visible strings follow
+  the page language; the dynamic strings the script needs (result counts,
+  no-results with the query, load failure) travel as `data-*` attributes so
+  `assets/js/search.js` stays language-agnostic.
+
+  Accessibility: a real `<form role="search">` with an associated `<label>`
+  keeps the control keyboard-operable with no script at all (a no-JS submit
+  reloads the page with `?q=`); the result count / no-results state is
+  announced through the `role="status"` + `aria-live="polite"` region; every
+  result is a plain link, so Tab reaches them in order. The script focuses
+  the input on load (a dedicated search page, like a browser find box) and
+  Escape clears the query back to the guidance state.
+
+  Asset cache versioning (#61): the script and the lazily fetched index both
+  carry the `site.time` build token, like every other fixed-URL asset — the
+  index is fetched only from this page, never site-wide.
+{%- endcomment -%}
+{%- assign search_lang = page.lang | default: site.lang | default: 'en' -%}
+{%- if search_lang == 'vi' -%}
+  {%- assign search_label = 'Tìm kiếm bài viết' -%}
+  {%- assign search_placeholder = 'Nhập tiêu đề, tag hoặc từ khóa…' -%}
+  {%- assign search_results_label = 'Kết quả tìm kiếm' -%}
+  {%- assign search_found_one = 'Tìm thấy 1 bài viết' -%}
+  {%- assign search_found_many = 'Tìm thấy {n} bài viết' -%}
+  {%- assign search_no_results = 'Không có bài nào khớp với “{q}”. Thử từ khóa khác nhé.' -%}
+  {%- assign search_load_error = 'Không tải được chỉ mục tìm kiếm. Kiểm tra kết nối rồi tải lại trang nhé.' -%}
+{%- else -%}
+  {%- assign search_label = 'Search posts' -%}
+  {%- assign search_placeholder = 'Type a title, tag or keyword…' -%}
+  {%- assign search_results_label = 'Search results' -%}
+  {%- assign search_found_one = 'Found 1 post' -%}
+  {%- assign search_found_many = 'Found {n} posts' -%}
+  {%- assign search_no_results = 'No posts match “{q}”. Try another keyword.' -%}
+  {%- assign search_load_error = 'Could not load the search index. Check your connection and reload the page.' -%}
+{%- endif -%}
+{%- assign asset_version = site.time | date: '%s' -%}
+{%- comment -%}
+  Reader-facing guidance with the live per-language totals (#221): it doubles
+  as the empty-query state, so a reader always knows what the search covers.
+  Nil-guarded like every other `site.vi_posts` read (upstream theme-dev CI
+  build, `script/cibuild`).
+{%- endcomment -%}
+{%- assign search_en_total = site.posts | size -%}
+{%- assign search_vi_pool = site.vi_posts -%}
+{%- if search_vi_pool == nil -%}
+  {%- assign search_vi_total = 0 -%}
+{%- else -%}
+  {%- assign search_vi_total = search_vi_pool | size -%}
+{%- endif -%}
+{%- if search_lang == 'vi' -%}
+  {%- assign search_guidance = 'Nhập từ khóa ở trên để tìm trong ' | append: search_vi_total | append: ' bài tiếng Việt và ' | append: search_en_total | append: ' bài tiếng Anh.' -%}
+{%- else -%}
+  {%- assign search_guidance = 'Type above to search ' | append: search_en_total | append: ' English and ' | append: search_vi_total | append: ' Vietnamese posts.' -%}
+{%- endif -%}
+<div class="search" id="site-search" data-index-url="{{ '/search.json' | relative_url }}?v={{ asset_version }}" data-lang="{{ search_lang }}" data-found-one="{{ search_found_one | escape }}" data-found-many="{{ search_found_many | escape }}" data-no-results="{{ search_no_results | escape }}" data-load-error="{{ search_load_error | escape }}">
+  <form class="search__form" id="site-search-form" role="search" action="{{ page.url | relative_url }}" method="get">
+    <label class="search__label" for="site-search-input">{{ search_label }}</label>
+    <input class="search__input" type="search" id="site-search-input" name="q" placeholder="{{ search_placeholder | escape }}" autocomplete="off" enterkeyhint="search">
+  </form>
+  <p class="search__guidance" id="site-search-guidance">{{ search_guidance }}</p>
+  <p class="search__status" id="site-search-status" role="status" aria-live="polite"></p>
+  <ul class="search__results" id="site-search-results" aria-label="{{ search_results_label }}"></ul>
+  <p class="search__empty" id="site-search-empty" hidden></p>
+</div>
+<script src="/assets/js/search.js?v={{ asset_version }}" defer></script>

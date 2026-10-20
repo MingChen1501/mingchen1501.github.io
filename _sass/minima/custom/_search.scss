@@ -1,0 +1,90 @@
+// #174: offline search page (#221). Cascade slot 13 of 13.
+//
+// The search form and its results are plain stacked blocks: the input keeps
+// a 44px target, results are a reset list of title links with a small meta
+// line (language badge, date, tags) and the description. Nothing here may
+// push the page sideways at phone widths — the input is `max-width: 100%`
+// with `box-sizing: border-box` against the base `img`-style padding probe
+// from #50, and long titles/URLs wrap instead of overflowing.
+
+.search {
+  margin-bottom: $spacing-unit;
+}
+
+.search__form {
+  margin-bottom: $spacing-unit * 0.5;
+}
+
+.search__label {
+  display: block;
+  font-size: $base-font-size * 1.125;
+  font-weight: 600;
+  margin-bottom: $spacing-unit * 0.25;
+}
+
+.search__input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: $spacing-unit * 0.25 $spacing-unit * 0.5;
+  font-size: $base-font-size;
+  color: $text-color;
+  background-color: $background-color;
+  border: 1px solid $border-color-01;
+  border-radius: 4px;
+}
+
+.search__guidance,
+.search__status {
+  color: $brand-color-dimmed;
+  font-size: $small-font-size;
+}
+
+.search__status:not(:empty) {
+  color: $text-color;
+}
+
+.search__results {
+  list-style: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.search__item {
+  padding-top: $spacing-unit * 0.5;
+  padding-bottom: $spacing-unit * 0.5;
+  border-bottom: 1px solid $border-color-01;
+  overflow-wrap: break-word;
+}
+
+.search__link {
+  font-size: $base-font-size * 1.125;
+  font-weight: 600;
+}
+
+.search__meta {
+  margin-bottom: 0;
+  font-size: $small-font-size;
+  color: $brand-color-dimmed;
+}
+
+.search__lang {
+  display: inline-block;
+  font-size: $small-font-size * 0.9;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid $border-color-01;
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+.search__desc {
+  margin-bottom: 0;
+  font-size: $small-font-size;
+}
+
+.search__empty {
+  font-weight: 600;
+}

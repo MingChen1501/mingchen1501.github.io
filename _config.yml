@@ -27,6 +27,7 @@ minima:
     - about.md
     - portfolio.md
     - tags.md
+    - search.md
 
   # Social Media Links.
   social_links:
