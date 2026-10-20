@@ -21,4 +21,4 @@ Cảm ơn bạn đã ghé thăm, chúc bạn một ngày vui vẻ!
 
 ## Quyền riêng tư
 
-Trang này không dùng cookie, không gắn mã theo dõi hay phân tích riêng nào. Lựa chọn giao diện sáng/tối chỉ lưu trong `localStorage` của chính trình duyệt này (khóa `theme`) — bạn có thể xóa bất cứ lúc nào trong phần cài đặt dữ liệu trang web. Bình luận ở các trang bài viết tải [Giscus](https://giscus.app) (GitHub Discussions) và tuân theo điều khoản quyền riêng tư của GitHub khi bạn tương tác. Các trang được phục vụ qua TLS bởi mạng biên Cloudflare, nơi cũng xử lý bộ nhớ đệm và che địa chỉ email.
+Trang này không dùng cookie, không gắn mã theo dõi hay phân tích riêng nào. Lựa chọn giao diện sáng/tối chỉ lưu trong `localStorage` của chính trình duyệt này (khóa `theme`) — bạn có thể xóa bất cứ lúc nào trong phần cài đặt dữ liệu trang web. Bình luận ở các trang bài viết tải Giscus (GitHub Discussions) và tuân theo điều khoản quyền riêng tư của GitHub khi bạn tương tác. Các trang được phục vụ qua TLS bởi mạng biên Cloudflare, nơi cũng xử lý bộ nhớ đệm và che địa chỉ email.
