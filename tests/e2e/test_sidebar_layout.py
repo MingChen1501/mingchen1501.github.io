@@ -433,7 +433,17 @@ def test_sidebar_highlights_come_from_the_data_file():
 @pytest.mark.static
 def test_sidebar_thumbnail_falls_back_to_the_first_body_image():
     html = _read(SIDEBAR_INCLUDE)
-    assert "sidebar_post.image" in html
+    # #313: the sidebar mirrors the post-card chain in
+    # `_includes/post-thumbnail.html` — front matter `thumbnail`, then
+    # `image`, then the first body image — so a future `thumbnail:` never
+    # silently diverges from the list cards.
+    thumb = html.index("sidebar_post.thumbnail")
+    image = html.index("default: sidebar_post.image")
+    body = html.index("split: '<img'")
+    assert thumb < image < body, (
+        "the sidebar thumbnail source chain must be front matter "
+        "thumbnail, then image, then the first body image"
+    )
     assert "split: '<img'" in html
     assert """split: 'src="'""" in html
     # #308: local sources reuse the small cover-cropped variants from

@@ -40,8 +40,9 @@
   `site.minima.date_format` (the verbose Vietnamese string used on the home
   list and post pages) does not fit a 300px column.
 
-  Thumbnail resolution (#308): `post.image`, else the first image of the post
-  body, else no thumbnail at all (no placeholder art). Local sources never
+  Thumbnail resolution (#308, aligned with `_includes/post-thumbnail.html`
+  in #313): front matter `thumbnail`, else front matter `image`, else the
+  first image of the post body, else no thumbnail at all (no placeholder
   load the original: the URL is mapped to the small cover-cropped variant
   from `script/generate-thumbnails` (`/assets/img/` -> `/assets/img/thumbs/`,
   `-240.webp`, 240x180) with the same `?v=` build token as the list
@@ -149,7 +150,7 @@
       {%- endunless -%}
       {%- if sidebar_post and sidebar_rendered < 5 -%}
             {%- assign sidebar_rendered = sidebar_rendered | plus: 1 -%}
-      {%- assign sidebar_thumb = sidebar_post.image | default: '' -%}
+      {%- assign sidebar_thumb = sidebar_post.thumbnail | default: sidebar_post.image | default: '' -%}
       {%- if sidebar_thumb == '' -%}
         {%- assign sidebar_body_parts = sidebar_post.content | split: '<img' -%}
         {%- if sidebar_body_parts.size > 1 -%}
