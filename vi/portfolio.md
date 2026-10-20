@@ -59,7 +59,7 @@ Backend Engineer với hơn 2 năm kinh nghiệm xây dựng hệ phân tán t�
 
 ## Hồ sơ (PDF)
 
-<object data="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}" type="application/pdf" width="100%" height="800px">
+<object data="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}" type="application/pdf" width="100%" height="800px" title="Hồ sơ của Trần Công Minh (PDF)" aria-label="Hồ sơ của Trần Công Minh (PDF)">
   <p>
     Trình duyệt của bạn không xem được PDF trực tiếp.
     <a href="{{ '/assets/resume-tran-cong-minh.pdf' | relative_url }}">Tải hồ sơ (PDF)</a>

@@ -14,48 +14,46 @@ the version (4.14.0), the npm source tarball, its registry integrity hash and
 the MPL-2.0 license; static guards below pin the header so a silent swap is
 caught.
 
-Accepted exceptions (serious, kept green deliberately — each needs an
-owner/UX decision tracked in the follow-up issue instead of a drive-by fix):
+Accepted exceptions: none. The four #207 waivers were resolved for real
+in #213 and removed, so the suite now fails on any serious/critical
+finding outright:
 
-- `label-content-name-mismatch` on `.lang-switcher`: the visible label is the
-  ISO language code (`EN`/`VI`) while the accessible name is the full
-  translated action. The compact pill (icon + code, full name as
-  `aria-label`/`title`) is pinned by the #122 guards, so renaming the visible
-  text or the accessible name needs an i18n/UX decision.
-- `label-content-name-mismatch` on `.u-email`: the visible text is the raw
-  address while the accessible name is the localized recipient label. That
-  label is pinned by the #150 guards (a stable name that Cloudflare Email
-  Obfuscation cannot rewrite), so reconciling WCAG 2.5.3 with #150 needs an
-  owner decision.
-- `color-contrast` on `blockquote > p` (coffee post EN+VI): blockquote text is
-  `$brand-color` (`#818181`) on `#fdfdfd` (3.82:1, needs 4.5:1) from the minima
-  auto skin. Changing the brand colour restyles the whole site, so it needs a
-  design decision.
-- `object-alt` on `/portfolio/` `<object>`: the resume PDF embed has no
-  title/`aria-label` (it does ship an in-element fallback link). Fixing the
-  markup needs an owner decision (label the object vs. replace the embed).
-  The waiver is scoped to Chromium/Firefox: axe's `object-is-loaded`
-  matcher only applies when the fallback renders zero boxes, and headless
-  WebKit (no PDF plugin intercept) renders the fallback inline, so the
-  rule never fires there (#209).
+- `label-content-name-mismatch` on `.lang-switcher`: the full translated
+  action ships as visually-hidden text inside the link, so the visible ISO
+  code (`EN`/`VI`) is part of the accessible name (WCAG 2.5.3).
+- `label-content-name-mismatch` on `.u-email`: the localized recipient
+  label is a visually-hidden span inside the link, so the visible address
+  stays in the accessible name while the label itself holds no raw address
+  (stable under Cloudflare Email Obfuscation, #150).
+- `color-contrast` on `blockquote > p` (coffee post EN+VI): blockquote text
+  deepened to `#616161` (6.1:1 on `#fdfdfd`) without touching
+  `$brand-color`, so the rest of the site keeps its design.
+- `object-alt` on `/portfolio/` `<object>`: the resume embed carries a
+  matching `title`/`aria-label` next to its in-element fallback link
+  (labelled, not replaced).
 
-Strictness: an unexpected serious/critical violation fails the run, and an
-accepted exception that no longer reproduces *also* fails (stale exceptions
-must be removed, not carried forever).
+Strictness: any serious/critical violation fails the run — there are no
+waivers left to hide behind. If a future exception is ever accepted into
+`ACCEPTED`, it must carry a rule, a node target and a deferred-fix reason,
+and the build test at the end of this file keeps it honest.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
 
-import conftest
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AXE_JS = REPO_ROOT / "tests" / "e2e" / "axe-core" / "axe.min.js"
 AXE_PIN_DOC = REPO_ROOT / "tests" / "e2e" / "axe-core" / "AXE_PIN.md"
+CUSTOM_SCSS = REPO_ROOT / "_sass" / "minima" / "custom" / "_a11y.scss"
+PORTFOLIO_MD = {
+    "portfolio.md": "Resume of Tran Cong Minh (PDF)",
+    "vi/portfolio.md": "Hồ sơ của Trần Công Minh (PDF)",
+}
 
 AXE_VERSION = "4.14.0"
 
@@ -77,66 +75,11 @@ BLOCKING_IMPACTS = {"serious", "critical"}
 # Lower impacts are reported in the test output but never fail.
 REPORT_ONLY_IMPACTS = {"minor", "moderate"}
 
-# Every accepted exception: the axe rule, a substring of the node's CSS
-# target selector, and why the fix is deferred instead of done here.
-ACCEPTED = [
-    {
-        "rule": "label-content-name-mismatch",
-        "target": ".lang-switcher",
-        "reason": (
-            "visible label is the ISO language code (EN/VI) while the "
-            "accessible name is the full translated action; the compact "
-            "pill is pinned by the #122 guards, renaming needs an "
-            "i18n/UX decision"
-        ),
-    },
-    {
-        "rule": "label-content-name-mismatch",
-        "target": ".u-email",
-        "reason": (
-            "visible raw address vs. localized recipient aria-label; the "
-            "label is pinned by the #150 guards (Cloudflare obfuscation "
-            "stability), reconciling WCAG 2.5.3 with #150 needs an owner "
-            "decision"
-        ),
-    },
-    {
-        "rule": "color-contrast",
-        "target": "blockquote",
-        "reason": (
-            "blockquote $brand-color #818181 on #fdfdfd is 3.82:1 (needs "
-            "4.5:1) from the minima auto skin; changing the brand colour "
-            "restyles the whole site, needs a design decision"
-        ),
-    },
-    {
-        "rule": "object-alt",
-        "target": "object",
-        # No "engines" key means every engine; this waiver is scoped because
-        # axe's `object-is-loaded` matcher only applies when the <object>
-        # fallback renders zero boxes. Chromium/Firefox hide the fallback
-        # behind the PDF plugin area (the rule fires); headless WebKit has
-        # no PDF plugin intercept, so it renders the in-element fallback
-        # link inline and the rule never applies there (#209).
-        "engines": ("chromium", "firefox"),
-        "reason": (
-            "the /portfolio/ resume PDF <object> has no title/aria-label "
-            "(it ships an in-element fallback link); labelling vs. "
-            "replacing the embed needs an owner decision"
-        ),
-    },
-]
-
-# (rule, target-substring) pairs observed during this module's browser run, and
-# how many page x viewport cases executed. The build test at the end of this
-# file fails on accepted exceptions that no longer reproduce anywhere, so
-# fixed issues cannot linger as blanket waivers. Both live in module globals
-# (not a module-scoped fixture): `conftest.py` reorders the suite static-first,
-# which finalizes module-scoped fixtures before the browser group runs.
-_OBSERVED: set[tuple[str, str]] = set()
-_CASES_RUN = 0
-_EXPECTED_CASES = len(VIEWPORTS) * len(PAGES)
-
+# No accepted exceptions remain: every waiver needs a `reason` explaining
+# why the fix is deferred instead of done, and #213 fixed all four, so the
+# list stays empty until a future waiver is justified. An empty list keeps
+# the stale-exception machinery below working (it trivially passes).
+ACCEPTED: list = []
 
 def _read(path):
     return path.read_text(encoding="utf-8")
@@ -171,6 +114,65 @@ def test_axe_pin_note_documents_version_source_and_license():
     assert "Mozilla Public License" in note, "the pin note must state the license"
 
 
+def _relative_luminance(hex_color):
+    """WCAG relative luminance of a `#rrggbb` colour."""
+    channels = [int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    linearized = [
+        channel / 12.92 if channel <= 0.03928
+        else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return (
+        0.2126 * linearized[0]
+        + 0.7152 * linearized[1]
+        + 0.0722 * linearized[2]
+    )
+
+
+@pytest.mark.static
+def test_blockquote_color_meets_aa_contrast():
+    """The #213 blockquote fix must keep 4.5:1 on the page background.
+
+    The override lives in custom styles (``$brand-color`` itself is
+    untouched), so this parses the winning `blockquote` colour and checks
+    the ratio directly instead of re-running a browser.
+    """
+    scss = _read(CUSTOM_SCSS)
+    matches = re.findall(
+        r"^\s*blockquote\s*\{(.*?)\}", scss, re.S | re.M
+    )
+    assert matches, (
+        "custom a11y styles define no blockquote colour override (#213)"
+    )
+    colour = re.search(r"color:\s*(#[0-9a-fA-F]{6})", matches[-1])
+    assert colour, "the blockquote override sets no static colour (#213)"
+    lighter = _relative_luminance("#fdfdfd")
+    darker = _relative_luminance(colour.group(1))
+    ratio = (lighter + 0.05) / (darker + 0.05)
+    assert ratio >= 4.5, (
+        f"blockquote {colour.group(1)} on #fdfdfd is {ratio:.2f}:1 "
+        "(needs 4.5:1, #213)"
+    )
+
+
+@pytest.mark.static
+def test_portfolio_object_has_accessible_name_and_fallback():
+    """The #213 object-alt fix: labelled embed, fallback link retained."""
+    for rel, label in PORTFOLIO_MD.items():
+        md = _read(REPO_ROOT / rel)
+        tag = re.search(r"<object\b[^>]*>", md)
+        assert tag, f"{rel} renders no resume <object> to judge (#213)"
+        assert f'title="{label}"' in tag.group(0), (
+            f"{rel} resume <object> has no title (#213): {tag.group(0)}"
+        )
+        assert f'aria-label="{label}"' in tag.group(0), (
+            f"{rel} resume <object> has no aria-label (#213): {tag.group(0)}"
+        )
+        assert re.search(
+            r"<object\b[^>]*>.*?<a\b[^>]*>.*?</a>.*?</object>", md, re.S
+        ), f"{rel} resume <object> lost its in-element fallback link (#213)"
+
+
 # --- browser smoke (needs Ruby + a browser) --------------------------------
 
 
@@ -203,7 +205,7 @@ def _describe(violation, node, path, width):
 def test_axe_no_unexpected_serious_or_critical_violations(
     path, width, built_site_url, browser
 ):
-    """Fail on serious/critical findings outside the documented exceptions."""
+    """Fail on any serious/critical finding (no exceptions remain, #213)."""
     context = browser.new_context(
         viewport={"width": width, "height": VIEWPORT_HEIGHT},
         color_scheme="light",
@@ -224,7 +226,6 @@ def test_axe_no_unexpected_serious_or_critical_violations(
         # Readiness: every template renders the footer; axe needs final styles.
         page.wait_for_selector(".site-footer", state="attached", timeout=10_000)
 
-        global _CASES_RUN
         unexpected = []
         advisory = []
         for violation in _run_axe(page):
@@ -242,40 +243,34 @@ def test_axe_no_unexpected_serious_or_critical_violations(
                     )
                     if match is None:
                         unexpected.append(line)
-                    else:
-                        _OBSERVED.add((match["rule"], match["target"]))
                 elif violation["impact"] in REPORT_ONLY_IMPACTS:
                     advisory.append(line)
                 else:
                     unexpected.append(f"{line} (unknown impact)")
-        _CASES_RUN += 1
         if advisory:
             print(f"\naxe advisory (non-blocking) for {width}px {path}:")
             for line in advisory:
                 print(f"  {line}")
         assert not unexpected, (
-            f"axe serious/critical violations at {width}px {path} outside the "
-            f"accepted exceptions:\n" + "\n".join(f"  {line}" for line in unexpected)
+            f"axe serious/critical violations at {width}px {path}:\n"
+            + "\n".join(f"  {line}" for line in unexpected)
         )
     finally:
         context.close()
 
 
-def test_accepted_exceptions_match_this_build(built_site, browser_name):
-    """The waiver list above must describe the real build (no silent drift).
+def test_fixed_nodes_still_render_and_rules_still_ship(built_site):
+    """The #213 fixes must stay real (no silent drift or vacuous green).
 
-    Without Ruby there is no build to judge, so this needs the session build;
-    it re-reads the rendered pages and asserts every accepted (rule, target)
-    pair occurs at least once somewhere, catching include changes that move
-    or rename the waived nodes without touching axe. On a full module run it
-    additionally fails on accepted exceptions the browser cases never
-    observed, so fixed issues cannot linger as waivers (partial `-k` runs
-    skip that half: not every case executed). Waivers scoped to a subset of
-    engines (the ``engines`` key, #209) are only required on those engines.
+    The browser cases above prove the four former violations are gone, but
+    deleting the switcher/email/blockquote/object markup would also turn the
+    run green — so this re-reads the rendered pages and asserts the fixed
+    nodes still occur somewhere, catching include changes that drop them
+    without touching axe. It also asserts the vendored bundle still ships
+    the three rule ids (the suite pins the scanner version in the static
+    guard; a swap that drops a rule is caught here rather than silently
+    passing).
     """
-    selector_snippets = {
-        (entry["rule"], entry["target"]): False for entry in ACCEPTED
-    }
     targets = {
         ".lang-switcher": 'class="lang-switcher"',
         ".u-email": 'class="u-email"',
@@ -283,44 +278,27 @@ def test_accepted_exceptions_match_this_build(built_site, browser_name):
         "object": "<object",
     }
     portfolio_only = {"object"}
+    seen = {target: False for target in targets}
     checked = 0
     for path in PAGES:
         html = _read(built_site / path.lstrip("/").rstrip("/") / "index.html") \
             if (built_site / path.lstrip("/").rstrip("/") / "index.html").is_file() \
             else _read(built_site / path.lstrip("/"))
         checked += 1
-        for (rule, target), _ in selector_snippets.items():
+        for target, snippet in targets.items():
             if target in portfolio_only and path != "/portfolio/":
                 continue
-            if targets[target] in html:
-                selector_snippets[(rule, target)] = True
-    missing = [key for key, seen in selector_snippets.items() if not seen]
+            if snippet in html:
+                seen[target] = True
+    missing = [target for target, found in seen.items() if not found]
     assert checked == len(PAGES)
     assert not missing, (
-        "accepted axe exception targets missing from the build — the markup "
-        f"moved, update ACCEPTED in {Path(__file__).name}: {missing}"
+        "fixed axe nodes missing from the build — the markup moved or was "
+        f"dropped, so the green run may be vacuous: {missing}"
     )
     # The suite pins the vendored scanner version (see the static guard); the
     # rule ids themselves ship in that bundle, so a scanner swap that drops a
-    # waived rule is caught here rather than silently passing.
+    # fixed rule is caught here rather than silently passing.
     bundle = _read(AXE_JS)
-    for rule in {entry["rule"] for entry in ACCEPTED}:
+    for rule in ("label-content-name-mismatch", "color-contrast", "object-alt"):
         assert rule in bundle, f"vendored axe bundle has no {rule} rule"
-
-    if _CASES_RUN != _EXPECTED_CASES:
-        print(
-            f"\nskipping the stale-exception check: {_CASES_RUN}/"
-            f"{_EXPECTED_CASES} browser cases ran (partial selection?)"
-        )
-        return
-    stale = [
-        entry
-        for entry in ACCEPTED
-        if browser_name in entry.get("engines", conftest.BROWSER_NAMES)
-        and (entry["rule"], entry["target"]) not in _OBSERVED
-    ]
-    assert not stale, (
-        "accepted axe exceptions that no longer reproduce — remove them "
-        f"from ACCEPTED in {Path(__file__).name}: "
-        + "; ".join(f"{entry['rule']} ({entry['target']})" for entry in stale)
-    )

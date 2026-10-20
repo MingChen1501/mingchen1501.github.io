@@ -214,15 +214,13 @@ Guard for #207. The pinned, vendored axe-core scanner
 `/`, one EN post plus its VI counterpart, `/tags/`, `/vi/`, `/about/` and
 `/portfolio/`, each at 375px and 1280px in the light colour scheme.
 
-- Fails on `serious`/`critical` violations outside the documented exceptions.
+- Fails on any `serious`/`critical` violation: the four #207 exceptions
+  were resolved for real in #213, so `ACCEPTED` is empty (a future waiver
+  needs a rule + node-target + deferred-fix reason). Fixed nodes that must
+  keep rendering (`.lang-switcher`, `.u-email`, `blockquote`, the
+  portfolio `<object>`) plus the shipped rule ids are re-asserted so the
+  green run cannot go vacuous.
 - `minor`/`moderate` findings are printed but non-blocking.
-- Accepted exceptions (rule + reason, full text in the spec file):
-  `label-content-name-mismatch` on `.lang-switcher` (#122 pill pins the
-  ISO-code visible label) and on `.u-email` (#150 pins the localized
-  recipient label), `color-contrast` on the coffee-post `blockquote`
-  (`#818181` on `#fdfdfd`, brand-colour design decision), `object-alt` on
-  the `/portfolio/` PDF `<object>`. An exception that stops reproducing
-  fails the run so fixed issues cannot linger as waivers.
 
 ## Visual regression baselines (`test_visual_regression.py`)
 

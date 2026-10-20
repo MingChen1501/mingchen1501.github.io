@@ -1,13 +1,20 @@
-"""Guards for #150: footer email link needs a stable accessible name.
+"""Guards for #150 (accessible name) and #213 (WCAG 2.5.3 fix).
 
 The footer contact email in `_includes/footer.html` was a bare `mailto:`
 link whose text is the raw address. Under Cloudflare Email Obfuscation the
 visible text can become "[email protected]", which is what assistive
 technology announces — the link had no stable accessible name. The link now
-carries a localized `aria-label` naming the recipient ("Email <name>" /
-"Gửi email cho <name>"), which contains no raw address so obfuscation cannot
-rewrite it, while the visible text stays the plain address (works with JS
+names the recipient in plain text ("Email <name>" /
+"Gửi email cho <name>", no raw address in the label so obfuscation cannot
+rewrite it) while the visible text stays the plain address (works with JS
 off) and the `mailto:` href is unchanged.
+
+The label ships as a visually-hidden span *inside* the link (#213), not as
+an `aria-label`: `aria-label` would override the contents and reintroduce
+the WCAG 2.5.3 Label-in-Name mismatch (the visible address would no longer
+be part of the accessible name). With the in-link span the accessible name
+is "<address> (<label>)", which contains the visible text and still names
+the recipient when obfuscation rewrites the address.
 
 Static guards (no Ruby) cover the source contract; build guards (need Ruby,
 no browser) assert the rendered footer on the EN and VI homes.
@@ -24,25 +31,31 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FOOTER_INCLUDE = REPO_ROOT / "_includes" / "footer.html"
 
 
-def _email_anchor(page_html, url):
-    """The rendered `<a class="u-email" ...>` opening tag of a page."""
-    match = re.search(r'<a class="u-email"[^>]*>', page_html)
+def _email_link(page_html, url):
+    """The rendered `<a class="u-email" ...>...</a>` of a page."""
+    match = re.search(r'<a class="u-email"[^>]*>(.*?)</a>', page_html, re.S)
     assert match, f"{url} renders no footer email link"
-    return match.group(0)
+    return match.group(0), match.group(1)
 
 
 # --- static guards (no Ruby, no browser) ------------------------------------
 
 
 @pytest.mark.static
-def test_email_link_carries_aria_label_not_text_only():
+def test_email_link_names_recipient_in_link_text_not_aria_label():
+    """No `aria-label`: the name must come from the link contents (#213)."""
     html = FOOTER_INCLUDE.read_text(encoding="utf-8")
     anchor = re.search(r'<a class="u-email"[^>]*>', html)
     assert anchor, "footer.html renders no u-email link to judge"
-    assert "aria-label=" in anchor.group(0), (
-        "footer email link has no stable accessible name (#150): "
-        f"{anchor.group(0)}"
+    assert "aria-label" not in anchor.group(0), (
+        "footer email link must not carry aria-label: it would hide the "
+        "visible address from the accessible name (WCAG 2.5.3, #213)"
     )
+    assert re.search(
+        r'<span class="visually-hidden">\s*\(\{\{\s*email_label\s*\}\}\)\s*</span>',
+        html,
+    ), "footer email link must name the recipient in a visually-hidden "
+    "span inside the link (#150, #213)"
 
 
 @pytest.mark.static
@@ -73,7 +86,7 @@ def test_email_link_keeps_mailto_and_visible_address():
     assert "href=\"mailto:{{ site.author.email }}\"" in html, (
         "the email link must keep its mailto href (#150)"
     )
-    assert ">{{ site.author.email }}</a>" in html, (
+    assert ">{{ site.author.email }}<span" in html, (
         "the visible footer text must stay the plain address (#150)"
     )
 
@@ -82,28 +95,31 @@ def test_email_link_keeps_mailto_and_visible_address():
 
 
 def _assert_named_email(page_html, url, address, label):
-    anchor = _email_anchor(page_html, url)
+    anchor, inner = _email_link(page_html, url)
     assert f'href="mailto:{address}"' in anchor, (
         f"{url} footer email link must keep its mailto href (#150)"
     )
-    found = re.search(r'aria-label="([^"]+)"', anchor)
-    assert found and found.group(1).strip(), (
-        f"{url} footer email link has no stable accessible name (#150): "
-        f"{anchor}"
+    assert "aria-label" not in anchor, (
+        f"{url} footer email link must not carry aria-label "
+        f"(WCAG 2.5.3, #213): {anchor}"
     )
-    assert found.group(1) == label, (
-        f"{url} footer email link must be labelled {label!r} (#150), "
-        f"got {found.group(1)!r}"
-    )
-    assert "@" not in found.group(1), (
+    assert "@" not in label, (
         f"{url} footer email label must not depend on the address "
-        f"text (#150): {found.group(1)!r}"
+        f"text (#150): {label!r}"
     )
-    link_text = re.search(
-        r'<a class="u-email"[^>]*>(.*?)</a>', page_html, re.S
+    assert inner.startswith(address), (
+        f"{url} visible footer email must stay the plain address (#150): "
+        f"{inner!r}"
     )
-    assert link_text and link_text.group(1).strip() == address, (
-        f"{url} visible footer email must stay the plain address (#150)"
+    rest = inner[len(address):]
+    assert re.fullmatch(
+        r'\s*<span class="visually-hidden">\s*\('
+        + re.escape(label)
+        + r'\)\s*</span>\s*',
+        rest,
+    ), (
+        f"{url} footer email link must name the recipient {label!r} in a "
+        f"hidden span after the address (#150, #213): {inner!r}"
     )
 
 
