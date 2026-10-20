@@ -123,6 +123,168 @@
     background: none !important;
   }
 
+  // #242: printing from dark mode kept the dark syntax-token colours
+  // (light-on-dark by design in `dm-highlight`) on the forced-white page,
+  // so code printed unreadable; plain `pre` text also kept the dark
+  // heading colour, and `color-scheme: dark` could leak dark form
+  // controls/scrollbars into print. Pin the scheme to light (the
+  // `html[...]` qualifiers match both dark layers in `_theme-toggle.scss`)
+  // and repin every Rouge token to its readable light (`lm-highlight`)
+  // colour. The `!important` flags outrank the non-important dark rules
+  // for both the stored choice and the OS-preference fallback, in both
+  // languages; screen output is unchanged (still inside `@media print`).
+  html[data-theme="dark"],
+  html:not([data-theme="light"]),
+  html,
+  :root {
+    color-scheme: light !important;
+  }
+
+  // Plain code text (unstyled tokens inherit this): `pre` otherwise keeps
+  // the dark heading colour through the skin variable.
+  .post-content pre,
+  .post-content code,
+  .post-content .highlight,
+  .post-content .highlight pre,
+  .post-content .highlight code {
+    color: #000 !important;
+    background: none !important;
+  }
+
+  .post-content .highlight .err {
+    color: #a61717 !important;
+    background: none !important;
+  }
+
+  .post-content .highlight .hll {
+    background: none !important;
+  }
+
+  .post-content .highlight .c,
+  .post-content .highlight .cm,
+  .post-content .highlight .cp,
+  .post-content .highlight .c1,
+  .post-content .highlight .cs,
+  .post-content .highlight .lineno,
+  .post-content .highlight .gl {
+    color: #9c9996 !important;
+  }
+
+  .post-content .highlight .gd,
+  .post-content .highlight .gd .x {
+    color: #e25050 !important;
+  }
+
+  .post-content .highlight .gh,
+  .post-content .highlight .bp {
+    color: #999999 !important;
+  }
+
+  .post-content .highlight .gi,
+  .post-content .highlight .gi .x {
+    color: #3f993f !important;
+  }
+
+  .post-content .highlight .go {
+    color: #888888 !important;
+  }
+
+  .post-content .highlight .gp {
+    color: #555555 !important;
+  }
+
+  .post-content .highlight .gr,
+  .post-content .highlight .gt {
+    color: #aa0000 !important;
+  }
+
+  .post-content .highlight .gu {
+    color: #aaaaaa !important;
+  }
+
+  .post-content .highlight .k,
+  .post-content .highlight .kc,
+  .post-content .highlight .kd,
+  .post-content .highlight .kp,
+  .post-content .highlight .kr,
+  .post-content .highlight .nb {
+    color: #cf222e !important;
+  }
+
+  .post-content .highlight .kt {
+    color: #445588 !important;
+  }
+
+  .post-content .highlight .n {
+    color: #111111 !important;
+  }
+
+  .post-content .highlight .na,
+  .post-content .highlight .nc,
+  .post-content .highlight .ni,
+  .post-content .highlight .nn {
+    color: #097e39 !important;
+  }
+
+  .post-content .highlight .ne {
+    color: #990000 !important;
+  }
+
+  .post-content .highlight .nf {
+    color: #2c7d74 !important;
+  }
+
+  .post-content .highlight .no {
+    color: #a61154 !important;
+  }
+
+  .post-content .highlight .nt {
+    color: #b81e63 !important;
+  }
+
+  .post-content .highlight .nv,
+  .post-content .highlight .vc,
+  .post-content .highlight .vg,
+  .post-content .highlight .vi {
+    color: #752a75 !important;
+  }
+
+  .post-content .highlight .o,
+  .post-content .highlight .ow,
+  .post-content .highlight .ss {
+    color: #0842a0 !important;
+  }
+
+  .post-content .highlight .m,
+  .post-content .highlight .mf,
+  .post-content .highlight .mh,
+  .post-content .highlight .mi,
+  .post-content .highlight .il,
+  .post-content .highlight .mo {
+    color: #005a99 !important;
+  }
+
+  .post-content .highlight .s,
+  .post-content .highlight .s1,
+  .post-content .highlight .s2,
+  .post-content .highlight .sb,
+  .post-content .highlight .sc,
+  .post-content .highlight .sd,
+  .post-content .highlight .se,
+  .post-content .highlight .sh,
+  .post-content .highlight .si,
+  .post-content .highlight .sx {
+    color: #914d08 !important;
+  }
+
+  .post-content .highlight .sr {
+    color: #009926 !important;
+  }
+
+  .post-content .highlight .w {
+    color: #bbbbbb !important;
+  }
+
   // Images stay inside the text column at their rendered ratio.
   .post-content img {
     max-width: 100% !important;
