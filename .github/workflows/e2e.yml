@@ -88,16 +88,15 @@ jobs:
       - name: Run browser E2E, layout overflow and tag-chip guards
         env:
           E2E_BROWSER: ${{ matrix.browser }}
-        run: python -m pytest tests/e2e -v -m "not static"
-        env:
           # Harvest CI-rendered captures on failure: screenshot bytes depend
           # on the machine, so the canonical visual baselines (#208) are
           # collected from this runner, never generated locally.
           SAVE_FRESH_DIR: tests/e2e/visual/fresh
-      - name: Upload fresh visual captures
+        run: python -m pytest tests/e2e -v -m "not static"
+      - name: Upload fresh visual captures (${{ matrix.browser }})
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-fresh
+          name: visual-fresh-${{ matrix.browser }}
           path: tests/e2e/visual/fresh/
           if-no-files-found: error

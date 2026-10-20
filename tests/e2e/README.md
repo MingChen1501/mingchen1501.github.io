@@ -178,9 +178,12 @@ selects another:
 E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
 ```
 
-- There are no pixel-comparison (screenshot) guards in this suite: layout
-  and style assertions read geometry and computed styles through the DOM,
-  so the same guards run unmodified on all three engines.
+- Pixel comparison (`test_visual_regression.py`, #208) runs Chromium-only:
+  the committed baselines are Chromium renders, and other engines
+  rasterize differently, so the case skips on Firefox/WebKit with an
+  explicit reason. Every other browser guard runs unmodified on all three
+  engines (layout and style assertions read geometry and computed styles
+  through the DOM, never pixels).
 - `test_copy_code.py` narrows two things per engine: the clipboard grants
   run on Chromium only (Firefox allows clipboard over loopback HTTP with
   no grant and rejects the grant call), and the two click-to-copy
@@ -193,7 +196,7 @@ E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
   no PDF plugin intercept, renders the fallback link inline, and the rule
   never fires there. The waiver stays enforced where it applies.
 - Measured runtime for `-m "not static"` (one shared Jekyll build
-  plus 194 browser tests): locally Chromium ~2m20s, Firefox ~3m10s,
+  plus 230 browser tests): locally Chromium ~2m20s, Firefox ~3m10s,
   WebKit ~2m50s; CI job durations (build + `install --with-deps` + suite)
   Chromium 2m09s, Firefox 1m58s, WebKit 1m48s.
   The three CI jobs run in parallel, so PR wall-clock is the slowest
@@ -255,7 +258,7 @@ script/update-visual-baselines
   bytes depend on the machine's font rasterization and JPEG encoder, so
   locally generated captures fail on CI. To refresh them, push the branch
   (or run the `Visual baselines` dispatch workflow once merged) and
-  download the `visual-fresh` artifact from the failed browser-E2E run
+  download the `visual-fresh-chromium` artifact from the failed browser-E2E run
   into `tests/e2e/visual/baseline/` — never commit locally rendered
   captures.
 
