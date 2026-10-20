@@ -18,6 +18,7 @@ exactly one place; other files link to it instead of restating it.
 | Reviewer (checklist, risk label, verdict) | `.opencode/agents/site-reviewer.md` + `jekyll-review` skill |
 | Article writer (EN+VI pair, one PR) | `.opencode/agents/article-writer.md` + `article-writer` skill |
 | Buffer (file issues only, no implementation) | `.opencode/agents/buffer-worker.md` |
+| Architect (audit, specs, refactor issues; never implements) | `.opencode/agents/architect.md` + `architecture` skill |
 
 ## Commands (every task)
 
@@ -65,6 +66,7 @@ exactly one place; other files link to it instead of restating it.
 | Article `article`-label issue waiting on a cron wake: detect, dedupe, spawn | `orchestrator` skill ("Article-intake scan") |
 | Owner describes a task/bug/enhancement: buffer worker files the issue(s) first, implementation follows under the normal pool | `orchestrator` skill ("Owner-task buffer-worker workflow") |
 | Turn an idea/chat draft or `article` issue into an EN+VI article PR (entry: intake #190, chat-draft #192; direct-attachment images; handoff per skill) | `article-writer` skill + `.opencode/agents/article-writer.md` |
+| Audit structure/coupling/duplication, maintain `docs/architecture/` specs, file refactor issues, architecture lens on a PR | `.opencode/agents/architect.md` + `architecture` skill |
 | Pinned upstream minima baseline, sync policy, upstream-change check | `docs/upstream-baseline-184.md` |
 
 Each skill's frontmatter (`description` + `trigger`) says when to load it;

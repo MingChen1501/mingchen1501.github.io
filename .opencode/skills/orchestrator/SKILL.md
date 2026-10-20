@@ -314,6 +314,9 @@ Checklist (each review starts from the pinned baseline, never re-derived):
 - Worker role: `.opencode/skills/worker/SKILL.md` (scope, branching,
   PR workflow, report contract). Buffer role:
   `.opencode/agents/buffer-worker.md`.
+- Architect role: `.opencode/agents/architect.md` + `architecture`
+  skill (audits, `docs/architecture/` specs, refactor issues,
+  review-lens mode; never implements/merges).
 - AO CLI catalog: `.opencode/skills/using-ao/SKILL.md`.
 - Pending owner cue/config updates (CLI cannot edit/delete cues —
   apply via desktop/project settings): rewrite `publish-and-review`
