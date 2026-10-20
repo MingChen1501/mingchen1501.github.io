@@ -202,7 +202,7 @@ portfolio with its VI twin (12 pages x 3 viewports = 36 captures in
   through the page) before each full-page screenshot.
 - Comparison: captures are downscaled to half size (Lanczos) and stored as
   JPEG quality 60, so all 36 baselines stay under the 2 MB budget (currently
-  ~1.8 MB; `test_baseline_budget` pins the ceiling and the per-case file
+  ~1.9 MB; `test_baseline_budget` pins the ceiling and the per-case file
   list). A pixel counts as changed when any channel differs by more than 12,
   and the capture fails past 1% changed pixels — a 30px layout shift measures
   ~18%, while identical renders measure 0%.
