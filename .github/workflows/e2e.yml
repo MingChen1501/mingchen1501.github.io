@@ -1,4 +1,4 @@
-name: E2E
+name: E2E + Lighthouse
 
 on:
   push:
@@ -8,11 +8,11 @@ on:
     branches:
       - master
   # Full-run override (#229): dispatch with full=true (the default) forces
-  # the browser matrix even on a content-only change set.
+  # the full suite even on a content-only change set.
   workflow_dispatch:
     inputs:
       full:
-        description: "Force the full browser matrix (true) or classify the branch diff (false)"
+        description: "Force the full E2E + Lighthouse suite (true) or classify the branch diff (false)"
         required: false
         default: "true"
 
@@ -22,16 +22,19 @@ permissions:
   contents: read
 
 # A superseded push cancels its in-flight run instead of letting a whole
-# duplicate run finish (#56).
+# duplicate run finish (#56). One workflow now covers E2E and Lighthouse
+# (#320), so one group supersedes both of the old per-workflow runs.
 concurrency:
-  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  group: site-checks-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   # Content-only classification (#229): a PR that touches only content paths
   # (_posts/**, _vi_posts/**, assets/img/**, _data/highlights.yml) sets
-  # content_only=true and skips the heavy browser matrix. Any code path --
-  # or any uncertain diff -- defaults to the full suite. No silent skip.
+  # content_only=true and skips the heavy jobs. Any code path -- or any
+  # uncertain diff -- defaults to the full suite. No silent skip. The
+  # classifier lives in one composite action (#320) so E2E and Lighthouse
+  # cannot drift apart.
   classify:
     name: "Classify content-only vs full run"
     runs-on: "ubuntu-latest"
@@ -44,30 +47,9 @@ jobs:
           fetch-depth: 0
       - name: Classify changed files
         id: classify
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.full }}" = "true" ]; then
-            echo "workflow_dispatch full=true override: forcing full run."
-            echo "content_only=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            RANGE="origin/${{ github.base_ref }}...HEAD"
-          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
-            RANGE="${{ github.event.before }} ${{ github.sha }}"
-          else
-            echo "No base available for diff: defaulting to the full suite."
-            echo "content_only=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # shellcheck disable=SC2086
-          if FILES=$(git diff --name-only $RANGE 2>/dev/null); then
-            echo "Changed files:"
-            echo "$FILES"
-            echo "$FILES" | script/classify-content-only >> "$GITHUB_OUTPUT"
-          else
-            echo "Diff unavailable: defaulting to the full suite."
-            echo "content_only=false" >> "$GITHUB_OUTPUT"
-          fi
+        uses: ./.github/actions/classify-content-only
+        with:
+          force-full: ${{ github.event_name == 'workflow_dispatch' && inputs.full }}
 
   # Fast, browser-free guards (image budget, comments/tag markup): no Ruby, no
   # Chromium, no Jekyll build, so they report in seconds (#56). Always run,
@@ -94,25 +76,23 @@ jobs:
       - name: Run static guards (images, comments/tag markup)
         run: python -m pytest tests/e2e -v -m static
 
-  # The slow half: one shared Jekyll build served to the three browser
-  # engines (#209, #266). The `build-site` job below builds once and shares
-  # the `_site/` artifact; each `browser-e2e` job downloads it and points
-  # the suite at it via `$E2E_PREBUILT_SITE` instead of rebuilding (the
+  # The slow half, built once (#266, #273, #320): one `bundle exec jekyll
+  # build` serves the three browser engines (#209) and both LHCI passes
+  # (#273) from the same `site` artifact, so a full PR pays one Ruby setup
+  # + one build + one upload instead of one per workflow. The consumers
+  # download it and point their suites at it instead of rebuilding (the
   # `built_site` fixture reuses the directory as-is, so the engines assert
-  # against the identical tree). The three jobs run in parallel, so PR
-  # wall-clock is the slowest engine, not the sum (measured runtimes per
-  # engine live in `tests/e2e/README.md`, "Browser matrix"). Skipped on
-  # content-only PRs (#229): new posts cannot break layout, JS, or Sass.
-  # Savings vs one build per engine (#266): two fewer Jekyll builds and
-  # two fewer Ruby/bundler setups per full run -- billed minutes drop by
-  # roughly twice one engine's build+setup slice, with identical assertions.
+  # against the identical tree; LHCI serves the same tree). The browser
+  # jobs and both LHCI jobs run in parallel, so PR wall-clock is the
+  # slowest consumer, not the sum. Skipped on content-only PRs (#229): new
+  # posts cannot break layout, JS, or Sass.
   build-site:
-    name: "E2E build site once (#266)"
+    name: "Build site once (#320)"
     needs: classify
     if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
     # `actions: write` for the "Upload built site" step
-    # (actions/upload-artifact; write covers the same-run download too).
+    # (actions/upload-artifact; write covers the same-run downloads too).
     # `contents: read` is restated because a job-level `permissions` block
     # replaces (not merges with) the top-level block.
     permissions:
@@ -133,7 +113,7 @@ jobs:
       - name: Upload built site
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-site
+          name: site
           path: _site/
           retention-days: 1
 
@@ -158,10 +138,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Download built site (#266)
+      - name: Download built site (#320)
         uses: actions/download-artifact@v4
         with:
-          name: e2e-site
+          name: site
           path: _site/
       - name: Set Up Python
         uses: actions/setup-python@v5
@@ -191,7 +171,7 @@ jobs:
       - name: Run browser E2E, layout overflow and tag-chip guards
         env:
           E2E_BROWSER: ${{ matrix.browser }}
-          # Shared build from the build-site job (#266): the suite serves
+          # Shared build from the build-site job (#320): the suite serves
           # this directory instead of running its own `jekyll build`.
           E2E_PREBUILT_SITE: ${{ github.workspace }}/_site
           # Harvest CI-rendered captures on failure: screenshot bytes depend
@@ -205,6 +185,103 @@ jobs:
         with:
           name: visual-fresh-${{ matrix.browser }}
           path: tests/e2e/visual/fresh/
+          if-no-files-found: error
+
+  # Desktop pass (#273): unchanged thresholds (performance warn-only at
+  # 0.85, accessibility/best-practices/SEO error at 0.90) served from the
+  # shared build above, so the mobile pass costs no extra build. Runs on
+  # PRs and manual dispatches only (#320): the old standalone Lighthouse
+  # workflow never ran on master pushes.
+  lighthouse-desktop:
+    name: "Lighthouse CI (desktop)"
+    needs: [classify, build-site]
+    if: needs.classify.outputs.content_only != 'true' && github.event_name != 'push'
+    runs-on: "ubuntu-latest"
+    # `actions: write` for the "Download built site" step
+    # (actions/download-artifact) and the "Upload Lighthouse report" step
+    # (actions/upload-artifact; write covers both).
+    # `contents: read` is restated because a job-level `permissions` block
+    # replaces (not merges with) the top-level block.
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download built site (#320)
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site/
+      # NOTE (#195): pages embedding external attachment images
+      # (`https://github.com/user-attachments/assets/...`) are measured as-is;
+      # no origin is blocked. Attachment-hosted bytes are exempt from the local
+      # 6MB `assets/img/` budget (enforced by script/check-images) instead of
+      # carrying a byte threshold here, because the site does not control
+      # their compression. Remove this exemption on storage migration.
+      - name: Set Up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run Lighthouse CI
+        run: npx --yes @lhci/cli@0.15.1 autorun
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-desktop
+          path: .lighthouseci/
+          retention-days: 7
+          # .lighthouseci/ is a dot-directory, skipped by default (#319).
+          include-hidden-files: true
+          # Fail loudly on a future miss instead of warning (#319).
+          if-no-files-found: error
+
+  # Mobile-emulation pass (#273): default (mobile) emulation, no `desktop`
+  # preset, over `/`, the photo-heavy Tet 2023 posts (EN/VI, full-size
+  # portrait phone photos that dominate mobile LCP and are invisible to the
+  # desktop pass), and `/tags/`. `numberOfRuns: 3` damps single-run noise
+  # (assert uses the median); performance stays warn-only at 0.85 so mobile
+  # noise never blocks a PR, matching desktop. Fixing whatever this flags is
+  # follow-up work -- this job only makes the signal visible. Runs on PRs
+  # and manual dispatches only (see above).
+  lighthouse-mobile:
+    name: "Lighthouse CI (mobile)"
+    needs: [classify, build-site]
+    if: needs.classify.outputs.content_only != 'true' && github.event_name != 'push'
+    runs-on: "ubuntu-latest"
+    # `actions: write` for the "Download built site" step
+    # (actions/download-artifact) and the "Upload Lighthouse report" step
+    # (actions/upload-artifact; write covers both).
+    # `contents: read` is restated because a job-level `permissions` block
+    # replaces (not merges with) the top-level block.
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Download built site (#320)
+        uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site/
+      - name: Set Up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run Lighthouse CI (mobile)
+        run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.mobile.json
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-mobile
+          path: .lighthouseci/
+          retention-days: 7
+          # .lighthouseci/ is a dot-directory, skipped by default (#319).
+          include-hidden-files: true
+          # Fail loudly on a future miss instead of warning (#319).
           if-no-files-found: error
 
   # Stable aggregator for branch protection (#229): a skipped browser matrix
@@ -227,3 +304,25 @@ jobs:
             [ "${{ needs.build-site.result }}" = "success" ] && \
             [ "${{ needs.browser-e2e.result }}" = "success" ]
           fi
+
+  # Stable aggregator for branch protection (#229): see E2E suite result.
+  # Lighthouse runs on PRs and manual dispatches only (#320), so a master
+  # push or a content-only PR reports success without the LHCI jobs.
+  lighthouse-summary:
+    name: "Lighthouse suite result"
+    runs-on: "ubuntu-latest"
+    needs: [classify, lighthouse-desktop, lighthouse-mobile]
+    if: always()
+    steps:
+      - name: Report suite result
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Push to master: Lighthouse runs on PRs only (#320)."
+            exit 0
+          fi
+          if [ "${{ needs.classify.outputs.content_only }}" = "true" ]; then
+            echo "Content-only PR: Lighthouse skipped by design (#229)."
+            exit 0
+          fi
+          [ "${{ needs.lighthouse-desktop.result }}" = "success" ] && \
+          [ "${{ needs.lighthouse-mobile.result }}" = "success" ]
