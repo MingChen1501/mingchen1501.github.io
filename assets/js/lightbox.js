@@ -25,11 +25,10 @@
  *   path as the arrow keys). No animation anywhere, so there is nothing
  *   for `prefers-reduced-motion` to disable — the stylesheet only removes
  *   transitions defensively.
- * - Labels follow `<html lang>` (English default, Vietnamese `vi*`).
+ * - Labels follow `<html lang>` (English default, Vietnamese `vi*`, #246).
  */
 (function () {
-  var lang = (document.documentElement.lang || 'en').toLowerCase();
-  var vi = lang === 'vi' || lang.indexOf('vi-') === 0;
+  var vi = window.SiteUtils.isVietnamese();
   var TEXT = vi
     ? {
         viewer: 'Trình xem ảnh',
@@ -286,9 +285,5 @@
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
-  } else {
-    run();
-  }
+  window.SiteUtils.onReady(run);
 })();

@@ -46,6 +46,7 @@ SHARE_INCLUDE = REPO_ROOT / "_includes" / "share.html"
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
 SCRIPT = REPO_ROOT / "assets" / "js" / "share.js"
+HELPER = REPO_ROOT / "assets" / "js" / "site-utils.js"
 
 SCRIPT_PATH = "/assets/js/share.js"
 
@@ -209,11 +210,15 @@ def test_the_share_script_exists_and_stays_tiny():
 def test_the_script_copies_with_a_fallback_and_gates_native_share():
     """Clipboard API first with a textarea fallback; Web Share only."""
     text = _read(SCRIPT)
-    assert "navigator.clipboard" in text and "writeText" in text, (
-        "the script must copy through the Clipboard API"
+    helper = _read(HELPER)
+    assert "SiteUtils" in text and "copyText" in text, (
+        "the script must copy through the shared SiteUtils helper (#246)"
     )
-    assert "textarea" in text and "execCommand" in text, (
-        "the script must fall back to a textarea + execCommand copy"
+    assert "navigator.clipboard" in helper and "writeText" in helper, (
+        "the shared helper must copy through the Clipboard API"
+    )
+    assert "textarea" in helper and "execCommand" in helper, (
+        "the shared helper must fall back to a textarea + execCommand copy"
     )
     assert "navigator.share" in text, (
         "the script must offer the Web Share API where the browser has it"

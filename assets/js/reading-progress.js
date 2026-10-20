@@ -76,9 +76,5 @@
     update();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
-  } else {
-    run();
-  }
+  window.SiteUtils.onReady(run);
 })();

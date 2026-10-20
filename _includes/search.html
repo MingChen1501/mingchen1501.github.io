@@ -19,9 +19,13 @@
   spam) so every filtered view is shareable; the page path (EN/VI) never
   changes, only the query string.
 
-  Asset cache versioning (#61): the script and the lazily fetched index both
+  Asset cache versioning (#61): the scripts and the lazily fetched index both
   carry the `site.time` build token, like every other fixed-URL asset — the
-  index is fetched only from this page, never site-wide.
+  index is fetched only from this page, never site-wide. The shared helper
+  (`assets/js/site-utils.js`, #246) loads first here because `search.js`
+  uses it at load: the page content (this tag) runs before the deferred
+  scripts in `_includes/sub-footer.html`, and the token matches, so the
+  browser fetches the helper once and re-running it is a harmless no-op.
 {%- endcomment -%}
 {%- assign search_lang = page.lang | default: site.lang | default: 'en' -%}
 {%- if search_lang == 'vi' -%}
@@ -70,4 +74,5 @@
   <ul class="search__results" id="site-search-results" aria-label="{{ search_results_label }}"></ul>
   <p class="search__empty" id="site-search-empty" hidden></p>
 </div>
+<script src="/assets/js/site-utils.js?v={{ asset_version }}" defer></script>
 <script src="/assets/js/search.js?v={{ asset_version }}" defer></script>

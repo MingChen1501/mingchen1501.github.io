@@ -15,9 +15,5 @@
       });
     });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mark);
-  } else {
-    mark();
-  }
+  window.SiteUtils.onReady(mark);
 })();

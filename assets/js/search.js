@@ -220,9 +220,5 @@
     if (shouldAutofocus()) input.focus();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  window.SiteUtils.onReady(init);
 })();

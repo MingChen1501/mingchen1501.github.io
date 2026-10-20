@@ -38,6 +38,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BASE_SCSS = REPO_ROOT / "_sass" / "minima" / "_base.scss"
 COPY_SCRIPT = REPO_ROOT / "assets" / "js" / "copy-code.js"
+HELPER_SCRIPT = REPO_ROOT / "assets" / "js" / "site-utils.js"
 
 PHONE_WIDTHS = (360, 320)
 
@@ -179,6 +180,7 @@ def test_wide_code_and_tables_stay_contained(width, built_site_url, browser):
             "(html) => { document.body.insertAdjacentHTML('beforeend', html); }",
             _FIXTURE_HTML,
         )
+        page.add_script_tag(path=str(HELPER_SCRIPT))
         page.add_script_tag(path=str(COPY_SCRIPT))
         page.wait_for_selector(
             "#overflow-151-fixture .copy-code__button",
