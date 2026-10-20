@@ -18,3 +18,7 @@ Về chuyên môn, mình làm việc trong lĩnh vực phần mềm và thích t
 Nếu bạn thấy bài viết nào hữu ích hoặc muốn góp ý, trao đổi, cứ thoải mái liên hệ qua email **mingchen1501@gmail.com** hoặc tìm mình trên các mạng xã hội có liên kết ở chân trang. Mình luôn vui khi nhận được phản hồi từ độc giả.
 
 Cảm ơn bạn đã ghé thăm, chúc bạn một ngày vui vẻ!
+
+## Quyền riêng tư
+
+Trang này không dùng cookie, không gắn mã theo dõi hay phân tích riêng nào. Lựa chọn giao diện sáng/tối chỉ lưu trong `localStorage` của chính trình duyệt này (khóa `theme`) — bạn có thể xóa bất cứ lúc nào trong phần cài đặt dữ liệu trang web. Bình luận ở các trang bài viết tải [Giscus](https://giscus.app) (GitHub Discussions) và tuân theo điều khoản quyền riêng tư của GitHub khi bạn tương tác. Các trang được phục vụ qua TLS bởi mạng biên Cloudflare, nơi cũng xử lý bộ nhớ đệm và che địa chỉ email.

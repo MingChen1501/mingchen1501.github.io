@@ -16,3 +16,7 @@ Professionally, I work in software and enjoy exploring new technologies, especia
 If you find a post useful, or want to share feedback, feel free to reach out by email at **mingchen1501@gmail.com** or find me on the social links in the footer. I always enjoy hearing from readers.
 
 Thanks for stopping by, and have a lovely day!
+
+## Privacy
+
+This site sets no cookies and runs no analytics or trackers of its own. Your theme choice is saved only in this browser's `localStorage` (key `theme`) — clear it anytime via your browser's site-data settings. Comments on post pages load [Giscus](https://giscus.app) (GitHub Discussions) and follow GitHub's privacy terms once you interact with them. Pages are served over TLS through Cloudflare's edge network, which also handles caching and email-address obfuscation.
