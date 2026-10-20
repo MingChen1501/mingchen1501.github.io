@@ -40,6 +40,7 @@ EXPECTED_ORDER = (
     "tap-targets",
     "legibility",
     "theme-toggle",
+    "list-thumbs",
 )
 
 # The exact literals the variables replaced (#174 evidence).
@@ -62,7 +63,12 @@ EXPECTED_VARIABLES = {
 # identical light values (the skin's light `:root` confirms each one), so
 # light mode renders unchanged; everything else is pure addition (dark
 # variables, dark syntax tokens, the `data-theme` layer, toggle styles).
-EXPECTED_CSS_SHA256 = "0c4fbbd74e46afa7159a163453906bf563c49fa8267b37b4bb546dbeb8273851"
+# #226 (list thumbnails): the `list-thumbs` partial was appended. Diffed old
+# vs new before bumping: the only change is the additive `.post-list__item` /
+# `.post-list__body` / `.post-thumb` block above (fixed 120x90 box with
+# `object-fit: cover`); no existing rule moved, so every other page renders
+# unchanged.
+EXPECTED_CSS_SHA256 = "55ac3f794a920ec727b785bcef3d7c13a01753fe28b943890be45f9bf9ad9bc9"
 
 
 def _imported_partials():

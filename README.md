@@ -462,6 +462,31 @@ long edge exceeds 1600px. Budget limits live in `script/image-budget.sh`
 (single source of truth). It runs in `script/cibuild` and as the
 "Check image sizes" step in `.github/workflows/ci.yaml`.
 
+## List thumbnails (fixed 120x90 box, #226)
+
+The home list and the tag pages show post imagery again, but every item shares
+one fixed 120x90 (4:3) box, so the list never shifts while images load:
+
+- Source chain per post: front matter `thumbnail`, else front matter `image`,
+  else the first image of the post body, else the fixed built-in placeholder
+  (`assets/img/placeholder.svg`) for posts with no image. All of it renders
+  through `_includes/post-thumbnail.html` with `width="120" height="90"` and
+  `object-fit: cover` (see `_sass/minima/custom/_list-thumbs.scss`) — do not
+  hand-size list images anywhere else.
+- Local sources never load the original: `script/generate-thumbnails`
+  pre-generates small 240x180 cover-cropped WebP variants
+  (`assets/img/thumbs/<slug>/<name>-240.webp`, ~3-10KB each, committed to git
+  inside the 6MB `assets/img` budget). Rerun the script after adding or
+  changing a post image and commit the variants; `--check` fails when a
+  variant is missing or older than its source, and the #226 E2E guard pins the
+  same. The URL mapping (`/assets/img/` -> `/assets/img/thumbs/` plus
+  `-240.webp`) lives in both the script and the include — keep them in sync.
+- External attachment URLs cannot be resized: those keep the same fixed CSS
+  box, but the list downloads the full attachment bytes. Prefer a local image
+  (or front matter `thumbnail` pointing at one) for posts that appear on the
+  lists; the bandwidth cost of external list thumbnails is a documented
+  trade-off, not a CI failure.
+
 ## External attachment images (temporary workaround, #195)
 
 Dedicated object storage is unavailable due to billing, so article images

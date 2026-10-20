@@ -42,8 +42,9 @@ Guarded here:
   reserves the aspect-ratio box;
 - (built HTML) every ``.post-content`` image has numeric ``width``/``height``,
   every ``img[title]`` sits inside a ``<blockquote>``, the long post renders
-  ``figure.post-figure`` + ``figcaption``, and no ``ul.post-list > li`` on the
-  home / Vietnamese home / tag pages contains an ``<img>``.
+  ``figure.post-figure`` + ``figcaption``, and every ``ul.post-list > li`` on
+  the home / Vietnamese home / tag pages contains exactly one fixed-size
+  thumbnail (the #226 ``post-thumb`` variant, never a full-size original).
 """
 
 import re
@@ -270,7 +271,15 @@ def test_built_captions_are_figures_except_blockquote_leads(built_site):
     assert figures > 0, "no <figure class=\"post-figure\"> rendered in any post"
 
 
-def test_built_list_items_contain_no_full_size_images(built_site):
+def test_built_list_items_contain_only_fixed_size_thumbnails(built_site):
+    """List items render the #226 fixed-size thumbnail, never full originals.
+
+    Before #226 this guard asserted list items contain no ``<img>`` at all
+    (the #113 excerpt rule). Reintroducing thumbnails keeps the #113 intent —
+    no full-size content image may load inside a list item — while allowing
+    exactly one ``post-thumb`` image per item: the small variant (or the
+    placeholder, or an external attachment URL kept inside the fixed CSS box).
+    """
     problems = []
     checked = 0
     for path in sorted(built_site.rglob("*.html")):
@@ -278,12 +287,28 @@ def test_built_list_items_contain_no_full_size_images(built_site):
         for match in re.finditer(
             r'<ul class="post-list">(.*?)</ul>', text, re.S
         ):
-            for item in re.finditer(r"<li>(.*?)</li>", match.group(1), re.S):
+            for item in re.finditer(r"<li(.*?)>(.*?)</li>", match.group(1), re.S):
+                attrs, body = item.group(1), item.group(2)
                 checked += 1
-                if "<img" in item.group(1):
-                    problems.append(str(path.relative_to(built_site)))
-                    break
+                thumbs = re.findall(
+                    r'<a class="post-thumb"[^>]*><img\b[^>]*>', body
+                )
+                if len(thumbs) != 1:
+                    problems.append(
+                        f"{path.relative_to(built_site)}: "
+                        f"list item has {len(thumbs)} post-thumb images, want 1"
+                    )
+                    continue
+                for original in re.finditer(
+                    r'src="(/assets/img/(?!thumbs/|placeholder\.svg)[^"]*)"',
+                    body,
+                ):
+                    problems.append(
+                        f"{path.relative_to(built_site)}: list item loads "
+                        f"full-size original {original.group(1)}"
+                    )
     assert checked > 0, "no post-list items found in the built site"
     assert not problems, (
-        "list pages embedding content images in excerpts:\n" + "\n".join(problems)
+        "list items without exactly one fixed-size thumbnail:\n"
+        + "\n".join(problems)
     )
