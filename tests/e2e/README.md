@@ -188,6 +188,111 @@ form covered by the guards above. Adding the search link to both navs still
 changes the header on every baselined page, so the full set regenerates
 with any search/header change.
 
+## Dark mode theme toggle (`test_theme_toggle.py`)
+
+Guard for #220. Every page carries an icon-only `.theme-toggle` button in
+the header row that flips the whole site between light and dark: first
+visit follows the OS `prefers-color-scheme` (even without JS, via the
+`auto` minima skin, with an inline bootstrap in `_includes/head.html`
+setting `html[data-theme]` before first paint so there is no flash);
+an explicit choice persists in `localStorage`. The name/tooltip follow the
+page language, the control is a real 44px keyboard-operable `<button>`
+with visible focus, transitions respect `prefers-reduced-motion`, and
+contrast stays >= 4.5:1 in both modes (axe `color-contrast`, home + post +
+tag pages, phone + desktop, EN + VI). Dark mode has no visual baselines:
+`test_visual_regression.py` pins the light colour scheme, so dark-only
+changes never touch baselines.
+
+## Share buttons (`test_share_buttons.py`)
+
+Guard for #222. Post pages render a small tracker-free share row (via
+`_includes/share.html`) below the content: a copy-link button, a
+`navigator.share` button revealed only where the API exists, and three
+plain share-intent links (X, Facebook, LinkedIn) — no third-party SDK.
+Labels are localized with stable accessible names; the copy button carries
+the canonical post URL through the Clipboard API with a textarea +
+`execCommand` fallback announced in a `role="status"` line; the copy-link
+item ships hidden and is revealed by the script, with a `noscript`
+fallback showing the canonical URL as a plain link so no-JS pages have
+zero dead controls (#244).
+
+## Reading progress + back-to-top (`test_reading_progress.py`)
+
+Guard for #224. `_layouts/post.html` ships a thin fixed progress bar
+(0-100% width + `aria-valuenow`) and a back-to-top pill past ~600px of
+scroll, both `hidden` in the markup so no-JS readers render neither;
+`assets/js/reading-progress.js` reveals the bar and drives both at
+runtime. Labels follow the page language; `prefers-reduced-motion` jumps
+instantly instead of smooth-scrolling. The script is linked through the
+`?v=` build token like every other fixed-URL asset (#61). Browser guards
+scroll a long EN post and its VI twin (progress advances, button appears,
+activate, top reached) plus short-page, keyboard, focus, and no-JS cases.
+
+## Print styles (`test_print_styles.py`)
+
+Guard for #225. `_sass/minima/custom/_print.scss` trims print output to
+the article column only, in both languages (all selectors are
+language-neutral). The partial is imported exactly once and last (so it
+wins the cascade) and carries no rules outside its single `@media print`
+block — screen rendering stays byte-identical, and the Chromium visual
+baselines (screen media only) never regenerate for print changes. The
+block hides every chrome selector (header/nav, sidebars, TOC mounts,
+share row, Related posts, comments, footer, reading progress,
+back-to-top, lightbox, skip link), keeps readable print typography,
+appends destination URLs to outbound links, and refuses breaks inside
+headings/images/code. #242 pins dark-mode printing to the readable light
+colours (`color-scheme: light` + light Rouge tokens).
+
+## Post-only JS gating (`test_post_only_js.py`)
+
+Guard for #253. `_includes/sub-footer.html` wraps the `share.js` and
+`reading-progress.js` tags (share, then reading-progress, both after
+`site-utils.js`, each with the `?v=` build token) in a single
+`page.layout == 'post'` conditional; the six scripts every page needs stay
+unconditional. Built non-post pages (home EN/VI, tag index + one tag
+page, about, portfolio, search EN/VI) link neither script (9 → 7
+sub-footer requests) while EN/VI post pages still link both.
+
+## Shared JS helper (`test_site_utils.py`)
+
+Guard for #246. Seven deferred scripts re-implemented the same primitives
+inline (clipboard fallback, `readyState` guard, VI sniff); they now share
+`assets/js/site-utils.js` (`window.SiteUtils` with `copyText` / `onReady`
+/ `isVietnamese`), loaded first with the same `?v=` build token
+site-wide (`sub-footer.html`) and on the search pages (`search.html`).
+The guard pins the helper contract, the removal of the duplicated blocks
+at every call site, and that total `assets/js` bytes do not grow.
+Byte ceilings per page kind live in `script/asset-budget.sh` (single
+source of truth), pinned by `tests/e2e/test_asset_budget.py` (#267):
+bump both files together, deliberately.
+
+## Giscus theme sync (`test_giscus_comments.py`)
+
+Guard for #211 with theme sync for #258. Comments stay gated off in dev
+builds (`site.comments.dev` is false), so every test here builds with
+`JEKYLL_ENV=production`: the enabled post renders the `section#comments`
+container and the `https://giscus.app/client.js` script with every
+configured data attribute, while Giscus traffic is intercepted and
+aborted (zero real requests). `assets/js/giscus-theme.js` primes the
+embed's `data-theme` to the site-mapped Giscus theme before the lazy
+iframe boots and re-sends the Giscus `setConfig` postMessage on every
+theme flip and iframe load, without reloading — pinned statically
+(template wiring, postMessage shape/origin, silent fallback) and in the
+browser with a mocked Giscus client (initial paint + toggle flip in all
+four OS x site combos, EN + VI). See also "Comments" above for the Disqus
+stubs and the `comments: false` / provider-off negatives.
+
+## Post social image + JSON-LD image (`test_post_social_image.py`)
+
+Guard for #256. `jekyll-seo-tag` already renders a complete `BlogPosting`
+JSON-LD block plus `og:image` / `twitter:image` from `page.image` — but no
+post declared `image:`, so image-bearing posts emitted no image. Every
+published post whose body embeds a local `/assets/img/` image (or that
+declared `thumbnail:`) now declares root-relative `image:` (the former
+`thumbnail`, else the first body image), in both languages of each pair;
+image-less posts declare nothing. Never hand-write a second `BlogPosting`
+block: it would duplicate seo-tag's graph with conflicting entities.
+
 ## Shared fixtures (#56)
 
 `tests/e2e/conftest.py` owns the plumbing every module reuses, so a suite run

@@ -15,6 +15,7 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
      `assets/img/` total <= 6MB).
 2. Build: `bundle exec jekyll build --trace` (run `bundle install` first if gems are missing).
 3. Test: `python -m pytest tests/e2e -v` (first time: `pip install -r tests/e2e/requirements.txt`).
+    The suite builds the site once per session; to reuse an existing build instead, set `E2E_PREBUILT_SITE=<dir>` (see `tests/e2e/README.md` "Shared fixtures").
    Visual pixel compares skip locally by default and always run in CI —
    opt in locally with `E2E_VISUAL=1` (#265).
    Scope matrix — run the matching guard when you touch:
@@ -38,6 +39,45 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
       `tests/e2e/test_theme_toggle.py` (OS default, persistence, localized
       names, keyboard, 44px target, axe contrast in both modes) plus the
       dark blockquote pin in `tests/e2e/test_axe_a11y.py`.
+   - Search (`search.json` template, `_includes/search.html`,
+     `assets/js/search.js`, `search.md`, `vi/search.md`, nav links) →
+     `tests/e2e/test_search.py` (index fields, both language pages,
+     diacritics-free VI queries, keyboard, no 375px overflow).
+   - Share buttons (`_includes/share.html`, `assets/js/share.js`) →
+     `tests/e2e/test_share_buttons.py` (post-only row, localized labels,
+     copy-link + fallback, share intents, `noscript` link, no tracker).
+   - Image lightbox (`assets/js/lightbox.js`, post content images, its
+     SCSS partial) → `tests/e2e/test_lightbox.py` (triggers, dialog
+     semantics, keyboard/arrows/Esc, focus trap + restore; baselined pages
+     stay pixel-identical, so no baseline regeneration).
+   - Reading progress + back-to-top (`_layouts/post.html` bar/button
+     markup, `assets/js/reading-progress.js`) →
+     `tests/e2e/test_reading_progress.py` (post-only, `hidden` up front,
+     0-100% tracking, ~600px button reveal, reduced motion, no-JS).
+   - Print stylesheet (`_sass/minima/custom/_print.scss`) →
+     `tests/e2e/test_print_styles.py` (article-only output, last import,
+     single `@media print` block, dark-mode print pinned to light).
+   - List thumbnails (`_includes/post-thumbnail.html`,
+     `script/generate-thumbnails`, `assets/img/thumbs/**`, the list-thumb
+     SCSS partial) → `tests/e2e/test_list_thumbnails.py` (source chain,
+     fixed 120x90 box, no CLS; rerun `script/generate-thumbnails` after
+     adding or changing a post image and commit the variants).
+   - Post-only JS gating + shared helper (`_includes/sub-footer.html`
+     script tags, `assets/js/site-utils.js`, any `assets/js/` caller) →
+     `tests/e2e/test_post_only_js.py` (share/reading-progress scripts on
+     post pages only) plus `tests/e2e/test_site_utils.py` (the three
+     shared primitives live only in the helper; total-bytes ceiling in
+     `script/asset-budget.sh` with `tests/e2e/test_asset_budget.py`).
+   - Giscus theme sync (`_includes/comments.html` mapping attributes,
+     `assets/js/giscus-theme.js`) →
+     `tests/e2e/test_giscus_comments.py` (embed attempt with zero real
+     network, initial paint + toggle flip in every OS x site combo;
+     needs `JEKYLL_ENV=production` — dev builds gate comments off).
+   - Post social image + JSON-LD `image:` (post front matter only, no
+     layout/SEO-template change) → `tests/e2e/test_post_social_image.py`
+     (every local-image post declares root-relative `image:`, file exists
+     and stays within budget; never hand-write a second `BlogPosting`
+     block — `jekyll-seo-tag` owns the graph).
    - New post only → a build smoke test is enough; verify front matter matches
      the 4-pillar taxonomy template (`tags`, `description`) — see the
      `jekyll-post` skill.
