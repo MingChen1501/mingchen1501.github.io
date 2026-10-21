@@ -53,6 +53,7 @@ doc group.
   / `risk-high` / `risk-very-high`); squash merge only
   (`gh pr merge <n> --squash --delete-branch`) on green CI; `risk-high`,
   `risk-very-high`, or a missing label needs explicit owner approval.
+- Issue and PR titles/labels follow `docs/project/issue-conventions.md` (`[type] Imperative summary`, one type label + one `risk-*` label).
 - All public repo artifacts MUST be English (PRs, commits, issues, review
   comments, code comments); Vietnamese only for internal AO reporting.
   Every artefact is signed with its role (normative rules: `docs/ao-rules.md`).
