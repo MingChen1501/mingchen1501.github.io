@@ -42,7 +42,7 @@ jobs:
       content_only: ${{ steps.classify.outputs.content_only }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Classify changed files
@@ -59,13 +59,13 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set Up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('tests/e2e/requirements.txt') }}
@@ -100,7 +100,7 @@ jobs:
       actions: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set Up Ruby 3.3
         uses: ruby/setup-ruby@v1
         with:
@@ -111,7 +111,7 @@ jobs:
       - name: Verify build output
         run: test -f _site/index.html
       - name: Upload built site
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: _site/
@@ -137,18 +137,18 @@ jobs:
         browser: ["chromium", "firefox", "webkit"]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Download built site (#320)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: site
           path: _site/
       - name: Set Up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('tests/e2e/requirements.txt') }}
@@ -160,7 +160,7 @@ jobs:
         id: playwright
         run: echo "version=$(python -m pip show playwright | awk '/^Version:/ {print $2}')" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
@@ -181,7 +181,7 @@ jobs:
         run: python -m pytest tests/e2e -v -m "not static"
       - name: Upload fresh visual captures (${{ matrix.browser }})
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-fresh-${{ matrix.browser }}
           path: tests/e2e/visual/fresh/
@@ -207,9 +207,9 @@ jobs:
       actions: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Download built site (#320)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: site
           path: _site/
@@ -220,14 +220,14 @@ jobs:
       # carrying a byte threshold here, because the site does not control
       # their compression. Remove this exemption on storage migration.
       - name: Set Up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Run Lighthouse CI
         run: npx --yes @lhci/cli@0.15.1 autorun
       - name: Upload Lighthouse report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse-report-desktop
           path: .lighthouseci/
@@ -260,21 +260,21 @@ jobs:
       actions: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Download built site (#320)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: site
           path: _site/
       - name: Set Up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
       - name: Run Lighthouse CI (mobile)
         run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.mobile.json
       - name: Upload Lighthouse report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouse-report-mobile
           path: .lighthouseci/
