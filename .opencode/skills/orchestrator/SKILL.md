@@ -87,7 +87,8 @@ Spawning:
 - One worker, one issue, one PR. The per-issue spawn prompt must name the
   issue number/title/URL, point at the writer role
   (`.opencode/agents/article-writer.md`) and the `article-writer` skill
-  (`.opencode/skills/article-writer/SKILL.md`, procedure #191), require
+  (`.opencode/skills/article-writer/SKILL.md`, procedure #191) — role
+  string `content` (`article-writer` is the legacy workflow-file name), require
   EN+VI posts in a single PR with `Closes #<n>`, and require issue
   images to be embedded by direct attachment URL
   (`https://github.com/user-attachments/assets/...`) — never downloaded,
@@ -131,7 +132,8 @@ Trigger: the owner describes a new task, bug, or enhancement in chat.
 
 ## Role separation
 
-- Roles are **separate sessions**: issue-writer / dev / reviewer / fixer.
+- Roles are **separate sessions**: `business-analyst` / `dev` /
+  `dev-peer-review` or `content-review` / `dev-takeover`.
   The reviewer is a manual worker session (see Review flow) — never
   the native reviewer, and never the same session that implemented
   the PR.
@@ -142,35 +144,21 @@ Trigger: the owner describes a new task, bug, or enhancement in chat.
 
 ## Role signatures (#350)
 
-Every worker writes with the same GitHub account, so each artefact is
-signed with the role that produced it. Canonical role strings:
-`orchestrator`, `article-writer`, `site-reviewer`, `spec-reviewer`,
-`architect`, `qa-lead`, `release-manager`, `product-owner`,
-`business-analyst`, or generic `worker` when none applies. The role is
-the AO session's acting role from its session name/agent definition.
-Normative summary lives in `AGENTS.md` ("Role signatures"); this
-section is the exact template plus the spawn step.
+Normative rules: `docs/ao-rules.md` (canonical roles, commit identity,
+footer/marker template, reviewer-must-differ, session naming). Do not
+restate the list here — link it. Summary for orchestration use only.
 
-- **Spawn step.** Every spawn prompt must tell the worker to set its
-  per-worktree git identity before committing (same email, so the
-  contribution graph still credits the owner):
-  `git config --worktree user.name "Ming Chen (<role>)"` /
-  `git config --worktree user.email "mingchen1501@gmail.com"`.
-  Existing commits are never rewritten. Never change the account, add
-  bot accounts, or spoof authorship beyond the name suffix.
-- **Footer template.** PR bodies, issue bodies, review bodies, and
-  issue/PR comments end with a blank line followed by these two
-  lines (generate with `script/ao-role-footer.sh <role> [session-id]`
-  — never hand-write them):
-  `<!-- ao-role: <role> -->`
-  `Role: <role> · AO session <session-id>`
-  The session id is optional in review bodies posted by a reviewer
-  session; include it when known, otherwise end with `Role: <role>`.
-- **Reviewer verdicts** carry `Role: site-reviewer` (or
-  `spec-reviewer`), making approval provenance obvious.
-- **Merge commits** keep whatever subject the squash policy produces;
-  the role is visible in the PR body marker and, where relevant, in
-  the squash commit trailer `Role: <role>`.
+- **Spawn step.** Every spawn prompt names the session `<role> <target>`
+  and tells the worker to set its per-worktree git identity before
+  committing (`git config --worktree user.name "Ming Chen (<role>)"`,
+  same email). Existing commits are never rewritten.
+- **Reviewer rules.** The reviewer role must differ from the implementer
+  (`dev` vs `dev-peer-review`, `content` vs `content-review`). A reviewer
+  never posts code changes; it posts one COMMENT review with its verdict
+  plus its role footer.
+- **Self-check.** Footer before creating any issue/PR/review/comment;
+  `<role> <target>` before spawning; confirm the `Role:` line in the PR
+  body before merging.
 
 ## Model separation and rate-limit rotation (#76)
 
@@ -338,7 +326,8 @@ Checklist (each review starts from the pinned baseline, never re-derived):
 
 - Article writer role/skill: `.opencode/agents/article-writer.md` and
   `.opencode/skills/article-writer/SKILL.md` (entry: intake #190,
-  chat-draft #192; handoff/report contract and image workaround inside).
+  chat-draft #192; handoff/report contract and image workaround inside;
+  LEGACY name — role string is `content`, see `docs/ao-rules.md`).
 - Site review rules: `.opencode/skills/jekyll-review/SKILL.md` and
   `references/review-checklist.md`.
 - Site verify rules: `.opencode/skills/jekyll-verify/SKILL.md` and

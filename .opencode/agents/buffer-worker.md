@@ -50,7 +50,6 @@ in other sessions under the normal pool.
 
 ## Role signature
 
-This session's role string is the generic `worker` (buffer work has no
-dedicated role string). Sign every artefact per `AGENTS.md` ("Role
-signatures") and the `orchestrator` skill footer template
-(`script/ao-role-footer.sh worker [session-id]`).
+This session's role string is `business-analyst` (buffer work files
+issues; see `docs/ao-rules.md`). Sign every artefact per that file
+(`script/ao-role-footer.sh business-analyst [session-id]`).

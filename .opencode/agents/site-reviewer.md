@@ -31,7 +31,9 @@ Priority: broken Liquid layout, comments environment gate, wrong config (`url`,
 
 ## Role signature
 
-This session's role string is `site-reviewer`. Sign every artefact per
-`AGENTS.md` ("Role signatures") and the `orchestrator` skill footer
-template (`script/ao-role-footer.sh site-reviewer [session-id]`,
+LEGACY file name: new sessions use `dev-peer-review` for code or
+`content-review` for content (mapping: `site-reviewer` ->
+`dev-peer-review`/`content-review`, see `docs/ao-rules.md`; legacy name
+appears only in old session records). Sign every artefact per that file
+(`script/ao-role-footer.sh dev-peer-review [session-id]`,
 session id optional in verdict comments).

@@ -75,5 +75,5 @@ the verdict stays with the reviewer role.
 ## Role signature
 
 This session's role string is `architect`. Sign every artefact per
-`AGENTS.md` ("Role signatures") and the `orchestrator` skill footer
-template (`script/ao-role-footer.sh architect [session-id]`).
+`docs/ao-rules.md`
+(`script/ao-role-footer.sh architect [session-id]`).

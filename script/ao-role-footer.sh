@@ -14,7 +14,7 @@
 #
 # Usage:
 #   script/ao-role-footer.sh <role> [session-id]
-#   script/ao-role-footer.sh site-reviewer mingchen-site-144
+#   script/ao-role-footer.sh dev-peer-review mingchen-site-144
 set -u
 
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
@@ -26,10 +26,11 @@ role="$1"
 session="${2:-}"
 
 case "$role" in
-  orchestrator|article-writer|site-reviewer|spec-reviewer|architect|qa-lead|release-manager|product-owner|business-analyst|worker)
+  orchestrator|product-owner|business-analyst|architect|qa-lead|release-manager|spec-reviewer|dev|dev-peer-review|dev-takeover|content|content-review)
     ;;
   *)
-    echo "warning: unknown role '$role' (expected one of: orchestrator, article-writer, site-reviewer, spec-reviewer, architect, qa-lead, release-manager, product-owner, business-analyst, worker)" >&2
+    echo "error: unknown role '$role' (expected one of: orchestrator, product-owner, business-analyst, architect, qa-lead, release-manager, spec-reviewer, dev, dev-peer-review, dev-takeover, content, content-review)" >&2
+    exit 1
     ;;
 esac
 
