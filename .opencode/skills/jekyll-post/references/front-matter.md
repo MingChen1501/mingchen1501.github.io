@@ -39,7 +39,7 @@ description: "One short sentence (120-155 chars) summarising the post for SEO an
 | `author` | Author name. Ming's posts use `author: Ming Chen`. |
 | `date` | Defaults to the `YYYY-MM-DD` in the file name. Only add it for a specific time, e.g. `2026-10-17 08:00:00 +0700`. |
 | `modified_date` | Updated date — the layout adds an "Updated:" line. |
-| `tags` | Required — exactly one (max 4) of the 4 content pillars: `backend-production`, `ai-agent`, `linux-tooling`, `doi-song`. Drives the `/tags/` index, the post page's secondary tag column and the `/tags/<tag>/` page. |
+| `tags` | Required — one or more (max 4) of the 4 content pillars: `backend-production`, `ai-agent`, `linux-tooling`, `doi-song`. Drives the `/tags/` index, the post page's secondary tag column and the `/tags/<tag>/` page. A post with several tags appears on every tag's page, and its Related posts list is the union over all of them (#343). |
 | `description` | Required — ~120-155 chars; rendered as `<meta name="description">` by `jekyll-seo-tag`. |
 | `fallback_vi: true` | Retired stub mechanism (phase 1): reuse the Vietnamese body under the fallback banner when a translation is still pending. No stub remains since PR B; never combined with a translated body. |
 | (no field) | Highlighting is configured in `_data/highlights.yml` (#64, per-language `en:` / `vi:` lists since #93): add the post's slug to that language's ordered list to feature it in the list sidebar's highlight block. No per-post front matter flag. |

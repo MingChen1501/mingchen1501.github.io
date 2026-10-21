@@ -140,10 +140,24 @@ def test_post_sidebar_renders_the_posts_tags():
     assert "post_tags.size > 0" in html
 
 
-def test_post_sidebar_lists_posts_sharing_the_first_tag():
+def test_post_sidebar_lists_posts_sharing_any_tag():
     html = _read(POST_LAYOUT)
-    assert "primary_tag = post_tags.first" in html
-    assert "site.tags[primary_tag]" in html
+    # #343: the related list is the union over ALL of the post's tags, not
+    # the first one — no `primary_tag` / `post_tags.first` may remain.
+    assert "primary_tag" not in html
+    assert "post_tags.first" not in html
+    # Each tag contributes its language's posts; English via `site.tags`,
+    # Vietnamese via a nil-safe `site.vi_posts` filter on the loop variable.
+    assert "for rel_tag in post_tags" in html
+    assert "site.tags[rel_tag]" in html
+    assert '"rel_post.tags contains rel_tag"' in html
+    assert "rel_union" in html and "concat" in html
+    # Ordering rule (#343): newest first across the union, same-date ties
+    # broken by URL, de-duplicated so a two-tag post renders once.
+    assert 'sort: "url"' in html
+    assert 'sort: "date"' in html
+    assert "reverse" in html
+    assert "push: rel_post" in html
     assert 'class="related-posts"' in html
     # The current post must not list itself.
     assert "other.url != page.url" in html

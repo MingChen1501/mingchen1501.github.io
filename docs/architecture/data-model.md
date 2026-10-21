@@ -44,6 +44,15 @@ Purpose: the three `_data/` files — what each owns and who reads it.
   (manual sync) → `tags.md` / `vi/tags.md` indexes → `tag.html` pages.
   Guarded by `test_tag_localization.py` (453 lines) and
   `test_tag_index_descriptions.py`.
+- Multi-tag posts (#343): a post may carry more than one pillar tag
+  (max 4). Tag pages and the list-sidebar tag groups filter by membership
+  (`tags contains <name>`), so such a post appears under every tag it
+  carries; the post sidebar's Related list is the union over all of the
+  page's tags — newest first, same-date ties broken by URL, de-duplicated,
+  current page excluded, capped at five — with the Latest-posts fallback
+  keyed off that union. Guarded by `test_multi_tag_posts.py` (overlay
+  build with synthetic two-tag posts) plus the singleton-fallback guards
+  in `test_related_posts_fallback.py`.
 - Image-host chain: `image_hosts.yml` → guard script + E2E test + README
   + `docs/conventions-173.md`. Four consumers of one 20-line file; the
   migration must touch all four.

@@ -63,7 +63,7 @@
     tag pages, search, and feeds.
   - 4. Interaction with existing features. Multi-tag posts (#343):
     orthogonal — the series nav is independent of tags and the Related-posts
-    sidebar stays primary-tag based. Curated tag list (#344): series index
+    sidebar stays tag based (union over all tags, #343). Curated tag list (#344): series index
     pages are separate from tag pages; no template copy is shared. Nested
     ToC (#345): the nav block sits outside `.post-content`, so heading
     scraping and ToC mount counts are unaffected. RSS/sitemap/JSON-LD: the

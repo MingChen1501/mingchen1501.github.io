@@ -11,7 +11,8 @@
 // byte-identical. Shared dimensions live in `custom/variables`.
 //
 // Post page layout (#45, epic #44): main column = the post, secondary column =
-// the post's tags + the other posts sharing its first tag. Tag chips link to
+// the post's tags + the other posts sharing any of its tags (#343: the
+// related list is the union over all tags, newest first). Tag chips link to
 // the per-tag pages (#46) implemented in `_layouts/tag.html`.
 // ---------------------------------------------------------------------------
 
