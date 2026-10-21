@@ -6,8 +6,9 @@ as grey-on-white text on phones.
 
 Acceptance guarded here (risk-low, SCSS-only, no markup changes):
 
-- at 360px the sidebar base text, the sidebar meta/count rows, the tag chips
-  and the language switcher all render at >= 15px effective size (browser);
+- at 360px the sidebar base text, the sidebar meta/count rows, the tag chips,
+  the tag index topic summaries (#341) and the language switcher all render
+  at >= 15px effective size (browser);
 - at desktop width the hierarchy is unchanged: the sidebar base, the chips
   and the language pill still render at 14px (browser);
 - the lift lives in a single `max-width: $on-medium` block in
@@ -124,6 +125,10 @@ def test_mobile_block_raises_the_secondary_text():
         tail,
     ), "the tag counts must render 15px with line-height 1.5 on phones"
     assert re.search(
+        r"\.tag-index__desc\s*\{[^}]*font-size: 15px;[^}]*line-height: 1\.5;",
+        tail,
+    ), "the tag index topic summaries must render 15px with line-height 1.5 on phones (#341)"
+    assert re.search(
         r"\.tag-chip\s*\{[^}]*font-size: 15px;[^}]*line-height: 1\.6;",
         tail,
     ), "the tag chips must render 15px with line-height 1.6 on phones"
@@ -186,6 +191,36 @@ def test_secondary_text_meets_the_minimum_at_360px(built_site_url, browser):
                 f"/ at {PHONE_WIDTH}px: {selector} renders at "
                 f"{entry['fontSize']}, below the 15px minimum (#148)"
             )
+
+
+def test_tag_index_summaries_meet_the_minimum_at_360px(built_site_url, browser):
+    """The tag index topic summaries (#341) read at >= 15px on phones.
+
+    The one-line descriptions (#140/#157) are dimmed sentence text, the same
+    category as the count rows the #148 lift already covers — but they were
+    added after that lift and stayed at the 14px desktop size. The tag index
+    pages use `layout: page` (no sidebar), so this opens them directly instead
+    of reusing `_open`'s sidebar wait.
+    """
+    selectors = ["a.tag-chip", ".tag-index__count", ".tag-index__desc"]
+    for path in ("/tags/", "/vi/tags/"):
+        with _viewport(browser, built_site_url, PHONE_WIDTH) as page:
+            response = page.goto(f"{built_site_url}{path}", wait_until="load")
+            assert response is not None and response.status == 200, (
+                f"{path} did not load "
+                f"(status {response.status if response else 'none'})"
+            )
+            page.wait_for_selector(".tag-index", state="attached", timeout=10_000)
+            measured = page.evaluate(_MEASURE_JS, selectors)
+            for selector in selectors:
+                entry = measured[selector]
+                assert entry is not None, (
+                    f"{path} at {PHONE_WIDTH}px: no element for {selector}"
+                )
+                assert _px(entry["fontSize"]) >= 15, (
+                    f"{path} at {PHONE_WIDTH}px: {selector} renders at "
+                    f"{entry['fontSize']}, below the 15px minimum (#148, #341)"
+                )
 
 
 def test_desktop_hierarchy_is_unchanged(built_site_url, browser):

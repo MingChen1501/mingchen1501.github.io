@@ -141,7 +141,14 @@ EXPECTED_VARIABLES = {
 # #335 is gone with the feature (#342 deleted the search page, its
 # `<noscript>` fallback, and the `search` partial that carried the
 # `.search__noscript` selector).
-EXPECTED_CSS_SHA256 = "0570bf99382927a3f98c7a3df8eac7ce3ba5aebc7ecdf6d90faef77f43bd7f44"
+# #341 (tag index summaries): the `legibility` partial gained one additive
+# rule inside the existing `max-width: $on-medium` block (`.tag-index__desc`
+# at 15px / 1.5, joining the dimmed count rows per the #148 lift). Diffed
+# old vs new before bumping: the only change is that 4-line hunk; no
+# existing rule moved, so every other page renders unchanged. The two 375px
+# tag-index visual baselines (EN/VI) were refreshed from the CI
+# `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
+EXPECTED_CSS_SHA256 = "0bf1f70bd99d60385993dfb5359c8145e0148e891787f766197c363a02a9361d"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275
