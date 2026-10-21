@@ -12,6 +12,9 @@
 //   `$base-font-size` (16px) with the base line-height;
 // - the dimmed sidebar meta and count rows stay compact: 15px with a 1.5
 //   line-height;
+// - the tag index topic summaries (#341) are the same dimmed sentence text
+//   as the count rows, so they join them at 15px / 1.5 instead of staying at
+//   the 14px desktop size on phones;
 // - tag chips stay compact (wrapping pills): 15px, keeping their 1.6
 //   line-height;
 // - the language pill is a two-letter code in a 44px pill: 15px keeps it
@@ -30,6 +33,11 @@
   }
 
   .tag-index__count {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .tag-index__desc {
     font-size: 15px;
     line-height: 1.5;
   }
