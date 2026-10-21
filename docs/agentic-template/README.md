@@ -34,9 +34,10 @@ template repository (decision still open).
 Blog-specific material stays out and survives only as explicitly marked
 "worked example" side notes:
 
-- Static-site/Jekyll specifics, bilingual content rules, comment-system
-  integrations, CDN configuration, article workflows with owner-read
-  gates, per-page asset budgets, and any actual visual baselines.
+- Static-site-generator specifics, theme styling, bilingual content
+  rules, comment-widget integrations, CDN configuration, article
+  workflows with owner-read gates, per-page asset budgets, and any
+  actual visual baselines.
 
 Worked example (this repo): a personal blog deployed from `master` via a
 static-site host, where "reader-visible" means rendered HTML and "guard
@@ -45,9 +46,12 @@ your own stack when adopting.
 
 ## Adoption checklist
 
-- [ ] Register the AO project for the new repo (`ao project add`,
-  set `--agent-rules-file` to the agent guide so every session loads
-  the same rules).
+- [ ] Register the AO project for the new repo: `ao project add
+  --name [repo] --path $(pwd)`, then `ao project set-config
+  [project-id] --agent-rules-file [agent guide, e.g. AGENTS.md]` so
+  every session loads the same rules (see `bootstrap.md` step 3;
+  `set-config` replaces the whole config, so use `--config-json`
+  with the complete object when other settings exist).
 - [ ] Copy the `docs/` classification tree and index table
   (`bootstrap.md` step 1); mark every row `active`, `stub (not needed
   yet)`, or `n/a (technical)` — no orphans, no dead links.

@@ -51,8 +51,22 @@ list) so internal specs never leak to users.
 ## Step 3 — configure the AO project
 
 ```sh
-ao project add --name [repo] --path $(pwd) \
-  --agent-rules-file [path to your agent guide, e.g. AGENTS.md]
+ao project add --name [repo] --path $(pwd)
+ao project set-config [project-id] --agent-rules-file [repo-relative path to your agent guide, e.g. AGENTS.md]
+```
+
+`[project-id]` is the id shown by `ao project ls` (derived from the
+path unless overridden with `--id` at add time). The rules file path
+is repo-relative, so every session loads the same rules.
+
+Warning: `ao project set-config` replaces the whole per-project
+config, even when focused flags are used. If the project already has
+other settings (model, env, branch, reviewers), pass the complete
+object with `--config-json` so nothing is dropped:
+
+```sh
+ao project set-config [project-id] --config-json \
+  '{"agentRulesFile":"AGENTS.md","defaultBranch":"main"}'
 ```
 
 Write the agent guide for the new repo: precedence (owner instruction >
@@ -66,11 +80,16 @@ it from everywhere else.
 ## Step 4 — branch protection, labels, CI
 
 ```sh
-gh label create risk-low --color 0E8A16 --description "No user-visible change"
-gh label create risk-medium --color FBCA04 --description "Visible, reversible, guarded"
-gh label create risk-high --color D93F0B --description "Needs owner approval"
-gh label create risk-very-high --color B60205 --description "Irreversible or high blast radius"
+gh label create risk-low --color 0E8A16
+gh label create risk-medium --color FBCA04
+gh label create risk-high --color D93F0B
+gh label create risk-very-high --color B60205
 ```
+
+Label meanings are normative in `conventions.md` (Risk labels
+section) — use those wordings as the `--description` values when
+creating the labels. If the commands above and `conventions.md`
+drift, `conventions.md` wins.
 
 In the repository settings, protect the default branch: require pull
 requests, require green CI, forbid direct pushes. Set up the smallest
