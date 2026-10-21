@@ -72,7 +72,9 @@ def _body(path):
 @pytest.mark.static
 def test_every_pillar_has_a_one_line_description_per_language():
     labels = _tag_labels()
-    assert set(labels) == set(PILLARS)
+    assert set(PILLARS) <= set(labels), (
+        f"tag_labels.yml lost a pillar: missing {sorted(set(PILLARS) - set(labels))}"
+    )
     for key in PILLARS:
         for field in ("description_en", "description_vi"):
             desc = labels[key].get(field)
@@ -127,31 +129,64 @@ def _descriptions(html):
     ]
 
 
-def test_english_index_lists_the_four_english_descriptions(built_site):
+def _published_tags(posts_dir):
+    """Canonical tag keys used by published posts in ``posts_dir``."""
+    tags = set()
+    for path in sorted(posts_dir.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        match = FRONT_MATTER_RE.match(text)
+        front_matter = match.group(1) if match else ""
+        if re.search(r"^published:\s*false\s*$", front_matter, re.M):
+            continue
+        inline = re.search(r"^tags:\s*\[(.*?)\]", front_matter, re.M)
+        if inline:
+            tags.update(
+                t.strip().strip("'\"")
+                for t in inline.group(1).split(",")
+                if t.strip()
+            )
+    return tags
+
+
+def _expected_descriptions(lang):
+    """Descriptions the index must render: one per published tag that
+    declares one in `_data/tag_labels.yml` (#344: the index lists tags
+    with posts, not a hardcoded pillar count)."""
+    posts_dir = REPO_ROOT / "_vi_posts" if lang == "vi" else REPO_ROOT / "_posts"
+    labels = _tag_labels()
+    return {
+        labels[key][f"description_{lang}"]
+        for key in _published_tags(posts_dir)
+        if key in labels and labels[key].get(f"description_{lang}")
+    }
+
+
+def test_english_index_lists_the_published_descriptions(built_site):
     html = (built_site / "tags" / "index.html").read_text(encoding="utf-8")
     descs = _descriptions(html)
-    assert len(descs) == 4, f"/tags/ must list 4 descriptions, got {len(descs)}"
-    labels = _tag_labels()
-    for key in PILLARS:
-        assert labels[key]["description_en"] in descs, (
-            f"/tags/ is missing the English description for {key}"
-        )
+    expected = _expected_descriptions("en")
+    assert len(descs) == len(expected), (
+        f"/tags/ must list one description per published tag, got {descs}"
+    )
+    for desc in expected:
+        assert desc in descs, f"/tags/ is missing the description {desc!r}"
     for phrase in VI_ONLY_PHRASES:
         assert phrase not in html, (
             f"/tags/ must not leak Vietnamese copy ({phrase!r})"
         )
 
 
-def test_vietnamese_index_lists_the_four_vietnamese_descriptions(built_site):
+def test_vietnamese_index_lists_the_published_descriptions(built_site):
     html = (built_site / "vi" / "tags" / "index.html").read_text(encoding="utf-8")
     descs = _descriptions(html)
-    assert len(descs) == 4, (
-        f"/vi/tags/ must list 4 descriptions, got {len(descs)}"
+    expected = _expected_descriptions("vi")
+    assert len(descs) == len(expected), (
+        f"/vi/tags/ must list one description per published tag, got {descs}"
     )
     labels = _tag_labels()
-    for key in PILLARS:
-        assert labels[key]["description_vi"] in descs, (
-            f"/vi/tags/ is missing the Vietnamese description for {key}"
+    for desc in expected:
+        assert desc in descs, (
+            f"/vi/tags/ is missing the description {desc!r}"
         )
     for phrase in EN_ONLY_PHRASES:
         assert phrase not in html, (

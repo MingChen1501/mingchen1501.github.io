@@ -237,8 +237,12 @@ def test_every_published_post_declares_lang_ref_and_pillar_tags():
             )
             tags = _tags(front_matter)
             assert tags, f"{path.name} must declare tags"
-            assert set(tags) <= set(PILLARS), (
-                f"{path.name} uses tags outside the pillars: {tags}"
+            labels = yaml.safe_load(
+                (REPO_ROOT / "_data" / "tag_labels.yml").read_text(encoding="utf-8")
+            ) or {}
+            assert set(tags) <= set(labels), (
+                f"{path.name} uses tags missing from tag_labels.yml: "
+                f"{sorted(set(tags) - set(labels))}"
             )
             assert _value(front_matter, "description"), (
                 f"{path.name} must declare a translated `description`"

@@ -255,10 +255,17 @@ def test_every_published_post_tag_has_a_tag_page():
                 )
 
 
-def test_published_posts_only_use_the_four_pillars():
+def test_published_post_tags_are_declared_in_tag_labels():
+    """Post tags must be declared in `_data/tag_labels.yml` (#344): pillars
+    and non-pillar topics alike render on the data-driven indexes, so the
+    data file — not the pillar list — is the closed world."""
+    labels = _tag_labels()
     for posts_dir in (POSTS_DIR, VI_POSTS_DIR):
         for post_name, tags in _published_post_tags(posts_dir):
-            assert set(tags) <= set(PILLARS), f"{post_name} uses tags outside the pillars: {tags}"
+            assert set(tags) <= set(labels), (
+                f"{post_name} uses tags missing from tag_labels.yml: "
+                f"{sorted(set(tags) - set(labels))}"
+            )
 
 
 def test_tag_pages_declare_the_matching_tag_and_permalink():
@@ -273,8 +280,9 @@ def test_tag_pages_declare_the_matching_tag_and_permalink():
             tag = re.search(r"^tag:\s*(.+?)\s*$", front_matter, re.M)
             assert tag, f"{rel} must declare a canonical `tag:`"
             key = tag.group(1)
-            assert key in PILLARS, f"{rel} serves a tag outside the pillars: {key}"
             assert key in labels, f"{rel} serves a tag missing from tag_labels.yml: {key}"
+            # Non-pillar topics may ship their own pages too (#344); every
+            # page still declares a canonical key from the data file.
             # The permalink is the *localized* slug (#129: `doi-song` lives
             # at `/tags/life/` in English, `/vi/tags/doi-song/` in Vietnamese).
             expected = f"{base}{labels[key][slug_key]}/"
@@ -285,13 +293,15 @@ def test_tag_pages_declare_the_matching_tag_and_permalink():
             ), f"{rel} must declare `permalink: {expected}`"
             assert re.search(r"^layout:\s*tag\s*$", front_matter, re.M)
             seen.add(key)
-        assert seen == set(PILLARS), (
+        assert seen >= set(PILLARS), (
             f"{tag_pages_dir.relative_to(REPO_ROOT)}/ must serve every pillar: "
             f"missing {sorted(set(PILLARS) - seen)}"
         )
 
 
-def test_tags_index_links_every_tag_page():
+def test_tags_index_is_data_driven_not_a_hardcoded_list():
+    """The indexes iterate the tag collections (#344): no hardcoded pillar
+    array may return, or new tags would never reach the index."""
     for tags_index, tag_pages_dir, base in (
         (TAGS_INDEX, TAG_PAGES_DIR, "/tags/"),
         (VI_TAGS_INDEX, VI_TAG_PAGES_DIR, "/vi/tags/"),
@@ -299,17 +309,27 @@ def test_tags_index_links_every_tag_page():
         index = _read(tags_index)
         rel_index = tags_index.relative_to(REPO_ROOT)
 
-        listed = re.search(r'assign pillars = "([^"]+)"', index)
-        assert listed, f"{rel_index} must list the pillars to build the index"
-        assert listed.group(1).split(",") == PILLARS
-
-        # The index builds the chip label and URL from the loop variable via
-        # `_data/tag_labels.yml` (#129), so the pillar list carries canonical
-        # keys while the rendered links carry localized slugs.
-        assert "site.data.tag_labels[pillar]" in index
-        assert f"'{base}' | append: pillar_slug | append: '/'" in index
+        assert "backend-production,ai-agent,linux-tooling,doi-song" not in index, (
+            f"{rel_index} must not hardcode the pillar array (#344)"
+        )
+        assert 'assign pillars = "' not in index, (
+            f"{rel_index} must not assign a hardcoded pillar list"
+        )
+        # The index still builds chip labels/URLs from the loop variable via
+        # `_data/tag_labels.yml` (#129), so canonical keys render as
+        # localized slugs.
+        assert "site.data.tag_labels" in index
+        assert f"'{base}' | append:" in index and "append: '/'" in index
+        # Pillars render in `order` first; the rest follow under a "More
+        # topics" group sorted by the localized label.
+        assert "order" in index
+        assert "More topics" in index or "Chủ đề khác" in index
+        # Every tag page stays reachable: its canonical key flows through
+        # the loop variable into the localized link.
         for key in _canonical_tag_keys(tag_pages_dir):
-            assert key in listed.group(1), f"{rel_index} does not link {key}"
+            assert key in _tag_labels(), (
+                f"{rel_index} cannot link {key}: missing from tag_labels.yml"
+            )
 
 
 def test_permalinks_of_generated_tag_pages_are_unique():
@@ -322,7 +342,12 @@ def test_permalinks_of_generated_tag_pages_are_unique():
                 "must declare a permalink"
             )
             permalinks.append(match.group(1))
-    assert len(permalinks) == len(set(permalinks)) == 2 * len(PILLARS)
+    # One page per tag per language (#344 allows non-pillar pages too, so
+    # the count follows the tag-page directories, not the pillar list).
+    expected = sum(1 for _ in _tag_pages(TAG_PAGES_DIR)) + sum(
+        1 for _ in _tag_pages(VI_TAG_PAGES_DIR)
+    )
+    assert len(permalinks) == len(set(permalinks)) == expected
 
 
 # --- home list chips (#47) -------------------------------------------------
