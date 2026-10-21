@@ -39,11 +39,12 @@ HELPER_PATH = "/assets/js/site-utils.js"
 MAX_HELPER_BYTES = 1536
 MAX_HELPER_CODE_LINES = 45
 
-# Total JS payload after the dedupe (9 files, `wc -c`): it grows only by
-# deliberate feature additions. #258 adds `giscus-theme.js` (~3KB), which
-# loads solely on Giscus comment pages — non-comment pages fetch nothing new.
-# (#342 removed `search.js`, ~8KB, with the search page.)
-MAX_TOTAL_JS_BYTES = 32768
+# Total JS payload (11 files, `wc -c`): it grows only by deliberate
+# feature additions. #258 adds `giscus-theme.js` (~3KB), which loads solely
+# on Giscus comment pages — non-comment pages fetch nothing new.
+# (#342 removed `search.js`, ~8KB, with the search page. #345 ships the
+# post-only `toc-spy.js` nested disclosure + scroll-spy, ~9KB.)
+MAX_TOTAL_JS_BYTES = 41984
 
 READY_CONSUMERS = (
     "copy-code.js",
@@ -52,6 +53,7 @@ READY_CONSUMERS = (
     "lightbox.js",
     "reading-progress.js",
     "share.js",
+    "toc-spy.js",
 )
 
 

@@ -156,7 +156,23 @@ EXPECTED_VARIABLES = {
 # sidebar/home/tag visual baselines that include the sidebar or the
 # data-driven tag index were refreshed from the CI
 # `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
-EXPECTED_CSS_SHA256 = "d772c5a1f1e095c4ba7b7970e6b4e1bdd185ead3537c55ab6f456ab81cdc7829"
+# #345 (ToC nested disclosure + scroll-spy): the `toc` partial changed with
+# the collapsed-default visual contract — branches now render nested `<ul>`s
+# inside their parent `<li>` (real descendants, so a collapsed branch hides
+# its subtree), each branch row is a link plus a disclosure toggle (24px
+# target, CSS chevron rotating on `aria-expanded`, instant under
+# reduced-motion), h4 rows indent a second step, and the active-row rule
+# gained a semibold weight next to the theme-aware link colour and the
+# layout-free 3px bar (the transparent border above still reserves its
+# space, so only the marked row itself changes width — siblings never
+# shift). Diffed old vs new before bumping: the only changes are those
+# additive nested-disclosure rules; no existing rule moved, so every render
+# without a marked ToC row stays identical. Post pages with a ToC render
+# the outer `<details open>` with all branches collapsed on load (JS
+# progressive enhancement — the static markup ships every level expanded),
+# which changes post screenshots, but the visual baselines pin ToC-less
+# posts only, so no baseline refreshes.
+EXPECTED_CSS_SHA256 = "a2cadc2013c18ed09663b6dff5c40a4f125abe140ed4b3396ff68732c093bdee"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275
