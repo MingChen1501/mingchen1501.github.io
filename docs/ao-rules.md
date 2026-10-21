@@ -14,3 +14,5 @@ Artefacts (PR/issue/review bodies, comments) end with a blank line plus two line
 Session id is optional in review bodies only; otherwise always include it. Merge commits keep the squash subject; the role stays visible in the PR marker and squash trailer `Role: <role>`.
 
 Reviewer must differ from implementer (`dev` vs `dev-peer-review`, `content` vs `content-review`). A reviewer posts one COMMENT verdict with its footer and never posts code.
+
+Worker and orchestrator reports are posted to GitHub (issue comment or dedicated issue), not written into the repo or left only in local files — see the "Reports" section of `docs/project/issue-conventions.md`.
