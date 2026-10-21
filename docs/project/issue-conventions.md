@@ -54,6 +54,16 @@ PRs use `.github/PULL_REQUEST_TEMPLATE.md`: Summary, linked issue
 (`Closes #`), Type, Risk label, Test evidence (which suites/CI checks),
 Screenshots/baselines note, and the role footer.
 
+## Reports
+
+Task tracking, decisions, and reports live on GitHub issues, not in local
+files. Post a report as an issue comment on its tracking or decision issue
+by default (long comments are fine); open a dedicated tracking issue when
+the report needs its own thread. Shape: summary first, then evidence
+tables, then links. Append the AO role footer as with every artefact. Keep
+the local artifacts directory for genuinely non-GitHub material only
+(e.g. screenshots too large for a comment, or private notes).
+
 ## Examples of good titles
 
 - `[chore] Add issue and PR templates with a title and label convention`
