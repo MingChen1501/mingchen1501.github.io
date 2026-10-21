@@ -1,6 +1,7 @@
-"""Guards for #112 (reader-UX audit) as constrained by #328: posts whose
-primary tag has no published siblings still get a sidebar section, but an
-older evergreen page must never suggest newer unrelated posts.
+"""Guards for #112 (reader-UX audit) as constrained by #328, plus the #343
+multi-tag union: posts whose tags have no published siblings still get a
+sidebar section, but an older evergreen page must never suggest newer
+unrelated posts.
 
 Background: the audit found the Internet post (EN + VI) renders no Related
 posts — its pillar-mate stays unpublished, so `site.tags` holds it alone.

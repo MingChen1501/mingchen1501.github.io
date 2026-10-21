@@ -48,8 +48,8 @@ Do not commit the `_site/` directory (already in `.gitignore`).
 ## Taxonomy (#26, #44)
 
 - Every post picks tags from the 4 content pillars only
-  (`backend-production`, `ai-agent`, `linux-tooling`, `doi-song`), 1 tag per
-  post and at most 4 tags/post; always include a short translated `description`
+  (`backend-production`, `ai-agent`, `linux-tooling`, `doi-song`), one or more
+  tags per post and at most 4 tags/post (#343); always include a short translated `description`
   (~120-155 chars) so `jekyll-seo-tag` renders a proper meta description.
   Copy-paste template lives in the README "Writing a new post (mingchen.id.vn
   taxonomy)" section and `references/front-matter.md`.
@@ -63,7 +63,8 @@ Do not commit the `_site/` directory (already in `.gitignore`).
   add its path to `minima.nav_pages` in `_config.yml`. The `/tags/` page
   (`tags.md`) is already listed there and is the index of the 4 pillars.
 - Post pages render a secondary column with the post's tags + posts sharing
-  its first tag in the page's language (`_layouts/post.html`,
+  any of its tags in the page's language (#343: Related posts is the union
+  over all tags, newest first, de-duplicated; `_layouts/post.html`,
   `_includes/post-tags.html`, styles in
   `_sass/minima/custom-styles.scss`, the index over the `_sass/minima/custom/`
   partials). The home post list renders the same chips

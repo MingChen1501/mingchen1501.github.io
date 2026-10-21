@@ -669,7 +669,8 @@ render "Đời sống" at `/vi/tags/doi-song/`. Technical tags keep the same slu
 and English label in both languages.
 
 Post pages render a secondary column with the post's tags and the other posts
-sharing its first tag (`_layouts/post.html`, `_includes/post-tags.html`, styles
+sharing any of its tags (#343: Related posts is the union over all tags,
+newest first, de-duplicated; `_layouts/post.html`, `_includes/post-tags.html`, styles
 in `_sass/minima/custom-styles.scss`, an index over the `_sass/minima/custom/`
 partials).
 

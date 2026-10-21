@@ -107,13 +107,15 @@ layout: base
 
     {%- comment -%}
       Secondary column (#45): the post's tags plus the other posts sharing
-      the first tag, headed by the automatic ToC (#134) when the post
-      qualifies. When the primary tag has no published siblings (a pillar
-      with a single post, e.g. the Internet post while its pillar-mate
-      stays unpublished — #112), the section falls back to the newest
-      posts of the page's language not newer than the current page (#328:
-      an older evergreen page must never suggest newer unrelated posts,
-      so the fallback filters to `other.date <= page.date` and the
+      any of its tags (#343: a post may carry more than one pillar tag, so
+      the related list is the union over all of them — newest first, with
+      same-date ties broken by URL for determinism), headed by the automatic
+      ToC (#134) when the post qualifies. When none of the post's tags has
+      published siblings (a pillar with a single post, e.g. the Internet post
+      while its pillar-mate stays unpublished — #112), the section falls back
+      to the newest posts of the page's language not newer than the current
+      page (#328: an older evergreen page must never suggest newer unrelated
+      posts, so the fallback filters to `other.date <= page.date` and the
       section stays suppressed when nothing that old exists), under an
       honest "Latest posts" heading, so the sidebar is never a tags-only
       dead end unless there is genuinely nothing older to show. Rendered
@@ -143,7 +145,15 @@ layout: base
         {%- include post-tags.html tags=post_tags -%}
       </section>
 
-      {%- assign primary_tag = post_tags.first -%}
+      {%- comment -%}
+        Related posts (#343): the union of same-language posts sharing ANY
+        of this post's tags. Each tag contributes its own newest-first list
+        and the union is re-sorted newest-first across tags (same-date ties
+        broken by URL, via the `url` pre-sort, so the order is
+        deterministic), de-duplicated (a post carrying two of this post's
+        tags still renders once — the first, newest occurrence wins), and the
+        render loop below excludes the current page and caps at five.
+      {%- endcomment -%}
       {%- if post_lang == 'vi' -%}
         {%- comment -%}
           Nil-safe like the tag layout: the collection may be undefined in the
@@ -153,15 +163,36 @@ layout: base
         {%- if rel_vi_source == nil -%}
           {%- assign rel_vi_source = "" | split: "" -%}
         {%- endif -%}
-        {%- assign tag_posts = rel_vi_source | where_exp: "rel_post", "rel_post.tags contains primary_tag" | sort: "date" | reverse -%}
+        {%- assign rel_union = "" | split: "" -%}
+        {%- for rel_tag in post_tags -%}
+          {%- assign rel_tag_posts = rel_vi_source | where_exp: "rel_post", "rel_post.tags contains rel_tag" -%}
+          {%- assign rel_union = rel_union | concat: rel_tag_posts -%}
+        {%- endfor -%}
         {%- assign latest_source = rel_vi_source -%}
       {%- else -%}
-        {%- assign tag_posts = site.tags[primary_tag] | sort: "date" | reverse -%}
+        {%- assign rel_union = "" | split: "" -%}
+        {%- for rel_tag in post_tags -%}
+          {%- assign rel_tag_posts = site.tags[rel_tag] -%}
+          {%- if rel_tag_posts == nil -%}
+            {%- assign rel_tag_posts = "" | split: "" -%}
+          {%- endif -%}
+          {%- assign rel_union = rel_union | concat: rel_tag_posts -%}
+        {%- endfor -%}
         {%- assign latest_source = site.posts -%}
       {%- endif -%}
+      {%- assign rel_sorted = rel_union | sort: "url" | sort: "date" | reverse -%}
+      {%- assign tag_posts = "" | split: "" -%}
+      {%- assign rel_seen = "|" -%}
+      {%- for rel_post in rel_sorted -%}
+        {%- assign rel_key = "|" | append: rel_post.url | append: "|" -%}
+        {%- unless rel_seen contains rel_key -%}
+          {%- assign tag_posts = tag_posts | push: rel_post -%}
+          {%- assign rel_seen = rel_seen | append: rel_post.url | append: "|" -%}
+        {%- endunless -%}
+      {%- endfor -%}
       {%- comment -%}
         Latest-posts fallback (#112, constrained by #328): a post whose
-        primary tag has no published siblings (its pillar-mate
+        tags have no published siblings (its pillar-mate
         unpublished, or a lone tag) would otherwise render a tags-only
         sidebar. Fall back to the newest posts of the page's language
         that are not newer than the current page, so an older evergreen
