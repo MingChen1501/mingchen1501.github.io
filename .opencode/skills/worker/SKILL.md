@@ -30,6 +30,19 @@ Precedence (canonical: `AGENTS.md`): owner instruction > project cues >
   `--force` / `--force-with-lease`, never `--delete` on a shared
   branch, never push directly to `master`.
 - Keep commits focused with conventional commit messages, in English.
+- Set your per-worktree git identity before committing (same email, so
+  the contribution graph still credits the owner):
+  `git config --worktree user.name "Ming Chen (worker)"` (use your
+  session's role string when it is not generic worker work). Existing
+  commits are never rewritten.
+
+## Role signature
+
+This skill's role string is the generic `worker` (use the session's
+specific role — e.g. `article-writer` — when acting under a role file
+in `.opencode/agents/`). Sign every artefact per `AGENTS.md` ("Role
+signatures") and the `orchestrator` skill footer template
+(`script/ao-role-footer.sh <role> [session-id]`).
 
 ## Implement and verify
 

@@ -71,3 +71,9 @@ the verdict stays with the reviewer role.
 - No code, layout, style, JS, CI, or config behavior change.
 - All public repo artifacts (specs, issues, comments) in English.
   Vietnamese only in chat and reports.
+
+## Role signature
+
+This session's role string is `architect`. Sign every artefact per
+`AGENTS.md` ("Role signatures") and the `orchestrator` skill footer
+template (`script/ao-role-footer.sh architect [session-id]`).

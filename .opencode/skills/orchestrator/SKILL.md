@@ -140,6 +140,38 @@ Trigger: the owner describes a new task, bug, or enhancement in chat.
   review worker; create follow-up issues if the review or CI surfaces any.
 - Do not let one session both implement and review its own PR.
 
+## Role signatures (#350)
+
+Every worker writes with the same GitHub account, so each artefact is
+signed with the role that produced it. Canonical role strings:
+`orchestrator`, `article-writer`, `site-reviewer`, `spec-reviewer`,
+`architect`, `qa-lead`, `release-manager`, `product-owner`,
+`business-analyst`, or generic `worker` when none applies. The role is
+the AO session's acting role from its session name/agent definition.
+Normative summary lives in `AGENTS.md` ("Role signatures"); this
+section is the exact template plus the spawn step.
+
+- **Spawn step.** Every spawn prompt must tell the worker to set its
+  per-worktree git identity before committing (same email, so the
+  contribution graph still credits the owner):
+  `git config --worktree user.name "Ming Chen (<role>)"` /
+  `git config --worktree user.email "mingchen1501@gmail.com"`.
+  Existing commits are never rewritten. Never change the account, add
+  bot accounts, or spoof authorship beyond the name suffix.
+- **Footer template.** PR bodies, issue bodies, review bodies, and
+  issue/PR comments end with a blank line followed by these two
+  lines (generate with `script/ao-role-footer.sh <role> [session-id]`
+  — never hand-write them):
+  `<!-- ao-role: <role> -->`
+  `Role: <role> · AO session <session-id>`
+  The session id is optional in review bodies posted by a reviewer
+  session; include it when known, otherwise end with `Role: <role>`.
+- **Reviewer verdicts** carry `Role: site-reviewer` (or
+  `spec-reviewer`), making approval provenance obvious.
+- **Merge commits** keep whatever subject the squash policy produces;
+  the role is visible in the PR body marker and, where relevant, in
+  the squash commit trailer `Role: <role>`.
+
 ## Model separation and rate-limit rotation (#76)
 
 All AO sessions on this project share one free-tier OpenCode account. When a

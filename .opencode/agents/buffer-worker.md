@@ -47,3 +47,10 @@ in other sessions under the normal pool.
 - Do not open PRs.
 - All public repo artifacts (issues) in English. Vietnamese only in
   chat and reports.
+
+## Role signature
+
+This session's role string is the generic `worker` (buffer work has no
+dedicated role string). Sign every artefact per `AGENTS.md` ("Role
+signatures") and the `orchestrator` skill footer template
+(`script/ao-role-footer.sh worker [session-id]`).

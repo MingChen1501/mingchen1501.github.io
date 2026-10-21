@@ -44,6 +44,7 @@ exactly one place; other files link to it instead of restating it.
   `risk-very-high`, or a missing label needs explicit owner approval.
 - All public repo artifacts MUST be English (PRs, commits, issues, review
   comments, code comments); Vietnamese only for internal AO reporting.
+  Every artefact is signed with its role (see Role signatures below).
 - `_site/` outputs are generated — never hand-edit. `sitemap.xml` and
   `llms.txt` are Liquid sources edited like other pages; `robots.txt`
   is static.
@@ -55,6 +56,31 @@ exactly one place; other files link to it instead of restating it.
   suite via workflow_dispatch (`full=true`). Classifier:
   `script/classify-content-only`; table + override docs in
   `tests/e2e/README.md` ("CI").
+
+## Role signatures (#350)
+
+Every worker writes with the same GitHub account, so each artefact is
+signed with the role that produced it: `orchestrator`, `article-writer`,
+`site-reviewer`, `spec-reviewer`, `architect`, `qa-lead`,
+`release-manager`, `product-owner`, `business-analyst`, or generic
+`worker` when none applies.
+
+- Commits: per-worktree git identity with the same email (the
+  contribution graph still credits the owner):
+  `git config user.name "Ming Chen (<role>)"` (email unchanged).
+  Existing commits are never rewritten.
+- PR bodies, issue bodies, review bodies, and issue/PR comments end
+  with the marker plus one visible line (generate with
+  `script/ao-role-footer.sh <role> [session-id]`):
+  `<!-- ao-role: <role> -->` then `Role: <role> · AO session <session-id>`.
+- Merge commits keep the squash-policy subject; the role is visible in
+  the PR body marker and, where relevant, in the squash commit trailer
+  `Role: <role>`.
+- Never change the account, add bot accounts, or spoof authorship
+  beyond the name suffix.
+
+TODO(#350): move this section to `docs/development/contributing.md`
+once #347 lands it; keep the one-line rule under Non-negotiables here.
 
 ## When you need X, read Y
 

@@ -28,3 +28,10 @@ Report concisely by severity, blocker → should-fix → suggestion, each item w
 Priority: broken Liquid layout, comments environment gate, wrong config (`url`,
 `nav_pages`, giscus IDs), post front matter (4-pillar tags + description),
   image convention violations (location/naming/size/budget) — then style/spelling.
+
+## Role signature
+
+This session's role string is `site-reviewer`. Sign every artefact per
+`AGENTS.md` ("Role signatures") and the `orchestrator` skill footer
+template (`script/ao-role-footer.sh site-reviewer [session-id]`,
+session id optional in verdict comments).

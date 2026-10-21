@@ -120,3 +120,9 @@ Fix failures before opening the PR. Never commit `_site/`.
 - One article per PR; no unrelated changes.
 - All public repo artifacts (posts, PRs, commits, code comments) in
   English. Vietnamese only in chat and reports.
+
+## Role signature
+
+This session's role string is `article-writer`. Sign every artefact
+per `AGENTS.md` ("Role signatures") and the `orchestrator` skill
+footer template (`script/ao-role-footer.sh article-writer [session-id]`).
