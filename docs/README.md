@@ -11,6 +11,22 @@ Real docs either own content or explicitly defer with a link — no
 duplicated source of truth. Stubs say why they are not needed and when to
 revisit.
 
+## Spec ownership (role -> groups, #348)
+
+| Role | Groups |
+|---|---|
+| `product-owner` | Business, Product |
+| `business-analyst` | Requirements |
+| `architect` (as solution architect) | Architecture, Technical |
+| `qa-lead` | Testing |
+| `release-manager` | DevOps, Operations, Release |
+| `spec-reviewer` | none (read-only gate over all groups) |
+
+Development, Project, and Support groups have no spec-role owner yet;
+their rows flip through the normal worker flow. Tiers, minimum spec
+sets, and the gate procedure live in the `spec-gate` skill
+(`.opencode/skills/spec-gate/SKILL.md`).
+
 ## Business
 
 | Type | Path | Status | Purpose |

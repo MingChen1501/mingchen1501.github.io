@@ -23,6 +23,14 @@ exactly one place; other files link to it instead of restating it.
 | Architect (audit, specs, refactor issues; never implements) | `.opencode/agents/architect.md` + `architecture` skill |
 | Legacy: `article-writer` -> `content`; `site-reviewer` -> `dev-peer-review`/`content-review` (old records only) | `docs/ao-rules.md` |
 
+## Spec gate (tiers T0–T4, #348)
+
+Behavioural/architectural changes need specs written and `active`
+before the implementation PR opens; the `spec-reviewer` verdict gates
+implementation. Tiers, minimum spec sets, and role ownership live in
+the `spec-gate` skill; `docs/README.md` states which role owns each
+doc group.
+
 ## Commands (every task)
 
 - Preview real content: `bundle exec jekyll serve` (uses `_config.yml`;

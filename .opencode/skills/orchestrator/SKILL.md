@@ -130,6 +130,26 @@ Trigger: the owner describes a new task, bug, or enhancement in chat.
    implementation workers under the normal pool.
 5. The orchestrator must not file owner-task issues itself.
 
+## Spec gate (tiers T0–T4, #348)
+
+No behavioural, architectural, or release-affecting change jumps
+straight from idea to code. Canonical tiers, minimum spec sets, role
+ownership, and the gate procedure live in the `spec-gate` skill
+(`.opencode/skills/spec-gate/SKILL.md`) — link it, do not restate it.
+
+- Tier the issue first (owning spec role proposes, `spec-reviewer`
+  re-checks): T0 docs-only and T1 (typo/test-only/dependency bump)
+  need no gate; T2 needs acceptance criteria + FR/NFR delta +
+  traceability before the implementation PR opens; T3 adds an ADR +
+  HLD update with owner acceptance (`proposed -> accepted`) before
+  merge; T4 adds deployment/env/runbook deltas + a rollback note.
+- Spec sessions count as the single task worker (see Pool): specs,
+  gate verdict, then implementation — sequentially, never in parallel.
+- Gate verdicts are manual COMMENTs by a `spec-reviewer` session
+  (`SPEC-GATE PASS/FAIL`); never `ao review trigger` here.
+- Articles keep their owner-read gate (`article-writer` skill); only
+  site-behaviour parts of article work are tiered.
+
 ## Role separation
 
 - Roles are **separate sessions**: `business-analyst` / `dev` /
@@ -337,7 +357,8 @@ Checklist (each review starts from the pinned baseline, never re-derived):
   `.opencode/agents/buffer-worker.md`.
 - Architect role: `.opencode/agents/architect.md` + `architecture`
   skill (audits, `docs/architecture/` specs, refactor issues,
-  review-lens mode; never implements/merges).
+  review-lens mode; also solution architect for `docs/technical/*`
+  in the spec workflow; never implements/merges).
 - AO CLI catalog: `.opencode/skills/using-ao/SKILL.md`.
 - Pending owner cue/config updates (CLI cannot edit/delete cues —
   apply via desktop/project settings): rewrite `publish-and-review`
