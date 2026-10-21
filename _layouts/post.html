@@ -90,7 +90,7 @@ layout: base
         {%- endif -%}
         {%- if show_toc -%}
           <div class="post-toc-mount post-toc-mount--inline">
-            {%- include post-toc.html html=content lang=post_lang -%}
+            {%- include post-toc.html html=content lang=post_lang mount="inline" -%}
           </div>
         {%- endif -%}
         {{ content }}
@@ -135,7 +135,7 @@ layout: base
       {%- if show_toc -%}
       <section class="post-sidebar__section post-sidebar__section--toc">
         <div class="post-toc-mount post-toc-mount--sidebar">
-          {%- include post-toc.html html=content lang=post_lang -%}
+          {%- include post-toc.html html=content lang=post_lang mount="sidebar" -%}
         </div>
       </section>
       {%- endif -%}

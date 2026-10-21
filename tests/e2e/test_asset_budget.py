@@ -52,11 +52,13 @@ SUB_FOOTER = test_post_only_js.SUB_FOOTER
 # totals (see script/asset-budget.sh for the per-kind measurements). Bump a
 # ceiling only with an intentional change, in both files at once.
 # (#275 re-measured after the syntax split: the main sheet dropped to
-# ~45.1KB, the conditional companion to ~17.5KB. #345 added the post-only
-# toc-spy.js scroll-spy, re-measured to ~34.4KB prod.)
+# ~45.1KB, the conditional companion to ~17.5KB. #345 re-measured after
+# the nested-disclosure rework: toc-spy.js grew ~5.1KB -> ~8.6KB with the
+# branch collapse, auto-expand, and pinning logic, re-measured to
+# ~38.3KB prod.)
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
-    "MAX_JS_POST_BYTES": 37888,
+    "MAX_JS_POST_BYTES": 41984,
     "MAX_CSS_BYTES": 50176,
     "MAX_SYNTAX_CSS_BYTES": 19456,
 }

@@ -156,16 +156,23 @@ EXPECTED_VARIABLES = {
 # sidebar/home/tag visual baselines that include the sidebar or the
 # data-driven tag index were refreshed from the CI
 # `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
-# #345 (ToC scroll-spy): the `toc` partial gained the additive active-row
-# rule (`.post-toc__item a[aria-current="location"]` in the theme-aware
-# link colour plus a border-colour flip) and a layout-free 3px transparent
-# border + 8px padding reserve on every ToC link, so activating a row
-# never shifts its siblings. Diffed old vs new before bumping: the only
-# change is that additive hunk; no existing rule moved, so every render
+# #345 (ToC nested disclosure + scroll-spy): the `toc` partial changed with
+# the collapsed-default visual contract — branches now render nested `<ul>`s
+# inside their parent `<li>` (real descendants, so a collapsed branch hides
+# its subtree), each branch row is a link plus a disclosure toggle (24px
+# target, CSS chevron rotating on `aria-expanded`, instant under
+# reduced-motion), h4 rows indent a second step, and the active-row rule
+# gained a semibold weight next to the theme-aware link colour and the
+# layout-free 3px bar (the transparent border above still reserves its
+# space, so only the marked row itself changes width — siblings never
+# shift). Diffed old vs new before bumping: the only changes are those
+# additive nested-disclosure rules; no existing rule moved, so every render
 # without a marked ToC row stays identical. Post pages with a ToC render
-# the list expanded now (`open`), which changes post screenshots — but the
-# visual baselines pin ToC-less posts only, so no baseline refreshes.
-EXPECTED_CSS_SHA256 = "3c244e83ba7bf48f08e0f57bf6cacd5acb248e891424de344fae8f6374e554dc"
+# the outer `<details open>` with all branches collapsed on load (JS
+# progressive enhancement — the static markup ships every level expanded),
+# which changes post screenshots, but the visual baselines pin ToC-less
+# posts only, so no baseline refreshes.
+EXPECTED_CSS_SHA256 = "a2cadc2013c18ed09663b6dff5c40a4f125abe140ed4b3396ff68732c093bdee"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

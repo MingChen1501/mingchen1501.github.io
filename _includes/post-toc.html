@@ -10,30 +10,47 @@
   every long post to carry the marker by hand. Instead this include builds
   the TOC in pure Liquid from the already-rendered `html` (kramdown emits
   `id` anchors on every heading via `auto_ids`, which `--safe` keeps), so no
-  plugin and no JavaScript are needed.
+  plugin and no JavaScript are needed for the list itself.
 
   Usage from `_layouts/post.html` (two mounts of this same include):
-    {%- include post-toc.html html=content lang=post_lang -%}
+    {%- include post-toc.html html=content lang=post_lang mount="inline" -%}
   once inline at the top of `.post-content` (phones) and once as the first
-  `.post-sidebar` section (desktop); CSS shows exactly one copy per viewport.
-  Emits an open `<details>` block (localized summary, links to the `h2`/`h3`
-  anchors) or nothing when the page has no `h2`/`h3` headings with ids.
-  The block starts expanded (`open`): readers without JS get the full list
-  with plain anchors, and `assets/js/toc-spy.js` (#345) only adds the
-  `aria-current` mark — it never closes the block. H4 headings stay out of
-  the list: no published post uses them (checked 2026-10-21), so `h2`/`h3`
-  cover every level present.
+  `.post-sidebar` section (desktop); CSS shows exactly one copy per
+  viewport. `mount` ("inline"/"sidebar") scopes the per-branch
+  `aria-controls` ids, so the two copies never share an element id.
+
+  Nested, progressively disclosed (#345). Pass 1 collects the h2/h3/h4
+  records in document order; pass 2 emits nested lists with one-step
+  lookahead (`toc_rows[forloop.index]`, so every branch knows whether it
+  has children before its `<li>` opens). Children lists are REAL
+  descendants of their parent `<li>`, never a flat list with padding, so
+  collapsing a parent hides its whole subtree. H5/H6 stay out of the list:
+  no published post uses anything below h4 (checked 2026-10-21), and h4 is
+  supported so any level present nests correctly.
+
+  No-JS contract: the static markup ships FULLY EXPANDED (outer `<details
+  open>`, every branch `aria-expanded="true"`, no `hidden` anywhere), so
+  without JS every level is visible and every anchor works. Collapsing and
+  scroll-spy auto-expansion are runtime progressive enhancement owned by
+  `assets/js/toc-spy.js`, which runs on load, never by this markup.
 {%- endcomment -%}
 {%- assign toc_lang = include.lang | default: page.lang | default: 'en' -%}
 {%- assign toc_label = 'On this page' -%}
+{%- assign toc_show = 'Show subsections' -%}
+{%- assign toc_hide = 'Hide subsections' -%}
 {%- if toc_lang == 'vi' -%}
   {%- assign toc_label = 'Trong bài này' -%}
+  {%- assign toc_show = 'Hiện các mục con' -%}
+  {%- assign toc_hide = 'Ẩn các mục con' -%}
 {%- endif -%}
-{%- assign toc_items = '' -%}
+{%- assign toc_mount = include.mount | default: 'inline' -%}
+{%- assign toc_rec_sep = '@@TOC-REC@@' -%}
+{%- assign toc_fld_sep = '@@TOC-FLD@@' -%}
+{%- assign toc_records = '' -%}
 {%- assign toc_chunks = include.html | split: '<h' -%}
 {%- for toc_chunk in toc_chunks -%}
   {%- assign toc_level = toc_chunk | slice: 0, 1 -%}
-  {%- if toc_level == '2' or toc_level == '3' -%}
+  {%- if toc_level == '2' or toc_level == '3' or toc_level == '4' -%}
     {%- assign toc_id_parts = toc_chunk | split: 'id="' -%}
     {%- if toc_id_parts.size > 1 -%}
       {%- assign toc_anchor = toc_id_parts[1] | split: '"' | first -%}
@@ -42,17 +59,72 @@
       {%- assign toc_tag = toc_heading | split: '>' | first | append: '>' -%}
       {%- assign toc_title = toc_heading | remove_first: toc_tag | strip_html | strip -%}
       {%- if toc_anchor != '' and toc_title != '' -%}
-        {%- capture toc_row %}<li class="post-toc__item post-toc__item--h{{ toc_level }}"><a href="#{{ toc_anchor }}">{{ toc_title | escape }}</a></li>{% endcapture -%}
-        {%- assign toc_items = toc_items | append: toc_row -%}
+        {%- capture toc_rec %}{{ toc_level }}{{ toc_fld_sep }}{{ toc_anchor }}{{ toc_fld_sep }}{{ toc_title | escape }}{% endcapture -%}
+        {%- if toc_records == '' -%}
+          {%- assign toc_records = toc_rec -%}
+        {%- else -%}
+          {%- assign toc_records = toc_records | append: toc_rec_sep | append: toc_rec -%}
+        {%- endif -%}
       {%- endif -%}
     {%- endif -%}
   {%- endif -%}
 {%- endfor -%}
-{%- if toc_items != '' -%}
+{%- if toc_records != '' -%}
+  {%- assign toc_rows = toc_records | split: toc_rec_sep -%}
 <details class="post-toc" open>
   <summary class="post-toc__summary">{{ toc_label }}</summary>
   <nav class="post-toc__nav" aria-label="{{ toc_label }}">
-    <ul class="post-toc__list">{{ toc_items }}</ul>
+    <ul class="post-toc__list">
+      {%- assign toc_h2_open = false -%}
+      {%- assign toc_kids_open = false -%}
+      {%- assign toc_h3_open = false -%}
+      {%- assign toc_h4list_open = false -%}
+      {%- for toc_row in toc_rows -%}
+        {%- assign toc_parts = toc_row | split: toc_fld_sep -%}
+        {%- assign toc_lvl = toc_parts[0] -%}
+        {%- assign toc_ref = toc_parts[1] -%}
+        {%- assign toc_text = toc_parts[2] -%}
+        {%- assign toc_next_lvl = '' -%}
+        {%- unless forloop.last -%}
+          {%- assign toc_next = toc_rows[forloop.index] | split: toc_fld_sep -%}
+          {%- assign toc_next_lvl = toc_next[0] -%}
+        {%- endunless -%}
+        {%- assign toc_kid_id = 'toc-' | append: toc_mount | append: '-' | append: toc_ref | append: '-children' -%}
+        {%- if toc_lvl == '2' -%}
+          {%- if toc_h4list_open -%}</ul>{%- assign toc_h4list_open = false -%}{%- endif -%}
+          {%- if toc_h3_open -%}</li>{%- assign toc_h3_open = false -%}{%- endif -%}
+          {%- if toc_kids_open -%}</ul>{%- assign toc_kids_open = false -%}{%- endif -%}
+          {%- if toc_h2_open -%}</li>{%- assign toc_h2_open = false -%}{%- endif -%}
+          <li class="post-toc__item post-toc__item--h2" data-level="2"><div class="post-toc__row"><a href="#{{ toc_ref }}">{{ toc_text }}</a>
+          {%- if toc_next_lvl == '3' or toc_next_lvl == '4' -%}
+            <button type="button" class="post-toc__toggle" aria-expanded="true" aria-controls="{{ toc_kid_id }}" data-label-show="{{ toc_show }}: {{ toc_text }}" data-label-hide="{{ toc_hide }}: {{ toc_text }}" aria-label="{{ toc_hide }}: {{ toc_text }}"><span class="post-toc__chevron" aria-hidden="true"></span></button></div>
+            <ul class="post-toc__list post-toc__children" id="{{ toc_kid_id }}">
+            {%- assign toc_h2_open = true -%}
+            {%- assign toc_kids_open = true -%}
+          {%- else -%}
+            </div></li>
+          {%- endif -%}
+        {%- elsif toc_lvl == '3' -%}
+          {%- if toc_h4list_open -%}</ul>{%- assign toc_h4list_open = false -%}{%- endif -%}
+          {%- if toc_h3_open -%}</li>{%- assign toc_h3_open = false -%}{%- endif -%}
+          <li class="post-toc__item post-toc__item--h3" data-level="3"><div class="post-toc__row"><a href="#{{ toc_ref }}">{{ toc_text }}</a>
+          {%- if toc_next_lvl == '4' -%}
+            <button type="button" class="post-toc__toggle" aria-expanded="true" aria-controls="{{ toc_kid_id }}" data-label-show="{{ toc_show }}: {{ toc_text }}" data-label-hide="{{ toc_hide }}: {{ toc_text }}" aria-label="{{ toc_hide }}: {{ toc_text }}"><span class="post-toc__chevron" aria-hidden="true"></span></button></div>
+            <ul class="post-toc__list post-toc__children" id="{{ toc_kid_id }}">
+            {%- assign toc_h3_open = true -%}
+            {%- assign toc_h4list_open = true -%}
+          {%- else -%}
+            </div></li>
+          {%- endif -%}
+        {%- else -%}
+          <li class="post-toc__item post-toc__item--h4" data-level="4"><div class="post-toc__row"><a href="#{{ toc_ref }}">{{ toc_text }}</a></div></li>
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if toc_h4list_open -%}</ul>{%- endif -%}
+      {%- if toc_h3_open -%}</li>{%- endif -%}
+      {%- if toc_kids_open -%}</ul>{%- endif -%}
+      {%- if toc_h2_open -%}</li>{%- endif -%}
+    </ul>
   </nav>
 </details>
 {%- endif -%}

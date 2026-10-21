@@ -1,17 +1,21 @@
 // #174: table of contents (#125/#134). Cascade slot 7 of 11.
 // ---------------------------------------------------------------------------
 // Table of contents (#125, automatic since #134): posts with at least
-// `toc_min_h2` h2 headings (constant in `_layouts/post.html`) get an
-// expanded `<details open>` TOC from `_includes/post-toc.html` — pure
-// Liquid over the rendered headings, so it stays Pages-safe. Mounted
-// twice from the same include: inline at the top of `.post-content` for
-// phones (inside the reading measure, never wider than the main column)
-// and as the first `.post-sidebar` section for desktop. Exactly one copy
-// is visible per viewport; `toc: false` suppresses both. The only script
-// is the first-party scroll-spy (`assets/js/toc-spy.js`, #345), which
-// merely marks the row being read; the list itself needs no JS.
-// Indentation is CSS-driven per level class below (`--h2` flush, `--h3`
-// one step in), so it holds all the way down to 320px widths.
+// `toc_min_h2` h2 headings (constant in `_layouts/post.html`) get a
+// nested disclosure ToC from `_includes/post-toc.html` — pure Liquid over
+// the rendered headings, so it stays Pages-safe. Mounted twice from the
+// same include: inline at the top of `.post-content` for phones (inside
+// the reading measure, never wider than the main column) and as the first
+// `.post-sidebar` section for desktop. Exactly one copy is visible per
+// viewport; `toc: false` suppresses both.
+//
+// The static markup ships fully expanded (no-JS: every level visible,
+// plain anchors); `assets/js/toc-spy.js` (#345) collapses every branch on
+// load, so the default view is H2 only, and auto-expands the branch being
+// read. Children lists are real descendants of their parent `<li>`, so a
+// collapsed branch hides its whole subtree. Indentation follows the level
+// class below (`--h2` flush, `--h3` one step, `--h4` two), so it holds all
+// the way down to 320px widths.
 // ---------------------------------------------------------------------------
 .post-toc {
   margin: 0 0 $spacing-unit;
@@ -53,22 +57,93 @@ ul.post-toc__list {
   }
 }
 
+// Nested children (#345): a real descendant `<ul>` of its parent `<li>`,
+// so collapsing the parent hides the whole subtree. Collapsing is runtime
+// state owned by `toc-spy.js` (`hidden` + `aria-expanded`); the static
+// markup never hides anything (no-JS contract).
+ul.post-toc__children {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Each row is a link plus, on branches with children, a disclosure toggle.
+// The link takes the measure; the toggle keeps a 24px minimum target.
+.post-toc__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.post-toc__row a {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.post-toc__toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $brand-color-dark;
+  }
+}
+
+// Disclosure chevron (#345): CSS triangle pointing down when the branch
+// is open, rotated to point right when collapsed. The rotation is the only
+// motion on this control; reduced-motion readers get an instant flip.
+.post-toc__chevron {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+  transition: transform 0.15s ease-in-out;
+}
+
+.post-toc__toggle[aria-expanded="false"] .post-toc__chevron {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-toc__chevron {
+    transition: none;
+  }
+}
+
 // Scroll-spy active row (#345): the script marks exactly one link per
 // mount with `aria-current="location"`. Not colour-only: the link takes
 // the theme-aware link colour (`$link-base-color` compiles to
 // `var(--minima-link-base-color)`, ~5.1:1 on the light background and
-// ~5.4:1 on the dark one, both measured 2026-10-21) plus a 3px bar that
-// costs no layout — the transparent border above already reserves the
-// space, so activating a row never shifts its siblings.
+// ~5.4:1 on the dark one, both measured 2026-10-21) plus a 3px bar and a
+// semibold weight. The bar costs no layout — the transparent border above
+// already reserves the space, so activating a row never shifts its
+// siblings; only the marked row itself turns semibold.
 .post-toc__item a[aria-current="location"] {
   color: $link-base-color;
   border-left-color: $link-base-color;
+  font-weight: 600;
 }
 
-// `h3` entries hang under their `h2`: flat list, so no nested-list bookkeeping
-// in the Liquid include.
+// `h3`/`h4` entries nest under their parent branch: the indentation
+// follows the heading tree because the lists themselves are nested.
 .post-toc__item--h3 {
   padding-left: 16px;
+}
+
+.post-toc__item--h4 {
+  padding-left: 32px;
 }
 
 // Dual mount (#134): the sidebar copy stays hidden on phones (the sidebar

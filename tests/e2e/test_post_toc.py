@@ -6,13 +6,17 @@ has at least `toc_min_h2` (4) `h2` headings, unless the post sets
 `toc: false`. GitHub Pages builds with `--safe`, so `jekyll-toc` is
 unavailable, and kramdown's own `{:toc}` marker cannot be injected from the
 layout (it only expands inside the post's Markdown source). The include
-therefore builds the TOC in pure Liquid from the rendered `h2`/`h3` headings
-(kramdown `auto_ids` supply the anchors) and ships it expanded, with no
-JavaScript needed for the list itself; #345 adds a post-only scroll-spy
-(`assets/js/toc-spy.js`, guarded in `test_toc_spy.py`) that only marks the
-row being read.
+therefore builds the TOC in pure Liquid from the rendered `h2`/`h3`/`h4`
+headings (kramdown `auto_ids` supply the anchors) as a NESTED list:
+children `<ul>`s are real descendants of their parent `<li>`, each branch
+carrying a disclosure `<button>` (`aria-expanded`/`aria-controls` with a
+mount-scoped id). The static markup ships fully expanded with no hidden
+subtree, so no JavaScript is needed for the list itself; #345 adds a
+post-only scroll-spy (`assets/js/toc-spy.js`, guarded in `test_toc_spy.py`)
+that collapses branches on load and auto-expands the branch being read.
 
-The same include is mounted twice: inline at the top of `.post-content`
+The same include is mounted twice (with `mount="inline"`/`"sidebar"` so
+branch control ids never collide): inline at the top of `.post-content`
 (phones) and as the first `.post-sidebar` section above Tags/Related posts
 (desktop). CSS shows exactly one copy per viewport.
 
@@ -78,6 +82,9 @@ def test_post_layout_shows_toc_automatically_above_a_single_threshold():
 def test_post_layout_mounts_the_same_include_inline_and_in_the_sidebar():
     html = _read(POST_LAYOUT)
     assert html.count("include post-toc.html") == 2
+    assert 'mount="inline"' in html and 'mount="sidebar"' in html, (
+        "each mount must scope its branch control ids (#345)"
+    )
     inline = html.index("post-toc-mount--inline")
     sidebar = html.index("post-toc-mount--sidebar")
     body_start = html.index('class="post-content e-content"')
@@ -115,12 +122,12 @@ def test_toc_include_uses_a_details_block_with_a_localized_summary():
 
 
 @pytest.mark.static
-def test_toc_include_links_h2_and_h3_anchors_without_plugins_or_js():
+def test_toc_include_nests_h2_h3_h4_with_per_branch_toggles():
     html = _read(TOC_INCLUDE)
     # Pure Liquid over the rendered headings: no plugin tag, no script.
     assert "<script" not in html
     assert "{% toc" not in html
-    assert "toc_level == '2' or toc_level == '3'" in html
+    assert "toc_level == '2' or toc_level == '3' or toc_level == '4'" in html
     assert 'split: \'id="\'' in html
     assert 'href="#' in html
     assert "strip_html" in html
@@ -128,13 +135,23 @@ def test_toc_include_links_h2_and_h3_anchors_without_plugins_or_js():
     # expands inside the post source, so the layout cannot inject it.
     assert "{:toc}" in html
     assert "--safe" in html
+    # Nesting fidelity: children lists are real descendants of their
+    # parent branch, each branch carrying a disclosure button with a
+    # mount-scoped control id and a data-level row marker.
+    assert "post-toc__children" in html
+    assert "post-toc__toggle" in html
+    assert "aria-expanded" in html and "aria-controls" in html
+    assert "data-level" in html
+    assert "toc_mount" in html, (
+        "branch control ids must scope per mount (#345)"
+    )
 
 
 @pytest.mark.static
 def test_toc_include_renders_nothing_without_headings():
     html = _read(TOC_INCLUDE)
-    # A qualifying post with no `h2`/`h3` must not emit an empty box.
-    assert "toc_items != ''" in html
+    # A qualifying post with no `h2`/`h3`/`h4` must not emit an empty box.
+    assert "toc_records != ''" in html
 
 
 @pytest.mark.static
@@ -172,13 +189,16 @@ def test_long_posts_need_no_flag_and_short_posts_carry_none():
 
 
 def _toc_mounts(html):
+    # The mount divs wrap the whole `<details>` block, which now contains
+    # nested `.post-toc__row` divs: capture up to `</details>`, not the
+    # first inner `</div>`.
     inlines = re.findall(
-        r'<div class="post-toc-mount post-toc-mount--inline">(.*?)</div>',
+        r'<div class="post-toc-mount post-toc-mount--inline">(.*?</details>)',
         html,
         re.S,
     )
     sidebars = re.findall(
-        r'<div class="post-toc-mount post-toc-mount--sidebar">(.*?)</div>',
+        r'<div class="post-toc-mount post-toc-mount--sidebar">(.*?</details>)',
         html,
         re.S,
     )
@@ -216,6 +236,25 @@ def test_long_post_without_flag_renders_both_toc_mounts(built_site, rel, label):
         assert not missing, f"TOC links without a matching heading id: {missing}"
     # Both mounts list the same sections.
     assert _toc_hrefs(inlines[0]) == _toc_hrefs(sidebars[0])
+    # Structural invariants that hold for any heading corpus: toggle
+    # targets exist, children lists nest inside branch items, and rows
+    # carry their depth for the CSS/JS contract.
+    for mount in inlines + sidebars:
+        for control in re.findall(r'aria-controls="([^"]+)"', mount):
+            assert f'id="{control}"' in mount, (
+                f"{rel}: toggle target {control} must render (#345)"
+            )
+        for child in re.findall(
+            r'<ul class="post-toc__list post-toc__children"[^>]*>',
+            mount,
+        ):
+            assert mount.index(child) > mount.index("<li"), (
+                f"{rel}: children lists must nest inside a branch (#345)"
+            )
+        for level in re.findall(r'data-level="(\d)"', mount):
+            assert level in ("2", "3", "4"), (
+                f"{rel}: unexpected ToC depth {level} (#345)"
+            )
 
 
 @pytest.mark.parametrize(

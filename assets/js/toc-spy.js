@@ -1,30 +1,50 @@
-/* Table of contents scroll-spy (#345): progressive enhancement for the
- * automatic ToC on post pages. `_includes/post-toc.html` renders the list
- * expanded with plain anchors (both mounts: inline for phones, sidebar for
- * desktop), so without JS the ToC is fully usable; this script only marks
- * the row for the section currently being read:
- *
- * - rule: the last heading whose top has passed the viewport top wins (the
- *   site header is not sticky, so only a small `EDGE_PX` slack keeps a
- *   heading sitting exactly on the edge stable). One deterministic rule
- *   drives every trigger, so adjacent sections never flicker. At the very
- *   end of the page the last heading stays active even when a short tail
- *   section never reaches the viewport top.
- * - mark: `aria-current="location"` on the active link in BOTH mounts
- *   (the CSS active style keys off the attribute, so there is no second
- *   mechanism to drift). Exactly one row per mount is ever marked: above
- *   the first heading the first row counts as current.
- * - triggers: an `IntersectionObserver` over the headings recomputes on
- *   every crossing, plus a passive rAF-throttled scroll/resize listener
- *   that covers browsers without `IntersectionObserver` and any shift the
- *   observer misses. Clicking a ToC link marks its row immediately (the
- *   default anchor jump is instant — no smooth scrolling is added, so
- *   there is nothing for `prefers-reduced-motion` to disable).
- * - keyboard: links stay plain anchors in tab order; the script never
- *   touches `tabindex`, focus, or the `details[open]` state.
+/* ToC nested disclosure with scroll-spy (#345). `_includes/post-toc.html`
+ * renders a NESTED list (children `<ul>`s as real descendants of their
+ * parent `<li>`) starting FULLY EXPANDED (`<details open>`, every branch
+ * `aria-expanded="true"`, no `hidden`): without JS every level is visible
+ * and every anchor works. This script owns collapsing/auto-expansion:
+ * init collapses every branch (default view H2 only; `hidden` keeps
+ * collapsed subtrees out of the accessibility tree); the scroll-spy rule
+ * (last heading past the viewport top wins; offset derived from the
+ * measured `.site-header` height when sticky/fixed, else a small slack —
+ * the header is not sticky, pinned by a static guard) marks exactly one
+ * row per mount (`aria-current="location"`, both mounts together) and
+ * auto-expands the active branch plus its ancestors, collapsing
+ * auto-opened branches on leave unless pinned by hand (`data-manual`,
+ * set on explicit toggle, makes the auto logic skip that branch until
+ * the next explicit toggle). Auto-expansion never moves focus. Triggers:
+ * `IntersectionObserver` plus a passive rAF-throttled scroll/resize
+ * fallback; link clicks mark immediately. No smooth scrolling (nothing
+ * for `prefers-reduced-motion` to disable). Real `<button>` toggles give
+ * Enter/Space natively; `tabindex`, focus, and the outer `details[open]`
+ * are never touched.
  */
 (function () {
   var EDGE_PX = 24;
+
+  function headerOffset() {
+    var header = document.querySelector('.site-header');
+    if (!header) {
+      return EDGE_PX;
+    }
+    var position = window.getComputedStyle
+      ? window.getComputedStyle(header).position
+      : 'static';
+    if (position === 'sticky' || position === 'fixed') {
+      return Math.ceil(header.getBoundingClientRect().height) + EDGE_PX;
+    }
+    return EDGE_PX;
+  }
+
+  function setBranch(toggle, list, open) {
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    var showLabel = toggle.getAttribute('data-label-show');
+    var hideLabel = toggle.getAttribute('data-label-hide');
+    if (showLabel && hideLabel) {
+      toggle.setAttribute('aria-label', open ? hideLabel : showLabel);
+    }
+    list.hidden = !open;
+  }
 
   function run() {
     var navs = document.querySelectorAll('.post-toc__nav');
@@ -60,6 +80,24 @@
       return;
     }
 
+    // Collapse every branch list on load: the default view is H2 only.
+    // The static markup ships expanded (no-JS contract), so this is the
+    // single place that hides anything.
+    Array.prototype.forEach.call(navs, function (nav) {
+      Array.prototype.forEach.call(
+        nav.querySelectorAll('.post-toc__toggle'),
+        function (toggle) {
+          var list = document.getElementById(
+            toggle.getAttribute('aria-controls')
+          );
+          if (!list) {
+            return;
+          }
+          setBranch(toggle, list, false);
+        }
+      );
+    });
+
     var activeId = null;
 
     function mark(id) {
@@ -79,8 +117,50 @@
       }
     }
 
+    // Expand the active branch and its ancestors in one mount; collapse
+    // branches the auto logic opened that no longer hold the active row.
+    // Branches the reader pinned by hand (`data-manual`) are never
+    // touched: manual intent wins until the next explicit toggle.
+    function syncBranches(nav, id) {
+      var activeLink = null;
+      var links = nav.querySelectorAll('a[href^="#"]');
+      for (var i = 0; i < links.length; i++) {
+        if (links[i].getAttribute('href') === '#' + id) {
+          activeLink = links[i];
+          break;
+        }
+      }
+      Array.prototype.forEach.call(
+        nav.querySelectorAll('.post-toc__toggle'),
+        function (toggle) {
+          if (toggle.getAttribute('data-manual') === 'true') {
+            return;
+          }
+          var list = document.getElementById(
+            toggle.getAttribute('aria-controls')
+          );
+          if (!list) {
+            return;
+          }
+          var holdsActive = !!activeLink && list.contains(activeLink);
+          var open = toggle.getAttribute('aria-expanded') === 'true';
+          if (holdsActive && !open) {
+            setBranch(toggle, list, true);
+            toggle.setAttribute('data-auto', 'true');
+          } else if (
+            !holdsActive &&
+            open &&
+            toggle.getAttribute('data-auto') === 'true'
+          ) {
+            setBranch(toggle, list, false);
+            toggle.removeAttribute('data-auto');
+          }
+        }
+      );
+    }
+
     function apply() {
-      var line = window.scrollY + EDGE_PX;
+      var line = window.scrollY + headerOffset();
       var active = entries[0];
       for (var i = 0; i < entries.length; i++) {
         var top =
@@ -95,7 +175,11 @@
       // page is scrolled to the end, the last heading counts as current.
       var atEnd = window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - 2;
-      mark(atEnd ? entries[entries.length - 1].id : active.id);
+      var id = atEnd ? entries[entries.length - 1].id : active.id;
+      mark(id);
+      Array.prototype.forEach.call(navs, function (nav) {
+        syncBranches(nav, id);
+      });
     }
 
     var scheduled = false;
@@ -117,8 +201,27 @@
 
     Array.prototype.forEach.call(navs, function (nav) {
       nav.addEventListener('click', function (event) {
-        var link = event.target.closest
-          ? event.target.closest('a[href^="#"]')
+        var target = event.target;
+        var toggle = target.closest
+          ? target.closest('.post-toc__toggle')
+          : null;
+        if (toggle && nav.contains(toggle)) {
+          // Manual toggle: flip the branch and pin it, so the auto logic
+          // leaves it alone until the next explicit toggle.
+          var list = document.getElementById(
+            toggle.getAttribute('aria-controls')
+          );
+          if (!list) {
+            return;
+          }
+          var open = toggle.getAttribute('aria-expanded') === 'true';
+          setBranch(toggle, list, !open);
+          toggle.setAttribute('data-manual', 'true');
+          toggle.removeAttribute('data-auto');
+          return;
+        }
+        var link = target.closest
+          ? target.closest('a[href^="#"]')
           : null;
         if (!link || !nav.contains(link)) {
           return;

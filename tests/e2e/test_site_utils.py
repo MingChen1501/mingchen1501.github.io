@@ -42,9 +42,9 @@ MAX_HELPER_CODE_LINES = 45
 # Total JS payload (11 files, `wc -c`): it grows only by deliberate
 # feature additions. #258 adds `giscus-theme.js` (~3KB), which loads solely
 # on Giscus comment pages — non-comment pages fetch nothing new.
-# (#342 removed `search.js`, ~8KB, with the search page. #345 adds the
-# post-only `toc-spy.js` scroll-spy, ~5KB.)
-MAX_TOTAL_JS_BYTES = 37888
+# (#342 removed `search.js`, ~8KB, with the search page. #345 ships the
+# post-only `toc-spy.js` nested disclosure + scroll-spy, ~9KB.)
+MAX_TOTAL_JS_BYTES = 41984
 
 READY_CONSUMERS = (
     "copy-code.js",

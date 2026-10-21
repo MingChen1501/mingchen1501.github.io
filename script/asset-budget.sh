@@ -23,11 +23,13 @@
 #
 # Measured 2026-10-21 (dev and JEKYLL_ENV=production builds agree, except
 # the production-only comments script):
-#   page   21225 B (7 files), post 34449 B (11 files, prod),
+#   page   21225 B (7 files), post 38298 B (11 files, prod),
 #   css main 45120 B, css syntax companion 17455 B (was one 62449 B file
 #   before #275; code-free pages download 27.8% less render-blocking CSS).
 # (#342 removed the search page and its search.js: the former SEARCH kind
-# is gone with its ceiling.)
+# is gone with its ceiling. #345 re-measured after the nested-disclosure
+# rework: toc-spy.js grew ~5.1KB -> ~8.6KB with the branch collapse,
+# auto-expand, and pinning logic.)
 #
 # Headroom policy: each ceiling sits ~10% above its measured total — wide
 # enough for a small intentional addition, tight enough that re-adding any
@@ -45,7 +47,7 @@
 # Max first-party JS bytes for home/tag/about/portfolio pages.
 MAX_JS_PAGE_BYTES=23552
 # Max first-party JS bytes for post pages (production worst case).
-MAX_JS_POST_BYTES=37888
+MAX_JS_POST_BYTES=41984
 # Max bytes for the compiled code-free assets/css/style.css.
 MAX_CSS_BYTES=50176
 # Max bytes for the conditional companion assets/css/syntax.css (#275).
