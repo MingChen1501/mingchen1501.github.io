@@ -10,15 +10,11 @@
 # regrowing every page. No runtime behavior change — test-only numbers.
 #
 # Page kinds follow the test_post_only_js.py split:
-#   - PAGE  (home, tag, about, portfolio): the 7 scripts every page needs.
-#   - POST  (post, production worst case): the 7 above + the 2 post-only
-#     scripts (#253: share.js, reading-progress.js) + the comments sync
-#     script (assets/js/giscus-theme.js, rendered only in production
-#     builds where comments are enabled).
-#   - SEARCH (search EN/VI): the 7 above + assets/js/search.js (the extra
-#     site-utils.js tag in _includes/search.html re-fetches nothing: the
-#     browser already has that URL from sub-footer.html, so budgets count
-#     unique files).
+#   - PAGE  (home, tag, about, portfolio): the scripts every page needs.
+#   - POST  (post, production worst case): the page scripts + the post-only
+#     scripts (#253: share.js, reading-progress.js, plus #318: copy-code.js,
+#     lightbox.js) + the comments sync script (assets/js/giscus-theme.js,
+#     rendered only in production builds where comments are enabled).
 #   - CSS: the main compiled assets/css/style.css, identical for every
 #     page kind, plus the conditional companion assets/css/syntax.css
 #     (#275: Rouge token rules, linked from _includes/head.html only on
@@ -27,9 +23,10 @@
 # Measured 2026-10-20 (dev and JEKYLL_ENV=production builds agree, except
 # the production-only comments script):
 #   page   21225 B (7 files), post 29689 B (10 files, prod),
-#   search 28961 B (8 unique files),
 #   css main 45120 B, css syntax companion 17455 B (was one 62449 B file
 #   before #275; code-free pages download 27.8% less render-blocking CSS).
+# (#342 removed the search page and its search.js: the former SEARCH kind
+# is gone with its ceiling.)
 #
 # Headroom policy: each ceiling sits ~10% above its measured total — wide
 # enough for a small intentional addition, tight enough that re-adding any
@@ -48,8 +45,6 @@
 MAX_JS_PAGE_BYTES=23552
 # Max first-party JS bytes for post pages (production worst case).
 MAX_JS_POST_BYTES=32768
-# Max first-party JS bytes for search pages (EN/VI).
-MAX_JS_SEARCH_BYTES=32256
 # Max bytes for the compiled code-free assets/css/style.css.
 MAX_CSS_BYTES=50176
 # Max bytes for the conditional companion assets/css/syntax.css (#275).

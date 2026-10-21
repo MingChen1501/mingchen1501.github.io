@@ -39,10 +39,6 @@ trigger: "After editing layout, include, sass, config, or assets — or before o
       `tests/e2e/test_theme_toggle.py` (OS default, persistence, localized
       names, keyboard, 44px target, axe contrast in both modes) plus the
       dark blockquote pin in `tests/e2e/test_axe_a11y.py`.
-   - Search (`search.json` template, `_includes/search.html`,
-     `assets/js/search.js`, `search.md`, `vi/search.md`, nav links) →
-     `tests/e2e/test_search.py` (index fields, both language pages,
-     diacritics-free VI queries, keyboard, no 375px overflow).
    - Share buttons (`_includes/share.html`, `assets/js/share.js`) →
      `tests/e2e/test_share_buttons.py` (post-only row, localized labels,
      copy-link + fallback, share intents, `noscript` link, no tracker).

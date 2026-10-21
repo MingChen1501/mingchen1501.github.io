@@ -44,7 +44,6 @@ EXPECTED_ORDER = (
     "legibility",
     "theme-toggle",
     "list-thumbs",
-    "search",
     "print",
 )
 
@@ -73,10 +72,12 @@ EXPECTED_VARIABLES = {
 # `.post-list__body` / `.post-thumb` block above (fixed 120x90 box with
 # `object-fit: cover`); no existing rule moved, so every other page renders
 # unchanged.
-# #221 (offline search): the `search` partial was appended. Diffed old vs new
-# before bumping: the only change is the additive `.search` / `.search__*`
-# block at the end (form, input, results list, language badge); no existing
-# rule moved, so every other page renders unchanged.
+# #221 (offline search) then #342 (its removal): the `search` partial was
+# appended, then deleted with the whole feature (owner decision 2026-10-21:
+# drop the static client-side index). Diffed old vs new before bumping: the
+# only change is the removal of the additive `.search` / `.search__*` block
+# (form, input, results list, language badge); no existing rule moved, so
+# every other page renders unchanged.
 # #223 (image lightbox): the `lightbox` partial was inserted after `post`.
 # Diffed old vs new before bumping: the only change is the additive
 # `.lightbox*` overlay block plus the `.post-content img.lightbox-trigger`
@@ -137,12 +138,10 @@ EXPECTED_VARIABLES = {
 # sheet. Code pages load both sheets (same token, same relative order),
 # code-free pages load the slimmed main sheet only; every screen render
 # stays identical, so no visual baseline changes.
-# #335 (no-JS search fallback): `.search__noscript` joined the muted
-# `.search__guidance` / `.search__status` selector group in the `search`
-# partial (the noscript note reuses the guidance tone). Diffed old vs new
-# before bumping: the only change is that one additive selector line; no
-# existing rule moved, so every render stays identical.
-EXPECTED_CSS_SHA256 = "943bae5f811885259144c84e6ac9a1881c7daeb36333e43067cac4f5e5718196"
+# #335 is gone with the feature (#342 deleted the search page, its
+# `<noscript>` fallback, and the `search` partial that carried the
+# `.search__noscript` selector).
+EXPECTED_CSS_SHA256 = "0570bf99382927a3f98c7a3df8eac7ce3ba5aebc7ecdf6d90faef77f43bd7f44"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

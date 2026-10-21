@@ -58,7 +58,6 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HEAD_INCLUDE = REPO_ROOT / "_includes" / "head.html"
 SUB_FOOTER_INCLUDE = REPO_ROOT / "_includes" / "sub-footer.html"
-SEARCH_INCLUDE = REPO_ROOT / "_includes" / "search.html"
 ASSET_VERSION_INCLUDE = REPO_ROOT / "_includes" / "asset-version.html"
 TEMPLATE_DIRS = ("_includes", "_layouts")
 
@@ -235,10 +234,10 @@ def test_asset_version_assignment_has_a_single_source():
     """The `?v=` build token is assigned once and shared (#295).
 
     The `asset_version = site.time | date: '%s'` assignment used to be
-    copy-pasted into the head, the sub-footer, and the search shell, so a
-    change to the versioning scheme needed three matching edits. It now
+    copy-pasted into the head and the sub-footer, so a
+    change to the versioning scheme needed matching edits. It now
     lives in exactly one include; every call site pulls it in instead of
-    assigning it, so the head, the deferred scripts, and the search page
+    assigning it, so the head and the deferred scripts
     can never drift to different tokens.
     """
     literal = re.compile(r"assign\s+asset_version\s*=\s*site\.time\s*\|\s*date:")
@@ -252,7 +251,7 @@ def test_asset_version_assignment_has_a_single_source():
         f"({ASSET_VERSION_INCLUDE.relative_to(REPO_ROOT)}), found in: "
         f"{owners} (#295)"
     )
-    for site in (HEAD_INCLUDE, SUB_FOOTER_INCLUDE, SEARCH_INCLUDE):
+    for site in (HEAD_INCLUDE, SUB_FOOTER_INCLUDE):
         text = _read(site)
         assert re.search(r"\{%-?\s*include\s+asset-version\.html\s*-?%\}", text), (
             f"{site.relative_to(REPO_ROOT)} must include asset-version.html "

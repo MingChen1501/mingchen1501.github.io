@@ -14,7 +14,7 @@ Guarded here, with the ceilings in ``script/asset-budget.sh`` (single source
 of truth; the tests below pin the documented policy values, so a bump touches
 both files deliberately):
 
-- the budget file holds the five documented ceilings (static);
+- the budget file holds the documented ceilings (static);
 - the pinned script sets match the templates exactly: any added, removed,
   or relocated tag fails statically, even inside the byte headroom, and
   the post-only scripts stay gated to post pages (the #253 win, locked
@@ -29,7 +29,7 @@ both files deliberately):
   static guard.
 
 Page kinds follow the ``test_post_only_js.py`` split: home, post, tag,
-about/portfolio (``page`` layout), search. Failure messages name the
+about/portfolio (``page`` layout). Failure messages name the
 measured bytes and the budget file.
 """
 
@@ -44,7 +44,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BUDGET_FILE = REPO_ROOT / "script" / "asset-budget.sh"
 JS_DIR = REPO_ROOT / "assets" / "js"
 HEAD_INCLUDE = REPO_ROOT / "_includes" / "head.html"
-SEARCH_INCLUDE = REPO_ROOT / "_includes" / "search.html"
 COMMENTS_INCLUDE = REPO_ROOT / "_includes" / "comments.html"
 SUB_FOOTER = test_post_only_js.SUB_FOOTER
 
@@ -56,12 +55,10 @@ SUB_FOOTER = test_post_only_js.SUB_FOOTER
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
     "MAX_JS_POST_BYTES": 32768,
-    "MAX_JS_SEARCH_BYTES": 32256,
     "MAX_CSS_BYTES": 50176,
     "MAX_SYNTAX_CSS_BYTES": 19456,
 }
 
-SEARCH_PATH = "/assets/js/search.js"
 GISCUS_THEME_PATH = "/assets/js/giscus-theme.js"
 STYLESHEET_PATH = "/assets/css/style.css"
 
@@ -82,7 +79,6 @@ EXPECTED_SETS = {
          *test_post_only_js.POST_ONLY,
          GISCUS_THEME_PATH)
     ),
-    "search": frozenset((*test_post_only_js.ALWAYS_LOADED, SEARCH_PATH)),
 }
 
 
@@ -158,11 +154,6 @@ def test_pinned_script_sets_match_the_templates():
     assert gated == list(test_post_only_js.POST_ONLY), (
         f"the post-gated script set changed: {gated} (#253, #267, #318)"
     )
-    search_refs = _template_scripts(SEARCH_INCLUDE)
-    assert search_refs == ["/assets/js/site-utils.js", SEARCH_PATH], (
-        f"_includes/search.html must reference only its helper + search.js, "
-        f"got {search_refs} (#267)"
-    )
     comments_refs = _template_scripts(COMMENTS_INCLUDE)
     assert comments_refs == [GISCUS_THEME_PATH], (
         f"_includes/comments.html must reference only {GISCUS_THEME_PATH}, "
@@ -184,7 +175,7 @@ def test_non_post_kinds_exclude_the_post_only_scripts():
         assert path in gated, (
             f"{path} is no longer inside the post-layout gate (#253, #318)"
         )
-    for kind in ("page", "search"):
+    for kind in ("page",):
         for path in test_post_only_js.POST_ONLY:
             assert path not in EXPECTED_SETS[kind]
 
@@ -195,17 +186,12 @@ def test_js_bytes_per_page_kind_within_budget():
     (production worst case for posts, which alone render the comments
     sync script)."""
     unconditional, gated = _sub_footer_sets()
-    search_refs = set(_template_scripts(SEARCH_INCLUDE))
     comments_refs = set(_template_scripts(COMMENTS_INCLUDE))
     kinds = {
         "page": ("MAX_JS_PAGE_BYTES", set(unconditional)),
         "post": (
             "MAX_JS_POST_BYTES",
             set(unconditional) | set(gated) | comments_refs,
-        ),
-        "search": (
-            "MAX_JS_SEARCH_BYTES",
-            set(unconditional) | search_refs,
         ),
     }
     budget = _read_budget()
@@ -254,7 +240,6 @@ def _representative_pages(built_site):
         "page": ["index.html", "vi/index.html", "tags/index.html",
                  "about/index.html", "portfolio/index.html"],
         "post": [EN_POST_REL.as_posix(), VI_POST_REL.as_posix()],
-        "search": ["search/index.html", "vi/tim-kiem/index.html"],
     }
     tag_pages = sorted(built_site.glob("tags/*/index.html"))
     assert tag_pages, "no tag pages in the build"
@@ -272,7 +257,6 @@ def test_built_pages_reference_only_their_budgeted_scripts(built_site):
     keys = {
         "page": "MAX_JS_PAGE_BYTES",
         "post": "MAX_JS_POST_BYTES",
-        "search": "MAX_JS_SEARCH_BYTES",
     }
     for kind, rels in _representative_pages(built_site).items():
         # Dev builds skip the comments include, so dev post pages carry

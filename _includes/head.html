@@ -87,7 +87,7 @@
     post-only JS gating in `sub-footer.html`): the Rouge `.highlight`
     token rules (~12.4KB, ~25% of the render-blocking CSS) ship in
     `assets/css/syntax.css` instead of the main stylesheet. Code-free
-    pages (home, search, tag index, prose posts) render zero Rouge output,
+    pages (home, tag index, prose posts) render zero Rouge output,
     so they skip the second download; pages whose rendered content
     contains the Rouge wrapper (`class="highlight"` on the block
     container, exactly what Rouge and kramdown emit for fenced code

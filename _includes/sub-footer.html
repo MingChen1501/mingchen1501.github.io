@@ -44,7 +44,7 @@
   Post-only scripts (#253, #318): copy-code + lightbox + share + reading
   progress. Their markup ships only from post pages (code blocks,
   `.post-content` images, the share row include, the hidden progress bar
-  and back-to-top button), so non-post pages (home, tag, page, search)
+  and back-to-top button), so non-post pages (home, tag, page)
   skip all four tags: 4 fewer requests and ~17KB less per non-post view.
   Deferred scripts run in document order; all users of `site-utils.js`
   stay after it, and the relative order is unchanged.

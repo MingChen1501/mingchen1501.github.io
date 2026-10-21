@@ -4,8 +4,8 @@ The failure page is a reader surface like any other: a single static
 `404.html` (kept on `layout: base` so the header, footer, theme toggle and
 theme bootstrap stay) shows English and Vietnamese guidance inline — one
 static file serves both languages, no JS redirect and no meta refresh
-(#154 stays Cloudflare-only) — and links back to `/`, `/vi/`, `/search/`,
-`/vi/tim-kiem/`, `/tags/` and `/vi/tags/`, plus the newest post per
+(#154 stays Cloudflare-only) — and links back to `/`, `/vi/`,
+`/tags/` and `/vi/tags/`, plus the newest post per
 language (#335). It reuses the site stylesheet (the minima
 `post`/`post-header`/`post-title`/`post-content` classes), so dark mode
 follows `html[data-theme]` with no page-specific `<style>` and no
@@ -47,7 +47,7 @@ VIEWPORT_HEIGHT = 800
 
 # Every destination the lost reader is offered, as rendered in the build
 # (`baseurl` is empty, so `relative_url` emits these verbatim).
-EXPECTED_LINKS = ("/", "/vi/", "/search/", "/vi/tim-kiem/", "/tags/", "/vi/tags/")
+EXPECTED_LINKS = ("/", "/vi/", "/tags/", "/vi/tags/")
 
 
 def _read(path):
@@ -116,7 +116,7 @@ def test_404_source_carries_bilingual_copy():
 
 
 @pytest.mark.static
-def test_404_source_links_home_search_and_tags_in_both_languages():
+def test_404_source_links_home_and_tags_in_both_languages():
     source = _read(NOT_FOUND)
     for target in EXPECTED_LINKS:
         assert f"'{target}' | relative_url" in source, (
@@ -196,8 +196,9 @@ def test_built_404_section_suggestions_all_resolve(built_site):
                 f"built 404.html links {href}, which is not in the build"
             )
             checked += 1
-    assert checked >= 8, (
-        f"built 404.html offers only {checked} section links, expected 4 per language"
+    assert checked >= 6, (
+        f"built 404.html offers only {checked} section links, "
+        "expected 3 per language"
     )
 
 

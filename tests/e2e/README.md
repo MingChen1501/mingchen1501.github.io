@@ -153,41 +153,6 @@ render pixel-identical with or without the script: lightbox work never
 regenerates the visual baselines below unless the trigger/overlay styling
 itself changes page pixels.
 
-## Offline search (`test_search.py`)
-
-Guard for #221. A build-time JSON index (`search.json`, emitted by Liquid
-over `site.posts` + `site.vi_posts` — title, description, URL, lang, tags,
-date; drafts and generated pages excluded) plus a vanilla-JS page pair
-(`/search/` + `/vi/tim-kiem/`, shared `ref: search`) that filters the index
-in the reader's browser. No plugin, no external service, no SDK.
-
-- Static (no Ruby, no browser): the index template emits exactly the six
-  metadata fields (never the body) with the `site.vi_posts` nil-guard the
-  upstream theme-dev build needs; both pages carry lang/ref/permalink and
-  include the shell; the shell wires label/input/landmark/`aria-live`
-  status/results plus the `?v=` build token on the script and the index URL
-  (#61); the script stays vanilla, tiny and offline; nothing outside the
-  shell loads either asset (the index is fetched only on the search page);
-  both navs link the page; the SCSS partial joins the cascade.
-- Build (needs Ruby, no browser): `search.json` parses, holds one entry per
-  published post per language with all six fields, and every URL resolves
-  to a built file; both pages render with a numeric version token and
-  switch to each other.
-- Browser (needs Ruby + a browser): a fixture query returns the expected
-  post first on both paths — including a diacritics-free Vietnamese query
-  (`bai bien` finds `bãi biển`) and the shared `fedora` query, which ranks
-  the same-language post top; empty query shows guidance, nonsense query
-  shows the localized no-results state announced via the live region; the
-  control is keyboard-operable (autofocus, Enter filters in place, Tab
-  reaches results, Escape clears); neither page scrolls sideways at 375px
-  or 1280px.
-
-The search pages are deliberately outside the visual-baseline set below:
-the baselines already use ~1.9 of the 2 MB budget, and the page is a simple
-form covered by the guards above. Adding the search link to both navs still
-changes the header on every baselined page, so the full set regenerates
-with any search/header change.
-
 ## Dark mode theme toggle (`test_theme_toggle.py`)
 
 Guard for #220. Every page carries an icon-only `.theme-toggle` button in
@@ -250,17 +215,17 @@ Guard for #253, extended by #318. `_includes/sub-footer.html` wraps the
 (in that order, all after `site-utils.js`, each with the `?v=` build
 token) in a single `page.layout == 'post'` conditional; the five scripts
 every page needs stay unconditional. Built non-post pages (home EN/VI,
-tag index + one tag page, about, portfolio, search EN/VI) link none of
+tag index + one tag page, about, portfolio) link none of
 the four scripts (9 → 5 sub-footer requests) while EN/VI post pages still
 link all four.
 
 ## Shared JS helper (`test_site_utils.py`)
 
-Guard for #246. Seven deferred scripts re-implemented the same primitives
+Guard for #246. Six deferred scripts re-implemented the same primitives
 inline (clipboard fallback, `readyState` guard, VI sniff); they now share
 `assets/js/site-utils.js` (`window.SiteUtils` with `copyText` / `onReady`
 / `isVietnamese`), loaded first with the same `?v=` build token
-site-wide (`sub-footer.html`) and on the search pages (`search.html`).
+site-wide (`sub-footer.html`).
 The guard pins the helper contract, the removal of the duplicated blocks
 at every call site, and that total `assets/js` bytes do not grow.
 Byte ceilings per page kind live in `script/asset-budget.sh` (single
@@ -542,7 +507,7 @@ Guard for #207. The pinned, vendored axe-core scanner
 (`tests/e2e/axe-core/axe.min.js`, version/source/hash/license in
 `tests/e2e/axe-core/AXE_PIN.md` — no CDN, offline-capable) is injected into
 `/`, one EN post plus its VI counterpart, `/tags/`, `/vi/`, `/about/`,
-`/portfolio/` and the `/search/` + `/vi/tim-kiem/` pair (#221), each at
+`/portfolio/`, each at
 375px and 1280px in the light colour scheme.
 
 - Fails on any `serious`/`critical` violation: the four #207 exceptions

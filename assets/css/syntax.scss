@@ -7,7 +7,7 @@
 // of the render-blocking CSS) ship here instead of in `style.css`, and
 // `_includes/head.html` links this file only on pages whose rendered
 // content contains Rouge output (`class="highlight"`), so code-free pages
-// (home, search, tag index) skip it.
+// (home, tag index) skip it.
 //
 // Emission order mirrors the old single-file cascade exactly: light tokens,
 // the no-JS OS-preference dark tokens, then the `data-theme` explicit-choice

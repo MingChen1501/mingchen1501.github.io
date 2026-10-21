@@ -60,8 +60,8 @@ single-concern and healthy.
 ## Known findings
 
 - #295 — implemented: the `asset_version` assignment lives once in
-  `_includes/asset-version.html`, included by `head.html`,
-  `sub-footer.html`, and `search.html`.
+  `_includes/asset-version.html`, included by `head.html` and
+  `sub-footer.html`.
 - #296 — implemented: `skins/solarized.scss`, `solarized-light.scss`,
   `solarized-dark.scss` had no importer while the skin is `auto`
   (grep over `.scss`/`.yml`/`.html` found only self-references), so they

@@ -308,13 +308,13 @@ def test_the_built_row_links_the_canonical_url(built_site):
 
 
 def test_no_share_row_leaves_the_post_pages(built_site):
-    """Home, tag, search and static pages stay share-free."""
+    """Home, tag and static pages stay share-free."""
     pages = ["index.html", "vi/index.html", "tags/index.html"]
     pages.extend(
         path.relative_to(built_site).as_posix()
         for path in sorted(built_site.glob("tags/*/index.html"))[:1]
     )
-    pages.extend(["about/index.html", "search/index.html"])
+    pages.extend(["about/index.html", "portfolio/index.html"])
     for page in pages:
         assert (built_site / page).is_file(), f"{page} is missing"
         assert 'class="share"' not in _read(built_site / page), (

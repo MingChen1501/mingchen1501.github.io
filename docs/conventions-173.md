@@ -16,8 +16,8 @@ GitHub Pages (through Cloudflare) serves `assets/**` with
 Images are NOT versioned — their URLs are content-addressed by convention, so
 a changed image ships under a NEW filename, never rewritten in place.
 Single source: the `asset_version` assignment in
-`_includes/asset-version.html` (included by `_includes/head.html`,
-`_includes/sub-footer.html`, and `_includes/search.html`). Guard:
+`_includes/asset-version.html` (included by `_includes/head.html` and
+`_includes/sub-footer.html`). Guard:
 `tests/e2e/test_stylesheet_cache_version.py`. Rationale: see the README
 "Asset cache versioning (#61)" section.
 
