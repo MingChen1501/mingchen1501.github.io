@@ -76,13 +76,6 @@ re-checks the tier as part of its verdict.
 
 ## Worked example
 
-PR #349 (removing the static client-side search, Closes #342,
-`risk-medium`): deleting `search.json`, `assets/js/search.js`, the
-search include/SCSS/nav entries, and the search guards is a subsystem
-removal, so tier **T3 architectural**. Under this gate it would have
-required, before the implementation PR: an ADR (remove vs keep search,
-owner-accepted), an HLD/LLD update (component removal), the FR/NFR
-delta (drop the search FRs, lower the JS budget), updated test
-traceability (search guards removed), and acceptance criteria — the
-same artefacts the PR in fact carried as diff hunks, but written as
-specs first with `docs/README.md` rows flipped to `active`.
+| Change | Tier | Required specs before implementation | Evidence/notes |
+|---|---|---|---|
+| PR #349 — removing the static client-side search (Closes #342) | T3 architectural (subsystem removal) | ADR (remove vs keep search, owner-accepted); HLD/LLD update (component removal); FR/NFR delta (drop the search FRs, lower the JS budget); updated test traceability (search guards removed); acceptance criteria; `docs/README.md` rows flipped to `active` before the implementation PR | `risk-medium`; deleted `search.json`, `assets/js/search.js`, the search include/SCSS/nav entries, and the search guards; same artefacts the PR in fact carried as diff hunks, but written as specs first |
