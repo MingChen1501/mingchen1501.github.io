@@ -12,7 +12,9 @@ Purpose: the three `_data/` files — what each owns and who reads it.
   Sole reader: `_includes/site-sidebar.html:100`. Content-only path
   (#229): editing it skips the browser matrix.
 - `tag_labels.yml` — taxonomy source of truth: canonical key → `en`/`vi`
-  labels, `slug_en`/`slug_vi`, one-line `description_en`/`description_vi`.
+  labels, `slug_en`/`slug_vi`, one-line `description_en`/`description_vi`,
+  plus optional `pillar`/`order` (`pillar: true` entries are the curated
+  sidebar set, rendered in ascending `order` and capped at 6).
   Readers: `tag-label.html`, `tags.md`, `vi/tags.md`, tag pages. Bodies of
   `tags/*.md` + descriptions here must be kept in sync by hand (header
   comment in the file).

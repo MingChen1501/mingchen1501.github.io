@@ -12,7 +12,8 @@ Static guards (no Ruby) cover the source contract; build guards (need Ruby,
 no browser) cover the emitted indexes and sidebar, including two
 throwaway-content builds that prove the index grows with a brand-new tag
 and the sidebar cap binds at 6 pillars — the cap build additionally opens
-in a phone viewport to pin the no-overflow acceptance at the maximum width.
+at 375px and 320px phone widths to pin the no-overflow acceptance at the
+maximum width.
 """
 
 from __future__ import annotations
@@ -475,12 +476,13 @@ def test_sidebar_cap_binds_at_six_pillars(tmp_path):
     ], "the index must list every pillar in `order`, uncapped"
 
 
-def test_capped_sidebar_has_no_overflow_at_375px(tmp_path, browser):
-    """With 6 sidebar groups the phone layout must not overflow (#344)."""
+@pytest.mark.parametrize("width", [375, 320])
+def test_capped_sidebar_has_no_overflow_at_phone_widths(tmp_path, browser, width):
+    """With 6 sidebar groups neither phone width overflows (#344)."""
     destination = _build_mutated_site(tmp_path, "pillar-overflow", _mutate_seven_pillars)
     with conftest._served(destination) as url:
         origin = urlparse(url).netloc
-        context = browser.new_context(viewport={"width": 375, "height": 900})
+        context = browser.new_context(viewport={"width": width, "height": 900})
         try:
             page = context.new_page()
             page.route(
@@ -498,7 +500,7 @@ def test_capped_sidebar_has_no_overflow_at_375px(tmp_path, browser):
                     "innerWidth: window.innerWidth})"
                 )
                 assert metrics["scrollWidth"] <= metrics["innerWidth"], (
-                    f"{path}: horizontal overflow at 375px with 6 sidebar "
+                    f"{path}: horizontal overflow at {width}px with 6 sidebar "
                     f"groups: {metrics}"
                 )
         finally:
