@@ -66,7 +66,7 @@ Known wart: the lifestyle pillar key is `doi-song` while the EN page file is
 
 - Comments: provider switch in `comments.html` (giscus/disqus/none),
   included only by `post.html:255`. Theme sync via `giscus-theme.js`.
-  Guarded by `test_comments*.py` ×3 + `test_giscus_comments.py`.
+  Guarded by `test_comments.py`, `test_comments_markup.py` and `test_giscus_comments.py`.
 
 ## Boundaries
 
