@@ -8,11 +8,11 @@ title: "Page not found | Không tìm thấy trang"
   languages with no script redirect and no meta refresh, reusing the
   site stylesheet so dark mode follows `html[data-theme]` with no
   page-specific CSS and no third-party request. It links back to `/`,
-  `/vi/`, `/search/`, `/vi/tim-kiem/`, `/tags/` and `/vi/tags/`, plus
+  `/vi/`, `/tags/` and `/vi/tags/`, plus
   the newest post per language. Each language section offers the same
-  four doors home: the language home itself (which lists the newest
+  three doors home: the language home itself (which lists the newest
   posts), the newest post (looked up at build time, nil-guarded for
-  configs without `site.vi_posts`), the language search page, and the
+  configs without `site.vi_posts`), and the
   language tag index.
 {%- endcomment -%}
 {%- assign latest_en = site.posts.first -%}
@@ -37,7 +37,6 @@ title: "Page not found | Không tìm thấy trang"
         {%- if latest_en -%}
         <li><a href="{{ latest_en.url | relative_url }}">Latest post: {{ latest_en.title | escape }}</a></li>
         {%- endif -%}
-        <li><a href="{{ '/search/' | relative_url }}">Search posts</a></li>
         <li><a href="{{ '/tags/' | relative_url }}">Tags</a></li>
       </ul>
     </section>
@@ -50,7 +49,6 @@ title: "Page not found | Không tìm thấy trang"
         {%- if latest_vi -%}
         <li><a href="{{ latest_vi.url | relative_url }}">Bài mới nhất: {{ latest_vi.title | escape }}</a></li>
         {%- endif -%}
-        <li><a href="{{ '/vi/tim-kiem/' | relative_url }}">Tìm kiếm bài viết</a></li>
         <li><a href="{{ '/vi/tags/' | relative_url }}">Chủ đề</a></li>
       </ul>
     </section>

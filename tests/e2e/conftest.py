@@ -68,7 +68,7 @@ def template_with_includes(path):
     """A template's text plus every include it pulls in directly.
 
     #295 hoisted the `asset_version` build-token assignment out of
-    `head.html`, `sub-footer.html`, and `search.html` into the shared
+    `head.html` and `sub-footer.html` into the shared
     `_includes/asset-version.html`. Guards pinning "the token derives
     from the build" read through this helper so they see the assignment
     through the `{% include %}` indirection instead of requiring the

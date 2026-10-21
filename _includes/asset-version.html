@@ -1,7 +1,7 @@
 {%- comment -%}
   Single source for the `?v=` cache-busting build token (#295, rationale
-  in AGENTS.md "Asset cache versioning"). `head.html`, `sub-footer.html`,
-  and `search.html` include this file instead of repeating the
+  in AGENTS.md "Asset cache versioning"). `head.html` and
+  `sub-footer.html` include this file instead of repeating the
   assignment, so a future change to the versioning scheme touches one
   file. Includes share the caller's Liquid scope, so `asset_version` is
   visible wherever this file is included, and every fixed-URL asset in

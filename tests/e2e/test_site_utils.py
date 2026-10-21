@@ -1,8 +1,8 @@
 """Guards for #246: one shared JS helper instead of three copy-pasted blocks.
 
-Seven deferred scripts re-implemented the same primitives inline: a
+Six deferred scripts re-implemented the same primitives inline: a
 clipboard textarea + ``execCommand`` fallback (``copy-code.js``,
-``share.js``), a ``document.readyState === 'loading'`` guard (all seven),
+``share.js``), a ``document.readyState === 'loading'`` guard (all six),
 and a ``documentElement.lang`` Vietnamese sniff (``copy-code.js``,
 ``lightbox.js``). They now share ``assets/js/site-utils.js``
 (``window.SiteUtils`` with ``copyText`` / ``onReady`` / ``isVietnamese``),
@@ -16,9 +16,8 @@ Guarded here:
   (static);
 - the duplicated blocks are gone: the guard, the fallback and the sniff
   live only in the helper, and every call site uses it (static);
-- the helper loads before its users with the ``?v=`` build token, both
-  site-wide (``sub-footer.html``) and on the search pages (``search.html``,
-  whose script tag runs before the sub-footer ones) (static + built);
+- the helper loads before its users with the ``?v=`` build token,
+  site-wide (``sub-footer.html``) (static + built);
 - total ``assets/js`` bytes do not grow (static).
 """
 
@@ -31,7 +30,6 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HELPER = REPO_ROOT / "assets" / "js" / "site-utils.js"
 SUB_FOOTER = REPO_ROOT / "_includes" / "sub-footer.html"
-SEARCH_INCLUDE = REPO_ROOT / "_includes" / "search.html"
 JS_DIR = REPO_ROOT / "assets" / "js"
 
 HELPER_PATH = "/assets/js/site-utils.js"
@@ -41,10 +39,11 @@ HELPER_PATH = "/assets/js/site-utils.js"
 MAX_HELPER_BYTES = 1536
 MAX_HELPER_CODE_LINES = 45
 
-# Total JS payload after the dedupe (10 files, `wc -c`): it grows only by
+# Total JS payload after the dedupe (9 files, `wc -c`): it grows only by
 # deliberate feature additions. #258 adds `giscus-theme.js` (~3KB), which
 # loads solely on Giscus comment pages — non-comment pages fetch nothing new.
-MAX_TOTAL_JS_BYTES = 38482
+# (#342 removed `search.js`, ~8KB, with the search page.)
+MAX_TOTAL_JS_BYTES = 32768
 
 READY_CONSUMERS = (
     "copy-code.js",
@@ -52,7 +51,6 @@ READY_CONSUMERS = (
     "lazy-load.js",
     "lightbox.js",
     "reading-progress.js",
-    "search.js",
     "share.js",
 )
 
@@ -178,23 +176,12 @@ def test_the_helper_is_linked_first_with_the_cache_version_token():
     )
     first = html.index(f"{HELPER_PATH}?v=")
     for name in READY_CONSUMERS:
-        if name == "search.js":
-            continue
         tag = f"/assets/js/{name}?v="
         assert tag in html, f"sub-footer must still link {tag}"
         assert first < html.index(tag), (
             f"the helper must load before {name} (deferred scripts run in "
             "document order, #246)"
         )
-    search_html = _read(SEARCH_INCLUDE)
-    assert f"{HELPER_PATH}?v=" in search_html, (
-        "search pages run `search.js` before the sub-footer scripts, so "
-        f"{SEARCH_INCLUDE.relative_to(REPO_ROOT)} must link the helper "
-        "ahead of `search.js` (#246)"
-    )
-    assert search_html.index(f"{HELPER_PATH}?v=") < search_html.index(
-        "/assets/js/search.js?v="
-    ), "the helper must load before `search.js` on the search pages"
 
 
 @pytest.mark.static
@@ -210,7 +197,7 @@ def test_total_js_bytes_do_not_increase():
 
 
 def test_the_rendered_helper_url_carries_a_non_empty_token(built_site):
-    """The token must render as a real epoch, on pages and search."""
+    """The token must render as a real epoch on the home page."""
     home = _read(built_site / "index.html")
     match = re.search(r'<script src="(/assets/js/site-utils\.js\?v=([^"]+))"', home)
     assert match, "the home page does not link the shared helper"
@@ -220,13 +207,4 @@ def test_the_rendered_helper_url_carries_a_non_empty_token(built_site):
     )
     assert home.index(match.group(1)) < home.index("lazy-load.js?v="), (
         "the rendered helper tag must precede its users"
-    )
-    search = _read(built_site / "search" / "index.html")
-    helper_pos = search.find("/assets/js/site-utils.js?v=")
-    script_pos = search.find("/assets/js/search.js?v=")
-    assert helper_pos != -1 and script_pos != -1, (
-        "the rendered search page must link the helper and the script"
-    )
-    assert helper_pos < script_pos, (
-        "the rendered helper tag must precede `search.js`"
     )

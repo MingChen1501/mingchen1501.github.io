@@ -11,7 +11,7 @@ the current state, not the process.
 
 Personal bilingual (EN/VI) blog at `mingchen.id.vn`, forked from the Jekyll
 minima theme, deployed with GitHub Pages from `master` (`CNAME`, `url` in
-`_config.yml`). No custom plugins: every dynamic feature (search, comments,
+`_config.yml`). No custom plugins: every dynamic feature (comments,
 theme toggle) is build-time Liquid plus vanilla JS, because Pages builds
 with `--safe`.
 
@@ -19,9 +19,9 @@ with `--safe`.
 
 | Area | Spec | Size (2026-10-20) |
 |---|---|---|
-| Layouts + includes (Liquid) | `content-pipeline.md` | 5 layouts (541 LOC) + 24 includes (1,362 LOC) |
+| Layouts + includes (Liquid) | `content-pipeline.md` | 5 layouts (541 LOC) + 23 includes (~1,270 LOC) |
 | SCSS layers | `styling.md` | 27 files, ~3,200 LOC |
-| Vanilla JS modules | `javascript.md` | 11 files, 1,079 LOC |
+| Vanilla JS modules | `javascript.md` | 10 files, 845 LOC |
 | Data files + taxonomy | `data-model.md` | 3 files, 80 LOC |
 | Tests + scripts + CI | `testing.md` | 62 e2e files (~19,500 LOC), 14 scripts, 5 workflows (597 LOC) |
 | Content (posts) | `content-pipeline.md` | 7 EN files (6 published + 1 unpublished sample) + 6 VI posts |

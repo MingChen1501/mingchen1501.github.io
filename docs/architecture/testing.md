@@ -5,11 +5,13 @@ coverage overlaps.
 
 ## Current structure
 
-- `tests/e2e/`: 62 `test_*.py` files plus `conftest.py`, fixtures, and an
-  `axe-core` vendored helper — 111 files, ~19,500 LOC total. The largest
+- `tests/e2e/`: 61 `test_*.py` files plus `conftest.py`, fixtures, and an
+  `axe-core` vendored helper — 111 files, ~19,200 LOC total. The largest
   area of the repo (layouts + includes + SCSS + JS ≈ 6,200 LOC combined).
   Largest files: `test_sidebar_layout.py` (1,166), `test_giscus_comments.py`
-  (979), `test_i18n.py` (842), `test_search.py` (744).
+  (979), `test_i18n.py` (842). Largest JS-adjacent coverage now lives in
+`test_site_utils.py` after #342 removed the search page and its 744-line
+`test_search.py` guard.
 - `script/` (14 files): `check-images` + `image-budget.sh` (500KB/file,
   6MB-total image budgets), `check-external-images` (allowlisted
   attachment hosts, #195), `classify-content-only` (#229),

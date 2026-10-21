@@ -1,7 +1,7 @@
 # Content pipeline
 
 Purpose: how raw posts become bilingual pages — layouts, includes,
-collections, cross-language links, taxonomy, comments, and search.
+collections, cross-language links, taxonomy, and comments.
 
 ## Current structure
 
@@ -47,10 +47,10 @@ home chips); both list layouts call it with `post` + `lang`.
   `tag.html:20,55,90,94`, plus `share.html`, `head.html`,
   `site-sidebar.html`, `social.html`, `ref-urls.html`). No i18n filter or
   dictionary; each label is a one-off conditional.
-- Nil-guards for undefined `site.vi_posts` repeat in ~10 files
+- Nil-guards for undefined `site.vi_posts` repeat in ~8 files
   (`home.html`, `tag.html`, `post.html`, `head.html`, `site-sidebar.html`,
-  `ref-urls.html`, `sitemap-alternates.html`, `search.html`, `search.json`,
-  `vi/feed.xml`, `vi/tags.md`).
+  `ref-urls.html`, `sitemap-alternates.html`, `vi/feed.xml`,
+  `vi/tags.md`).
 
 ## Taxonomy
 
@@ -62,15 +62,11 @@ canonical key (e.g. `doi-song`); `tag-label.html` resolves label + slug per
 Known wart: the lifestyle pillar key is `doi-song` while the EN page file is
 `tags/life.md` (slug mapping hides it, `tags/life.md:1-11`).
 
-## Comments and search
+## Comments
 
 - Comments: provider switch in `comments.html` (giscus/disqus/none),
   included only by `post.html:197`. Theme sync via `giscus-theme.js`.
   Guarded by `test_comments*.py` ×3 + `test_giscus_comments.py`.
-- Search: `search.json` (`layout: null`, posts only — title/desc/URL/lang/
-  tags/date, never body) + `search.md` / `vi/search.md` + `search.js`
-  (lazy-loaded on the search page only). Guarded by `test_search.py`
-  (743 lines).
 
 ## Boundaries
 

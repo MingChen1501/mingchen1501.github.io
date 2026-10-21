@@ -8,7 +8,7 @@ drives the progress bar + back-to-top button that ship ``hidden`` in
 ``_layouts/post.html``), ``copy-code.js`` (which enhances ``pre > code``,
 rendered only on posts) and ``lightbox.js`` (which queries
 ``.post-content img``, absent from non-post ``.post-content`` blocks).
-Home, tag, about, portfolio and search pages rendered none of those
+Home, tag, about and portfolio pages rendered none of those
 controls yet downloaded all four files (#253 gated share + reading-progress;
 #318 gated copy-code + lightbox the same way).
 
@@ -20,7 +20,7 @@ Guarded here:
   conditional (static);
 - the five scripts every page needs stay unconditional (static);
 - built non-post pages (home EN/VI, tag index + one tag page, about,
-  portfolio, search EN/VI) link none of the four scripts and go from 9 to 5
+  portfolio) link none of the four scripts and go from 9 to 5
   sub-footer script requests, while built EN/VI post pages still link
   all four with a non-empty epoch token (built, needs Ruby).
 """
@@ -122,8 +122,6 @@ def _non_post_pages(built_site):
         "tags/index.html",
         "about/index.html",
         "portfolio/index.html",
-        "search/index.html",
-        "vi/tim-kiem/index.html",
     ]
     pages.extend(
         path.relative_to(built_site).as_posix()
@@ -133,10 +131,9 @@ def _non_post_pages(built_site):
 
 
 def test_non_post_pages_skip_all_post_only_scripts(built_site):
-    """Home, tag, about, portfolio, search: no post-only downloads (#318).
+    """Home, tag, about, portfolio: no post-only downloads (#318).
 
-    Non-post pages drop from 9 to 5 sub-footer scripts (search pages carry
-    their own ``search.js`` + helper tags on top); every page keeps the
+    Non-post pages drop from 9 to 5 sub-footer scripts; every page keeps the
     five scripts it actually needs.
     """
     for page in _non_post_pages(built_site):
