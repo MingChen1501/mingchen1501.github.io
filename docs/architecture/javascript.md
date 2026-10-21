@@ -5,7 +5,7 @@ the loading contract.
 
 ## Current structure
 
-`assets/js/` holds 10 files, 845 LOC, no bundler, no framework, no
+`assets/js/` holds 11 files, 1,094 LOC, no bundler, no framework, no
 third-party runtime (giscus/disqus SDKs load only inside the comments
 embed). Every file has at least one `<script>` caller (no orphan JS).
 
@@ -21,9 +21,10 @@ embed). Every file has at least one `<script>` caller (no orphan JS).
 | `share.js` | 60 | share intents + copy-link | posts only (#253) |
 | `reading-progress.js` | 80 | progress bar + back-to-top | posts only (#253) |
 | `giscus-theme.js` | 100 | repaint giscus iframe on theme flip (#258) | prod comments only |
+| `toc-spy.js` | 249 | ToC scroll-spy + auto-expand (#345) | posts only |
 
-Shipped byte budgets (`script/asset-budget.sh`, measured 2026-10-20):
-page 21,225 B (7 files), post 29,689 B (10 files, prod).
+Shipped byte budgets (`script/asset-budget.sh`, measured 2026-10-21):
+page 9,329 B (5 files), post 38,298 B (11 files, prod).
 Guarded by `test_asset_budget.py`. (#342 removed `search.js`, 234 lines /
 ~8KB, with the search page.)
 
@@ -41,8 +42,8 @@ Guarded by `test_asset_budget.py`. (#342 removed `search.js`, 234 lines /
 
 ## Coupling notes
 
-- `sub-footer.html` is the single script manifest: 7 global scripts +
-  2 post-only scripts.
+- `sub-footer.html` is the single script manifest: 5 global scripts +
+  5 post-only scripts.
 - `lightbox.js` (289 lines, largest module) couples to post content images
   and `_lightbox.scss`.
 - `giscus-theme.js` couples to the `data-*` mapping attributes in
@@ -54,7 +55,7 @@ Guarded by `test_asset_budget.py`. (#342 removed `search.js`, 234 lines /
 - #295 — implemented: the `asset_version` token lives once in
   `_includes/asset-version.html`, included by `sub-footer.html`
   (plus `head.html`).
-- `lightbox.js` is the largest single module (~10KB, ~35% of all JS
+- `lightbox.js` is the largest single module (~10KB, ~26% of all JS
   bytes); it is single-purpose and correctly gated, so size alone is not
   a finding — recorded here so the next audit has a baseline.
 

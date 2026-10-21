@@ -5,7 +5,7 @@ touch.
 
 ## Current structure
 
-`_sass/` holds 27 files (~3,200 LOC). Entry points in `assets/css/`:
+`_sass/` holds 26 files (~3,200 LOC). Entry points in `assets/css/`:
 
 - `style.scss` imports the skin (`minima/skins/{{ site.minima.skin }}`,
   pinned to `auto` in `_config.yml:21`) then `minima/initialize.scss`
@@ -20,7 +20,7 @@ Layers, in cascade order:
    `initialize.scss` (50 lines) — forked, rarely touched.
 2. Skins (`skins/`, 3 files): `auto.scss` (active) builds on `classic` +
    `dark`; `classic.scss` / `dark.scss` re-export `auto`.
-3. Site partials (`custom/`, 17 files + `_variables.scss`): one scope per
+3. Site partials (`custom/`, 17 files including `_variables.scss`): one scope per
    file, imported in fixed order by `custom-styles.scss` (last import
    wins; `print.scss` at 298 lines is deliberately last). Shared
    dimensions live in `custom/_variables.scss` (16 lines, #174).
@@ -28,8 +28,8 @@ Layers, in cascade order:
    `custom-styles.scss` (40 lines, index only).
 
 Largest partials: `_print.scss` (298), `_theme-toggle.scss` (228),
-`_lightbox.scss` (182), `_sidebar.scss` (163). Smallest real partials
-(`_utilities.scss` 58, `_legibility.scss` 45, `_post.scss` 43) are
+`_lightbox.scss` (182), `_sidebar.scss` (177). Smallest real partials
+(`_utilities.scss` 58, `_legibility.scss` 53, `_post.scss` 43) are
 single-concern and healthy.
 
 ## Boundaries

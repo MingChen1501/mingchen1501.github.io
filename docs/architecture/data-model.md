@@ -4,7 +4,7 @@ Purpose: the three `_data/` files — what each owns and who reads it.
 
 ## Current structure
 
-`_data/` holds 3 files, 80 LOC total.
+`_data/` holds 3 files, 103 LOC total.
 
 - `highlights.yml` — per-language sidebar highlight slugs (`en:` / `vi:`,
   ≤5, ordered). Unknown/unpublished slugs are skipped silently; an

@@ -6,9 +6,11 @@ declared once in `script/` and never redeclared here.
 - NFR-1 Images: each file <= 500KB, `assets/img/` total <= 6MB.
   Guards: `script/check-images` (+ `image-budget.sh`), `test_check_images.py`.
 - NFR-2 First-party JS/CSS bytes under the ceilings in
-  `script/asset-budget.sh` (page 21,225 B, post 29,689 B, CSS main
-  45,120 B, syntax companion 17,455 B). Guards: `test_asset_budget.py`,
+  `script/asset-budget.sh` (page 23,552 B, post 41,984 B, CSS main
+  50,176 B, syntax companion 19,456 B). Guards: `test_asset_budget.py`,
   `test_syntax_highlight_css.py`; parity pinned by `test_css_parity.py`.
+  `script/asset-budget.sh` is the single source of truth; the numbers
+  here are informational only and must not be used to pin new ceilings.
 - NFR-3 Lighthouse: desktop and mobile LHCI passes on every full-suite
   run (`.github/workflows/e2e.yml`, `lighthouserc.json`,
   `lighthouserc.mobile.json`); reports uploaded from `.lighthouseci/`.
