@@ -9,7 +9,7 @@ FR/NFR text: `requirements/fr.md`, `requirements/nfr.md`.
 | FR-2 | `test_tag_localization.py`, `test_tag_index_descriptions.py` |
 | FR-3 | `test_sidebar_layout.py`, `test_home_tag_chips.py`, `test_list_thumbnails.py` |
 | FR-4 | `test_giscus_comments.py`, `test_comments.py`, `test_comments_markup.py` |
-| FR-5 | `test_sitemap.py`, `test_seo_bilingual.py` |
+| FR-5 | `test_robots_sitemap_llms.py`, `test_seo_bilingual.py` |
 | FR-6 | `test_lightbox.py`, `test_copy_code.py`, `test_lazy_load_images.py` |
 | FR-7 | `test_pagination.py`, `test_portfolio_h1.py`, `test_about_privacy.py` |
 | FR-8 | `test_site_utils.py` (+ `docs/architecture/javascript.md`) |

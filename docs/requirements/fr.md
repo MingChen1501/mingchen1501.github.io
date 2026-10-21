@@ -3,7 +3,7 @@
 Status: active. Each item names the guard test that enforces it; behaviour
 detail lives in `docs/architecture/content-pipeline.md`.
 
-- FR-1 Bilingual posts: EN in `_posts/`, VI in `vi_posts` (`/vi/...`),
+- FR-1 Bilingual posts: EN in `_posts/`, VI in `_vi_posts` (`/vi/...`),
   cross-linked by `lang`/`ref`. Guards: `test_i18n.py`,
   `test_lang_switcher.py`, `test_post_chrome_i18n.py`.
 - FR-2 Tag taxonomy: canonical keys in `_data/tag_labels.yml`, per-tag
@@ -16,7 +16,7 @@ detail lives in `docs/architecture/content-pipeline.md`.
   Guards: `test_giscus_comments.py`, `test_comments.py`,
   `test_comments_markup.py`.
 - FR-5 Feeds and discovery: Atom feed (EN), sitemap with hreflang
-  alternates, `llms.txt`. Guards: `test_sitemap.py`, `test_seo_bilingual.py`.
+  alternates, `llms.txt`. Guards: `test_robots_sitemap_llms.py`, `test_seo_bilingual.py`.
 - FR-6 Reader tools: theme toggle, lazy images, lightbox, copy-code,
   reading progress, share intents. Guards: `test_lightbox.py`,
   `test_copy_code.py`, `test_lazy_load_images.py`.
