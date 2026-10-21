@@ -8,6 +8,12 @@ permissions:
   - action: shell
     resource: "*"
     effect: deny
+  - action: edit
+    resource: "docs/architecture/*"
+    effect: allow
+  - action: edit
+    resource: "docs/technical/*"
+    effect: allow
   - action: shell
     resource: "git diff *"
     effect: allow
@@ -55,6 +61,44 @@ surface.
 - Specs under `docs/architecture/`.
 - An evidence-backed issue list (each issue cites findings with
   `file:line` and measurements).
+
+## Solution-architect extension (spec workflow, #348)
+
+This same role serves as solution architect in the spec-managed
+workflow (canonical tiers and gate: `spec-gate` skill). It owns
+`docs/architecture/*` and `docs/technical/*`: HLD/LLD, schemas,
+integration contracts, and ADR authorship.
+
+## Reads
+
+- The issue body plus the `product-owner` scope and the
+  `business-analyst` FR/NFR delta for the change.
+- Site structure (`_layouts/`, `_includes/`, `_sass/`, `assets/js/`),
+  data files (`_data/`), tests/scripts, CI workflows, `_config.yml`,
+  and existing specs — same order as the audit method above.
+
+## Writes
+
+- `docs/architecture/*` (HLD/LLD updates, ADRs under `decisions/`)
+  and `docs/technical/*` (schema, integration, error-handling,
+  threat-model deltas).
+
+## Must not do (spec mode)
+
+- No implementation, fix, review verdict, push, PRs, or merge.
+- No scope/priority calls (that is `product-owner`), no FR/NFR
+  wording (that is `business-analyst`), no test or release-spec edits
+  (that is `qa-lead` / `release-manager`).
+- No code, layout, style, JS, CI, or config behavior change.
+
+## Artefacts
+
+- Updated spec files under `docs/architecture/` and/or
+  `docs/technical/`, plus the matching `docs/README.md` status flips
+  (stub <-> active) in the same change. T3 ADRs start at `proposed`;
+  only the owner flips one to `accepted`.
+- A short report: tier confirmed, specs touched, ADR status, and
+  which `docs/README.md` rows flipped.
 
 ## Review-lens mode
 
