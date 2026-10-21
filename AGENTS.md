@@ -74,6 +74,7 @@ exactly one place; other files link to it instead of restating it.
 | Turn an idea/chat draft or `article` issue into an EN+VI article PR (entry: intake #190, chat-draft #192; direct-attachment images; handoff per skill) | `article-writer` skill + `.opencode/agents/article-writer.md` |
 | Audit structure/coupling/duplication, maintain `docs/architecture/` specs, file refactor issues, architecture lens on a PR | `.opencode/agents/architect.md` + `architecture` skill |
 | Pinned upstream minima baseline, sync policy, upstream-change check | `docs/upstream-baseline-184.md` |
+| SWE document index (which doc type lives where, active vs stub) | `docs/README.md` |
 
 Each skill's frontmatter (`description` + `trigger`) says when to load it;
 details live there, not here.
