@@ -5,19 +5,20 @@ coverage overlaps.
 
 ## Current structure
 
-- `tests/e2e/`: 61 `test_*.py` files plus `conftest.py`, fixtures, and an
-  `axe-core` vendored helper — 111 files, ~19,200 LOC total. The largest
-  area of the repo (layouts + includes + SCSS + JS ≈ 6,200 LOC combined).
-  Largest files: `test_sidebar_layout.py` (1,166), `test_giscus_comments.py`
-  (979), `test_i18n.py` (842). Largest JS-adjacent coverage now lives in
-`test_site_utils.py` after #342 removed the search page and its 744-line
-`test_search.py` guard.
-- `script/` (14 files): `check-images` + `image-budget.sh` (500KB/file,
-  6MB-total image budgets), `check-external-images` (allowlisted
+- `tests/e2e/`: 65 `test_*.py` files plus `conftest.py`, fixtures, and an
+  `axe-core` vendored helper — 114 files, ~21,000 LOC in `test_*.py`. The
+  largest area of the repo (layouts + includes + SCSS + JS ≈ 6,300 LOC combined).
+  Largest files: `test_sidebar_layout.py` (1,176), `test_giscus_comments.py`
+  (979), `test_toc_spy.py` (906). Largest JS-adjacent coverage now lives in
+  `test_toc_spy.py` (#345 scroll-spy) alongside `test_site_utils.py`; #342
+  removed the search page and its 744-line `test_search.py` guard.
+- `script/` (15 files): `check-images` + `image-budget.sh` (500KB/file,
+  6MB-total image budgets), `check-image-details.py` (naming + dimension
+  lint helper), `check-external-images` (allowlisted
   attachment hosts, #195), `classify-content-only` (#229),
   `asset-budget.sh` (JS/CSS byte ceilings), `generate-thumbnails` (#226),
   `article-intake`, `cibuild`, `update-visual-baselines`, plus thin
-  `bootstrap`/`build`/`server` wrappers.
+  `bootstrap`/`build`/`server` wrappers and `ao-role-footer.sh`.
 - `.github/workflows/` (4 files): `ci.yaml` (Jekyll matrix +
   image guards + `cibuild`), `e2e.yml` (shared content-only
   classifier → static guards → one shared build → browser matrix +
@@ -73,8 +74,8 @@ skill maps each touch area to its guard test.
 
 ## Open questions
 
-- Is 19,500 LOC of guard for ~6,200 LOC of site past the point of
+- Is ~21,000 LOC of guard for ~6,300 LOC of site past the point of
   diminishing returns, or proportional to the bilingual × theme × page-kind
   matrix? The overlap map (#297) is the evidence base for that call.
 - Should `tests/e2e/README.md` gain a per-file one-line index so the next
-  audit does not re-derive ownership by reading 62 files?
+  audit does not re-derive ownership by reading 65 files?

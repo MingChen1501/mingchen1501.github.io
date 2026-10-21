@@ -5,24 +5,24 @@ collections, cross-language links, taxonomy, and comments.
 
 ## Current structure
 
-Layouts (`_layouts/`, 5 files, 541 LOC):
+Layouts (`_layouts/`, 5 files, 579 LOC):
 
 - `base.html` (29 lines): shell. `head.html` → skip link → `header.html`
   → `{{ content }}` → `footer.html` → `sub-footer.html` (scripts).
 - `home.html` (192 lines, `layout: base`): paginated EN/VI index.
   Post-card loop renders the shared `post-card.html` (~L90) +
   `site-sidebar.html` (~L189).
-- `post.html` (222 lines, `layout: base`): article page. Reading-progress
+- `post.html` (260 lines, `layout: base`): article page. Reading-progress
   bar + back-to-top button (~L19-21), `reading-time.html` (~L66),
-  `post-toc.html` (~L93), `share.html` (~L104), `post-tags.html` (~L139),
-  `comments.html` (~L217).
+  `post-toc.html` (~L93), `share.html` (~L104), `post-tags.html` (~L145),
+  `comments.html` (~L255).
 - `tag.html` (81 lines, `layout: base`): per-tag listing. Post-card loop
-  renders the shared `post-card.html` (~L60, `show_tags=false`) +
+  renders the shared `post-card.html` (~L67, `show_tags=false`) +
   `site-sidebar.html` (~L78).
 - `page.html` (17 lines, `layout: base`): static pages + `vi-fallback-notice.html`.
 
-Includes (`_includes/`, 24 files, 1,362 LOC). Largest: `site-sidebar.html`
-(265 lines), `head.html` (121 lines). Every include has at least one caller
+Includes (`_includes/`, 23 files, 1,420 LOC). Largest: `site-sidebar.html`
+(302 lines), `head.html` (121 lines). Every include has at least one caller
 outside itself (no orphan includes, 2026-10-20). `post-card.html`
 (38 lines, #293) is the single home/tag list-item markup
 (`post-thumbnail.html` + `reading-time.html` + description-first excerpt +
@@ -43,8 +43,8 @@ home chips); both list layouts call it with `post` + `lang`.
   `lang-alternates.html`, `sitemap-alternates.html`, `lang-switcher.html`,
   `vi-fallback-notice.html`.
 - Inline `{% if <x>_lang == 'vi' %}` string switches appear in 9+ files
-  (`base.html:13,17`, `home.html:51,77,84,161,225`, `post.html:19,21,34,118`,
-  `tag.html:20,55,90,94`, plus `share.html`, `head.html`,
+  (`base.html:13,17`, `home.html:51,77,84,124,188`, `post.html:19,21,34,129,144,157,211,251`,
+  `tag.html:20,55,73,77`, plus `share.html`, `head.html`,
   `site-sidebar.html`, `social.html`, `ref-urls.html`). No i18n filter or
   dictionary; each label is a one-off conditional.
 - Nil-guards for undefined `site.vi_posts` repeat in ~8 files
@@ -65,7 +65,7 @@ Known wart: the lifestyle pillar key is `doi-song` while the EN page file is
 ## Comments
 
 - Comments: provider switch in `comments.html` (giscus/disqus/none),
-  included only by `post.html:197`. Theme sync via `giscus-theme.js`.
+  included only by `post.html:255`. Theme sync via `giscus-theme.js`.
   Guarded by `test_comments*.py` ×3 + `test_giscus_comments.py`.
 
 ## Boundaries

@@ -17,24 +17,24 @@ with `--safe`.
 
 ## Area map
 
-| Area | Spec | Size (2026-10-20) |
+| Area | Spec | Size (2026-10-21) |
 |---|---|---|
-| Layouts + includes (Liquid) | `content-pipeline.md` | 5 layouts (541 LOC) + 23 includes (~1,270 LOC) |
-| SCSS layers | `styling.md` | 27 files, ~3,200 LOC |
-| Vanilla JS modules | `javascript.md` | 10 files, 845 LOC |
-| Data files + taxonomy | `data-model.md` | 3 files, 80 LOC |
-| Tests + scripts + CI | `testing.md` | 62 e2e files (~19,500 LOC), 14 scripts, 5 workflows (597 LOC) |
+| Layouts + includes (Liquid) | `content-pipeline.md` | 5 layouts (579 LOC) + 23 includes (~1,400 LOC) |
+| SCSS layers | `styling.md` | 26 files, ~3,200 LOC |
+| Vanilla JS modules | `javascript.md` | 11 files, 1,094 LOC |
+| Data files + taxonomy | `data-model.md` | 3 files, 103 LOC |
+| Tests + scripts + CI | `testing.md` | 65 e2e files (~21,000 LOC), 15 scripts, 4 workflows (498 LOC) |
 | Content (posts) | `content-pipeline.md` | 7 EN files (6 published + 1 unpublished sample) + 6 VI posts |
 | Decisions | `decisions/` | ADR template + first ADRs |
 
-348 tracked files total (`git ls-files`, excluding `_site/`).
+422 tracked files total (`git ls-files`, excluding `_site/`).
 
 Counting convention: raw `wc -l` per area; the E2E headline counts `test_*.py` lines.
 
 ## Bloat headline numbers
 
-- The E2E suite (~19,500 LOC) is the largest area of the repo — larger than
-  layouts + includes + SCSS + JS combined (~6,200 LOC). See `testing.md`
+- The E2E suite (~21,000 LOC) is the largest area of the repo — larger than
+  layouts + includes + SCSS + JS combined (~6,300 LOC). See `testing.md`
   for the overlap clusters and follow-up #297.
 - `assets/img/` holds 4.2MB of the 6MB budget (`script/check-images`);
   the largest single file is 236KB against the 500KB limit.
