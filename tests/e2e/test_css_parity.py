@@ -156,7 +156,16 @@ EXPECTED_VARIABLES = {
 # sidebar/home/tag visual baselines that include the sidebar or the
 # data-driven tag index were refreshed from the CI
 # `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
-EXPECTED_CSS_SHA256 = "d772c5a1f1e095c4ba7b7970e6b4e1bdd185ead3537c55ab6f456ab81cdc7829"
+# #345 (ToC scroll-spy): the `toc` partial gained the additive active-row
+# rule (`.post-toc__item a[aria-current="location"]` in the theme-aware
+# link colour plus a border-colour flip) and a layout-free 3px transparent
+# border + 8px padding reserve on every ToC link, so activating a row
+# never shifts its siblings. Diffed old vs new before bumping: the only
+# change is that additive hunk; no existing rule moved, so every render
+# without a marked ToC row stays identical. Post pages with a ToC render
+# the list expanded now (`open`), which changes post screenshots — but the
+# visual baselines pin ToC-less posts only, so no baseline refreshes.
+EXPECTED_CSS_SHA256 = "3c244e83ba7bf48f08e0f57bf6cacd5acb248e891424de344fae8f6374e554dc"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

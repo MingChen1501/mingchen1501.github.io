@@ -2,7 +2,8 @@
 
 Recent work shrank shipped bytes with no ceiling to keep them small: #253
 gated the post-only scripts (non-post pages went from 9 to 7 sub-footer
-scripts), #318 gated copy-code and lightbox the same way (9 to 5), and
+scripts), #318 gated copy-code and lightbox the same way, and #345
+  gates toc-spy the same way (10 to 5), and
 #254 replaced the Font Awesome CDN with inline SVGs. With no
 budget, any new global script silently regrows every page: ``test_post_only_js.py``
 pins script *count* per page kind but not *bytes*, and ``test_css_parity.py``
@@ -47,14 +48,15 @@ HEAD_INCLUDE = REPO_ROOT / "_includes" / "head.html"
 COMMENTS_INCLUDE = REPO_ROOT / "_includes" / "comments.html"
 SUB_FOOTER = test_post_only_js.SUB_FOOTER
 
-# Documented policy (#267): ceilings sit ~10% above the 2026-10-20 measured
+# Documented policy (#267): ceilings sit ~10% above the 2026-10-21 measured
 # totals (see script/asset-budget.sh for the per-kind measurements). Bump a
 # ceiling only with an intentional change, in both files at once.
 # (#275 re-measured after the syntax split: the main sheet dropped to
-# ~45.1KB, the conditional companion to ~17.5KB.)
+# ~45.1KB, the conditional companion to ~17.5KB. #345 added the post-only
+# toc-spy.js scroll-spy, re-measured to ~34.4KB prod.)
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
-    "MAX_JS_POST_BYTES": 32768,
+    "MAX_JS_POST_BYTES": 37888,
     "MAX_CSS_BYTES": 50176,
     "MAX_SYNTAX_CSS_BYTES": 19456,
 }
@@ -71,7 +73,7 @@ VI_POST_REL = test_post_only_js.VI_POST_REL
 #: Unique first-party scripts each page kind may reference. Post is the
 #: production worst case: dev builds skip the comments include
 #: (``comments.dev: false``), so the built-dev assertion below expects the
-#: nine-file set while the static byte assertion covers all ten.
+#: ten-file set while the static byte assertion covers all eleven.
 EXPECTED_SETS = {
     "page": frozenset(test_post_only_js.ALWAYS_LOADED),
     "post": frozenset(
@@ -152,7 +154,7 @@ def test_pinned_script_sets_match_the_templates():
         f"the difference ({unconditional}) (#267)"
     )
     assert gated == list(test_post_only_js.POST_ONLY), (
-        f"the post-gated script set changed: {gated} (#253, #267, #318)"
+        f"the post-gated script set changed: {gated} (#253, #267, #318, #345)"
     )
     comments_refs = _template_scripts(COMMENTS_INCLUDE)
     assert comments_refs == [GISCUS_THEME_PATH], (
@@ -163,17 +165,17 @@ def test_pinned_script_sets_match_the_templates():
 
 @pytest.mark.static
 def test_non_post_kinds_exclude_the_post_only_scripts():
-    """The #253 win, extended by #318, locked from the templates: all four
+    """The #253 win, extended by #318 and #345, locked from the templates: all five
     post-only scripts ship on post pages only, so no non-post kind can
     regain their weight."""
     unconditional, gated = _sub_footer_sets()
     for path in test_post_only_js.POST_ONLY:
         assert path not in unconditional, (
             f"{path} leaked out of the post-layout gate: non-post pages "
-            f"would ship it again (#253, #318)"
+            f"would ship it again (#253, #318, #345)"
         )
         assert path in gated, (
-            f"{path} is no longer inside the post-layout gate (#253, #318)"
+            f"{path} is no longer inside the post-layout gate (#253, #318, #345)"
         )
     for kind in ("page",):
         for path in test_post_only_js.POST_ONLY:
@@ -260,8 +262,8 @@ def test_built_pages_reference_only_their_budgeted_scripts(built_site):
     }
     for kind, rels in _representative_pages(built_site).items():
         # Dev builds skip the comments include, so dev post pages carry
-        # the nine-file set; the static guard above already covers the
-        # production tenth file in the same ceiling.
+        # the ten-file set; the static guard above already covers the
+        # production eleventh file in the same ceiling.
         expected = set(EXPECTED_SETS[kind])
         if kind == "post":
             expected.discard(GISCUS_THEME_PATH)

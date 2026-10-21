@@ -1,13 +1,16 @@
-"""Automatic table of contents for posts with enough sections (#134).
+"""Automatic table of contents for posts with enough sections (#134, #345).
 
 Posts need no opt-in flag: `_layouts/post.html` renders the `<details
-class="post-toc">` ToC from `_includes/post-toc.html` whenever the post has
-at least `toc_min_h2` (4) `h2` headings, unless the post sets `toc: false`.
-GitHub Pages builds with `--safe`, so `jekyll-toc` is unavailable, and
-kramdown's own `{:toc}` marker cannot be injected from the layout (it only
-expands inside the post's Markdown source). The include therefore builds the
-TOC in pure Liquid from the rendered `h2`/`h3` headings (kramdown `auto_ids`
-supply the anchors), with no JavaScript.
+class="post-toc" open>` ToC from `_includes/post-toc.html` whenever the post
+has at least `toc_min_h2` (4) `h2` headings, unless the post sets
+`toc: false`. GitHub Pages builds with `--safe`, so `jekyll-toc` is
+unavailable, and kramdown's own `{:toc}` marker cannot be injected from the
+layout (it only expands inside the post's Markdown source). The include
+therefore builds the TOC in pure Liquid from the rendered `h2`/`h3` headings
+(kramdown `auto_ids` supply the anchors) and ships it expanded, with no
+JavaScript needed for the list itself; #345 adds a post-only scroll-spy
+(`assets/js/toc-spy.js`, guarded in `test_toc_spy.py`) that only marks the
+row being read.
 
 The same include is mounted twice: inline at the top of `.post-content`
 (phones) and as the first `.post-sidebar` section above Tags/Related posts
@@ -102,7 +105,7 @@ def test_sidebar_renders_on_toc_alone_with_toc_first():
 @pytest.mark.static
 def test_toc_include_uses_a_details_block_with_a_localized_summary():
     html = _read(TOC_INCLUDE)
-    assert '<details class="post-toc">' in html
+    assert '<details class="post-toc" open>' in html
     assert '<summary class="post-toc__summary">' in html
     assert "On this page" in html
     assert "Trong bài này" in html
@@ -183,7 +186,9 @@ def _toc_mounts(html):
 
 
 def _toc_hrefs(mount):
-    details = re.search(r'<details class="post-toc">(.*?)</details>', mount, re.S)
+    details = re.search(
+        r'<details class="post-toc"[^>]*>(.*?)</details>', mount, re.S
+    )
     assert details, "expected a `<details class=\"post-toc\">` block"
     return re.findall(r'href="#([^"]+)"', details.group(1))
 
@@ -228,7 +233,7 @@ def test_short_or_opted_out_post_renders_no_toc(built_site, rel):
     page = built_site / rel
     assert page.is_file(), f"expected a built page at {rel}"
     html = page.read_text(encoding="utf-8")
-    assert '<details class="post-toc">' not in html
+    assert '<details class="post-toc"' not in html
     assert "post-toc-mount" not in html
 
 

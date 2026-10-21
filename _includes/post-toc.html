@@ -16,8 +16,13 @@
     {%- include post-toc.html html=content lang=post_lang -%}
   once inline at the top of `.post-content` (phones) and once as the first
   `.post-sidebar` section (desktop); CSS shows exactly one copy per viewport.
-  Emits a `<details>` block (localized summary, links to the `h2`/`h3`
+  Emits an open `<details>` block (localized summary, links to the `h2`/`h3`
   anchors) or nothing when the page has no `h2`/`h3` headings with ids.
+  The block starts expanded (`open`): readers without JS get the full list
+  with plain anchors, and `assets/js/toc-spy.js` (#345) only adds the
+  `aria-current` mark — it never closes the block. H4 headings stay out of
+  the list: no published post uses them (checked 2026-10-21), so `h2`/`h3`
+  cover every level present.
 {%- endcomment -%}
 {%- assign toc_lang = include.lang | default: page.lang | default: 'en' -%}
 {%- assign toc_label = 'On this page' -%}
@@ -44,7 +49,7 @@
   {%- endif -%}
 {%- endfor -%}
 {%- if toc_items != '' -%}
-<details class="post-toc">
+<details class="post-toc" open>
   <summary class="post-toc__summary">{{ toc_label }}</summary>
   <nav class="post-toc__nav" aria-label="{{ toc_label }}">
     <ul class="post-toc__list">{{ toc_items }}</ul>
