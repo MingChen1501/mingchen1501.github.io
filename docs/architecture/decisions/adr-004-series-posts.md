@@ -13,16 +13,22 @@
     series). `<key>` is kebab-case and language-neutral (e.g.
     `jekyll-mastery`). There is no per-post `series_title`: the series'
     localized title and description live in a new `_data/series_labels.yml`
-    (canonical key → `en`/`vi` titles, `slug_en`/`slug_vi`,
-    `description_en`/`description_vi`), mirroring `tag_labels.yml`, so
+    (canonical key → `en`/`vi` titles, `slug_en`/`slug_vi` (provisional
+    pending Q1: shared vs split slugs), `description_en`/`description_vi`,
+    plus `coming_soon_en`/`coming_soon_vi` labels for unlinked gap positions),
+    mirroring `tag_labels.yml`, so
     templates never hold copy. Validation is strict, never inferred: a post
     with `series` but no `series_order` fails the build guard (CI red) — the
     order is never derived from the date, because date-derived ordering is
     implicit and fragile (backdated evergreen posts already need the #328
     date constraint). Likewise `series_order` without `series`, a
     non-positive/non-integer order, or a duplicate order within one
-    (series, language) all fail. A series may launch with a single published
-    post (part 1); the no-orphan guard only requires the key to exist in
+    (series, language) all fail. A post belongs to at most one series:
+    `series` is a scalar key; the array form is out of scope and Phase 2
+    validators must reject a sequence value. A series may launch with a
+    single published
+    post (part 1) unless the owner answers Q2 otherwise; the no-orphan
+    guard only requires the key to exist in
     `series_labels.yml` and vice versa.
   - 2. Identity and i18n. The series key is language-neutral: EN
     (`site.posts`) and VI (`site.vi_posts`) twins share the key, matched
@@ -34,11 +40,15 @@
     404: the series nav and the series index always render within the
     reader's language; positions with no published twin in that language are
     skipped by prev/next and shown as unlinked "coming soon" labels
-    (localized copy from `series_labels.yml`) on the index, never linked
+    (localized copy from `coming_soon_en`/`coming_soon_vi` in
+    `series_labels.yml`) on the index, never linked
     into the other language. The per-post language switcher keeps its
-    existing #93 fallback behavior unchanged. "Part N of M" uses the global
-    `series_order` as N (identical in both languages) and the highest
-    published order in the reader's language as M.
+    existing #93 fallback behavior unchanged. "Part N of M" numbering is
+    global, not per-language: N is the global `series_order` (identical in
+    both languages) and M is the highest published order in the reader's
+    language (a maximum, never a count), so gaps at or below M render as
+    unlinked coming-soon labels without renumbering and a "Part 5 of 3"
+    can never occur.
   - 3. Rendering contract. Series nav block: `<nav class="series-nav">`
     ("Part N of M", prev/next links with installment titles, link to the
     series index) placed inside `.post-main` in `_layouts/post.html`,
@@ -65,15 +75,20 @@
     templates render nav/index copy from it — while series front matter on
     posts stays on the content-only path; `script/classify-content-only`
     gains the new mapping in Phase 2.
-  - 5. Guard plan (Phase 2 e2e). Ordering: the index lists strictly by
-    `series_order` and each nav block's "Part N of M" agrees with it.
-    Prev/next correctness: the first installment has no prev, the last has
-    no next, middle installments link both with the correct titles.
-    Cross-language parity: twins share key and order; lagging positions are
-    never cross-linked. Index completeness: every published installment of
-    that language appears, and no other post does. No orphan series: every
-    `series` key used by a published post exists in `series_labels.yml` and
-    vice versa; missing/duplicate orders fail.
+  - 5. Guard plan (Phase 2 e2e, planned files).
+    `tests/e2e/test_series_nav.py` (ordering: the index lists strictly by
+    `series_order` and each nav block's "Part N of M" agrees with it;
+    prev/next titles: the first installment has no prev, the last has no
+    next, middle installments link both with the correct titles).
+    `tests/e2e/test_series_i18n.py` (EN/VI parity: twins share key and
+    order; lagging-VI behaviour: missing twins are skipped by prev/next and
+    shown as unlinked coming-soon labels; no cross-language links, never
+    cross-linked, never 404). Orphan/strict-validation cases: every
+    `series` key used by a published post exists in `series_labels.yml`
+    and vice versa; missing/reverse/non-integer/non-positive/duplicate
+    orders fail, and a sequence (array) `series` value fails. Index
+    completeness: every published installment of
+    that language appears, and no other post does.
 - Consequences: Phase 2 posts only add two front-matter keys plus one data
   entry — no template rewrites. Strict validation trades a little authoring
   friction for ordering guarantees the guards can pin. Lagging translations
