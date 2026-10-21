@@ -62,3 +62,33 @@ Purpose: the three `_data/` files — what each owns and who reads it.
 - Should `highlights.yml` gain a CI warning on unresolvable slugs?
 - When dedicated image storage lands, who runs the #195 migration
   checklist in `image_hosts.yml`?
+
+## Series (proposed, ADR-004)
+
+Series support is decided but not yet implemented: no `_data/` file, no
+template, and no series post exist — this section records the contract so
+Phase 2 only adds front matter, not template rewrites.
+
+- Planned `_data/series_labels.yml` — series source of truth, mirroring
+  `tag_labels.yml`: canonical language-neutral key → `en`/`vi` titles,
+  `slug_en`/`slug_vi`, `description_en`/`description_vi`. Templates never
+  hold series copy. Full CI suite on change (like `tag_labels.yml`); series
+  front matter on posts stays on the content-only path (#229).
+- Front matter: `series: <key>` + `series_order: <int>` (1-based, no
+  per-post `series_title`). Strict validation — `series` without
+  `series_order` (or the reverse, non-integer/non-positive order, duplicate
+  order within one series + language) fails the guard; order is never
+  derived from the date.
+- i18n: EN/VI twins share the key via the `lang`/`ref` pipeline (ADR-003)
+  and must share `series_order` (parity guard). VI may lag behind EN:
+  nav/index render within the reader's language, missing twins are skipped
+  by prev/next and unlinked on the index — never cross-linked, never 404
+  (same rule class as #93/#172).
+- Rendering (Phase 2): `<nav class="series-nav">` (part N of M, prev/next
+  with titles, index link) inside `.post-main` after `share.html`, sidebar
+  untouched; index pages at `/series/<slug>/` + `/vi/series/<slug>/` on a
+  `tag.html`-mirroring layout; installments stay normal posts in all lists.
+  JSON-LD gains `isPartOf` + `position`.
+- Full contract, feature interactions (#343/#344/#345, RSS/sitemap/JSON-LD,
+  CI classification), guard plan, and open questions: see
+  [`adr-004-series-posts.md`](decisions/adr-004-series-posts.md).
