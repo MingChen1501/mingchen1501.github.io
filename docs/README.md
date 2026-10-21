@@ -143,6 +143,17 @@ sets, and the gate procedure live in the `spec-gate` skill
 | FAQ | `support/faq.md` | stub (not needed yet) | curated answers — no support load |
 | SLA | `support/sla.md` | stub (not needed yet) | service commitment — none offered |
 
+## Agentic template (reusable starter)
+
+| Path | Purpose |
+|---|---|
+| `agentic-template/README.md` | template overview, audience, adoption checklist |
+| `agentic-template/roles.md` | generalized role table + role file skeletons |
+| `agentic-template/gate.md` | T0–T4 gate + blank worked example |
+| `agentic-template/conventions.md` | artefact/commit/session naming, language, merge, verdict mechanics |
+| `agentic-template/bootstrap.md` | step-by-step: new repo to first guarded PR |
+| `agentic-template/extraction-plan.md` | options for a standalone template repo + open decision |
+
 ## Other existing docs (outside this classification)
 
 | Path | Purpose |
