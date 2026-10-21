@@ -127,6 +127,7 @@ sets, and the gate procedure live in the `spec-gate` skill
 | Plan | `project/plan.md` | stub (not needed yet) | milestones — issue queue only |
 | Risk register | `project/risk-register.md` | active | live risk list |
 | Decision log | `project/decision-log.md` | active | decision list pointing at ADRs |
+| Issue conventions | `project/issue-conventions.md` | active | title+label convention for issues and PRs |
 
 ## Release
 
