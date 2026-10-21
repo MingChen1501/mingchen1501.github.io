@@ -9,8 +9,11 @@
      against the page's language post source in file order, at most five,
      each with its thumbnail (when it has one), its title and its publication
      date,
-  2. every tag as a collapsed row (`<details>` without `open`): the tag name
-      as a chip-styled label plus its post count.
+  2. the curated pillar tags (`pillar: true` in `_data/tag_labels.yml`,
+     #344) as rows collapsed by default (`<details>` without `open`):
+     pillars in `order` (capped at 6), each showing the tag name as a
+     chip-styled label plus its post count. Non-pillar tags stay reachable
+     only through the tag index and their own pages.
       The label is a plain span, never a link: interactive content inside summary is invalid and breaks keyboard/AT behaviour (#114). Once open,
       the row shows at most three post links plus a link to that tag's page.
 
@@ -205,14 +208,30 @@
   </ul>
 </section>
 
+{%- comment -%}
+  Sidebar topics heading + all-topics link (#344): the heading keeps its
+  existing link to the tag index; the footer repeats it as an explicit
+  "All topics" / "Tất cả chủ đề" link so the capped list always offers the
+  way out to the full index.
+{%- endcomment -%}
+{%- if sidebar_lang == 'vi' -%}
+  {%- assign sidebar_all_topics = "Tất cả chủ đề &rarr;" -%}
+{%- else -%}
+  {%- assign sidebar_all_topics = "All topics &rarr;" -%}
+{%- endif -%}
 <section class="sidebar__section">
   <h2 class="sidebar__heading">{{ sidebar_topics_heading }}<a class="sidebar__heading-link" href="{{ sidebar_tag_base | relative_url }}">{{ sidebar_all_link }}</a></h2>
   <ul class="sidebar-tags">
     {%- comment -%}
-      Alphabetical, so the column reads in a stable order (the `/tags/`
-      index lists the 4 pillars in their own order). English names come from
-      `site.tags` keys; Vietnamese names are derived from the `site.vi_posts`
-      docs (collections never populate `site.tags`).
+      Curated pillars only (#344): every tag with at least one published
+      post resolves its curation metadata through the shared
+      `_includes/tag-label.html` partial (this include never reads the data
+      file itself, #175); only `pillar: true` tags are kept. The sortable `order|label|key` strings put pillars in `order`
+      (zero-padded so the string sort stays numeric, orders stay below
+      1000) with the localized label — never the raw key — as the
+      tiebreaker; unknown keys (order 999) would sort last. English names
+      come from `site.tags` keys; Vietnamese names are derived from the
+      `site.vi_posts` docs (collections never populate `site.tags`).
     {%- endcomment -%}
     {%- if sidebar_lang == 'vi' -%}
       {%- assign sidebar_tag_names = sidebar_source | map: "tags" | join: "," | split: "," | uniq | sort -%}
@@ -224,7 +243,23 @@
       {%- endfor -%}
       {%- assign sidebar_tag_names = sidebar_tag_names_str | split: "," -%}
     {%- endif -%}
+    {%- assign sidebar_pillar_keys = "" | split: "" -%}
     {%- for sidebar_tag_name in sidebar_tag_names -%}
+      {%- include tag-label.html key=sidebar_tag_name lang=sidebar_lang -%}
+      {%- if tag_pillar == true -%}
+        {%- assign sidebar_order_pad = "000" | append: tag_order | slice: -3, 3 -%}
+        {%- assign sidebar_sort_key = sidebar_order_pad | append: "|" | append: tag_label | append: "|" | append: sidebar_tag_name -%}
+        {%- assign sidebar_pillar_keys = sidebar_pillar_keys | push: sidebar_sort_key -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- assign sidebar_pillar_keys = sidebar_pillar_keys | sort -%}
+    {%- comment -%}
+      Capped at 6 (#344): a 7th pillar never grows the column — it stays
+      reachable through the tag index and its own page.
+    {%- endcomment -%}
+    {%- for sidebar_sort_key in sidebar_pillar_keys limit: 6 -%}
+      {%- assign sidebar_parts = sidebar_sort_key | split: "|" -%}
+      {%- assign sidebar_tag_name = sidebar_parts[2] -%}
       {%- if sidebar_lang == 'vi' -%}
         {%- assign sidebar_tag_posts = sidebar_source | where_exp: "sidebar_tag_post", "sidebar_tag_post.tags contains sidebar_tag_name" | sort: "date" | reverse -%}
       {%- else -%}
@@ -263,4 +298,5 @@
       </li>
     {%- endfor -%}
   </ul>
+  <a class="sidebar-tags__all" href="{{ sidebar_tag_base | relative_url }}">{{ sidebar_all_topics }}</a>
 </section>

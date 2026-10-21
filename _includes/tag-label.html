@@ -15,6 +15,13 @@
   label and slug in both. Unknown keys degrade to the canonical key. This
   include emits no markup itself.
 
+  Also returns the curation metadata (#344): `tag_pillar` is true only for
+  curated pillars (every other key — including unknown ones — reads false)
+  and `tag_order` is the data-file `order` (999 when the entry has none, so
+  non-pillars sort after pillars and fall back to the localized label).
+  Callers needing `description_*` keep their direct `_data/tag_labels.yml`
+  read (out of scope for this partial).
+
   Locals are `taglabel_*`-prefixed so nothing assigned here can collide with
   the caller; `tag_label`/`tag_slug` are the return contract.
 {%- endcomment -%}
@@ -27,3 +34,5 @@
   {%- assign tag_label = taglabel_entry.en | default: include.key -%}
   {%- assign tag_slug = taglabel_entry.slug_en | default: include.key -%}
 {%- endif -%}
+{%- assign tag_pillar = taglabel_entry.pillar | default: false -%}
+{%- assign tag_order = taglabel_entry.order | default: 999 -%}

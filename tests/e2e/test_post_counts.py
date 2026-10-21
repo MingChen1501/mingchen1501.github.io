@@ -112,12 +112,12 @@ def test_tag_layout_keeps_the_vietnamese_count_invariant():
 @pytest.mark.static
 def test_tag_indexes_pluralize_per_language():
     english = _read(REPO_ROOT / "tags.md")
-    assert re.search(r"\{\%\s*if\s+pillar_posts\.size\s*!=\s*1\s*\%\}s", english), (
+    assert re.search(r"\{\%\s*if\s+index_posts\.size\s*!=\s*1\s*\%\}s", english), (
         "tags.md must branch 'post'/'posts' on the count"
     )
     vietnamese = _read(REPO_ROOT / "vi" / "tags.md")
     assert re.search(
-        r"\{\{\s*pillar_posts\s*\|\s*size\s*\}\}\s*bài</span>", vietnamese
+        r"\{\{\s*index_posts\s*\|\s*size\s*\}\}\s*bài</span>", vietnamese
     ), "vi/tags.md must keep the invariant 'N bài' count form"
 
 

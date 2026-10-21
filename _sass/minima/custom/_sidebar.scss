@@ -5,12 +5,12 @@
 // rows. The block and heading styles are shared with the post sidebar above, so
 // the two sidebars cannot drift apart.
 //
-// Height budget (#63): five highlight rows and four tag rows have to fit beside
-// the list inside a 740px viewport, which is what keeps the sidebar free of a
-// scrollbar of its own (the media query above only pins the column from 740px
-// of viewport height). Hence the short rows below: a thumbnail capped to 96x60,
-// a title clamped to two lines, and a tag row collapsed until the reader opens
-// it.
+// Height budget (#63, #344): five highlight rows and at most six pillar rows
+// have to fit beside the list inside a 740px viewport, which is what keeps
+// the sidebar free of a scrollbar of its own (the media query above only
+// pins the column from 740px of viewport height). Hence the short rows
+// below: a thumbnail capped to 96x60, a title clamped to two lines, and a
+// tag row collapsed until the reader opens it.
 // ---------------------------------------------------------------------------
 
 ul.sidebar-posts,
@@ -160,4 +160,18 @@ ul.sidebar-tag__posts {
 .sidebar-tag__more {
   display: inline-block;
   margin: 6px 0 4px 14px;
+}
+
+// All-topics link below the capped pillar list (#344): the dimmed tone of
+// the heading link, so the way out to the full index reads as navigation.
+.sidebar-tags__all {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: $small-font-size;
+  color: $brand-color-dimmed;
+
+  &:hover,
+  &:focus {
+    color: $brand-color-dark;
+  }
 }

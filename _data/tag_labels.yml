@@ -1,5 +1,6 @@
 # Single source of truth for tag display labels, localized URL slugs (#129),
-# and one-line topic descriptions for the tag index pages (#140).
+# one-line topic descriptions for the tag index pages (#140), and the curated
+# pillar list for the sidebar and the tag indexes (#344).
 #
 # Post front matter keeps the canonical tag key (e.g. `doi-song`); templates
 # resolve the human-readable label and the tag-page URL slug for the current
@@ -15,6 +16,20 @@
 # apart. The individual tag pages keep rendering their own body copy via
 # `_layouts/tag.html` (`{{ content }}`), so the descriptions are NOT repeated
 # there.
+#
+# `pillar: true|false` and `order: <int>` drive the curated presentation
+# (#344): the sidebar (`_includes/site-sidebar.html`) renders only
+# `pillar: true` tags, sorted by ascending `order`, capped at 6 with an
+# "All topics" / "Tất cả chủ đề" link to the tag index; the tag indexes
+# list pillars first by `order`, then every other tag with at least one
+# published post under "More topics" / "Chủ đề khác" sorted by the localized
+# label. Tags with no published post never render. A brand-new tag needs only
+# a data-file entry (`pillar: false`) — or no entry at all, in which case the
+# label and slug fall back to the canonical key — plus its tag page; no
+# template edits. Within equal `order` values (or a missing `order`) the
+# tiebreaker is the localized label, never the raw key. Keep `order` values
+# unique, ascending, and below 1000 (templates zero-pad them for string
+# sorting). The four existing pillars keep their current presentation order.
 backend-production:
   en: Backend Production
   vi: Backend Production
@@ -22,6 +37,8 @@ backend-production:
   slug_vi: backend-production
   description_en: "Backend production: running real systems — infrastructure, networking, data and lessons from serving real users."
   description_vi: "Backend production: vận hành hệ thống thật — hạ tầng, mạng, dữ liệu và những bài học khi chạy sản phẩm cho người dùng thật."
+  pillar: true
+  order: 1
 ai-agent:
   en: AI Agent
   vi: AI Agent
@@ -29,6 +46,8 @@ ai-agent:
   slug_vi: ai-agent
   description_en: "AI agents: using and building coding agents, orchestration, prompts and tooling to bring AI into the everyday workflow."
   description_vi: "AI agent: dùng và tự dựng coding agent, orchestration, prompt và công cụ để đưa AI vào luồng làm việc hằng ngày."
+  pillar: true
+  order: 2
 linux-tooling:
   en: Linux Tooling
   vi: Linux Tooling
@@ -36,6 +55,8 @@ linux-tooling:
   slug_vi: linux-tooling
   description_en: "Linux and tooling: machine setup, command line, terminal, editor and tools that keep the workspace lean and fast."
   description_vi: "Linux và tooling: cài đặt máy, dòng lệnh, terminal, editor và những công cụ giúp môi trường làm việc gọn và nhanh hơn."
+  pillar: true
+  order: 3
 doi-song:
   en: Life
   vi: Đời sống
@@ -43,3 +64,5 @@ doi-song:
   slug_vi: doi-song
   description_en: "Everyday life: daily stories, hobbies, experiences and off-work notes."
   description_vi: "Đời sống: chuyện thường ngày, sở thích, trải nghiệm và những ghi chép ngoài lề công việc."
+  pillar: true
+  order: 4

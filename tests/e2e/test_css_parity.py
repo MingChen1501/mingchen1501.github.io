@@ -148,7 +148,15 @@ EXPECTED_VARIABLES = {
 # existing rule moved, so every other page renders unchanged. The two 375px
 # tag-index visual baselines (EN/VI) were refreshed from the CI
 # `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
-EXPECTED_CSS_SHA256 = "0bf1f70bd99d60385993dfb5359c8145e0148e891787f766197c363a02a9361d"
+# #344 (curated pillar tags): the `sidebar` partial gained one additive
+# rule (`.sidebar-tags__all` footer link below the capped pillar list, in
+# the dimmed tone of the heading link, with a hover/focus darkening).
+# Diffed old vs new before bumping: the only change is that additive hunk;
+# no existing rule moved, so every other page renders unchanged. The
+# sidebar/home/tag visual baselines that include the sidebar or the
+# data-driven tag index were refreshed from the CI
+# `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
+EXPECTED_CSS_SHA256 = "d772c5a1f1e095c4ba7b7970e6b4e1bdd185ead3537c55ab6f456ab81cdc7829"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

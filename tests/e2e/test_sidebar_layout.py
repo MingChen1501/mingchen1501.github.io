@@ -11,7 +11,7 @@ fed by one shared include, `_includes/site-sidebar.html`, whose two blocks are
    title and its publication date — or, when the file is empty/missing or no
    entry resolves to a post, the five newest posts with a heading that says
    so, and
-2. every tag as a row collapsed by default (`<details>` without `open`)
+2. the curated pillar tags (`pillar: true`, #344) as rows collapsed by default (`<details>` without `open`)
    showing the tag name (a chip-styled, non-link label — links are invalid
    inside `<summary>`, #114) and its post count, and — once opened — at most three
    post links plus a link to that tag's page.

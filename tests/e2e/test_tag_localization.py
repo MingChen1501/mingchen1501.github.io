@@ -106,7 +106,10 @@ def _post_with_tag(posts_dir, tag):
 @pytest.mark.static
 def test_tag_labels_is_the_single_source_of_truth():
     labels = _tag_labels()
-    assert set(labels) == set(TECHNICAL_TAGS + ["doi-song"])
+    assert set(TECHNICAL_TAGS + ["doi-song"]) <= set(labels), (
+        f"tag_labels.yml lost a tag: missing "
+        f"{sorted(set(TECHNICAL_TAGS + ['doi-song']) - set(labels))}"
+    )
     for key, entry in labels.items():
         for field in ("en", "vi", "slug_en", "slug_vi"):
             assert entry.get(field), f"tag_labels.yml[{key}] is missing `{field}`"
