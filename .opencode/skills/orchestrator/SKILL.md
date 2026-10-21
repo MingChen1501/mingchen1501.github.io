@@ -87,7 +87,8 @@ Spawning:
 - One worker, one issue, one PR. The per-issue spawn prompt must name the
   issue number/title/URL, point at the writer role
   (`.opencode/agents/article-writer.md`) and the `article-writer` skill
-  (`.opencode/skills/article-writer/SKILL.md`, procedure #191), require
+  (`.opencode/skills/article-writer/SKILL.md`, procedure #191) — role
+  string `content` (`article-writer` is the legacy workflow-file name), require
   EN+VI posts in a single PR with `Closes #<n>`, and require issue
   images to be embedded by direct attachment URL
   (`https://github.com/user-attachments/assets/...`) — never downloaded,
@@ -131,7 +132,8 @@ Trigger: the owner describes a new task, bug, or enhancement in chat.
 
 ## Role separation
 
-- Roles are **separate sessions**: issue-writer / dev / reviewer / fixer.
+- Roles are **separate sessions**: `business-analyst` / `dev` /
+  `dev-peer-review` or `content-review` / `dev-takeover`.
   The reviewer is a manual worker session (see Review flow) — never
   the native reviewer, and never the same session that implemented
   the PR.
@@ -139,6 +141,24 @@ Trigger: the owner describes a new task, bug, or enhancement in chat.
 - When a user-created ticket's PR is up, kill that session and spawn a dedicated
   review worker; create follow-up issues if the review or CI surfaces any.
 - Do not let one session both implement and review its own PR.
+
+## Role signatures (#350)
+
+Normative rules: `docs/ao-rules.md` (canonical roles, commit identity,
+footer/marker template, reviewer-must-differ, session naming). Do not
+restate the list here — link it. Summary for orchestration use only.
+
+- **Spawn step.** Every spawn prompt names the session `<role> <target>`
+  and tells the worker to set its per-worktree git identity before
+  committing (`git config --worktree user.name "Ming Chen (<role>)"`,
+  same email). Existing commits are never rewritten.
+- **Reviewer rules.** The reviewer role must differ from the implementer
+  (`dev` vs `dev-peer-review`, `content` vs `content-review`). A reviewer
+  never posts code changes; it posts one COMMENT review with its verdict
+  plus its role footer.
+- **Self-check.** Footer before creating any issue/PR/review/comment;
+  `<role> <target>` before spawning; confirm the `Role:` line in the PR
+  body before merging.
 
 ## Model separation and rate-limit rotation (#76)
 
@@ -306,7 +326,8 @@ Checklist (each review starts from the pinned baseline, never re-derived):
 
 - Article writer role/skill: `.opencode/agents/article-writer.md` and
   `.opencode/skills/article-writer/SKILL.md` (entry: intake #190,
-  chat-draft #192; handoff/report contract and image workaround inside).
+  chat-draft #192; handoff/report contract and image workaround inside;
+  LEGACY name — role string is `content`, see `docs/ao-rules.md`).
 - Site review rules: `.opencode/skills/jekyll-review/SKILL.md` and
   `references/review-checklist.md`.
 - Site verify rules: `.opencode/skills/jekyll-verify/SKILL.md` and

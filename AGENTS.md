@@ -9,16 +9,19 @@ text immediately, even before the cue is edited — this applies to pool
 size, reviewer flow, and merge policy. One rule lives normatively in
 exactly one place; other files link to it instead of restating it.
 
-## Roles (each role starts from its file)
+## Roles (each role starts from its file; normative rules: `docs/ao-rules.md`)
 
 | Role | Read |
 |---|---|
 | Orchestrator (spawn, pool, review/merge flow) | `orchestrator` skill |
-| Worker/implementer (scope, branch, PR, report) | `worker` skill |
-| Reviewer (checklist, risk label, verdict) | `.opencode/agents/site-reviewer.md` + `jekyll-review` skill |
-| Article writer (EN+VI pair, one PR) | `.opencode/agents/article-writer.md` + `article-writer` skill |
+| Spec roles — `product-owner`, `business-analyst`, `architect`, `qa-lead`, `release-manager`, `spec-reviewer` (no implementation) | role file or `orchestrator` skill |
+| Dev — `dev` implements; `dev-takeover` resumes a stalled `dev` branch | `worker` skill |
+| Dev review — `dev-peer-review` (code only, read-only) | `jekyll-review` skill |
+| Content — `content` (EN+VI posts/pages) | `jekyll-post` skill + role file |
+| Content review — `content-review` (read-only) | `jekyll-review` skill |
 | Buffer (file issues only, no implementation) | `.opencode/agents/buffer-worker.md` |
 | Architect (audit, specs, refactor issues; never implements) | `.opencode/agents/architect.md` + `architecture` skill |
+| Legacy: `article-writer` -> `content`; `site-reviewer` -> `dev-peer-review`/`content-review` (old records only) | `docs/ao-rules.md` |
 
 ## Commands (every task)
 
@@ -44,6 +47,7 @@ exactly one place; other files link to it instead of restating it.
   `risk-very-high`, or a missing label needs explicit owner approval.
 - All public repo artifacts MUST be English (PRs, commits, issues, review
   comments, code comments); Vietnamese only for internal AO reporting.
+  Every artefact is signed with its role (normative rules: `docs/ao-rules.md`).
 - `_site/` outputs are generated — never hand-edit. `sitemap.xml` and
   `llms.txt` are Liquid sources edited like other pages; `robots.txt`
   is static.

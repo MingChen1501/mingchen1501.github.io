@@ -17,7 +17,8 @@ Precedence (canonical: `AGENTS.md`): owner instruction > project cues >
 ## Scope
 
 - Implement exactly the assigned task. One article per PR for
-  article work (see the `article-writer` skill); no unrelated changes.
+  article work (see the `article-writer` skill; role string `content`);
+  no unrelated changes.
 - Docs/process tasks change no code behavior; keep the change scoped
   and do not refactor unrelated files.
 - Never take another role's work: do not review your own PR and do not
@@ -30,6 +31,18 @@ Precedence (canonical: `AGENTS.md`): owner instruction > project cues >
   `--force` / `--force-with-lease`, never `--delete` on a shared
   branch, never push directly to `master`.
 - Keep commits focused with conventional commit messages, in English.
+- Set your per-worktree git identity before committing (same email, so
+  the contribution graph still credits the owner):
+  `git config --worktree user.name "Ming Chen (dev)"` (use your
+  session's role string — `dev`, `content`, `dev-takeover` — see
+  `docs/ao-rules.md`). Existing commits are never rewritten.
+
+## Role signature
+
+Your role string is your session's role (`dev` for code, `content` for
+posts, `dev-takeover` when resuming; full list in `docs/ao-rules.md`).
+Sign every artefact per that file
+(`script/ao-role-footer.sh <role> [session-id]`).
 
 ## Implement and verify
 

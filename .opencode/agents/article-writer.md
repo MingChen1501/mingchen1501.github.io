@@ -115,8 +115,15 @@ Fix failures before opening the PR. Never commit `_site/`.
 ## Boundaries
 
 - Do not review your own output — review happens separately via
-  `site-reviewer`.
+  `content-review`.
 - Do not merge; never push to `master`.
 - One article per PR; no unrelated changes.
 - All public repo artifacts (posts, PRs, commits, code comments) in
   English. Vietnamese only in chat and reports.
+
+## Role signature
+
+LEGACY file name: new sessions use the role string `content` (mapping:
+`article-writer` -> `content`, see `docs/ao-rules.md`). Sign every
+artefact per that file
+(`script/ao-role-footer.sh content [session-id]`).

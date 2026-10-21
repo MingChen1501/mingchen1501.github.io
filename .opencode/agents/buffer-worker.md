@@ -47,3 +47,9 @@ in other sessions under the normal pool.
 - Do not open PRs.
 - All public repo artifacts (issues) in English. Vietnamese only in
   chat and reports.
+
+## Role signature
+
+This session's role string is `business-analyst` (buffer work files
+issues; see `docs/ao-rules.md`). Sign every artefact per that file
+(`script/ao-role-footer.sh business-analyst [session-id]`).
