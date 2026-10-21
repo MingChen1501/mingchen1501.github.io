@@ -13,7 +13,7 @@ redirect_from:
   - /2026/01/01/migate-windows-11-to-fedora.html
 ---
 
->Windows 11 lỗi quá, chuyển sang Linux cho con máy ở nhà thôi ![](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" aria-hidden="true" }
+>Windows 11 lỗi quá, chuyển sang Linux cho con máy ở nhà thôi ![Terminal Fedora hiển thị thông tin hệ thống trên nền hình vụ phóng tên lửa dưới ánh trăng](/assets/img/2026-01-01-Migrate-windows-11-to-fedora/desktop-fedora.jpg){: width="1600" height="902" }
 
 ## Hiện trạng
 - Windows 11 trên con laptop ghẻ thời sinh viên của mình đang khá lỗi: lỗi touchpad, lỗi driver, ...

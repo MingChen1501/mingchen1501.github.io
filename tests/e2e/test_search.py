@@ -205,6 +205,31 @@ def test_search_shell_is_accessible_and_versioned():
 
 
 @pytest.mark.static
+def test_search_shell_offers_a_no_js_fallback():
+    """#335: without JS the form is a dead end (filtering lives in the
+    script), so a `<noscript>` note points readers at the tag index and
+    the sitemap in the page language. The block is inert when JS runs,
+    so it must add no duplicate live region or control."""
+    html = _read(SEARCH_INCLUDE)
+    match = re.search(r"<noscript>(.*?)</noscript>", html, re.S)
+    assert match, "the search shell must carry a `<noscript>` fallback"
+    body = match.group(1)
+    for snippet in (
+        "Search needs JavaScript",
+        "Browse posts by topic",
+        "'/tags/' | relative_url",
+        "Tìm kiếm cần JavaScript",
+        "Duyệt bài viết theo chủ đề",
+        "'/vi/tags/' | relative_url",
+        "'/sitemap.xml' | relative_url",
+    ):
+        assert snippet in html, f"the no-JS fallback misses {snippet!r}"
+    assert "aria-live" not in body and 'role="status"' not in body, (
+        "the no-JS fallback must not duplicate the live region"
+    )
+
+
+@pytest.mark.static
 def test_search_script_stays_vanilla_tiny_and_offline():
     assert SEARCH_SCRIPT.is_file(), "assets/js/search.js is missing"
     text = _read(SEARCH_SCRIPT)
@@ -408,6 +433,24 @@ def test_search_pages_render_with_versioned_assets(built_site):
         assert f'href="{counterpart}"' in html, (
             f"{rel} must switch to its {counterpart} counterpart"
         )
+
+
+@pytest.mark.parametrize(
+    "rel,tags",
+    [("search/index.html", "/tags/"), ("vi/tim-kiem/index.html", "/vi/tags/")],
+)
+def test_search_noscript_fallback_links_tags_and_sitemap(
+    built_site, rel, tags
+):
+    """#335: the built fallback points at the language tag index and the
+    sitemap (both must be built files, like every crawled reference)."""
+    html = _read(built_site / rel)
+    assert "<noscript>" in html, f"{rel} renders no no-JS fallback"
+    assert f'href="{tags}"' in html, f"{rel} fallback links nowhere to {tags}"
+    assert 'href="/sitemap.xml"' in html, (
+        f"{rel} fallback links nowhere to the sitemap"
+    )
+    assert (built_site / "sitemap.xml").is_file()
 
 
 # --- browser guards (need Ruby + a browser) ---------------------------------

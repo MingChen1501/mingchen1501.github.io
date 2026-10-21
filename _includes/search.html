@@ -26,6 +26,11 @@
   uses it at load: the page content (this tag) runs before the deferred
   scripts in `_includes/sub-footer.html`, and the token matches, so the
   browser fetches the helper once and re-running it is a harmless no-op.
+
+  No-JS path (#335): the script does all filtering, so without it the form
+  is a dead end — a `<noscript>` note (inert when JS runs, so no duplicate
+  noise for assistive tech) points readers at the per-language tag index
+  and the sitemap instead.
 {%- endcomment -%}
 {%- assign search_lang = page.lang | default: site.lang | default: 'en' -%}
 {%- if search_lang == 'vi' -%}
@@ -69,6 +74,15 @@
     <label class="search__label" for="site-search-input">{{ search_label }}</label>
     <input class="search__input" type="search" id="site-search-input" name="q" placeholder="{{ search_placeholder | escape }}" autocomplete="off" enterkeyhint="search">
   </form>
+  <noscript>
+    <p class="search__noscript">
+      {%- if search_lang == 'vi' -%}
+        Tìm kiếm cần JavaScript. <a href="{{ '/vi/tags/' | relative_url }}">Duyệt bài viết theo chủ đề</a> hoặc xem <a href="{{ '/sitemap.xml' | relative_url }}">sơ đồ trang</a>.
+      {%- else -%}
+        Search needs JavaScript. <a href="{{ '/tags/' | relative_url }}">Browse posts by topic</a> or see the <a href="{{ '/sitemap.xml' | relative_url }}">sitemap</a>.
+      {%- endif -%}
+    </p>
+  </noscript>
   <p class="search__guidance" id="site-search-guidance">{{ search_guidance }}</p>
   <p class="search__status" id="site-search-status" role="status" aria-live="polite"></p>
   <ul class="search__results" id="site-search-results" aria-label="{{ search_results_label }}"></ul>

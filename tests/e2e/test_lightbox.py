@@ -65,8 +65,9 @@ TRIGGER_EN = "View full-size image"
 TRIGGER_VI = "Xem ảnh đầy đủ"
 
 # The EN/VI coffee pair shares `ref: cach-pha-ca-phe` (same article in both
-# languages); the EN post holds six informative images, the VI twin five
-# (its blockquote lead repeat is `aria-hidden`, #147).
+# languages); both posts hold six informative images (#309 gave the EN lead a
+# descriptive alt instead of `aria-hidden` so it joins the set; #335 did the
+# same for the VI lead with a Vietnamese alt).
 EN_POST = "/2022/10/27/brewing-vietnamese-coffee.html"
 VI_POST = "/vi/2022/10/27/cach-pha-ca-phe.html"
 
@@ -485,7 +486,7 @@ def test_vietnamese_post_uses_vietnamese_labels(built_site_url, page):
     assert page.get_by_role("button", name=CLOSE_VI).count() == 1
     assert page.get_by_role("button", name=PREV_VI).count() == 1
     assert page.get_by_role("button", name=NEXT_VI).count() == 1
-    assert page.locator(".lightbox__counter").inner_text() == "1 / 5"
+    assert page.locator(".lightbox__counter").inner_text() == "1 / 6"
     trigger_label = _triggers(page).first.get_attribute("aria-label") or ""
     assert trigger_label.startswith(TRIGGER_VI), (
         f"the VI trigger label must start with {TRIGGER_VI!r}, got "
@@ -495,15 +496,17 @@ def test_vietnamese_post_uses_vietnamese_labels(built_site_url, page):
     page.wait_for_selector(".lightbox[hidden]", state="attached", timeout=10_000)
 
 
-def test_decorative_repeats_never_become_triggers(built_site_url, page):
-    """The VI lead repeat is `aria-hidden` (#147): present, not a trigger."""
+def test_vi_lead_repeat_joins_the_trigger_set(built_site_url, page):
+    """The VI lead repeat carries a descriptive Vietnamese alt (#335,
+    mirroring #309 on the EN twin): present as a trigger — and no
+    `aria-hidden` repeat remains anywhere in the set."""
     page.goto(built_site_url.rstrip("/") + VI_POST, wait_until="load")
     page.wait_for_selector(".post-content img", state="attached", timeout=10_000)
     assert page.locator(".post-content img").count() == 6
-    assert _triggers(page).count() == 5, (
-        "the `aria-hidden` lead repeat must stay a plain image"
+    assert _triggers(page).count() == 6, (
+        "the VI lead repeat must join the set like its EN twin"
     )
-    assert page.locator('.post-content img[aria-hidden="true"]').count() == 1
+    assert page.locator('.post-content img[aria-hidden="true"]').count() == 0
 
 
 def test_single_image_set_hides_prev_next(built_site_url, page):
