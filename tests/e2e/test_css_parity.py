@@ -196,7 +196,13 @@ EXPECTED_VARIABLES = {
 # before bumping: pure addition, no existing rule moved; the button and
 # sheet render only on ToC posts (the visual baselines pin ToC-less posts
 # only) and stay `hidden`/desktop-none there, so no baseline refresh.
-EXPECTED_CSS_SHA256 = "a55e757d1f53250cc8fbcca89182a74c24ba7d26348e7ab2404a10d621e4df7c"
+# #395 (phone FAB stuck focus ring): the `toc` partial gained two additive
+# `.toc-fab` focus rules (`:focus:not(:focus-visible)` draws no outline so
+# taps leave no browser-default ring; `:focus-visible` keeps the 3px/3px
+# geometry in the theme-swapping link accent). Diffed old vs new before
+# bumping: pure addition, no existing rule moved; the outline only paints
+# on keyboard focus, so all baselined renders stay pixel-identical.
+EXPECTED_CSS_SHA256 = "3fdad34e8c36c5f8f49f18d6af795123b495945f6b4fbdaf416a438f9bccef69"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

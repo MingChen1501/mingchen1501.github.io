@@ -251,6 +251,28 @@ ul.post-toc__children {
   border-color: $brand-color-dark;
 }
 
+// Phone FAB focus (#395): a tap must never leave the browser-default
+// (black) `:focus` outline stuck on the round button, while keyboard
+// users keep a visible accent indicator. Pointer focus (including the
+// programmatic `fab.focus()` return after a tap-close, which never
+// matches `:focus-visible`) draws no outline at all; keyboard focus
+// draws the site link accent — `$link-base-color` compiles to
+// `var(--minima-link-base-color)`, so it follows the light/dark theme
+// with no extra override. Same 3px/3px geometry as the global
+// `:focus-visible` rule in `custom/_a11y.scss`; the outline follows the
+// 50% border radius. Placement stays fixed bottom-left (back-to-top
+// owns bottom-right): drag-to-move would need tap-vs-drag
+// disambiguation, a keyboard alternative, and position persistence for
+// a 48px button whose corner is already clear of every target.
+.toc-fab:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.toc-fab:focus-visible {
+  outline: 3px solid $link-base-color;
+  outline-offset: 3px;
+}
+
 .toc-fab__ring {
   position: absolute;
   inset: 0;

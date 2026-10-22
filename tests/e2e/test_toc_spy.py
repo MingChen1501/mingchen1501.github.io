@@ -440,6 +440,47 @@ def test_the_fab_styles_float_bottom_left_with_safe_area():
 
 
 @pytest.mark.static
+def test_the_fab_focus_is_accent_only_for_keyboards():
+    """Taps leave no ring; Tab shows the accent outline (#395).
+
+    The phone FAB is a round `<button>`, so a browser-default `:focus`
+    outline (black, rectangular) sticks out after a tap and never matches
+    the theme. Pointer focus — including the programmatic `fab.focus()`
+    return after a tap-close, which never matches `:focus-visible` — must
+    draw no outline at all, while keyboard focus keeps the 3px/3px
+    geometry of the global rule in the site link accent (a theme-swapping
+    variable, so no dark override is needed).
+    """
+    scss = _read(TOC_SCSS)
+    reset = re.search(r"\.toc-fab:focus:not\(\s*:focus-visible\s*\)\s*\{(.*?)\}", scss, re.S)
+    assert reset, (
+        "the FAB must neutralize pointer `:focus` so taps leave no "
+        "browser-default ring (#395)"
+    )
+    assert "outline: none" in reset.group(1) or "outline:none" in reset.group(1), (
+        "pointer focus on the FAB must draw no outline (#395)"
+    )
+    visible = re.search(r"\.toc-fab:focus-visible\s*\{(.*?)\}", scss, re.S)
+    assert visible, (
+        "the FAB must keep a visible keyboard focus indicator (#395)"
+    )
+    body = visible.group(1)
+    assert "outline: 3px solid $link-base-color" in body, (
+        "keyboard focus on the FAB must use the theme-aware link accent "
+        "(#395)"
+    )
+    assert "outline-offset: 3px" in body, (
+        "the FAB keyboard outline must keep the global 3px offset (#395)"
+    )
+    # The accent variable already swaps per theme (light `#1e69d8`, dark
+    # `#5691cd` via the skin custom properties), so — unlike the global
+    # `$brand-color-dark` rule — the FAB needs no dark-mode override here.
+    assert "toc-fab" not in _read(
+        REPO_ROOT / "_sass" / "minima" / "custom" / "_theme-toggle.scss"
+    ), "the FAB focus colour must need no dark override (#395)"
+
+
+@pytest.mark.static
 def test_the_spy_pins_manual_branches_against_auto_collapse():
     text = _read(SCRIPT)
     assert "data-manual" in text, (
@@ -1234,6 +1275,47 @@ def test_phone_fab_replaces_the_inline_mount(
         assert phone.evaluate(
             "document.documentElement.scrollWidth <= window.innerWidth"
         ), f"the FAB must not overflow a {width}px viewport (#383)"
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375, 414])
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_phone_fab_tap_close_leaves_no_outline_on_the_button(
+    built_site_url, browser, width, scheme
+):
+    """A tap-close returns focus with no stuck ring (#395).
+
+    Pointer activation (including the programmatic `fab.focus()` return,
+    which never matches `:focus-visible`) must leave the FAB with no
+    outline in either theme; focus itself still returns to the button so
+    the trap handoff is unchanged.
+    """
+    context, phone = _phone_page(browser, built_site_url, width, scheme)
+    try:
+        fab = phone.get_by_role("button", name=re.compile("On this page"))
+        fab.first.click()
+        expect(phone.locator(".toc-sheet")).to_be_visible()
+        # Pointer close (same path as a finger tap on the close button).
+        phone.locator(".toc-sheet__close").click()
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-fab')"
+        ), "tap-close must still return focus to the button (#395)"
+        outline = phone.evaluate(
+            """() => { const fab = document.querySelector('.toc-fab');
+              const style = getComputedStyle(fab);
+              return { style: style.outlineStyle,
+                focusVisible: fab.matches(':focus-visible') }; }"""
+        )
+        assert outline["style"] == "none", (
+            f"a tap-close left outline-style {outline['style']} on the FAB "
+            f"at {width}px (#395)"
+        )
+        assert outline["focusVisible"] is False, (
+            "the programmatic focus return after a tap must not match "
+            f":focus-visible at {width}px (#395)"
+        )
     finally:
         context.close()
 
