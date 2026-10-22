@@ -52,6 +52,14 @@
   padding: 0;
   border-radius: 0;
   object-fit: cover;
+  // Post-card hover (#402): the image eases larger inside its fixed
+  // 120x90 box (overflow hidden above) — transform-only, so the list
+  // never reflows. No motion, no zoom: the resting box is unchanged.
+  transition: transform $motion-base $motion-ease-out;
+}
+
+.post-list__item:hover .post-thumb img {
+  transform: scale(1.04);
 }
 
 // #245: dark-aware placeholder. Placeholder items render one

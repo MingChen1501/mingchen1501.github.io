@@ -1,1 +1,17 @@
 // Placeholder to allow overriding predefined variables smoothly.
+
+// Shared motion tokens (#402): one duration/easing scale for every
+// interactive control on the site. All durations (fast 120ms, base 180ms,
+// slow 240ms) and both easings (standard ease-out for most controls, a
+// spring-ish easing reserved for the FAB) are defined HERE and referenced
+// as `$motion-*` everywhere else — never redefined, never inlined as
+// literals. This file is imported before `minima/layout` and
+// `minima/custom-styles` (see `minima/initialize.scss`), so the tokens are
+// available to both the vendored layout and every custom partial,
+// including the keyframes and the reduced-motion guard in
+// `custom/_motion.scss`.
+$motion-fast: 120ms;
+$motion-base: 180ms;
+$motion-slow: 240ms;
+$motion-ease-out: cubic-bezier(0.2, 0, 0, 1);
+$motion-spring: cubic-bezier(0.34, 1.4, 0.64, 1);

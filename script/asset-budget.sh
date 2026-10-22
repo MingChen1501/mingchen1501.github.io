@@ -34,6 +34,13 @@
 # is gone with its ceiling. #345 re-measured after the nested-disclosure
 # rework: toc-spy.js grew ~5.1KB -> ~8.6KB with the branch collapse,
 # auto-expand, and pinning logic.)
+# Re-measured 2026-10-22 for #402 (dev build): post-source total
+# 49151 B (11 files) — copy-code.js carries the success-state class and
+# lightbox.js the per-navigation fade restart, ~260 B of intentional
+# addition, so the post ceiling moves 49152 -> 49664; the compiled main
+# sheet grows 48652 -> 52360 B with the shared keyframes, the global
+# reduced-motion guard, and the per-control tokenized transitions, so the
+# CSS ceiling moves 50176 -> 57344 (~10% headroom, per policy).
 #
 # Headroom policy: each ceiling sits ~10% above its measured total — wide
 # enough for a small intentional addition, tight enough that re-adding any
@@ -51,8 +58,8 @@
 # Max first-party JS bytes for home/tag/about/portfolio pages.
 MAX_JS_PAGE_BYTES=23552
 # Max first-party JS bytes for post pages (production worst case).
-MAX_JS_POST_BYTES=49152
+MAX_JS_POST_BYTES=49664
 # Max bytes for the compiled code-free assets/css/style.css.
-MAX_CSS_BYTES=50176
+MAX_CSS_BYTES=57344
 # Max bytes for the conditional companion assets/css/syntax.css (#275).
 MAX_SYNTAX_CSS_BYTES=19456

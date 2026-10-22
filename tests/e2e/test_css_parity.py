@@ -44,6 +44,7 @@ EXPECTED_ORDER = (
     "legibility",
     "theme-toggle",
     "list-thumbs",
+    "motion",
     "print",
 )
 
@@ -209,7 +210,22 @@ EXPECTED_VARIABLES = {
 # old vs new before bumping: pure addition, no existing rule moved; the
 # mark is only ever set on a pointer close, so all baselined renders stay
 # pixel-identical.
-EXPECTED_CSS_SHA256 = "8b633154582dae0184425cd306c657a9487a8195019b912b381b9d68eea2a245"
+# #402 (motion polish for the FAB and controls): the `custom-variables`
+# hook gained the shared `$motion-*` duration/easing tokens (fast 120ms,
+# base 180ms, slow 240ms, ease-out, FAB-only spring), the new `motion`
+# partial (imported first) holds the five shared keyframes plus the single
+# global reduced-motion guard, and every listed control gained
+# transform/opacity-only transitions/enter-animations through those tokens
+# (FAB press/hover + sheet open, ring/bar value smoothing, back-to-top
+# appear, theme/nav icon swaps, copy-code success pop, lightbox open +
+# image fade, share/chip/pager/post-card press/hover), with a print
+# kill-switch for all motion. Diffed old vs new before bumping: pure
+# addition except four tokenized substitutions (chevron 0.15s, ring/bar
+# 0.1s, theme 0.2s -> the matching tokens); no existing rule moved, every
+# animation ends at its resting box, and reduced-motion/print render
+# instantly — so all baselined renders stay pixel-identical and no baseline
+# refresh is needed.
+EXPECTED_CSS_SHA256 = "49f1a81aaf8dcecae0412bfe09782c29b46d14d85c9137fc62d8de3e161a8e2c"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

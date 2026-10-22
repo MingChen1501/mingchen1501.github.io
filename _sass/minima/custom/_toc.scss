@@ -109,7 +109,7 @@ ul.post-toc__children {
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
   border-top: 6px solid currentColor;
-  transition: transform 0.15s ease-in-out;
+  transition: transform $motion-base $motion-ease-out;
 }
 
 .post-toc__toggle[aria-expanded="false"] .post-toc__chevron {
@@ -245,10 +245,19 @@ ul.post-toc__children {
   display: flex;
   align-items: center;
   justify-content: center;
+  // Motion polish (#402): press/hover feedback on transform only (the
+  // spring easing is reserved for the FAB), so the 48px box never moves
+  // layout — only its paint. The state change itself stays instant.
+  transition: transform $motion-base $motion-spring;
 }
 
 .toc-fab:hover {
   border-color: $brand-color-dark;
+  transform: translateY(-1px) scale(1.03);
+}
+
+.toc-fab:active {
+  transform: scale(0.93);
 }
 
 // Phone FAB focus (#395): a tap must never leave the browser-default
@@ -305,7 +314,11 @@ ul.post-toc__children {
   stroke-linecap: round;
   stroke-dasharray: 125.66;
   stroke-dashoffset: 125.66;
-  transition: stroke-dashoffset 0.1s linear;
+  // Smooth value transitions (#402): the ring is one of the two
+  // sanctioned non-transform exceptions (see `custom/_motion.scss`) — the
+  // same percent reaches AT as label text, and scroll performance wins
+  // over smoothness (the script writes the offset straight through rAF).
+  transition: stroke-dashoffset $motion-fast linear;
 }
 
 .toc-fab__bars {
@@ -332,6 +345,18 @@ ul.post-toc__children {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
+}
+
+// Sheet open/close (#402): enter-animation paint only — the `hidden` flip
+// and the focus handoff in `toc-spy.js` stay synchronous, so motion never
+// delays the open, and closing stays instant by design (no exit animation
+// may postpone `hidden`). Final states are unchanged.
+.toc-sheet:not([hidden]) .toc-sheet__backdrop {
+  animation: motion-fade-in $motion-base $motion-ease-out;
+}
+
+.toc-sheet:not([hidden]) .toc-sheet__panel {
+  animation: motion-sheet-in $motion-slow $motion-ease-out;
 }
 
 .toc-sheet__panel {
@@ -377,6 +402,11 @@ ul.post-toc__children {
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
+  transition: transform $motion-fast $motion-ease-out;
+
+  &:active {
+    transform: scale(0.92);
+  }
 }
 
 .toc-sheet__body {

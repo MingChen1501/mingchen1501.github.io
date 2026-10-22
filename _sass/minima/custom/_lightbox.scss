@@ -120,6 +120,35 @@
   font-size: $base-font-size;
   line-height: 1;
   cursor: pointer;
+  // Press feedback (#402): transform-only. The prev/next resting
+  // transform recentres vertically, so their press composes with it.
+  transition: transform $motion-fast $motion-ease-out, opacity $motion-fast $motion-ease-out;
+}
+
+.lightbox__close:active {
+  transform: scale(0.92);
+}
+
+.lightbox__prev:active,
+.lightbox__next:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+// Open/close and image fade (#402): enter-animation paint only — the
+// `hidden` flip and the focus handoff in `lightbox.js` stay synchronous,
+// so opening never waits and closing stays instant. The image fade
+// retriggers per navigation through `.lightbox__image--fresh` (restarted
+// in `render()`); every frame ends at the resting box.
+.lightbox:not([hidden]) .lightbox__backdrop {
+  animation: motion-fade-in $motion-base $motion-ease-out;
+}
+
+.lightbox:not([hidden]) .lightbox__dialog {
+  animation: motion-pop $motion-base $motion-ease-out;
+}
+
+.lightbox__image--fresh {
+  animation: motion-fade-in $motion-fast $motion-ease-out;
 }
 
 // Prev/next float at the viewport edges, vertically centered on the
@@ -171,8 +200,10 @@
   }
 }
 
-// The script never animates (instant show/hide), so there is nothing to
-// gate — this only pins that promise against future transitions.
+// Open/close and navigation fade with transform/opacity-only enter
+// animations (#402), killed under `prefers-reduced-motion` — state changes
+// (open, close, prev/next) stay instant there. This pins that promise
+// against future transitions too.
 @media (prefers-reduced-motion: reduce) {
   .lightbox,
   .lightbox * {
