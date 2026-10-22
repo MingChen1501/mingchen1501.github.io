@@ -2,7 +2,7 @@
 layout: post
 lang: vi
 ref: life-around-a-shrimp-pond
-date: 2026-10-22
+date: 2026-10-22 13:22 +0700
 author: Ming Chen
 title: "Cuộc sống quanh ao tôm"
 tags: [doi-song]

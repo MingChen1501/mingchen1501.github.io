@@ -200,7 +200,7 @@ def _built_for_source(built_site, path):
         slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
         return _file_for(built_site, f"/{path.stem[:10].replace('-', '/')}/{slug}.html")
     if path.parent == VI_POSTS_DIR:
-        date = _value(front_matter, "date") or ""
+        date = (_value(front_matter, "date") or "")[:10]
         slug = path.stem
         return _file_for(built_site, f"/vi/{date.replace('-', '/')}/{slug}.html")
     if name == "index.html" and path.parent == REPO_ROOT:

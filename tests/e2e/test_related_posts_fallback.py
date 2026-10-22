@@ -26,7 +26,7 @@ Guarded here:
 """
 
 import re
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -38,8 +38,8 @@ FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.S)
 
 EN_SINGLETON = "2022/12/25/explaining-the-internet.html"
 VI_SINGLETON = "vi/2022/12/25/gioi-thieu-ve-internet.html"
-EN_SINGLETON_DATE = date(2022, 12, 25)
-VI_SINGLETON_DATE = date(2022, 12, 25)
+EN_SINGLETON_DATE = datetime(2022, 12, 25)
+VI_SINGLETON_DATE = datetime(2022, 12, 25)
 EN_RELATED = "2026/10/17/real-world-agent-orchestration-with-free-opencode.html"
 
 
@@ -48,31 +48,49 @@ def _read(path):
 
 
 def _en_post_dates():
-    """Published EN post URL -> date, from `_posts` filenames."""
+    """Published EN post URL -> datetime, from filename day plus any
+    front-matter `date:` time override (#398: same-day posts declare
+    `HH:MM`, which outranks the filename midnight)."""
     posts = {}
     for path in (REPO_ROOT / "_posts").glob("*.md"):
+        text = _read(path)
         match = re.match(r"(\d{4})-(\d{2})-(\d{2})-(.+)\.md$", path.name)
         if not match:
             continue
-        if re.search(r"^published:\s*false", _read(path), re.M):
+        if re.search(r"^published:\s*false", text, re.M):
             continue
         year, month, day, slug = match.groups()
-        posts[f"/{year}/{month}/{day}/{slug}.html"] = date(
-            int(year), int(month), int(day)
+        moment = datetime(int(year), int(month), int(day))
+        declared = re.search(
+            r"^date:\s*\d{4}-\d{2}-\d{2}[ \t]+(\d{2}):(\d{2})", text, re.M
         )
+        if declared:
+            moment = moment.replace(
+                hour=int(declared.group(1)), minute=int(declared.group(2))
+            )
+        posts[f"/{year}/{month}/{day}/{slug}.html"] = moment
     return posts
 
 
 def _vi_post_dates():
-    """VI post URL -> front-matter date, from `_vi_posts`."""
+    """VI post URL -> front-matter datetime, from `_vi_posts`.
+
+    Day-only `date:` values mean midnight; #398 same-day posts declare
+    `HH:MM` so the expectation model matches the layout's time sort.
+    """
     posts = {}
     for path in (REPO_ROOT / "_vi_posts").glob("*.md"):
-        match = re.search(r"^date:\s*(\d{4})-(\d{2})-(\d{2})", _read(path), re.M)
+        match = re.search(
+            r"^date:\s*(\d{4})-(\d{2})-(\d{2})(?:[ \t]+(\d{2}):(\d{2}))?",
+            _read(path),
+            re.M,
+        )
         if not match:
             continue
-        year, month, day = match.groups()
-        posts[f"/vi/{year}/{month}/{day}/{path.stem}.html"] = date(
-            int(year), int(month), int(day)
+        year, month, day, hour, minute = match.groups()
+        posts[f"/vi/{year}/{month}/{day}/{path.stem}.html"] = datetime(
+            int(year), int(month), int(day),
+            int(hour or 0), int(minute or 0),
         )
     return posts
 

@@ -2,6 +2,7 @@
 layout: post
 lang: en
 ref: back-to-linux-fundamentals
+date: 2026-10-22 15:40 +0700
 author: Ming Chen
 title: "Going back to Linux fundamentals after years of vibe coding"
 tags: [linux-tooling]

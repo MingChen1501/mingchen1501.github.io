@@ -2,6 +2,7 @@
 layout: post
 lang: en
 ref: hai-tuan-van-hanh-blog-cung-ai-agent-team
+date: 2026-10-20 10:40 +0700
 author: Ming Chen
 title: "Two weeks of running an AI agent team on my personal blog"
 tags: [ai-agent]

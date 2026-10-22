@@ -2,7 +2,7 @@
 layout: post
 lang: vi
 ref: back-to-linux-fundamentals
-date: 2026-10-22
+date: 2026-10-22 15:40 +0700
 author: Ming Chen
 title: "Quay lại Linux căn bản sau nhiều năm vibe code"
 tags: [linux-tooling]

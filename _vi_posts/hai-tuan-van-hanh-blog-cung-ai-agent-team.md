@@ -2,7 +2,7 @@
 layout: post
 lang: vi
 ref: hai-tuan-van-hanh-blog-cung-ai-agent-team
-date: 2026-10-20
+date: 2026-10-20 10:40 +0700
 author: Ming Chen
 title: "Hai tuần vận hành blog cá nhân cùng một đội AI agent"
 tags: [ai-agent]
