@@ -45,7 +45,7 @@ Counting convention: raw `wc -l` per area; the E2E headline counts `test_*.py` l
   PDFs at `assets/` root (`CV-Tran-Cong-Minh-14-5-23.pdf`,
   `resume-26-5-23.pdf`, 656KB each, unreferenced) were removed —
   ~3.7MB freed. Kept: `assets/resume-tran-cong-minh.pdf` (72KB, live
-  on `portfolio.md` / `vi/portfolio.md`).
+  on `resume.md` / `vi/resume.md`).
 - Unreachable code: the three solarized skins (no importer while
   `minima.skin: auto`). Follow-up: #296.
 
@@ -56,7 +56,7 @@ Counting convention: raw `wc -l` per area; the E2E headline counts `test_*.py` l
 2. #294 — implemented: orphan one-offs removed per owner decision
    (2026-10-21, delete all, no redirects) — `gift.html`, `fullmonth/`,
    and the two stale root PDFs; kept `assets/resume-tran-cong-minh.pdf`
-   (live on portfolio pages). `risk-medium` (reader-visible URLs).
+   (live on resume pages). `risk-medium` (reader-visible URLs).
 3. #295 — hoist the thrice-pasted `asset_version` token into one include.
 4. #296 — delete the unreachable solarized skins.
 5. #297 — map and consolidate overlapping E2E guards.

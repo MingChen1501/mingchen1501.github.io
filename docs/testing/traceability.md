@@ -11,7 +11,7 @@ FR/NFR text: `requirements/fr.md`, `requirements/nfr.md`.
 | FR-4 | `test_giscus_comments.py`, `test_comments.py`, `test_comments_markup.py` |
 | FR-5 | `test_robots_sitemap_llms.py`, `test_seo_bilingual.py` |
 | FR-6 | `test_lightbox.py`, `test_copy_code.py`, `test_lazy_load_images.py` |
-| FR-7 | `test_pagination.py`, `test_portfolio_h1.py`, `test_about_privacy.py` |
+| FR-7 | `test_pagination.py`, `test_resume_h1.py`, `test_about_privacy.py` |
 | FR-8 | `test_site_utils.py` (+ `docs/architecture/javascript.md`) |
 | FR-9 | `test_excluded_paths.py` |
 | NFR-1 | `script/check-images`, `test_check_images.py` |
