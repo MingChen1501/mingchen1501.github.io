@@ -14,7 +14,8 @@
   // Chrome around the article never prints: header/nav, sidebars, both TOC
   // mounts (inline + sidebar copy), the share row, Related posts, comments
   // (and the disabled-comments notice), footer, the fixed reading progress
-  // bar, the back-to-top pill, the lightbox overlay and the skip link.
+  // bar, the back-to-top pill, the phone ToC button + sheet (#383),
+  // the lightbox overlay and the skip link.
   .site-header,
   .site-nav,
   .post-sidebar,
@@ -28,6 +29,8 @@
   .site-footer,
   .reading-progress,
   .back-to-top,
+  .toc-fab,
+  .toc-sheet,
   .lightbox,
   .skip-link {
     display: none !important;

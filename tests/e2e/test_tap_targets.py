@@ -15,8 +15,9 @@ Guarded here:
 - at 360px every interactive target on `/`, `/vi/`, a post page (with TOC)
   and a tag page (EN + VI) measures >= 24px in both dimensions: chips,
   pager, social icons, lang switcher, opened mobile menu items, sidebar
-  titles / tag-post links / "view all" links, TOC summary +
-  entries, tag back-link and footer email (browser);
+  titles / tag-post links / "view all" links, the phone FAB (JS path) or
+  the inline TOC summary + entries (no-JS fallback), tag back-link and
+  footer email (browser);
 - at desktop width the nav items measure >= 24px tall (browser).
 
 The browser guards use the session's shared `built_site`/`built_site_url`
@@ -229,9 +230,24 @@ POST_PAGE_SELECTORS = [
     ".social-media-list a",
     "a.lang-switcher",
     ".site-nav .nav-item",
+    # Phone FAB (#383): on the JS path the inline mount (summary + entries)
+    # goes away entirely — the script hides it behind `html.toc-fab-on` and
+    # moves its nav into the shut sheet — so the floating button is the ToC
+    # target to measure here. The no-JS fallback keeps the inline list; it
+    # is covered by `test_post_page_toc_without_javascript` below, and the
+    # 24px SCSS minimum on the summary stays pinned by the static guard
+    # above. Sheet rows only render measurably once the sheet opens, so
+    # they belong to the sheet tests in `test_toc_spy.py`, not here.
+    ".toc-fab",
+    ".contact-list .u-email",
+]
+
+# No-JS fallback selectors (#383): with scripts disabled the FAB never
+# reveals (it ships `hidden`) and the inline collapsed ToC stays the
+# usable target, so both the summary and every entry must clear 24px.
+NO_JS_TOC_SELECTORS = [
     ".post-toc__summary",
     ".post-toc__item a",
-    ".contact-list .u-email",
 ]
 
 
@@ -311,12 +327,62 @@ def test_list_page_targets_meet_the_minimum_at_360px(
 def test_post_page_targets_meet_the_minimum_at_360px(
     built_site, built_site_url, browser,
 ):
+    """JS path: the FAB replaces the inline ToC, so measure the FAB (#383)."""
     path = _toc_post_url(built_site)
     with _viewport(browser, built_site_url, PHONE_WIDTH) as page:
         _open(page, built_site_url, path)
+        # The FAB reveals asynchronously (deferred scroll-spy): wait for the
+        # handoff flag so the button has its 48px box before measuring.
+        page.wait_for_function(
+            "document.documentElement.classList.contains('toc-fab-on')",
+            timeout=10_000,
+        )
         _open_mobile_menu(page)
         measured = page.evaluate(_MEASURE_JS, POST_PAGE_SELECTORS)
         _assert_targets(measured, path, PHONE_WIDTH)
+        fab = measured[".toc-fab"][0]
+        assert fab["w"] >= 44 and fab["h"] >= 44, (
+            f"{path} at {PHONE_WIDTH}px: the ToC button measures "
+            f"{fab['w']:.1f}x{fab['h']:.1f}, below the 44px preferred size "
+            "(#383)"
+        )
+
+
+def test_post_page_toc_stays_tappable_without_javascript(
+    built_site, built_site_url, browser,
+):
+    """No-JS fallback: the inline ToC stays visible and tappable (#383).
+
+    With scripts disabled the FAB never reveals and the inline collapsed
+    ToC from #382 stays the usable target, so the summary and every entry
+    must render and clear the 24px minimum here. (The JS path moves that
+    nav into the shut sheet, so it is measured as the FAB above instead.)
+    """
+    path = _toc_post_url(built_site)
+    context = browser.new_context(
+        viewport={"width": PHONE_WIDTH, "height": 800},
+        java_script_enabled=False,
+    )
+    try:
+        page = context.new_page()
+        origin = urlparse(built_site_url).netloc
+        page.route(
+            "**/*",
+            lambda route: route.continue_()
+            if urlparse(route.request.url).netloc == origin
+            else route.abort(),
+        )
+        _open(page, built_site_url, path)
+        assert page.locator(".toc-fab").is_hidden(), (
+            f"{path}: the FAB must stay hidden without JS (#383)"
+        )
+        assert page.locator(".toc-sheet").is_hidden(), (
+            f"{path}: the sheet must stay hidden without JS (#383)"
+        )
+        measured = page.evaluate(_MEASURE_JS, NO_JS_TOC_SELECTORS)
+        _assert_targets(measured, path, PHONE_WIDTH)
+    finally:
+        context.close()
 
 
 def test_desktop_nav_items_meet_the_minimum(built_site_url, browser):

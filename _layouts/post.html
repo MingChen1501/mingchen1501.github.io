@@ -229,6 +229,45 @@ layout: base
 
   </div>
 
+  {%- comment -%}
+    Phone ToC floating button + sheet (#383): progressive enhancement for
+    posts with a ToC. Both controls ship with the `hidden` attribute, so
+    readers without JS never see a dead button or an empty sheet — the
+    inline collapsed ToC from #382 stays their usable fallback. When JS
+    runs, `assets/js/toc-spy.js` (same post-only script, no second
+    observer) hides the inline mount via `html.toc-fab-on`, moves its nav
+    into the sheet slot, reveals the button, and drives the decorative
+    progress ring from the article's own scrollable range. Desktop keeps
+    the sidebar ToC untouched. Labels follow `post_lang` like the rest of
+    the layout, so the script carries no locale logic.
+  {%- endcomment -%}
+  {%- if show_toc -%}
+  {%- assign toc_fab_label = 'On this page' -%}
+  {%- assign toc_fab_close = 'Close' -%}
+  {%- if post_lang == 'vi' -%}
+  {%- assign toc_fab_label = 'Trong bài này' -%}
+  {%- assign toc_fab_close = 'Đóng' -%}
+  {%- endif -%}
+  <button type="button" class="toc-fab" hidden data-toc-fab aria-expanded="false" aria-controls="toc-sheet">
+    <svg class="toc-fab__ring" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <circle class="toc-fab__track" cx="24" cy="24" r="20"></circle>
+      <circle class="toc-fab__value" cx="24" cy="24" r="20" data-toc-ring></circle>
+    </svg>
+    <span class="toc-fab__bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    <span class="visually-hidden" data-toc-fab-label data-toc-fab-base="{{ toc_fab_label }}">{{ toc_fab_label }}, 0%</span>
+  </button>
+  <div class="toc-sheet" hidden data-toc-sheet id="toc-sheet">
+    <div class="toc-sheet__backdrop" data-toc-backdrop></div>
+    <div class="toc-sheet__panel" role="dialog" aria-modal="true" aria-label="{{ toc_fab_label }}">
+      <div class="toc-sheet__header">
+        <span class="toc-sheet__title">{{ toc_fab_label }}</span>
+        <button type="button" class="toc-sheet__close" data-toc-close aria-label="{{ toc_fab_close }}"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="toc-sheet__body" data-toc-slot></div>
+    </div>
+  </div>
+  {%- endif -%}
+
   {%- assign comments_provider = site.comments.provider | default: '' -%}
   {%- if comments_provider == '' and site.disqus.shortname -%}
     {%- assign comments_provider = 'disqus' -%}

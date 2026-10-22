@@ -43,8 +43,11 @@ MAX_HELPER_CODE_LINES = 45
 # feature additions. #258 adds `giscus-theme.js` (~3KB), which loads solely
 # on Giscus comment pages — non-comment pages fetch nothing new.
 # (#342 removed `search.js`, ~8KB, with the search page. #345 ships the
-# post-only `toc-spy.js` nested disclosure + scroll-spy, ~9KB.)
-MAX_TOTAL_JS_BYTES = 41984
+# post-only `toc-spy.js` nested disclosure + scroll-spy, ~9KB. #383 grows
+# it to ~14.5KB with the phone FAB + sheet handoff, article-range progress
+# ring, and dialog focus management — same observer and tick, no new
+# request.)
+MAX_TOTAL_JS_BYTES = 49152
 
 READY_CONSUMERS = (
     "copy-code.js",

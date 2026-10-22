@@ -1,29 +1,50 @@
-/* ToC nested disclosure with scroll-spy (#345) and the phone row model
- * (#377). `_includes/post-toc.html` renders a NESTED list (children
+/* ToC nested disclosure with scroll-spy (#345) and the phone FAB model
+ * (#383). `_includes/post-toc.html` renders a NESTED list (children
  * `<ul>`s as real descendants of their parent `<li>`) starting FULLY
  * EXPANDED (`<details open>`, every branch `aria-expanded="true"`, no
  * `hidden`): without JS every level is visible and every anchor works.
  * This script owns collapsing/auto-expansion: init collapses every branch
- * (H2-only default; `hidden` keeps shut subtrees out of the a11y tree);
- * on phone layouts it also starts the INLINE copy as one summary row (its
- * open list would fill most of the first viewport — the desktop sidebar
- * copy stays open). The scroll-spy rule (last heading past the viewport
- * top wins; offset from the measured `.site-header` height when
- * sticky/fixed, else a small slack — the header is non-sticky, pinned by
- * a static guard) marks one row per mount (`aria-current="location"`,
- * both mounts together), auto-expands the active branch plus ancestors,
- * collapses auto-opened branches on leave unless pinned by hand
- * (`data-manual` survives until the next explicit toggle), and keeps the
- * active row inside a bounded phone panel via the panel's own scrollTop
- * (the page itself never moves). Auto-expansion never moves focus.
+ * (H2-only default; `hidden` keeps shut subtrees out of the a11y tree).
+ * On phone layouts the INLINE copy goes away entirely: `_layouts/post.html`
+ * ships a floating button + bottom sheet (both `hidden`, so no-JS readers
+ * keep the inline collapsed ToC from #382 as their fallback), and this
+ * script — the same one, no second observer — hides the inline mount via
+ * `html.toc-fab-on`, moves its nav into the sheet slot, reveals the
+ * button, and drives the decorative progress ring from the article's own
+ * scrollable range (0% above the body, 100% at its end; the label text
+ * carries the same value for AT). The desktop sidebar copy stays open.
+ * The scroll-spy rule (last heading past the viewport top wins; offset
+ * from the measured `.site-header` height when sticky/fixed, else a small
+ * slack — the header is non-sticky, pinned by a static guard) marks one
+ * row per mount (`aria-current="location"`, sidebar plus sheet together),
+ * auto-expands the active branch plus ancestors, collapses auto-opened
+ * branches on leave unless pinned by hand (`data-manual` survives until
+ * the next explicit toggle), and keeps the active row inside the sheet via
+ * the moved nav's own scrollTop (the page itself never moves).
  * Triggers: `IntersectionObserver` plus a passive rAF-throttled
- * scroll/resize fallback; link clicks mark immediately. No smooth
- * scrolling (nothing for `prefers-reduced-motion` to disable). Real
- * `<button>` toggles give Enter/Space natively; `tabindex`, focus, and
- * the desktop outer `details[open]` are never touched.
+ * scroll/resize fallback; link clicks mark immediately and shut the
+ * sheet. The sheet shuts on its close button, its backdrop, and Esc;
+ * focus moves into it on open and returns to the button on close — a
+ * row tap returns focus at once and again on `hashchange` (Firefox
+ * resets focus to the body as the navigation lands). The panel keeps
+ * `role="dialog" aria-modal="true"` with a real focus trap rather than
+ * dropping to a plain disclosure: a modal promise without a trap lets
+ * Tab wander behind the backdrop, which is worse for AT users than no
+ * dialog role — and the trap is one keydown branch over the panel's own
+ * links and buttons (no second subscription, no `tabindex` juggling),
+ * so it cannot drift out of sync. While open, the covered landmarks go
+ * `inert` (tab order + a11y tree where implemented) and `aria-hidden`
+ * (older AT), restored on every close path.
+ * Opening the sheet never moves focus by itself beyond that handoff, and
+ * auto-expansion never moves focus at all. Anchor jumps stay instant, so
+ * there is nothing for `prefers-reduced-motion` to disable here (the ring
+ * transition is pinned in CSS). Real `<button>` toggles give Enter/Space
+ * natively; `tabindex` and the desktop outer `details[open]` are never
+ * touched.
  */
 (function () {
   var EDGE_PX = 24;
+  var RING_C = 125.66;
 
   function headerOffset() {
     var header = document.querySelector('.site-header');
@@ -101,20 +122,157 @@
       );
     });
 
-    // Phone default (#377): the open inline list fills most of the first
-    // phone viewport (audit 2026-10-22: 510px, 73% of 700px). Start it as
-    // one summary row on phone layouts; desktop stays open, no-JS still
-    // ships `open`, a tap reopens natively. Keyed off the visible mount.
-    Array.prototype.forEach.call(navs, function (nav) {
-      var mount = nav.closest ? nav.closest('.post-toc-mount--inline') : null;
-      if (!mount || window.getComputedStyle(mount).display === 'none') {
+    // Phone FAB model (#383): the open inline list fills most of the first
+    // phone viewport (audit 2026-10-22: 510px, 73% of 700px), so on phone
+    // layouts the inline mount goes away and the floating button + sheet
+    // take over. Keyed off the visible mount, never a hardcoded width; the
+    // desktop sidebar copy stays open, and no-JS still ships the inline
+    // list (the `toc-fab-on` class below is JS-only). The inline nav node
+    // itself moves into the sheet slot, so the spy keeps marking the same
+    // nodes — one `aria-current` per visible mount, same observer, same
+    // rAF tick, no second subscription anywhere.
+    var fab = document.querySelector('[data-toc-fab]');
+    var sheet = document.querySelector('[data-toc-sheet]');
+    var slot = sheet ? sheet.querySelector('[data-toc-slot]') : null;
+    var ring = fab ? fab.querySelector('[data-toc-ring]') : null;
+    var fabLabel = fab ? fab.querySelector('[data-toc-fab-label]') : null;
+    var fabBase = fabLabel
+      ? fabLabel.getAttribute('data-toc-fab-base') || ''
+      : '';
+    var closeBtn = sheet ? sheet.querySelector('[data-toc-close]') : null;
+    var panel = sheet ? sheet.querySelector('.toc-sheet__panel') : null;
+    var backdrop = sheet
+      ? sheet.querySelector('[data-toc-backdrop]')
+      : null;
+    var article = document.querySelector('.post-content');
+    var inlineMount = document.querySelector('.post-toc-mount--inline');
+    var phone = !!inlineMount &&
+      !(window.getComputedStyle(inlineMount).display === 'none');
+    var fabOn = !!(fab && sheet && slot && phone);
+    if (fabOn) {
+      var inlineNav = inlineMount.querySelector('.post-toc__nav');
+      if (inlineNav) {
+        slot.appendChild(inlineNav);
+      }
+      document.documentElement.classList.add('toc-fab-on');
+      fab.hidden = false;
+    }
+
+    function fabProgress() {
+      if (!fabOn || !ring || !fabLabel || !article || fab.hidden) {
         return;
       }
-      var box = nav.closest ? nav.closest('details.post-toc') : null;
-      if (box && box.hasAttribute('open')) {
-        box.removeAttribute('open');
+      var rect = article.getBoundingClientRect();
+      var height = article.offsetHeight || rect.height;
+      var start = rect.top + window.scrollY;
+      var end = start + height - window.innerHeight;
+      var ratio;
+      if (end <= start) {
+        ratio = window.scrollY >= start ? 1 : 0;
+      } else {
+        ratio = (window.scrollY - start) / (end - start);
+        if (ratio < 0) {
+          ratio = 0;
+        }
+        if (ratio > 1) {
+          ratio = 1;
+        }
       }
-    });
+      var pct = Math.round(ratio * 100);
+      ring.style.strokeDashoffset = String(RING_C * (1 - ratio));
+      fabLabel.textContent = fabBase + ', ' + pct + '%';
+    }
+
+    // Row-tap focus return (#383): the tapped hash arms the return;
+    // the `hashchange` listener below consumes it. Open/close disarm.
+    var rowHash = null;
+
+    // Covered landmarks (#383 review): named explicitly because the
+    // sheet itself lives in the article — inerting a shared ancestor
+    // would silence the panel too. The FAB stays out: it is the sheet's
+    // own toggle (it owns the panel via `aria-controls` and click
+    // toggles it shut), and the Tab trap already keeps keyboard focus
+    // inside — inerting it would only yank the AT context from its label.
+    var COVERED_SELECTORS =
+      '.site-header, .post-header, .post-content, .post-sidebar, ' +
+      '.share, .comments';
+
+    function setBackgroundModal(modal) {
+      Array.prototype.forEach.call(
+        document.querySelectorAll(COVERED_SELECTORS),
+        function (el) {
+          if (modal) {
+            el.setAttribute('inert', '');
+            el.setAttribute('aria-hidden', 'true');
+          } else {
+            el.removeAttribute('inert');
+            el.removeAttribute('aria-hidden');
+          }
+        }
+      );
+    }
+
+    // Tab trap (#383 review): the `aria-modal` panel owns Tab while
+    // open, wrapping first-to-last both ways over rendered stops only
+    // (collapsed branches are `hidden`, so their rows never tab). Every
+    // stop is a native link or button; the tab order itself stays
+    // untouched.
+    var TRAP_SELECTOR = 'a[href], button:not([disabled])';
+
+    function trapTab(event) {
+      if (!panel) {
+        return;
+      }
+      var stops = Array.prototype.filter.call(
+        panel.querySelectorAll(TRAP_SELECTOR),
+        function (el) {
+          return el.getClientRects().length > 0;
+        }
+      );
+      if (!stops.length) {
+        event.preventDefault();
+        return;
+      }
+      var first = stops[0];
+      var last = stops[stops.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    function openSheet() {
+      if (!fabOn || !sheet.hidden) {
+        return;
+      }
+      rowHash = null;
+      sheet.hidden = false;
+      fab.setAttribute('aria-expanded', 'true');
+      // Inert first: the opener (the FAB) is covered too, so focusing
+      // the panel before this would blur right back out.
+      setBackgroundModal(true);
+      apply();
+      if (closeBtn) {
+        closeBtn.focus();
+      }
+    }
+
+    function closeSheet(refocus) {
+      if (!fabOn || sheet.hidden) {
+        return;
+      }
+      rowHash = null;
+      sheet.hidden = true;
+      fab.setAttribute('aria-expanded', 'false');
+      // Restore before refocusing: the button is covered while open.
+      setBackgroundModal(false);
+      if (refocus !== false) {
+        fab.focus();
+      }
+    }
 
     var activeId = null;
 
@@ -175,9 +333,9 @@
           }
         }
       );
-      // Bounded phone panel (#377): the inline nav caps at 50vh with its
-      // own scroll. Nudge ONLY the panel's scrollTop — the page itself
-      // never moves (the #345 no-page-move rule still holds).
+      // Bounded sheet panel (#383, as #377 before it): the moved nav caps
+      // with its own scroll. Nudge ONLY the panel's scrollTop — the page
+      // itself never moves (the #345 no-page-move rule still holds).
       if (activeLink && nav.scrollHeight > nav.clientHeight + 1) {
         var panel = nav.getBoundingClientRect();
         var cell = activeLink.getBoundingClientRect();
@@ -210,6 +368,9 @@
       Array.prototype.forEach.call(navs, function (nav) {
         syncBranches(nav, id);
       });
+      // The ring keeps tracking while the sheet stays shut: same tick, no
+      // extra listener, reads batched above before the style write.
+      fabProgress();
     }
 
     var scheduled = false;
@@ -256,11 +417,59 @@
         if (!link || !nav.contains(link)) {
           return;
         }
-        // The anchor jump is instant; mark the row now instead of waiting
-        // for the next scroll event so the click feels immediate.
-        mark(link.getAttribute('href').slice(1));
+        // Mark at once so the click feels immediate; a row tap inside
+        // the open sheet also shuts it: hide, focus the button, and arm
+        // the return for when the fragment lands — Firefox resets focus
+        // to the body after this task (#383).
+        var rowHref = link.getAttribute('href');
+        mark(rowHref.slice(1));
+        if (fabOn && sheet.contains(link)) {
+          closeSheet(false);
+          fab.focus();
+          rowHash = rowHref;
+        }
       });
     });
+
+    if (fabOn) {
+      fab.addEventListener('click', function () {
+        if (sheet.hidden) {
+          openSheet();
+        } else {
+          closeSheet();
+        }
+      });
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+          closeSheet();
+        });
+      }
+      if (backdrop) {
+        backdrop.addEventListener('click', function () {
+          closeSheet();
+        });
+      }
+      document.addEventListener('keydown', function (event) {
+        if (!fabOn || sheet.hidden) {
+          return;
+        }
+        if (event.key === 'Tab') {
+          trapTab(event);
+          return;
+        }
+        if (event.key === 'Escape' || event.key === 'Esc') {
+          closeSheet();
+        }
+      });
+      // The tapped fragment lands after the tap task: refocus then
+      // (Firefox resets focus to the body). Pending tap only (#383).
+      window.addEventListener('hashchange', function () {
+        if (rowHash !== null && window.location.hash === rowHash) {
+          rowHash = null;
+          fab.focus();
+        }
+      });
+    }
 
     if ('IntersectionObserver' in window) {
       var observer = new IntersectionObserver(function () {
