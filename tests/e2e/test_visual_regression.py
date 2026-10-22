@@ -126,6 +126,17 @@ _FREEZE_CSS = """
   scroll-behavior: auto !important;
   caret-color: transparent !important;
 }
+/* Portfolio PDF embed (#384 follow-up): Chromium's PDF plugin paints its
+   viewer background nondeterministically in CI (white on some runs, black
+   on others — same SHA passed then failed with bit-identical diffs), and
+   the settle step below only gates `<img>` decoding, so the embed can
+   never gate the shot. Hide the plugin box from captures (layout is
+   preserved, so geometry stays asserted); the embed itself stays pinned
+   by `test_portfolio_bodies_keep_pdf_resume_embed` in
+   test_portfolio_h1.py. */
+object[type="application/pdf"] {
+  visibility: hidden !important;
+}
 """
 
 _SETTLE_JS = """
@@ -307,6 +318,21 @@ def test_visual_baseline(stem, path, width, built_site_url, browser, browser_nam
         f"{CHANNEL_TOLERANCE}); if the change is intentional, regenerate "
         "baselines with `UPDATE_BASELINES=1 python -m pytest "
         "tests/e2e/test_visual_regression.py -q` (#208)"
+    )
+
+
+@pytest.mark.static
+def test_freeze_css_hides_pdf_embeds():
+    """Captures must hide the PDF plugin box (#384 follow-up): Chromium's
+    PDF viewer paints its background nondeterministically in CI (white on
+    some runs, black on others for the identical SHA), and the settle step
+    only gates `<img>` decoding, so the embed must never reach the shot.
+    `visibility` (not `display`) keeps the box geometry asserted."""
+    assert 'object[type="application/pdf"]' in _FREEZE_CSS, (
+        "the freeze CSS must target the PDF object embed"
+    )
+    assert "visibility" in _FREEZE_CSS and "hidden" in _FREEZE_CSS, (
+        "the PDF embed must hide with `visibility: hidden` (layout preserved)"
     )
 
 
