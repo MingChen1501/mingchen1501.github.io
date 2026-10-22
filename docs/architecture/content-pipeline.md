@@ -68,6 +68,28 @@ Known wart: the lifestyle pillar key is `doi-song` while the EN page file is
   included only by `post.html:255`. Theme sync via `giscus-theme.js`.
   Guarded by `test_comments.py`, `test_comments_markup.py` and `test_giscus_comments.py`.
 
+## Image delivery
+
+Deliberate design, not a gap (owner decision on #307, option A — keep
+today's behaviour; #112 remainder closed): content images ship as single
+width-constrained files with runtime JS lazy-load. No `srcset` variants,
+no build-time `loading="lazy"`.
+
+- Lazy-load: `assets/js/lazy-load.js` (#86) marks every image inside
+  `.post-content` / `.page-content` / `article.post` as `loading="lazy"`
+  except the first, which stays eager (it can be the LCP element); images
+  that already declare a loading mode are never touched. No-JS readers get
+  eager loading.
+- No `srcset`: GitHub Pages builds with `--safe`, so there is no
+  image-resize pipeline, and `assets/img/` already uses ~4.2MB of the 6MB
+  `script/check-images` budget — generated variants would exceed it.
+- No build-time `loading="lazy"`: kramdown cannot inject the attribute, so
+  it would need IAL attributes on ~20 images — churn with LCP risk for
+  marginal gain over the JS rule.
+- Revisit (options B/C on #307) only if image delivery moves off
+  Pages-safe builds (a resize pipeline or CI-generated variants) or the
+  asset budget is raised.
+
 ## Boundaries
 
 - List rendering belongs in includes, not layouts: `post-thumbnail.html`,
