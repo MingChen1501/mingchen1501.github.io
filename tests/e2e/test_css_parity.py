@@ -233,7 +233,12 @@ EXPECTED_VARIABLES = {
 # existing rule moved; the button renders only on ToC posts (the visual
 # baselines pin ToC-less posts only) and stays `hidden`/desktop-none
 # there, so no baseline refresh is needed.
-EXPECTED_CSS_SHA256 = "8ca8d1fa8adf47120f32eee1bd7e5d9f886c123e84b3b477f9944101f794b70a"
+# #384 (first-paint nav flash): the phone panel's hide moved under `html.js`
+# and the show rule gained the `html.no-js` override. Diffed old vs new
+# before bumping: pure selector scoping, no declaration moved; settled
+# renders stay pixel-identical (the panel was collapsed post-JS before and
+# stays collapsed), so no baseline refresh is needed.
+EXPECTED_CSS_SHA256 = "d1d4494c72078f1c8d4ad8e733ebdb5d2f0b4dd45b5be0fb48622be4c843d2df"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

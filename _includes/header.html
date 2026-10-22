@@ -26,11 +26,13 @@
           menu (`aria-expanded` + `aria-controls`), so keyboard and
           screen-reader users can open it — the old checkbox + `<label>` hack
           exposed no accessible name and was unreachable by keyboard/AT.
-          `assets/js/nav-toggle.js` collapses the panel on small screens at
-          load and wires click/Escape; on desktop the panel is always shown
-          by CSS. Markup ships open, so readers without JS keep the full menu.
+          Markup ships collapsed (`aria-expanded="false"`, panel `hidden`),
+          and CSS under `html.js` keeps it shut through first paint (#384),
+          so the menu never flashes open on slow loads; readers without JS
+          match `html.no-js` instead and keep the full menu. On desktop the
+          panel is always shown by CSS.
         {%- endcomment -%}
-        <button type="button" class="nav-toggle" aria-expanded="true" aria-controls="nav-menu" aria-label="Menu">
+        <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
           <span class="menu-icon" aria-hidden="true"></span>
         </button>
 
