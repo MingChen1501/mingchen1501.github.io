@@ -12,7 +12,10 @@ VI twin, and portfolio with its VI twin.
 Determinism: every capture uses the shared dev build (the external giscus
 embed is never fetched, analytics only renders in production), blocks
 third-party requests, pins the light colour scheme with reduced motion,
-disables animations/transitions/caret blinking via injected CSS, waits for
+disables animations/transitions/caret blinking via injected CSS (which also
+hides the resume-PDF plugin box on the portfolio pages — its paint is
+nondeterministic headless, so baselines assert its layout space, never its
+pixels), waits for
 webfonts (`document.fonts.ready`) and for every same-origin image to decode
 (scrolling once through the page so lazy-loaded images settle; third-party
 images are blocked by design and article attachments stay external by
@@ -119,12 +122,20 @@ CASES = (
 
 # Kills animation/transition/caret nondeterminism; the repo ships no keyframe
 # animations, but smooth scrolling and blinking carets must not smear a shot.
+# The portfolio pages embed the resume PDF (`object[type=application/pdf]`),
+# whose plugin paint is nondeterministic in headless CI (blank white box on
+# some runs, black box on others, #409): hidden during captures so the
+# baselines assert layout, never plugin pixels. `visibility` (not `display`)
+# keeps the 800px layout space, so only the box region changes.
 _FREEZE_CSS = """
 *, *::before, *::after {
   animation: none !important;
   transition: none !important;
   scroll-behavior: auto !important;
   caret-color: transparent !important;
+}
+object[type="application/pdf"] {
+  visibility: hidden !important;
 }
 """
 
