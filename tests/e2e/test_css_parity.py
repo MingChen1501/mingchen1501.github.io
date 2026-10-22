@@ -238,7 +238,13 @@ EXPECTED_VARIABLES = {
 # before bumping: pure selector scoping, no declaration moved; settled
 # renders stay pixel-identical (the panel was collapsed post-JS before and
 # stays collapsed), so no baseline refresh is needed.
-EXPECTED_CSS_SHA256 = "d1d4494c72078f1c8d4ad8e733ebdb5d2f0b4dd45b5be0fb48622be4c843d2df"
+# #387 (Resume + full CV split): the `print` partial gained two additive
+# rules inside the existing `@media print` block (`.resume-jump` screen
+# navigation never prints; the `#cv` section starts on a fresh sheet).
+# Diffed old vs new before bumping: the only hunk is that addition; no
+# existing rule moved and screen media is untouched, so every screen render
+# stays identical and no baseline refresh is needed for this hunk.
+EXPECTED_CSS_SHA256 = "8ea4078bb0ae3c1716a280f2e8e2b2dda4409557f3d00d21593a6aae674c2265"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275
