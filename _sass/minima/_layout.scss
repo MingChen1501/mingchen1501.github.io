@@ -39,8 +39,9 @@
   }
 
   // Desktop always shows the menu: this author rule outranks the UA
-  // `[hidden]` style, so the panel stays visible even when the collapsed
-  // state lingers on the attribute (e.g. after a phone-to-desktop resize).
+  // `[hidden]` style, so the panel stays visible even while the shipped
+  // collapsed state lingers on the attribute (e.g. before the deferred
+  // toggle script marks it open).
   .nav-items {
     display: block;
   }
@@ -123,11 +124,18 @@
     }
 
     .nav-items {
-      &[hidden] {
+      // First paint (#384): the panel ships `hidden` with
+      // `aria-expanded="false"`, so a JS first paint never flashes the menu
+      // open — the deferred toggle script only opens it from here. The hide
+      // stays under `html.js` (flipped by the inline head script before
+      // paint), and `html.no-js` re-shows the same open treatment below, so
+      // readers without JS keep the full menu with no script involved.
+      html.js &[hidden] {
         display: none;
       }
 
-      &:not([hidden]) {
+      &:not([hidden]),
+      html.no-js &[hidden] {
         clear: both;
         display: block;
         padding-bottom: 5px;

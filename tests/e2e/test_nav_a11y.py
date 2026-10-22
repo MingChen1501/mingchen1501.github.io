@@ -13,9 +13,14 @@ Guarded here:
   name plus `aria-expanded`/`aria-controls` wired to the menu panel (static);
 - the old checkbox/label pattern is gone from the markup and the styles
   (static);
-- `assets/js/nav-toggle.js` exists, stays tiny and dependency-free, collapses
-  the panel on small screens, toggles it on click and closes it on Escape
-  while returning focus (static);
+- `assets/js/nav-toggle.js` exists, stays tiny and dependency-free, opens the
+  panel only on reader action, closes it on Escape while returning focus,
+  and re-syncs `aria-expanded` across breakpoint crossings (static);
+- the `no-js`/`js` progressive-enhancement hook flips before first paint and
+  CSS hides the phone panel only under `html.js` (static + browser);
+- the header markup ships the panel collapsed (`aria-expanded="false"` +
+  `hidden`) so a JS first paint never flashes it open, while no-JS readers
+  keep the full menu with working links (static + browser);
 - the script is linked with the `?v=` build token like every other fixed-URL
   asset (#61) (static + rendered);
 - no `<summary>` in the built pages contains a link (browser, EN + VI, home
@@ -40,6 +45,8 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HEADER_INCLUDE = REPO_ROOT / "_includes" / "header.html"
+HEAD_INCLUDE = REPO_ROOT / "_includes" / "head.html"
+BASE_LAYOUT = REPO_ROOT / "_layouts" / "base.html"
 NAV_ITEMS_INCLUDE = REPO_ROOT / "_includes" / "nav-items.html"
 SUB_FOOTER_INCLUDE = REPO_ROOT / "_includes" / "sub-footer.html"
 NAV_SCRIPT = REPO_ROOT / "assets" / "js" / "nav-toggle.js"
@@ -138,12 +145,14 @@ def test_the_nav_toggle_script_exists_and_stays_tiny():
     assert "import " not in text and "require(" not in text, (
         "the nav toggle script must not depend on anything"
     )
-    # The three behaviours the browser guards pin: collapse wiring,
-    # click toggling, Escape-to-close with focus back on the trigger.
+    # The four behaviours the browser guards pin: shipped-collapsed state,
+    # click toggling, Escape-to-close with focus back on the trigger, and
+    # breakpoint-crossing re-sync.
     assert "aria-expanded" in text
     assert "hidden" in text
     assert "Escape" in text
     assert ".focus()" in text
+    assert "resize" in text
 
 
 @pytest.mark.static
@@ -163,6 +172,58 @@ def test_the_nav_script_is_linked_with_the_cache_version_token():
 def test_focus_stays_visible_on_the_toggle():
     """#87's focus rule covers buttons, so the disclosure never goes dark."""
     assert "button:focus-visible" in conftest.custom_styles_text()
+
+
+@pytest.mark.static
+def test_nav_markup_ships_collapsed():
+    """#384: the toggle ships `aria-expanded="false"` and the panel `hidden`,
+    so a JS first paint never flashes the menu open (no closing snap needed)."""
+    header = _read(HEADER_INCLUDE)
+    match = re.search(r'<button[^>]*class="nav-toggle"[^>]*>', header)
+    assert match, "the mobile menu trigger must be a real <button>"
+    assert 'aria-expanded="false"' in match.group(0)
+    assert 'id="nav-menu" hidden' in _read(NAV_ITEMS_INCLUDE)
+
+
+@pytest.mark.static
+def test_no_js_hook_flips_to_js_before_first_paint():
+    """#384: `<html class="no-js">` plus a tiny blocking flip ahead of the
+    stylesheet, so CSS can gate the phone panel on `html.js` from paint one."""
+    base = _read(BASE_LAYOUT)
+    assert re.search(r'<html[^>]*class="no-js"', base), (
+        "base.html must ship `<html class=\"no-js\">` for the #384 hook"
+    )
+    head = _read(HEAD_INCLUDE)
+    tags = re.findall(r"<script[^>]*>.*?</script>", head, re.S)
+    flips = [tag for tag in tags if "no-js" in tag and "src=" not in tag.split(">", 1)[0]]
+    assert len(flips) == 1, "head.html must flip `no-js` to `js` exactly once"
+    tag = flips[0]
+    assert "documentElement" in tag and '"js"' in tag
+    inner = tag.split(">", 1)[1].rsplit("<", 1)[0]
+    assert len(inner.encode("utf-8")) < 200, "the flip must stay tiny and blocking"
+    opener = tag.split(">", 1)[0]
+    assert "defer" not in opener and "async" not in opener, (
+        "the flip must run before first paint, never deferred"
+    )
+    assert head.index(tag) < head.index('id="main-stylesheet"'), (
+        "the flip must run before the stylesheet paints"
+    )
+
+
+@pytest.mark.static
+def test_panel_hides_only_under_html_js_on_phones():
+    """#384: CSS hides the phone panel only when JS ran (`html.js`); no-JS
+    readers match `html.no-js` and keep the full menu with no script."""
+    scss = _read(NAV_LAYOUT)
+    assert re.search(r"html\.js\s+&\[hidden\]\s*\{\s*display:\s*none", scss), (
+        "the phone panel must hide under `html.js` only"
+    )
+    assert re.search(r"html\.no-js\s+&\[hidden\]", scss), (
+        "the phone panel must re-show under `html.no-js`"
+    )
+    assert len(re.findall(r"&\[hidden\]", scss)) == 2, (
+        "no unscoped `[hidden]` hide may leak into the phone panel styles"
+    )
 
 
 def test_the_rendered_nav_script_url_carries_a_non_empty_token(built_site):
@@ -276,6 +337,85 @@ def test_mobile_menu_is_keyboard_operable(path, built_site_url, browser):
         page.keyboard.press(" ")
         assert toggle.get_attribute("aria-expanded") == "true"
         assert panel.is_visible(), f"{path}: Space did not open the menu"
+
+
+@pytest.mark.parametrize("path", ["/", "/vi/"])
+def test_mobile_menu_never_paints_open(path, built_site_url, browser):
+    """#384: at 375px the panel is shut from paint one — `html.js` is set
+    before the stylesheet and the panel ships `hidden`, so no closing snap."""
+    for page in _viewport(browser, built_site_url, PHONE_WIDTH):
+        _open(page, built_site_url, path)
+        assert page.evaluate(
+            "document.documentElement.classList.contains('js')"
+        ), f"{path}: the `no-js` hook must flip before first paint"
+        toggle = page.locator(".nav-toggle")
+        assert toggle.get_attribute("aria-expanded") == "false"
+        panel = page.locator(f"#{EXPECTED_PANEL_ID}")
+        assert panel.is_hidden(), f"{path}: the menu panel must never paint open"
+        box = panel.bounding_box()
+        assert box is None or box["height"] == 0
+
+
+@pytest.mark.parametrize("path", ["/", "/vi/"])
+def test_resize_keeps_aria_in_sync_with_the_visible_panel(path, built_site_url, browser):
+    """#384: crossing the nav breakpoint never leaves `aria-expanded`
+    contradicting the visible panel."""
+    for page in _viewport(browser, built_site_url, PHONE_WIDTH):
+        _open(page, built_site_url, path)
+        toggle = page.locator(".nav-toggle")
+        panel = page.locator(f"#{EXPECTED_PANEL_ID}")
+        assert toggle.get_attribute("aria-expanded") == "false"
+        page.set_viewport_size({"width": DESKTOP_WIDTH, "height": 800})
+        page.wait_for_function(
+            "() => document.querySelector('.nav-toggle')"
+            ".getAttribute('aria-expanded') === 'true'",
+            timeout=10_000,
+        )
+        assert panel.is_visible(), f"{path}: the menu must show on desktop"
+        page.set_viewport_size({"width": PHONE_WIDTH, "height": 800})
+        page.wait_for_timeout(200)
+        assert (panel.is_visible()) == (
+            toggle.get_attribute("aria-expanded") == "true"
+        ), f"{path}: `aria-expanded` contradicts the visible panel after resize"
+
+
+@pytest.mark.parametrize("path", ["/", "/vi/"])
+def test_menu_stays_open_without_js(path, built_site_url, browser):
+    """#384: with JS disabled the menu is visible and every link works —
+    the `html.no-js` CSS override re-shows the shipped-collapsed panel."""
+    context = browser.new_context(
+        viewport={"width": PHONE_WIDTH, "height": 800}, java_script_enabled=False
+    )
+    try:
+        page = context.new_page()
+        origin = urlparse(built_site_url).netloc
+        page.route(
+            "**/*",
+            lambda route: route.continue_()
+            if urlparse(route.request.url).netloc == origin
+            else route.abort(),
+        )
+        response = page.goto(f"{built_site_url}{path}", wait_until="load")
+        assert response is not None and response.status == 200
+        assert page.evaluate(
+            "document.documentElement.classList.contains('no-js')"
+        ), f"{path}: the `no-js` hook must survive without JS"
+        panel = page.locator(f"#{EXPECTED_PANEL_ID}")
+        assert panel.is_visible(), f"{path}: the menu must stay open without JS"
+        links = panel.locator(".nav-item")
+        assert links.count() > 0, f"{path}: the menu holds no links"
+        for index in range(links.count()):
+            link = links.nth(index)
+            assert link.is_visible()
+            href = link.get_attribute("href")
+            assert href, f"{path}: a menu link has no destination"
+            link_response = page.request.get(f"{built_site_url}{href}")
+            assert link_response.status == 200, (
+                f"{path}: menu link {href} broke without JS "
+                f"(status {link_response.status})"
+            )
+    finally:
+        context.close()
 
 
 @pytest.mark.parametrize("path", ["/", "/vi/", TAG_PAGE, VI_TAG_PAGE])

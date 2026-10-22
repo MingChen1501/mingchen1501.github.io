@@ -1,4 +1,12 @@
-<div class="nav-items" id="nav-menu">
+{%- comment -%}
+  Mobile nav panel (#114, #384): ships `hidden` with the toggle's
+  `aria-expanded="false"`, so a JS first paint never flashes the menu open —
+  CSS under `html.js` keeps it shut until the reader opens it via
+  `assets/js/nav-toggle.js`. Readers without JS match `html.no-js`, whose
+  override below re-shows the panel, so the full menu stays reachable with
+  no script involved.
+{%- endcomment -%}
+<div class="nav-items" id="nav-menu" hidden>
   {%- for path in include.paths -%}
   {%- assign nav_page = site.pages | where: "path", path | first -%}
   {%- if nav_page.title %}
