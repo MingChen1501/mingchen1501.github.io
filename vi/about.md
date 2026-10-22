@@ -23,7 +23,14 @@ Trang này không dùng cookie, không gắn mã theo dõi hay phân tích riên
 
 ## Liên hệ
 
-Nếu bạn thấy bài viết nào hữu ích hoặc muốn góp ý, trao đổi, cứ thoải mái liên hệ qua email [mingchen1501@gmail.com](mailto:mingchen1501@gmail.com), hoặc tìm mình trên [GitHub](https://github.com/MingChen1501), [LinkedIn](https://linkedin.com/in/mingchen1501), [Facebook](https://facebook.com/mingchenn1501), [Instagram](https://instagram.com/mingchenn1501) và [YouTube](https://www.youtube.com/channel/UCriw08sS1Jg4ftN8Wd3Wefg). Mình luôn vui khi nhận được phản hồi từ độc giả.
+Nếu bạn thấy bài viết nào hữu ích, hoặc muốn góp ý, trao đổi — mình luôn vui khi nhận được phản hồi từ độc giả — cứ liên hệ qua các kênh dưới đây:
+
+- Email: [mingchen1501@gmail.com](mailto:mingchen1501@gmail.com)
+- GitHub: [github.com/MingChen1501](https://github.com/MingChen1501)
+- LinkedIn: [linkedin.com/in/mingchen1501](https://linkedin.com/in/mingchen1501)
+- Facebook: [facebook.com/mingchenn1501](https://facebook.com/mingchenn1501)
+- Instagram: [instagram.com/mingchenn1501](https://instagram.com/mingchenn1501)
+- YouTube: [kênh của Ming Chen](https://www.youtube.com/channel/UCriw08sS1Jg4ftN8Wd3Wefg)
 
 ## Colophon
 

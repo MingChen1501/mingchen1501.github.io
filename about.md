@@ -21,7 +21,14 @@ This site sets no cookies and runs no analytics or trackers of its own. Your the
 
 ## Contact
 
-If you find a post useful, or want to share feedback, feel free to reach out by email at [mingchen1501@gmail.com](mailto:mingchen1501@gmail.com), or find me on [GitHub](https://github.com/MingChen1501), [LinkedIn](https://linkedin.com/in/mingchen1501), [Facebook](https://facebook.com/mingchenn1501), [Instagram](https://instagram.com/mingchenn1501), and [YouTube](https://www.youtube.com/channel/UCriw08sS1Jg4ftN8Wd3Wefg). I always enjoy hearing from readers.
+If you find a post useful, or want to share feedback, I always enjoy hearing from readers — you can reach me here:
+
+- Email: [mingchen1501@gmail.com](mailto:mingchen1501@gmail.com)
+- GitHub: [github.com/MingChen1501](https://github.com/MingChen1501)
+- LinkedIn: [linkedin.com/in/mingchen1501](https://linkedin.com/in/mingchen1501)
+- Facebook: [facebook.com/mingchenn1501](https://facebook.com/mingchenn1501)
+- Instagram: [instagram.com/mingchenn1501](https://instagram.com/mingchenn1501)
+- YouTube: [Ming Chen's channel](https://www.youtube.com/channel/UCriw08sS1Jg4ftN8Wd3Wefg)
 
 ## Colophon
 
