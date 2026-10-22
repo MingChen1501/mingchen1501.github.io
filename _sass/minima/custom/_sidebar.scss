@@ -21,25 +21,12 @@ ul.sidebar-tag__posts {
   list-style: none;
 }
 
-// The heading row: the tag block also carries a link to the tag index.
+// The heading row of each sidebar block.
 .sidebar__heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-}
-
-.sidebar__heading-link {
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  color: $brand-color-dimmed;
-
-  &:hover,
-  &:focus {
-    color: $brand-color-dark;
-    text-decoration: none;
-  }
 }
 
 .sidebar-post {

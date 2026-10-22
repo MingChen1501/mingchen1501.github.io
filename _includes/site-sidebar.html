@@ -76,7 +76,6 @@
   {%- assign sidebar_dir = "_vi_posts/" -%}
   {%- assign sidebar_tag_base = "/vi/tags/" -%}
   {%- assign sidebar_topics_heading = "Chủ đề" -%}
-  {%- assign sidebar_all_link = "Tất cả &rarr;" -%}
   {%- assign sidebar_more_link = "Xem tất cả" -%}
   {%- assign sidebar_highlights_hit = "Bài nổi bật" -%}
   {%- assign sidebar_highlights_miss = "Bài mới nhất" -%}
@@ -85,7 +84,6 @@
   {%- assign sidebar_dir = "_posts/" -%}
   {%- assign sidebar_tag_base = "/tags/" -%}
   {%- assign sidebar_topics_heading = "Topics" -%}
-  {%- assign sidebar_all_link = "All &rarr;" -%}
   {%- assign sidebar_more_link = "View all" -%}
   {%- assign sidebar_highlights_hit = "Featured" -%}
   {%- assign sidebar_highlights_miss = "Latest posts" -%}
@@ -209,10 +207,10 @@
 </section>
 
 {%- comment -%}
-  Sidebar topics heading + all-topics link (#344): the heading keeps its
-  existing link to the tag index; the footer repeats it as an explicit
-  "All topics" / "Tất cả chủ đề" link so the capped list always offers the
-  way out to the full index.
+  Sidebar topics heading + all-topics link (#344, #378): the heading is plain
+  text (a link there duplicated the footer entry point to the tag index);
+  the footer repeats the way out as an explicit "All topics" /
+  "Tất cả chủ đề" link so the capped list always offers the full index.
 {%- endcomment -%}
 {%- if sidebar_lang == 'vi' -%}
   {%- assign sidebar_all_topics = "Tất cả chủ đề &rarr;" -%}
@@ -220,7 +218,7 @@
   {%- assign sidebar_all_topics = "All topics &rarr;" -%}
 {%- endif -%}
 <section class="sidebar__section">
-  <h2 class="sidebar__heading">{{ sidebar_topics_heading }}<a class="sidebar__heading-link" href="{{ sidebar_tag_base | relative_url }}">{{ sidebar_all_link }}</a></h2>
+  <h2 class="sidebar__heading">{{ sidebar_topics_heading }}</h2>
   <ul class="sidebar-tags">
     {%- comment -%}
       Curated pillars only (#344): every tag with at least one published

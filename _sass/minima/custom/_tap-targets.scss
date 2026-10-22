@@ -19,9 +19,8 @@
 //   collapsible panel keeps its block rows, `5px 10px` padding and own
 //   line-height untouched —
 // - sidebar highlight titles, tag-row post links, TOC entries, the tag
-//   back-link, the footer email link, the sidebar heading link and the
-//   tag-row "view all" links: the shortfall only, so multi-line targets keep
-//   their exact size.
+//   back-link, the footer email link and the tag-row "view all" links: the
+//   shortfall only, so multi-line targets keep
 //
 // Font sizes, margins and column widths are untouched, and the sidebar's #63
 // height budget keeps wide headroom at the 740px pin threshold.
@@ -46,12 +45,6 @@
 }
 
 .sidebar-tag__more {
-  min-width: $tap-target-minimum;
-  min-height: $tap-target-minimum;
-}
-
-.sidebar__heading-link {
-  display: inline-block;
   min-width: $tap-target-minimum;
   min-height: $tap-target-minimum;
 }

@@ -150,12 +150,19 @@ EXPECTED_VARIABLES = {
 # `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
 # #344 (curated pillar tags): the `sidebar` partial gained one additive
 # rule (`.sidebar-tags__all` footer link below the capped pillar list, in
-# the dimmed tone of the heading link, with a hover/focus darkening).
+# a dimmed tone with a hover/focus darkening).
 # Diffed old vs new before bumping: the only change is that additive hunk;
 # no existing rule moved, so every other page renders unchanged. The
 # sidebar/home/tag visual baselines that include the sidebar or the
 # data-driven tag index were refreshed from the CI
 # `visual-fresh-chromium` artifact; all other baselines are pixel-identical.
+# #378 (sidebar tag-index link deduplication): the `sidebar` partial lost the
+# now-unused `.sidebar__heading-link` rule (with its hover/focus), the
+# `tap-targets` partial lost its minimum for that selector, and the dark
+# `theme-toggle` override lost the matching hover/focus lines — the plain
+# topics heading keeps no link styling. Diffed old vs new before bumping:
+# only those hunks change; the heading itself keeps its row style, so the
+# refresh decision follows the same CI-artifact rule as #344.
 # #345 (ToC nested disclosure + scroll-spy): the `toc` partial changed with
 # the collapsed-default visual contract — branches now render nested `<ul>`s
 # inside their parent `<li>` (real descendants, so a collapsed branch hides
@@ -172,7 +179,7 @@ EXPECTED_VARIABLES = {
 # progressive enhancement — the static markup ships every level expanded),
 # which changes post screenshots, but the visual baselines pin ToC-less
 # posts only, so no baseline refreshes.
-EXPECTED_CSS_SHA256 = "a2cadc2013c18ed09663b6dff5c40a4f125abe140ed4b3396ff68732c093bdee"
+EXPECTED_CSS_SHA256 = "daff3e3072b54a48c16280e863935e0fc9595d1e672f1a8b4c4c890dc7a1e7df"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275
