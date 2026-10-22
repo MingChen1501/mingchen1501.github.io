@@ -106,26 +106,86 @@ layout: base
     </div>
 
     {%- comment -%}
-      Secondary column (#45): the post's tags plus the other posts sharing
-      any of its tags (#343: a post may carry more than one pillar tag, so
-      the related list is the union over all of them — newest first, with
-      same-date ties broken by URL for determinism), headed by the automatic
-      ToC (#134) when the post qualifies. When none of the post's tags has
-      published siblings (a pillar with a single post, e.g. the Internet post
-      while its pillar-mate stays unpublished — #112), the section falls back
-      to the newest posts of the page's language not newer than the current
-      page (#328: an older evergreen page must never suggest newer unrelated
-      posts, so the fallback filters to `other.date <= page.date` and the
-      section stays suppressed when nothing that old exists), under an
-      honest "Latest posts" heading, so the sidebar is never a tags-only
-      dead end unless there is genuinely nothing older to show. Rendered
-      when the post declares tags or shows a ToC.
-      Related posts stay inside the page's language (#93): English from `site.tags`
-      (English-only since the Vietnamese posts moved to `site.vi_posts`),
-      Vietnamese filtered out of `site.vi_posts`.
+      Secondary column (#45): the post's tags plus Related posts and Latest
+      posts together (#386). Related posts (#343) is the union over all of
+      the post's tags — newest first, with same-date ties broken by URL for
+      determinism — de-duplicated, current page excluded, capped at five.
+      Latest posts is the newest posts of the page's language below Related,
+      excluding the current page and anything already listed under Related,
+      capped at three (#386 supersedes the #328 no-newer rule for this
+      section: "Latest" means newest on the site, even when newer than the
+      page being read; the old single-section fallback disappears entirely).
+      A post with no tags shows Latest only; a brand-new single-post site
+      shows neither section. Rendered when the post declares tags, shows a
+      ToC, or has anything to list under Latest.
+      Both sections stay inside the page's language (#93): English from
+      `site.tags` / `site.posts` (English-only since the Vietnamese posts
+      moved to `site.vi_posts`), Vietnamese filtered out of `site.vi_posts`.
     {%- endcomment -%}
     {%- assign post_tags = page.tags | default: empty -%}
-    {%- if post_tags.size > 0 or show_toc -%}
+    {%- if post_lang == 'vi' -%}
+      {%- comment -%}
+        Nil-safe like the tag layout: the collection may be undefined in the
+        upstream `_config_theme-dev.yml` CI build.
+      {%- endcomment -%}
+      {%- assign rel_vi_source = site.vi_posts -%}
+      {%- if rel_vi_source == nil -%}
+        {%- assign rel_vi_source = "" | split: "" -%}
+      {%- endif -%}
+      {%- assign latest_source = rel_vi_source -%}
+    {%- else -%}
+      {%- assign latest_source = site.posts -%}
+    {%- endif -%}
+    {%- assign rel_union = "" | split: "" -%}
+    {%- if post_tags.size > 0 -%}
+      {%- if post_lang == 'vi' -%}
+        {%- for rel_tag in post_tags -%}
+          {%- assign rel_tag_posts = rel_vi_source | where_exp: "rel_post", "rel_post.tags contains rel_tag" -%}
+          {%- assign rel_union = rel_union | concat: rel_tag_posts -%}
+        {%- endfor -%}
+      {%- else -%}
+        {%- for rel_tag in post_tags -%}
+          {%- assign rel_tag_posts = site.tags[rel_tag] -%}
+          {%- if rel_tag_posts == nil -%}
+            {%- assign rel_tag_posts = "" | split: "" -%}
+          {%- endif -%}
+          {%- assign rel_union = rel_union | concat: rel_tag_posts -%}
+        {%- endfor -%}
+      {%- endif -%}
+    {%- endif -%}
+    {%- assign rel_sorted = rel_union | sort: "url" | sort: "date" | reverse -%}
+    {%- assign tag_posts = "" | split: "" -%}
+    {%- assign rel_seen = "|" -%}
+    {%- for rel_post in rel_sorted -%}
+      {%- assign rel_key = "|" | append: rel_post.url | append: "|" -%}
+      {%- unless rel_seen contains rel_key -%}
+        {%- assign tag_posts = tag_posts | push: rel_post -%}
+        {%- assign rel_seen = rel_seen | append: rel_post.url | append: "|" -%}
+      {%- endunless -%}
+    {%- endfor -%}
+    {%- comment -%}
+      Related top five excluding the current page (#386): collected as a
+      pipe-delimited URL set so the Latest section can exclude exactly what
+      Related already shows (the next newest three still render when
+      Related holds the newest five).
+    {%- endcomment -%}
+    {%- assign related_urls = "|" -%}
+    {%- assign related_count = 0 -%}
+    {%- for rel_post in tag_posts -%}
+      {%- if rel_post.url != page.url and related_count < 5 -%}
+        {%- assign related_urls = related_urls | append: rel_post.url | append: "|" -%}
+        {%- assign related_count = related_count | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- assign latest_sorted = latest_source | sort: "url" | sort: "date" | reverse -%}
+    {%- assign latest_posts = "" | split: "" -%}
+    {%- for latest_post in latest_sorted -%}
+      {%- assign latest_key = "|" | append: latest_post.url | append: "|" -%}
+      {%- unless latest_post.url == page.url or related_urls contains latest_key -%}
+        {%- assign latest_posts = latest_posts | push: latest_post -%}
+      {%- endunless -%}
+    {%- endfor -%}
+    {%- if post_tags.size > 0 or show_toc or latest_posts.size > 0 -%}
     <aside class="post-sidebar" aria-label="{% if post_lang == 'vi' %}Chủ đề của bài viết{% else %}Post topics{% endif %}">
       {%- comment -%}
         Sidebar TOC (#134): first section of the aside, above Tags and
@@ -144,71 +204,17 @@ layout: base
         <h2 class="post-sidebar__heading">{% if post_lang == 'vi' %}Chủ đề{% else %}Tags{% endif %}</h2>
         {%- include post-tags.html tags=post_tags -%}
       </section>
+      {%- endif -%}
 
       {%- comment -%}
-        Related posts (#343): the union of same-language posts sharing ANY
-        of this post's tags. Each tag contributes its own newest-first list
-        and the union is re-sorted newest-first across tags (same-date ties
-        broken by URL, via the `url` pre-sort, so the order is
-        deterministic), de-duplicated (a post carrying two of this post's
-        tags still renders once — the first, newest occurrence wins), and the
-        render loop below excludes the current page and caps at five.
+        Related posts (#343) plus Latest posts (#386): two sections with the
+        same `related-posts` list markup, Related first (cap five), Latest
+        below (cap three, never repeating Related or the current page).
+        Each section renders only when it has anything to list.
       {%- endcomment -%}
-      {%- if post_lang == 'vi' -%}
-        {%- comment -%}
-          Nil-safe like the tag layout: the collection may be undefined in the
-          upstream `_config_theme-dev.yml` CI build.
-        {%- endcomment -%}
-        {%- assign rel_vi_source = site.vi_posts -%}
-        {%- if rel_vi_source == nil -%}
-          {%- assign rel_vi_source = "" | split: "" -%}
-        {%- endif -%}
-        {%- assign rel_union = "" | split: "" -%}
-        {%- for rel_tag in post_tags -%}
-          {%- assign rel_tag_posts = rel_vi_source | where_exp: "rel_post", "rel_post.tags contains rel_tag" -%}
-          {%- assign rel_union = rel_union | concat: rel_tag_posts -%}
-        {%- endfor -%}
-        {%- assign latest_source = rel_vi_source -%}
-      {%- else -%}
-        {%- assign rel_union = "" | split: "" -%}
-        {%- for rel_tag in post_tags -%}
-          {%- assign rel_tag_posts = site.tags[rel_tag] -%}
-          {%- if rel_tag_posts == nil -%}
-            {%- assign rel_tag_posts = "" | split: "" -%}
-          {%- endif -%}
-          {%- assign rel_union = rel_union | concat: rel_tag_posts -%}
-        {%- endfor -%}
-        {%- assign latest_source = site.posts -%}
-      {%- endif -%}
-      {%- assign rel_sorted = rel_union | sort: "url" | sort: "date" | reverse -%}
-      {%- assign tag_posts = "" | split: "" -%}
-      {%- assign rel_seen = "|" -%}
-      {%- for rel_post in rel_sorted -%}
-        {%- assign rel_key = "|" | append: rel_post.url | append: "|" -%}
-        {%- unless rel_seen contains rel_key -%}
-          {%- assign tag_posts = tag_posts | push: rel_post -%}
-          {%- assign rel_seen = rel_seen | append: rel_post.url | append: "|" -%}
-        {%- endunless -%}
-      {%- endfor -%}
-      {%- comment -%}
-        Latest-posts fallback (#112, constrained by #328): a post whose
-        tags have no published siblings (its pillar-mate
-        unpublished, or a lone tag) would otherwise render a tags-only
-        sidebar. Fall back to the newest posts of the page's language
-        that are not newer than the current page, so an older evergreen
-        page never suggests newer unrelated posts. The render loop below
-        skips the current page, so `size > 1` still guarantees a non-empty
-        list in both branches — and suppresses the section when nothing
-        that old exists.
-      {%- endcomment -%}
-      {%- assign use_latest = false -%}
-      {%- if tag_posts.size <= 1 -%}
-        {%- assign use_latest = true -%}
-        {%- assign tag_posts = latest_source | where_exp: "latest_post", "latest_post.date <= page.date" | sort: "date" | reverse -%}
-      {%- endif -%}
-      {%- if tag_posts.size > 1 -%}
+      {%- if related_count > 0 -%}
       <section class="post-sidebar__section">
-        <h2 class="post-sidebar__heading">{% if use_latest %}{% if post_lang == 'vi' %}Bài viết mới nhất{% else %}Latest posts{% endif %}{% else %}{% if post_lang == 'vi' %}Bài viết cùng chủ đề{% else %}Related posts{% endif %}{% endif %}</h2>
+        <h2 class="post-sidebar__heading">{% if post_lang == 'vi' %}Bài viết cùng chủ đề{% else %}Related posts{% endif %}</h2>
         <ul class="related-posts">
           {%- assign shown = 0 -%}
           {%- for other in tag_posts -%}
@@ -223,6 +229,22 @@ layout: base
         </ul>
       </section>
       {%- endif -%}
+      {%- if latest_posts.size > 0 -%}
+      <section class="post-sidebar__section">
+        <h2 class="post-sidebar__heading">{% if post_lang == 'vi' %}Bài viết mới nhất{% else %}Latest posts{% endif %}</h2>
+        <ul class="related-posts">
+          {%- assign latest_shown = 0 -%}
+          {%- for other in latest_posts -%}
+            {%- if latest_shown < 3 -%}
+              {%- assign latest_shown = latest_shown | plus: 1 -%}
+              <li>
+                <a href="{{ other.url | relative_url }}">{{ other.title | escape }}</a>
+                <span class="post-meta">{{ other.date | date: date_format }}</span>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </section>
       {%- endif -%}
     </aside>
     {%- endif -%}

@@ -507,10 +507,14 @@ def test_short_pages_report_complete_without_errors(built_site_url, page):
     )
     page.wait_for_selector(".reading-progress:not([hidden])", timeout=10_000)
     # Shrink the article below the viewport so the page has no scroll range,
-    # then nudge the script the way a real resize would.
+    # then nudge the script the way a real resize would. The sidebar is
+    # hidden too: since #386 it holds Tags plus Related and Latest, which
+    # alone can exceed the viewport and keep a scroll range on their own.
     page.evaluate(
         """() => {
           document.querySelector('.post-content').innerHTML = '<p>Short.</p>';
+          const aside = document.querySelector('.post-sidebar');
+          if (aside) { aside.style.display = 'none'; }
           window.dispatchEvent(new Event('resize'));
         }"""
     )
