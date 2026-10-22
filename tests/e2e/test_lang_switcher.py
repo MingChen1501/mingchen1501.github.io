@@ -110,7 +110,9 @@ def test_switcher_styles_hit_the_tap_target_and_states():
     scss = conftest.custom_styles_text()
     assert "min-width: 44px" in scss
     assert "min-height: 44px" in scss
-    assert "border-radius: 999px" in scss
+    # Pill shape (#389): the switcher uses the shared pill token (defined as
+    # 999px in `custom/_variables.scss`, pinned by `test_shape_radius.py`).
+    assert "border-radius: var(--radius-pill)" in scss
     assert ".lang-switcher" in scss
     assert "&:hover" in scss
     assert ".lang-switcher:focus-visible" in scss or "&:focus-visible" in scss
