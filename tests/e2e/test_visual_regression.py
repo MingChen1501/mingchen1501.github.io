@@ -90,9 +90,12 @@ VIEWPORT_HEIGHT = 900
 # JPEG keeps 36 full-page captures under the 2 MB budget; the static
 # `test_baseline_budget` guard below pins that ceiling. Captures are stored at
 # half scale (`SCALE`): layout regressions still move thousands of pixels, but
-# photographic post images stop dominating the budget.
+# photographic post images stop dominating the budget. Quality dropped from
+# 60 to 50 in #387: the longer resume pages (Resume + full CV) pushed the set
+# to 2156 KB at 60, so the budget's own prescription applies — same
+# deterministic encode/decode, slightly smaller files.
 IMAGE_TYPE = "jpeg"
-JPEG_QUALITY = 60
+JPEG_QUALITY = 50
 SCALE = 0.5
 
 # A pixel counts as changed when any channel differs by more than this
