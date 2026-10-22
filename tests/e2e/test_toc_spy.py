@@ -18,8 +18,10 @@ Guarded here:
   falls back to a passive scroll listener, derives the scroll-spy offset
   from the measured header height when sticky/fixed (the header is
   statically pinned non-sticky), marks exactly one row per mount with
-  `aria-current="location"`, collapses only per-branch lists (never the
-  outer `details[open]`), never touches `tabindex`/focus, adds no smooth
+  `aria-current="location"`, collapses per-branch lists on load (and, on
+  phone layouts only, starts the inline copy as one summary row — #377),
+  never moves the viewport (the bounded phone panel only nudges its own
+  `scrollTop`), never touches `tabindex`/focus, adds no smooth
   scrolling (so `prefers-reduced-motion` needs no handling); the tag lives
   in the post-only gate after the helper with its build token; the active
   style keys off the attribute with a theme-safe colour plus non-colour
@@ -35,7 +37,13 @@ Guarded here:
   per-branch buttons toggle on Enter/Space without moving focus; an h4
   hides with its collapsed parent; the existing live-scroll
   exactly-one-`aria-current` assertion still holds on the long EN post;
-  with JS disabled every level stays visible with working anchors.
+  with JS disabled every level stays visible with working anchors;
+- phone (needs Ruby + a browser, #377): at 360/375px the inline copy
+  starts as one summary row (44px target), the expanded list is bounded
+  to 50vh with its own scroll, rows truncate with an ellipsis instead of
+  wrapping, every visible target clears 24px (toggles 32px), the active
+  row stays inside the panel without moving the page, and 320px never
+  overflows; desktop behaviour is unchanged.
 """
 
 import re
@@ -143,29 +151,52 @@ def test_the_spy_marks_one_row_per_mount_with_aria_current():
 
 
 @pytest.mark.static
-def test_the_spy_collapses_only_branches_and_never_steals_the_page():
+def test_the_spy_collapses_branches_and_the_phone_shell_but_never_the_page():
     text = _read(SCRIPT)
     # Strip the header comment: the assertions below pin runtime behaviour,
     # while the comment is allowed to narrate the design.
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     # Collapsing is per-branch runtime state: the script hides children
-    # lists and flips their toggles, but never the outer `<details open>`.
+    # lists and flips their toggles (#345). On phone layouts it also starts
+    # the INLINE copy as one summary row (#377: the open list fills most of
+    # the first viewport); the desktop copy stays open.
     assert ".post-toc__toggle" in code, (
         "collapsing must drive the per-branch disclosure toggles (#345)"
     )
     assert ".hidden" in code or "hidden =" in code, (
         "collapsed branches must hide their children list (#345)"
     )
-    assert "removeAttribute('open'" not in code and ".open =" not in code, (
-        "the scroll-spy must never close the outer expanded ToC (#345)"
+    assert ".post-toc-mount--inline" in code, (
+        "only the inline (phone) copy may start collapsed (#377)"
+    )
+    assert "removeAttribute('open')" in code, (
+        "the phone default closes the inline outer details (#377)"
+    )
+    assert re.search(r"\.open\s*=", code) is None, (
+        "the script must never force a ToC open, only the phone default "
+        "may close the inline shell (#377)"
+    )
+    assert "getComputedStyle" in code and "=== 'none'" in code, (
+        "the phone default must key off the visible mount, not a "
+        "hardcoded breakpoint (#377)"
     )
     # The default anchor jump is instant; nothing smooth is ever added, so
     # prefers-reduced-motion needs no handling (#345).
     assert "smooth" not in code, (
         "the scroll-spy must not smooth-scroll (reduced motion, #345)"
     )
-    assert "scrollIntoView" not in code and "scrollTo" not in code, (
+    # The page itself never moves: no viewport-scrolling calls. The one
+    # exception is the bounded phone panel, which nudges its own
+    # `scrollTop` so the active row stays inside it (#377).
+    assert "scrollIntoView" not in code, (
+        "the scroll-spy must never scroll anything into view (#345)"
+    )
+    assert re.search(r"scrollTo\s*\(", code) is None, (
         "the scroll-spy must never move the viewport itself (#345)"
+    )
+    assert "nav.scrollTop" in code, (
+        "the active row must be kept inside the bounded phone panel via "
+        "the panel's own scrollTop (#377)"
     )
     # Keyboard stays native: real buttons toggle on Enter/Space, links stay
     # plain anchors, and auto-expand never moves focus.
@@ -235,6 +266,61 @@ def test_the_active_style_is_visible_in_both_themes_without_colour_only():
     # so activating a row never shifts its siblings.
     assert "font-weight: 600" in body, (
         "the active row must pair colour and bar with weight (#345)"
+    )
+
+
+@pytest.mark.static
+def test_phone_inline_mount_uses_the_compact_bounded_row_model():
+    """Phone row model (#377): audit 2026-10-22 proved the open inline
+    list costs 510px / 73% of a 700px viewport on the 16-h2 EN post, wraps
+    2 of 16 titles, and leaves the marked row above the viewport."""
+    scss = _read(TOC_SCSS)
+    phone = re.search(
+        r"@include media-query\(\$two-column-breakpoint - 1px\)\s*\{(.*)",
+        scss,
+        re.S,
+    )
+    assert phone, (
+        "the phone ToC rules must scope below the two-column breakpoint "
+        "(#377)"
+    )
+    block = phone.group(1)
+    # The expanded list is bounded with its own scroll, so the article
+    # body starts higher and the panel never fills the viewport.
+    assert "max-height: 50vh;" in block, (
+        "the phone inline list must cap at half the viewport (#377)"
+    )
+    assert "overflow-y: auto;" in block, (
+        "the capped phone list must scroll internally (#377)"
+    )
+    # One 44px summary row by default; rows truncate instead of wrapping.
+    assert "min-height: 44px;" in block, (
+        "the phone summary must clear 44px (#377)"
+    )
+    assert "text-overflow: ellipsis;" in block, (
+        "phone rows must truncate with an ellipsis, not wrap (#377)"
+    )
+    assert "white-space: nowrap;" in block, (
+        "single-line truncation needs no-wrap rows (#377)"
+    )
+    # Disclosure toggles clear 32px; indentation tightens to two steps.
+    assert "min-width: 32px;" in block and "min-height: 32px;" in block, (
+        "phone toggles must clear 32px (#377)"
+    )
+    assert "padding-left: 12px;" in block, (
+        "phone h3 rows must indent one tight step (#377)"
+    )
+    assert "padding-left: 20px;" in block, (
+        "phone h4 rows must indent a second tight step (#377)"
+    )
+    # Anchor arrivals need no guard: the header is static, so jumps land
+    # fully visible (audit 2026-10-22: heading top 0 at every phone
+    # width). A scroll-margin was prototyped and reverted: reserving
+    # exactly the spy's 24px slack parks the heading on the marking
+    # boundary, and sub-pixel rounding then marks the previous row.
+    assert "scroll-margin" not in scss, (
+        "no scroll margin on post headings: it would park jumps on the "
+        "scroll-spy boundary (#377)"
     )
 
 
@@ -846,6 +932,213 @@ def test_three_open_levels_hold_without_overflow_on_small_phones(
         assert lefts[0] < lefts[1] < lefts[2], (
             f"levels must indent with depth, got {lefts} (#345)"
         )
+    finally:
+        context.close()
+
+
+def _phone_page(browser, site_url, width, scheme="light"):
+    """A phone-width page on the long EN post with third parties blocked."""
+    context = browser.new_context(
+        viewport={"width": width, "height": 700}, color_scheme=scheme
+    )
+    page = context.new_page()
+    origin = urlparse(site_url).netloc
+    page.route(
+        "**/*",
+        lambda route: route.continue_()
+        if urlparse(route.request.url).netloc == origin
+        else route.abort(),
+    )
+    page.goto(site_url.rstrip("/") + EN_LONG_POST, wait_until="load")
+    page.wait_for_function(
+        "() => Array.from(document.images).every(i => i.complete)",
+        timeout=15_000,
+    )
+    return context, page
+
+
+@pytest.mark.parametrize("width", [360, 375])
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_phone_inline_toc_starts_as_one_summary_row(
+    built_site_url, browser, width, scheme
+):
+    """Phones start collapsed: one 44px summary row above the article (#377).
+
+    Audit 2026-10-22: the open 16-row list cost 510px / 73% of a 700px
+    viewport before the first paragraph; collapsed it costs one row.
+    """
+    context, phone = _phone_page(browser, built_site_url, width, scheme)
+    try:
+        assert phone.evaluate(
+            "getComputedStyle(document.querySelector("
+            "'.post-toc-mount--inline')).display"
+        ) != "none"
+        assert phone.evaluate(
+            "getComputedStyle(document.querySelector("
+            "'.post-toc-mount--sidebar')).display"
+        ) == "none"
+        assert phone.locator(
+            ".post-toc-mount--inline details.post-toc[open]"
+        ).count() == 0, (
+            "the phone inline ToC must start collapsed (#377)"
+        )
+        summary_h = phone.locator(
+            ".post-toc-mount--inline .post-toc__summary"
+        ).evaluate("el => el.getBoundingClientRect().height")
+        assert summary_h >= 44, (
+            f"the phone summary row is {summary_h:.0f}px, below 44px (#377)"
+        )
+        toc_h = phone.locator(
+            ".post-toc-mount--inline details.post-toc"
+        ).evaluate("el => el.getBoundingClientRect().height")
+        assert toc_h <= 0.15 * 700, (
+            f"collapsed phone ToC costs {toc_h:.0f}px of a 700px viewport "
+            "(#377)"
+        )
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [360, 375])
+def test_phone_expanded_list_is_bounded_and_single_line(
+    built_site_url, browser, width
+):
+    """Tapping the summary opens a 50vh scrollable list; rows truncate (#377).
+
+    Audit 2026-10-22: 2 of 16 titles wrapped onto two lines; the open list
+    ran 510px unbounded.
+    """
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        phone.locator(
+            ".post-toc-mount--inline .post-toc__summary"
+        ).click()
+        expect(phone.locator(
+            ".post-toc-mount--inline details.post-toc[open]"
+        )).to_have_count(1)
+        nav = phone.locator(".post-toc-mount--inline .post-toc__nav")
+        box = nav.evaluate(
+            "el => ({client: el.clientHeight, scroll: el.scrollHeight})"
+        )
+        assert box["client"] <= 0.5 * 700 + 1, (
+            f"the expanded phone list is {box['client']:.0f}px, over the "
+            "50vh cap (#377)"
+        )
+        assert box["scroll"] >= box["client"], (
+            "the long-post list must scroll inside the panel (#377)"
+        )
+        heights = phone.locator(
+            ".post-toc-mount--inline .post-toc__item a"
+        ).evaluate_all("els => els.map(el => el.getBoundingClientRect().height)")
+        assert heights and all(h <= 25 for h in heights), (
+            f"phone rows must stay single-line, got {heights} (#377)"
+        )
+    finally:
+        context.close()
+
+
+def test_phone_active_row_stays_inside_the_panel_without_moving_the_page(
+    built_site_url, browser
+):
+    """Scrolling the article keeps the marked row visible in the panel (#377).
+
+    Audit 2026-10-22: after a mid-article scroll the active row sat above
+    the viewport on every width/theme. The panel nudges only its own
+    scrollTop; the page itself must land exactly where requested.
+    """
+    context, phone = _phone_page(browser, built_site_url, 375)
+    try:
+        phone.locator(
+            ".post-toc-mount--inline .post-toc__summary"
+        ).click()
+        target = phone.evaluate(
+            """() => { const hs = document.querySelectorAll(
+              '.post-content h2[id]');
+              const h = hs[Math.floor(hs.length / 2)];
+              return h.getBoundingClientRect().top + window.scrollY - 10; }"""
+        )
+        phone.evaluate(f"window.scrollTo(0, {target})")
+        phone.wait_for_function(
+            """() => document.querySelector(
+              '.post-toc-mount--inline a[aria-current="location"]'
+            ) !== null""",
+            timeout=10_000,
+        )
+        state = phone.evaluate(
+            """() => { const nav = document.querySelector(
+              '.post-toc-mount--inline .post-toc__nav');
+              const a = document.querySelector(
+              '.post-toc-mount--inline a[aria-current="location"]');
+              const p = nav.getBoundingClientRect();
+              const r = a.getBoundingClientRect();
+              return { inPanel: r.top >= p.top - 1 && r.bottom <= p.bottom + 1,
+                pageY: window.scrollY }; }"""
+        )
+        assert state["inPanel"], (
+            "the active row must be visible inside the phone panel (#377)"
+        )
+        assert abs(state["pageY"] - target) <= 2, (
+            f"the page moved to {state['pageY']:.0f}, expected {target:.0f}: "
+            "the panel must never move the page (#377)"
+        )
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_phone_tap_targets_and_no_overflow_at_320px(
+    built_site_url, browser, scheme
+):
+    """Every visible phone target clears 24px; 320px never overflows (#377)."""
+    context = browser.new_context(
+        viewport={"width": 320, "height": 700}, color_scheme=scheme
+    )
+    try:
+        page = context.new_page()
+        page.goto(
+            built_site_url.rstrip("/") + EN_LONG_POST, wait_until="load"
+        )
+        page.locator(
+            ".post-toc-mount--inline .post-toc__summary"
+        ).click()
+        sizes = page.evaluate(
+            """() => Array.from(document.querySelectorAll(
+              '.post-toc-mount--inline .post-toc__summary,'
+              + ' .post-toc-mount--inline .post-toc__item a'
+            )).map(el => { const r = el.getBoundingClientRect();
+              return [Math.round(r.width), Math.round(r.height)]; })"""
+        )
+        assert sizes, "expected visible phone ToC targets (#377)"
+        for w, h in sizes:
+            assert w >= 24 and h >= 24, (
+                f"phone ToC target measures {w}x{h}, below 24px (#377)"
+            )
+        assert page.evaluate(
+            "document.documentElement.scrollWidth <= window.innerWidth"
+        ), "the phone ToC must not overflow a 320px viewport (#377)"
+    finally:
+        context.close()
+
+
+def test_desktop_toc_stays_open_beside_the_article(built_site_url, browser):
+    """Desktop behaviour is unchanged: the sidebar copy stays open (#377)."""
+    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    try:
+        page = context.new_page()
+        page.goto(
+            built_site_url.rstrip("/") + EN_LONG_POST, wait_until="load"
+        )
+        assert page.locator("details.post-toc[open]").count() == 2, (
+            "desktop must keep both ToC copies open (#377)"
+        )
+        assert page.evaluate(
+            "getComputedStyle(document.querySelector("
+            "'.post-toc-mount--sidebar')).display"
+        ) != "none"
+        assert page.evaluate(
+            "getComputedStyle(document.querySelector("
+            "'.post-toc-mount--inline')).display"
+        ) == "none"
     finally:
         context.close()
 

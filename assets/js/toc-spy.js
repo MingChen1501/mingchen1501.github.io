@@ -1,23 +1,26 @@
-/* ToC nested disclosure with scroll-spy (#345). `_includes/post-toc.html`
- * renders a NESTED list (children `<ul>`s as real descendants of their
- * parent `<li>`) starting FULLY EXPANDED (`<details open>`, every branch
- * `aria-expanded="true"`, no `hidden`): without JS every level is visible
- * and every anchor works. This script owns collapsing/auto-expansion:
- * init collapses every branch (default view H2 only; `hidden` keeps
- * collapsed subtrees out of the accessibility tree); the scroll-spy rule
- * (last heading past the viewport top wins; offset derived from the
- * measured `.site-header` height when sticky/fixed, else a small slack —
- * the header is not sticky, pinned by a static guard) marks exactly one
- * row per mount (`aria-current="location"`, both mounts together) and
- * auto-expands the active branch plus its ancestors, collapsing
- * auto-opened branches on leave unless pinned by hand (`data-manual`,
- * set on explicit toggle, makes the auto logic skip that branch until
- * the next explicit toggle). Auto-expansion never moves focus. Triggers:
- * `IntersectionObserver` plus a passive rAF-throttled scroll/resize
- * fallback; link clicks mark immediately. No smooth scrolling (nothing
- * for `prefers-reduced-motion` to disable). Real `<button>` toggles give
- * Enter/Space natively; `tabindex`, focus, and the outer `details[open]`
- * are never touched.
+/* ToC nested disclosure with scroll-spy (#345) and the phone row model
+ * (#377). `_includes/post-toc.html` renders a NESTED list (children
+ * `<ul>`s as real descendants of their parent `<li>`) starting FULLY
+ * EXPANDED (`<details open>`, every branch `aria-expanded="true"`, no
+ * `hidden`): without JS every level is visible and every anchor works.
+ * This script owns collapsing/auto-expansion: init collapses every branch
+ * (H2-only default; `hidden` keeps shut subtrees out of the a11y tree);
+ * on phone layouts it also starts the INLINE copy as one summary row (its
+ * open list would fill most of the first viewport — the desktop sidebar
+ * copy stays open). The scroll-spy rule (last heading past the viewport
+ * top wins; offset from the measured `.site-header` height when
+ * sticky/fixed, else a small slack — the header is non-sticky, pinned by
+ * a static guard) marks one row per mount (`aria-current="location"`,
+ * both mounts together), auto-expands the active branch plus ancestors,
+ * collapses auto-opened branches on leave unless pinned by hand
+ * (`data-manual` survives until the next explicit toggle), and keeps the
+ * active row inside a bounded phone panel via the panel's own scrollTop
+ * (the page itself never moves). Auto-expansion never moves focus.
+ * Triggers: `IntersectionObserver` plus a passive rAF-throttled
+ * scroll/resize fallback; link clicks mark immediately. No smooth
+ * scrolling (nothing for `prefers-reduced-motion` to disable). Real
+ * `<button>` toggles give Enter/Space natively; `tabindex`, focus, and
+ * the desktop outer `details[open]` are never touched.
  */
 (function () {
   var EDGE_PX = 24;
@@ -98,6 +101,21 @@
       );
     });
 
+    // Phone default (#377): the open inline list fills most of the first
+    // phone viewport (audit 2026-10-22: 510px, 73% of 700px). Start it as
+    // one summary row on phone layouts; desktop stays open, no-JS still
+    // ships `open`, a tap reopens natively. Keyed off the visible mount.
+    Array.prototype.forEach.call(navs, function (nav) {
+      var mount = nav.closest ? nav.closest('.post-toc-mount--inline') : null;
+      if (!mount || window.getComputedStyle(mount).display === 'none') {
+        return;
+      }
+      var box = nav.closest ? nav.closest('details.post-toc') : null;
+      if (box && box.hasAttribute('open')) {
+        box.removeAttribute('open');
+      }
+    });
+
     var activeId = null;
 
     function mark(id) {
@@ -157,6 +175,18 @@
           }
         }
       );
+      // Bounded phone panel (#377): the inline nav caps at 50vh with its
+      // own scroll. Nudge ONLY the panel's scrollTop — the page itself
+      // never moves (the #345 no-page-move rule still holds).
+      if (activeLink && nav.scrollHeight > nav.clientHeight + 1) {
+        var panel = nav.getBoundingClientRect();
+        var cell = activeLink.getBoundingClientRect();
+        if (cell.top < panel.top) {
+          nav.scrollTop -= panel.top - cell.top + 8;
+        } else if (cell.bottom > panel.bottom) {
+          nav.scrollTop += cell.bottom - panel.bottom + 8;
+        }
+      }
     }
 
     function apply() {
