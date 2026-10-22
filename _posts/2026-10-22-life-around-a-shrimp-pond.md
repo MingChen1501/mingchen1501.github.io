@@ -6,7 +6,6 @@ author: Ming Chen
 title: "Life around a shrimp pond"
 tags: [doi-song]
 description: "The daily rhythm of a shrimp-farming season: feeding rounds, water watching, weather bets, and what life around the pond taught me."
-image: https://github.com/user-attachments/assets/e5841687-f027-4c8a-aeca-a064cde7f8be
 ---
 
 Stand near a shrimp pond long enough and you start telling time differently. Not by the clock on your phone, but by the feeding round, the color of the water, and whether the aerators are running. I spent time around one, and the season left a mark on me that office work never did.

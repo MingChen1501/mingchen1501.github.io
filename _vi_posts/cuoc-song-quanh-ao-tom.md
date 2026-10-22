@@ -7,7 +7,6 @@ author: Ming Chen
 title: "Cuộc sống quanh ao tôm"
 tags: [doi-song]
 description: "Nhịp sống một vụ nuôi tôm ven biển: cữ cho ăn mỗi ngày, nghề canh nước, canh trời trở chứng, và mọi điều ao tôm đã dạy tôi."
-image: https://github.com/user-attachments/assets/e5841687-f027-4c8a-aeca-a064cde7f8be
 ---
 
 Đứng cạnh ao tôm đủ lâu, bạn sẽ bắt đầu đếm thời gian theo một cách khác. Không phải bằng đồng hồ trên điện thoại, mà bằng cữ cho ăn, màu nước, và dàn quạt nước có đang chạy hay không. Tôi đã có thời gian ở quanh một ao tôm như thế, và vụ nuôi ấy để lại trong tôi điều mà công việc văn phòng chưa bao giờ làm được.
