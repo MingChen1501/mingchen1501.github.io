@@ -20,7 +20,7 @@
 .post-toc {
   margin: 0 0 $spacing-unit;
   border: 1px solid $border-color-01;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 12px 16px;
   font-size: $small-font-size;
   line-height: 1.5;
@@ -89,7 +89,7 @@ ul.post-toc__children {
   min-height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -237,7 +237,7 @@ ul.post-toc__children {
   height: 48px;
   padding: 0;
   border: 1px solid $border-color-01;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: $background-color;
   color: $text-color;
   cursor: pointer;
@@ -399,7 +399,7 @@ ul.post-toc__children {
   background: $background-color;
   color: $text-color;
   border-top: 1px solid $border-color-01;
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -425,7 +425,7 @@ ul.post-toc__children {
   min-height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: inherit;
   font-size: 24px;

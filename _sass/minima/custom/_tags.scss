@@ -25,7 +25,7 @@ ul.tag-chip-list--home {
   display: inline-block;
   padding: 2px 10px;
   border: 1px solid $border-color-01;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: $small-font-size;
   line-height: 1.6;
   color: $text-color;

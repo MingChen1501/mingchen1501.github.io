@@ -154,7 +154,7 @@ html[data-theme="dark"] {
   margin-left: 8px;
   padding: 0;
   border: 1px solid $border-color-01;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: transparent;
   color: $text-color;
   cursor: pointer;

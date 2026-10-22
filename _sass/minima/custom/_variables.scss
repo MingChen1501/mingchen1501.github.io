@@ -14,3 +14,27 @@ $post-sidebar-width: 240px;
 $site-sidebar-width: 300px;
 $pinned-sidebar-min-height: 740px;
 $tap-target-minimum: 24px;
+
+// Shared shape language (#389): one radius scale for every button-like
+// control on the site. Audit result: icon-only floating/header actions are
+// circles, filter/language controls are pills, and every text action is an
+// 8px rounded rectangle — the only outliers were square pager/social links
+// (no radius at all), the 5px nav panel, and the 6px copy-code/post-ToC
+// boxes, all unified to the scale below. Small nested controls (ToC
+// disclosure toggle) and small inline surfaces (thumbnails, lightbox image,
+// translation notice, skip link) share the 4px step — one step smaller than
+// the 8px actions that contain them. The bottom sheet keeps the single 12px
+// step for the large overlay surface. Code blocks stay at their own 3px
+// (out of scope: not button-like) and the ToC chevron bars keep their 1px
+// rounding (decorative segments, not controls).
+//
+// CSS custom properties (not Sass variables) so the compiled stylesheet
+// carries the token names and the guard in `tests/e2e/test_shape_radius.py`
+// can pin every button class to them — ad-hoc radii cannot creep back.
+:root {
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+}

@@ -244,7 +244,17 @@ EXPECTED_VARIABLES = {
 # Diffed old vs new before bumping: the only hunk is that addition; no
 # existing rule moved and screen media is untouched, so every screen render
 # stays identical and no baseline refresh is needed for this hunk.
-EXPECTED_CSS_SHA256 = "8ea4078bb0ae3c1716a280f2e8e2b2dda4409557f3d00d21593a6aae674c2265"
+# #389 (button shape language): the five `:root` radius tokens plus pointing
+# every button-like class at them (`var(--radius-*)`), with four genuine
+# fixes (square pager/social links gain the 8px text-action radius, the 5px
+# nav panel and the 6px copy-code/post-ToC boxes join it). Diffed old vs new
+# before bumping: the only changes are the token substitutions (computed
+# values identical), the `:root` token block, and those four radius fixes;
+# no other rule moved. Home/tag/list pages showing the pager and the footer
+# social icons render 8px corners where they were square — refresh those
+# visual baselines from the CI `visual-fresh-chromium` artifact; all other
+# baselines are pixel-identical.
+EXPECTED_CSS_SHA256 = "2b438727ff3dc1ea1e8b5f7ad5a3b1ee3f1b9990b9251445ec47048b2fdf5442"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

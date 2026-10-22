@@ -56,7 +56,7 @@
   min-height: 44px;
   padding: 8px 14px;
   border: 1px solid $border-color-01;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: $background-color;
   color: $text-color;
   font-size: $small-font-size;

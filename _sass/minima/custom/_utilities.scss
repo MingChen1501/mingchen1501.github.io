@@ -18,7 +18,7 @@
   padding: $spacing-unit * 0.5 $spacing-unit;
   border: 1px solid $border-color-01;
   border-left: 4px solid $brand-color;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background-color: $background-color;
   font-size: $small-font-size;
 }
@@ -44,7 +44,7 @@
   min-height: 44px;
   padding: 6px 12px;
   border: 1px solid $border-color-01;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background-color: $background-color;
   color: $text-color;
   font-size: $small-font-size;
