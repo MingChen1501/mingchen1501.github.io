@@ -23,7 +23,8 @@ Guarded here:
   order (merge history: #372 10:40 < #373 11:00 on 2026-10-20;
   #381 13:22 < #394 15:40 on 2026-10-22, +0700);
 - (built) the newer post of each pair renders first on the affected
-  surfaces: both homes, the four tag pages, both feeds, and the sitemap
+  surfaces: both homes, the shared `ai-agent` tag pages (the 2026-10-22
+  pair shares no tag — different pillars), both feeds, and the sitemap
   emission order.
 """
 
