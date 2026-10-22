@@ -129,6 +129,18 @@ def test_sidebar_renders_only_pillars_capped_at_six():
     )
     assert "sidebar-tags__all" in html
     assert "sidebar_tag_base | relative_url" in html
+    # Exactly one entry point to the tag index (#378): the trailing footer
+    # link. The heading is plain text (still an accessible name), so the
+    # duplicate heading link — and its locale strings — are gone.
+    assert "sidebar__heading-link" not in html, (
+        "the sidebar topics heading must be plain text, not a second tag-index link (#378)"
+    )
+    assert "sidebar_all_link" not in html, (
+        "the removed heading link's locale strings must not linger (#378)"
+    )
+    assert '<h2 class="sidebar__heading">{{ sidebar_topics_heading }}</h2>' in html, (
+        "the sidebar topics heading must keep its accessible name without a link (#378)"
+    )
 
 
 @pytest.mark.static
@@ -223,6 +235,29 @@ def test_sidebar_lists_pillars_in_order_with_all_topics_link(built_site):
         )
         assert all_topics in html, (
             f"{rel}: the sidebar must offer the {all_topics!r} link (#344)"
+        )
+        # Exactly one tag-index entry point per sidebar (#378): the footer
+        # link. The heading is plain text and each pillar row links its own
+        # tag page (never the bare index), so only the footer's exact href
+        # may match the index URL.
+        topics_sections = [
+            section
+            for section in re.findall(
+                r'<section class="sidebar__section">.*?</section>', html, re.S
+            )
+            if "sidebar-tags" in section
+        ]
+        assert len(topics_sections) == 1, (
+            f"{rel}: the sidebar must render exactly one topics section, "
+            f"got {len(topics_sections)}"
+        )
+        section_html = topics_sections[0]
+        assert section_html.count(f'href="{base}"') == 1, (
+            f"{rel}: the sidebar must link the tag index exactly once, "
+            f"got {section_html.count(f'href=\"{base}\"')} (#378)"
+        )
+        assert "sidebar__heading-link" not in section_html, (
+            f"{rel}: the sidebar topics heading must carry no link (#378)"
         )
 
 

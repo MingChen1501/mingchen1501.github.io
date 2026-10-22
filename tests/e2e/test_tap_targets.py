@@ -15,7 +15,7 @@ Guarded here:
 - at 360px every interactive target on `/`, `/vi/`, a post page (with TOC)
   and a tag page (EN + VI) measures >= 24px in both dimensions: chips,
   pager, social icons, lang switcher, opened mobile menu items, sidebar
-  titles / tag-post links / "view all" links / heading links, TOC summary +
+  titles / tag-post links / "view all" links, TOC summary +
   entries, tag back-link and footer email (browser);
 - at desktop width the nav items measure >= 24px tall (browser).
 
@@ -52,7 +52,6 @@ FIXED_SELECTORS = [
     ".sidebar-post__title",
     ".sidebar-tag__posts a",
     ".sidebar-tag__more",
-    ".sidebar__heading-link",
     ".post-toc__summary",
     ".post-toc__item a",
     ".tag-page__back a",
@@ -66,7 +65,6 @@ FIXED_SELECTORS = [
 # apply (and `min-width`, so a short label cannot shrink the other axis).
 INLINE_FIXED_SELECTORS = [
     ".sidebar-tag__posts a",
-    ".sidebar__heading-link",
     ".post-toc__item a",
     ".tag-page__back a",
     ".contact-list .u-email",
@@ -223,7 +221,6 @@ LIST_PAGE_SELECTORS = [
     "a.sidebar-post__title",
     ".sidebar-tag__posts a",
     "a.sidebar-tag__more",
-    ".sidebar__heading-link",
     ".contact-list .u-email",
 ]
 
