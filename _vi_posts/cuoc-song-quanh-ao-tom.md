@@ -7,6 +7,7 @@ author: Ming Chen
 title: "Cuộc sống quanh ao tôm"
 tags: [doi-song]
 description: "Nhịp sống một vụ nuôi tôm ven biển: cữ cho ăn mỗi ngày, nghề canh nước, canh trời trở chứng, và mọi điều ao tôm đã dạy tôi."
+image: https://github.com/user-attachments/assets/e5841687-f027-4c8a-aeca-a064cde7f8be
 ---
 
 Đứng cạnh ao tôm đủ lâu, bạn sẽ bắt đầu đếm thời gian theo một cách khác. Không phải bằng đồng hồ trên điện thoại, mà bằng cữ cho ăn, màu nước, và dàn quạt nước có đang chạy hay không. Tôi đã có thời gian ở quanh một ao tôm như thế, và vụ nuôi ấy để lại trong tôi điều mà công việc văn phòng chưa bao giờ làm được.
@@ -19,6 +20,8 @@ Vụ nuôi tôm không bắt đầu khi tôm giống về tới nơi. Nó bắt 
 
 Từ đó cuốn lịch coi như đã định. Những tuần đầu là chăm đàn tôm non: cho ăn ít mà nhiều cữ, chạy quạt nhẹ, theo dõi liên tục. Rồi đến chặng dài ở giữa, những tháng tôm lớn, công việc đi vào nhịp hằng ngày. Cuối cùng là thu hoạch — có khi thu tỉa làm nhiều đợt, có khi tháo cạn thu một lần — rồi ao được nghỉ, và mọi thứ lại bắt đầu.
 
+![Nhìn rộng qua ao tôm đang nuôi với những dàn quạt tung bọt nước trắng xóa, chụp từ bờ bê tông có ống van nhựa PVC và dây dẫn phía trước, xa xa là nhà kho và hàng dừa dưới trời trong](https://github.com/user-attachments/assets/00d9ce97-6bca-4af8-b282-dac32c525fd5){: width="960" height="1280" }
+
 Người quanh ao chẳng ai nói chuyện này bằng tuần thứ mấy hay mốc nào: ao này sớm, ao kia muộn, nước còn non, vụ này sắp xong. Vụ nuôi là một câu chuyện có mở đầu, có giữa, có kết mà ai cũng đọc được trong một cái nhìn — trừ tôi, hồi mới đến.
 
 ## Buổi sáng thuộc về ao tôm
@@ -28,6 +31,8 @@ Ngày làm việc bắt đầu sớm, khi trời còn chưa nóng. Việc đầu
 Rồi đến lượt kiểm tra nước. Nhìn màu nước — xanh thường là tốt, quá đậm hay quá trong mỗi kiểu kể một chuyện khác — để ý mùi, để ý váng mặt, xem tôm dạt bờ thế nào. Người nuôi lâu năm đọc ao như thợ máy nghe tiếng động cơ: chẳng có gì huyền bí, chỉ là hàng nghìn lần lặp lại nén thành một cái liếc mắt.
 
 Máy móc cũng cần chăm. Dàn quạt đảo nước để giữ oxy, nhất là ban đêm và những tháng nóng; máy bơm và cống lấy nước ra vào theo lịch. Chẳng thứ nào phức tạp, nhưng thứ nào cũng phải chạy mỗi ngày, vì ao không nghỉ chờ sửa chữa.
+
+![Nhìn gần bờ ao tôm lót bạt với mặt nước xanh đậm loang bọt trắng, dàn quạt nước nổi màu xanh ở phía phải, xa xa là thêm dàn quạt và hàng cây dưới bầu trời xanh](https://github.com/user-attachments/assets/e5841687-f027-4c8a-aeca-a064cde7f8be){: width="960" height="1280" }
 
 [OWNER FACT NEEDED: diện tích ao, số lượng ao, và ở đây nuôi giống tôm nào.]
 
@@ -64,6 +69,8 @@ Bài học thứ ba là sự nể trọng với công việc chân tay lặp đi
 ## Vì sao nó có ý nghĩa với tôi
 
 Tôi chưa từng nghĩ một ao tôm sẽ thành một phần trong thế giới nội tâm của mình. Nhưng mùa vụ có cách bám vào người ta: mùi nước lợ buổi sớm, tiếng quạt nước đêm khuya, cái yên tĩnh rất riêng của bờ ao khi đã cho ăn xong và chẳng còn việc gì ngoài ngồi ngắm. Tôi mang theo những chi tiết ấy như người ta mang theo bài hát của một năm nào đó.
+
+![Nắng sớm xuyên qua tầng mây thưa trên những mái ngói đỏ, phía dưới là rặng cây và một cây dừa in bóng](https://github.com/user-attachments/assets/7a23d529-7a4b-419b-87b3-596dc86010cd){: width="960" height="1280" }
 
 Nó có ý nghĩa vì nó nối tôi lại với một nhịp sống mà tôi từ đó mà ra và đã đi xa dần. Ngày thường của tôi giờ chạy bằng thông báo và deadline — nhanh, dễ bị ngắt, trừu tượng. Thời gian bên ao thì chậm, liền mạch và cụ thể: sinh vật sống lớn lên theo tốc độ của chính nó, có ai ngắm hay không. Nhớ rằng vẫn còn một nhịp sống như thế, và những người tôi thương vẫn đang sống trong đó, giúp tôi thành thật với chính sự vội vã của mình.
 

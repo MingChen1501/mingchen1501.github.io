@@ -6,6 +6,7 @@ author: Ming Chen
 title: "Life around a shrimp pond"
 tags: [doi-song]
 description: "The daily rhythm of a shrimp-farming season: feeding rounds, water watching, weather bets, and what life around the pond taught me."
+image: https://github.com/user-attachments/assets/e5841687-f027-4c8a-aeca-a064cde7f8be
 ---
 
 Stand near a shrimp pond long enough and you start telling time differently. Not by the clock on your phone, but by the feeding round, the color of the water, and whether the aerators are running. I spent time around one, and the season left a mark on me that office work never did.
@@ -18,6 +19,8 @@ A shrimp-farming season does not start when the shrimp arrive. It starts with an
 
 From there the calendar is roughly fixed. The first weeks are about nursing the young stock along: small frequent feeds, gentle aeration, constant watching. Then comes the long middle stretch, the grow-out months, when the shrimp put on size and the work settles into its daily rhythm. At the end comes the harvest — sometimes partial, thinning the pond in rounds, sometimes a full drain-down — and then the pond rests, and everything starts over.
 
+![Wide view across a working shrimp pond with paddlewheel aerators throwing up white spray, seen from a concrete bank with a PVC valve pipe and hose in the foreground and a shed and palm trees beyond](https://github.com/user-attachments/assets/00d9ce97-6bca-4af8-b282-dac32c525fd5){: width="960" height="1280" }
+
 Nobody around the pond talks about this in weeks and milestones. They talk about it the way farmers everywhere talk: this pond is early, that pond is late, the water is young, the crop is nearly done. The season is a story with a beginning, a middle, and an ending everybody can read at a glance — except me, at first. I had to learn to see it.
 
 ## Mornings belong to the pond
@@ -27,6 +30,8 @@ The working day starts early, before the heat. The first job is the feeding roun
 Then comes the water check. You look at the color — green is usually good, too dark or too clear tells its own story — you note the smell, the surface film, how the shrimp behave near the banks. Experienced farmers read a pond the way a mechanic listens to an engine: nothing mystical, just thousands of repetitions compressed into a glance.
 
 The equipment needs tending too. Paddlewheel aerators churn the water to keep oxygen up, especially at night and in the hot months; pumps and sluice gates move water in and out on schedule. None of it is complicated machinery, but all of it has to work, every day, because the pond does not pause for breakdowns.
+
+![Close view of a lined shrimp pond with dark green water and white foam, a blue floating paddlewheel aerator at the right, and more aerators and trees under a blue sky in the distance](https://github.com/user-attachments/assets/e5841687-f027-4c8a-aeca-a064cde7f8be){: width="960" height="1280" }
 
 [OWNER FACT NEEDED: pond size, number of ponds, and which shrimp species is farmed here.]
 
@@ -63,6 +68,8 @@ The third was respect for manual, repetitive work. Feeding rounds, tray checks, 
 ## Why it matters to me
 
 I did not grow up expecting a shrimp pond to be part of my inner landscape. But seasons have a way of attaching themselves to you: the smell of brackish water at dawn, the churn of the aerators at night, the particular quiet of the banks when the feed is done and there is nothing to do but watch. I carry those sensory details the way other people carry songs from a certain year.
+
+![Morning sun breaking through scattered clouds above red clay tile rooftops, with a silhouetted palm tree and treeline below](https://github.com/user-attachments/assets/7a23d529-7a4b-419b-87b3-596dc86010cd){: width="960" height="1280" }
 
 It matters because it reconnected me with a tempo I come from and had drifted away from. Most of my days now run on notifications and deadlines — fast, interruptible, abstract. Pond time is slow, continuous, and concrete: living things growing at their own speed whether or not anyone is watching. Remembering that such a tempo exists, and that people I care about still live inside it, keeps me honest about what my own hurry is for.
 
