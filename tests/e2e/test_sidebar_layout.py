@@ -32,7 +32,9 @@ Acceptance guarded here (issues #58, #63 and #64):
   posts,
 - the sidebar never scrolls inside itself (#63): no `max-height`/`overflow-y`
   cap, pinned only where its bounded content fits (desktop width *and* enough
-  viewport height), still scroll-free while a tag row is open, and
+  viewport height), still scroll-free while a tag row is open (the one
+  deliberate inner scroll is the #377 phone ToC panel, scoped to the inline
+  mount below the two-column breakpoint), and
 - no horizontal overflow at 375px on `/` *and* on a `/tags/<tag>/` page, with
   every image undistorted and never upscaled (the #50 rules), plus two columns
   beside each other on desktop.
@@ -561,7 +563,23 @@ def test_sidebar_height_is_bounded_instead_of_an_inner_scrollbar():
     """#63: the height budget replaces #58's `max-height` + `overflow-y` cap."""
     # Comments mention the removed cap, so only the declarations count.
     scss = re.sub(r"//[^\n]*", "", conftest.custom_styles_text())
-    assert "overflow-y" not in scss, "the sidebar must not scroll inside itself"
+    # Deliberate exception (#377): the phone inline ToC list is a bounded
+    # 50vh panel with its own scroll, scoped to the inline mount below the
+    # two-column breakpoint — the sticky desktop sidebars still never
+    # scroll. Carve that one panel out before asserting.
+    panel = re.search(
+        r"\.post-toc-mount--inline\s*\{\s*\.post-toc__nav\s*\{([^}]*)\}",
+        scss,
+        re.S,
+    )
+    assert panel and "max-height: 50vh;" in panel.group(1), (
+        "the carved-out phone ToC panel must be the bounded 50vh list (#377)"
+    )
+    rest = scss[:panel.start()] + scss[panel.end():]
+    assert "overflow-y" not in rest, (
+        "the sidebar must not scroll inside itself (#63; the one carved-out "
+        "panel is the #377 phone ToC list)"
+    )
     assert "100vh" not in scss, "no viewport-height cap on the sidebar either"
     # The budget itself: a title that cannot spill, and a capped thumbnail.
     assert "-webkit-line-clamp: 2" in scss

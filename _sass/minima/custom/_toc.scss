@@ -163,3 +163,48 @@ ul.post-toc__children {
     display: block;
   }
 }
+
+// Phone row model (#377): below the two-column breakpoint the inline copy
+// is the only visible one, stacked above the article. The 2026-10-22 audit
+// (320/360/375/414, light+dark, 16-h2 EN + 4-h2 VI posts) proved it costs
+// 510px / 73% of a 700px viewport on long posts before the first paragraph,
+// wraps 2 of 16 titles onto two lines, and leaves the marked row above the
+// viewport while reading — so the expanded list is bounded with its own
+// scroll (the script starts it collapsed to one summary row and keeps the
+// active row inside this panel, never moving the page), long titles
+// truncate with an ellipsis instead of wrapping, indentation caps at two
+// tight steps, and the summary/toggles clear 44px/32px. Desktop keeps the
+// wrapping multi-line rows and the 16/32px indents untouched.
+@include media-query($two-column-breakpoint - 1px) {
+  .post-toc-mount--inline {
+    .post-toc__nav {
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+
+    .post-toc__summary {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+
+    .post-toc__row a {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .post-toc__toggle {
+      min-width: 32px;
+      min-height: 32px;
+    }
+
+    .post-toc__item--h3 {
+      padding-left: 12px;
+    }
+
+    .post-toc__item--h4 {
+      padding-left: 20px;
+    }
+  }
+}

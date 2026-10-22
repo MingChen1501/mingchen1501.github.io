@@ -302,7 +302,7 @@ _MOUNT_DISPLAY_JS = """() => {
 }"""
 
 
-@pytest.mark.parametrize("width,visible,hidden", [(375, "inline", "sidebar"), (1280, "sidebar", "inline")])
+@pytest.mark.parametrize("width,visible,hidden", [(360, "inline", "sidebar"), (375, "inline", "sidebar"), (1280, "sidebar", "inline")])
 def test_exactly_one_toc_mount_is_visible_per_viewport(
     built_site_url, browser, width, visible, hidden
 ):

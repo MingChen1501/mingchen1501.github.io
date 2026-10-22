@@ -179,7 +179,15 @@ EXPECTED_VARIABLES = {
 # progressive enhancement — the static markup ships every level expanded),
 # which changes post screenshots, but the visual baselines pin ToC-less
 # posts only, so no baseline refreshes.
-EXPECTED_CSS_SHA256 = "daff3e3072b54a48c16280e863935e0fc9595d1e672f1a8b4c4c890dc7a1e7df"
+# #377 (phone ToC row model): the `toc` partial gained a phone-only block
+# (below the 960px two-column breakpoint). Diffed old vs new before
+# bumping: the only hunk is that addition (bounded 50vh scrollable inline
+# nav, 44px summary, single-line ellipsis rows, 32px toggles, 12/20px
+# h3/h4 indents); no existing rule moved, so desktop and no-JS renders
+# stay identical and the ToC-less visual baselines need no refresh. (A
+# `scroll-margin-top` guard was prototyped and reverted: it parked anchor
+# jumps on the scroll-spy marking boundary.)
+EXPECTED_CSS_SHA256 = "47aa524eed210e007a5661e8a4b4424bfc2f7699d85f5ae451625d6c09be0b46"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275
