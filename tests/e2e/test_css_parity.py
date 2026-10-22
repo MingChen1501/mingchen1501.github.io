@@ -202,7 +202,14 @@ EXPECTED_VARIABLES = {
 # geometry in the theme-swapping link accent). Diffed old vs new before
 # bumping: pure addition, no existing rule moved; the outline only paints
 # on keyboard focus, so all baselined renders stay pixel-identical.
-EXPECTED_CSS_SHA256 = "3fdad34e8c36c5f8f49f18d6af795123b495945f6b4fbdaf416a438f9bccef69"
+# #400 (phone FAB toggle-close ring): the `toc` partial gained one additive
+# `.toc-fab.toc-fab--no-focus-ring:focus-visible` rule drawing no outline
+# while the script's pointer-close mark is present (some engines match
+# `:focus-visible` for the programmatic focus return after a tap). Diffed
+# old vs new before bumping: pure addition, no existing rule moved; the
+# mark is only ever set on a pointer close, so all baselined renders stay
+# pixel-identical.
+EXPECTED_CSS_SHA256 = "8b633154582dae0184425cd306c657a9487a8195019b912b381b9d68eea2a245"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

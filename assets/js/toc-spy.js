@@ -260,6 +260,34 @@
       }
     }
 
+    // Focus-ring modality (#400): the programmatic `fab.focus()` return
+    // after a pointer close can still match `:focus-visible` in some
+    // engines, leaving the accent ring stuck on the FAB (tapping the FAB
+    // itself to close was the reported path). Track the last input
+    // modality instead of guessing from the engine: pointer-initiated
+    // closes mark the button with `toc-fab--no-focus-ring` (a CSS rule
+    // that outranks the `:focus-visible` accent without moving DOM
+    // focus), and the next keydown drops the mark so keyboard closes
+    // keep their visible ring. Clicks with no pointer behind them
+    // (keyboard activation, assistive tech) default to the ring.
+    var pointerClose = false;
+    document.addEventListener('pointerdown', function () {
+      pointerClose = true;
+    }, true);
+    document.addEventListener('keydown', function () {
+      pointerClose = false;
+      fab.classList.remove('toc-fab--no-focus-ring');
+    }, true);
+
+    function returnFocusToFab() {
+      if (pointerClose) {
+        fab.classList.add('toc-fab--no-focus-ring');
+      } else {
+        fab.classList.remove('toc-fab--no-focus-ring');
+      }
+      fab.focus();
+    }
+
     function closeSheet(refocus) {
       if (!fabOn || sheet.hidden) {
         return;
@@ -270,7 +298,7 @@
       // Restore before refocusing: the button is covered while open.
       setBackgroundModal(false);
       if (refocus !== false) {
-        fab.focus();
+        returnFocusToFab();
       }
     }
 
@@ -425,7 +453,7 @@
         mark(rowHref.slice(1));
         if (fabOn && sheet.contains(link)) {
           closeSheet(false);
-          fab.focus();
+          returnFocusToFab();
           rowHash = rowHref;
         }
       });
@@ -466,7 +494,7 @@
       window.addEventListener('hashchange', function () {
         if (rowHash !== null && window.location.hash === rowHash) {
           rowHash = null;
-          fab.focus();
+          returnFocusToFab();
         }
       });
     }

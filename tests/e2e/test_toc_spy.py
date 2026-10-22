@@ -74,9 +74,11 @@ SCRIPT_PATH = "/assets/js/toc-spy.js"
 # disclosure grew the script from ~5KB (flat highlight only) to ~8.6KB;
 # the phone FAB + sheet + article-range ring (#383) reuses the same
 # observer and rAF tick and grows it to ~14KB; the review follow-up keeps
-# `role="dialog" aria-modal="true"` with a real Tab trap plus background
-# `inert`/`aria-hidden` (~17.5KB).
-MAX_SCRIPT_BYTES = 18 * 1024
+# `role="dialog"` with a real Tab trap plus background `inert`/`aria-hidden`
+# (~17.5KB); the pointer-close ring suppression (#400) tracks the last
+# input modality so pointer closes mark the button instead of leaving a
+# stuck accent ring (~19KB).
+MAX_SCRIPT_BYTES = 20 * 1024
 
 EN_LONG_POST = "/2022/12/25/explaining-the-internet.html"
 VI_LONG_POST = "/vi/2022/12/25/gioi-thieu-ve-internet.html"
@@ -478,6 +480,48 @@ def test_the_fab_focus_is_accent_only_for_keyboards():
     assert "toc-fab" not in _read(
         REPO_ROOT / "_sass" / "minima" / "custom" / "_theme-toggle.scss"
     ), "the FAB focus colour must need no dark override (#395)"
+
+
+@pytest.mark.static
+def test_the_fab_pointer_close_marks_the_button_by_modality():
+    """Pointer closes suppress the ring by modality; keydown clears it (#400).
+
+    Some engines match `:focus-visible` for the programmatic focus return
+    after a tap-close, so the stylesheet alone cannot tell a pointer close
+    from a keyboard one. The script tracks the last input modality and
+    marks the button only for pointer closes, and the stylesheet outranks
+    the keyboard accent rule only while the mark is present; the next
+    keydown drops the mark so keyboard users keep their ring.
+    """
+    text = _read(SCRIPT)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    assert "pointerdown" in code, (
+        "pointer closes must be detected from real input events (#400)"
+    )
+    assert "toc-fab--no-focus-ring" in code, (
+        "pointer closes must mark the button so the ring stays off (#400)"
+    )
+    assert code.count("toc-fab--no-focus-ring") >= 3, (
+        "the mark must be added for pointer closes and removed for "
+        "keyboard input (#400)"
+    )
+    assert "returnFocusToFab" in code and "fab.focus()" in code, (
+        "every close path must still return DOM focus to the button "
+        "(only the painted ring is suppressed, #400)"
+    )
+    scss = _read(TOC_SCSS)
+    rule = re.search(
+        r"\.toc-fab\.toc-fab--no-focus-ring:focus-visible\s*\{(.*?)\}",
+        scss,
+        re.S,
+    )
+    assert rule, (
+        "the mark must outrank the keyboard `:focus-visible` accent rule "
+        "(#400)"
+    )
+    assert "outline: none" in rule.group(1) or "outline:none" in rule.group(1), (
+        "a marked (pointer-closed) FAB must draw no outline (#400)"
+    )
 
 
 @pytest.mark.static
@@ -1286,10 +1330,11 @@ def test_phone_fab_tap_close_leaves_no_outline_on_the_button(
 ):
     """A tap-close returns focus with no stuck ring (#395).
 
-    Pointer activation (including the programmatic `fab.focus()` return,
-    which never matches `:focus-visible`) must leave the FAB with no
-    outline in either theme; focus itself still returns to the button so
-    the trap handoff is unchanged.
+    Pointer activation must leave the FAB with no outline in either theme;
+    focus itself still returns to the button so the trap handoff is
+    unchanged. The guard reads the painted outline: some engines still
+    report `:focus-visible` for the programmatic focus return (see #400),
+    so the outline — not the match — is the user-visible contract.
     """
     context, phone = _phone_page(browser, built_site_url, width, scheme)
     try:
@@ -1315,6 +1360,171 @@ def test_phone_fab_tap_close_leaves_no_outline_on_the_button(
         assert outline["focusVisible"] is False, (
             "the programmatic focus return after a tap must not match "
             f":focus-visible at {width}px (#395)"
+        )
+    finally:
+        context.close()
+
+
+def _fab_outline(page):
+    """Painted outline of the FAB: the user-visible ring contract (#400)."""
+    return page.evaluate(
+        """() => { const fab = document.querySelector('.toc-fab');
+          const style = getComputedStyle(fab);
+          return { style: style.outlineStyle, width: style.outlineWidth,
+            marked: fab.classList.contains('toc-fab--no-focus-ring'),
+            focused: document.activeElement === fab }; }"""
+    )
+
+
+@pytest.mark.parametrize("width", [375, 414])
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_phone_fab_pointer_closes_leave_no_ring(
+    built_site_url, browser, width, scheme
+):
+    """Every pointer close leaves focus with no visible ring (#400).
+
+    The FAB toggle tap (the reported path), the close-button tap, and the
+    backdrop tap each return focus to the button with the
+    `toc-fab--no-focus-ring` mark, so no outline paints in either theme.
+    Some engines match `:focus-visible` for the programmatic return, so
+    the guard reads the painted outline and the mark, not the match.
+    """
+    context, phone = _phone_page(browser, built_site_url, width, scheme)
+    try:
+        fab = phone.get_by_role("button", name=re.compile("On this page"))
+        sheet = phone.locator(".toc-sheet")
+        # Toggle path (the reported one): tap the FAB to open, tap it
+        # again to close. The open sheet covers the FAB (panel z-1000 over
+        # button z-950), so no real pointer tap can reach it while open;
+        # dispatch the tap's pointerdown + click at the button to drive
+        # the same toggle handler with pointer modality armed.
+        fab.first.click()
+        expect(sheet).to_be_visible()
+        phone.evaluate(
+            """() => { const fab = document.querySelector('.toc-fab');
+              fab.dispatchEvent(
+                new PointerEvent('pointerdown', {bubbles: true}));
+              fab.click(); }"""
+        )
+        expect(sheet).to_be_hidden()
+        outline = _fab_outline(phone)
+        assert outline["focused"], (
+            "a FAB toggle-close must return focus to the button (#400)"
+        )
+        assert outline["marked"], (
+            "a FAB toggle-close must mark the button as pointer-driven "
+            f"at {width}px (#400)"
+        )
+        assert outline["style"] == "none", (
+            f"a FAB toggle-close left outline-style {outline['style']} "
+            f"on the FAB at {width}px (#400)"
+        )
+        # Close-button tap path.
+        fab.first.click()
+        expect(sheet).to_be_visible()
+        phone.locator(".toc-sheet__close").click()
+        expect(sheet).to_be_hidden()
+        outline = _fab_outline(phone)
+        assert outline["focused"], (
+            "a close-button tap must return focus to the button (#400)"
+        )
+        assert outline["style"] == "none", (
+            f"a close-button tap left outline-style {outline['style']} "
+            f"on the FAB at {width}px (#400)"
+        )
+        # Backdrop tap path.
+        fab.first.click()
+        expect(sheet).to_be_visible()
+        phone.locator(".toc-sheet__backdrop").click(position={"x": 20, "y": 20})
+        expect(sheet).to_be_hidden()
+        outline = _fab_outline(phone)
+        assert outline["focused"], (
+            "a backdrop tap must return focus to the button (#400)"
+        )
+        assert outline["style"] == "none", (
+            f"a backdrop tap left outline-style {outline['style']} on the "
+            f"FAB at {width}px (#400)"
+        )
+        # Row-tap path (the working contrast in the report): a real tap on
+        # a row still navigates, closes, returns focus, and leaves no ring.
+        fab.first.click()
+        expect(sheet).to_be_visible()
+        target = phone.evaluate(
+            """() => Array.from(
+              document.querySelectorAll('.post-content h2[id]')
+            ).map(h => h.id)[5]"""
+        )
+        phone.locator(f".toc-sheet a[href='#{target}']").click()
+        expect(sheet).to_be_hidden()
+        phone.wait_for_function(
+            f"() => window.location.hash === '#{target}'", timeout=10_000
+        )
+        phone.wait_for_function(
+            "() => document.activeElement.classList.contains('toc-fab')",
+            timeout=10_000,
+        )
+        outline = _fab_outline(phone)
+        assert outline["style"] == "none", (
+            f"a row tap left outline-style {outline['style']} on the FAB "
+            f"at {width}px (#400)"
+        )
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375, 414])
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_phone_fab_keyboard_close_keeps_the_ring(
+    built_site_url, browser, width, scheme
+):
+    """Keyboard closes keep the accent ring on the FAB (#400).
+
+    Esc and keyboard activation of the close button return focus without
+    the pointer mark, so the 3px accent outline from #395 still paints in
+    either theme.
+    """
+    context, phone = _phone_page(browser, built_site_url, width, scheme)
+    try:
+        fab = phone.get_by_role("button", name=re.compile("On this page"))
+        sheet = phone.locator(".toc-sheet")
+        # Open with the keyboard; Esc closes.
+        phone.evaluate(
+            "document.querySelector('.toc-fab').focus({preventScroll: true})"
+        )
+        phone.keyboard.press("Enter")
+        expect(sheet).to_be_visible()
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-sheet__close')"
+        ), "opening must move focus into the sheet (#400)"
+        phone.keyboard.press("Escape")
+        expect(sheet).to_be_hidden()
+        outline = _fab_outline(phone)
+        assert outline["focused"], (
+            "Esc must return focus to the button (#400)"
+        )
+        assert not outline["marked"], (
+            "a keyboard close must not carry the pointer mark (#400)"
+        )
+        assert outline["style"] != "none", (
+            "Esc left no visible ring on the FAB "
+            f"at {width}px in {scheme} mode (#400)"
+        )
+        assert outline["width"] == "3px", (
+            f"the Esc ring must keep the 3px accent geometry, got "
+            f"{outline['width']} at {width}px (#400)"
+        )
+        # Keyboard activation of the sheet's close button keeps it too.
+        phone.keyboard.press("Enter")
+        expect(sheet).to_be_visible()
+        phone.keyboard.press("Enter")
+        expect(sheet).to_be_hidden()
+        outline = _fab_outline(phone)
+        assert outline["focused"], (
+            "close-button activation must return focus to the button (#400)"
+        )
+        assert outline["style"] != "none", (
+            "close-button activation left no visible ring on the FAB "
+            f"at {width}px in {scheme} mode (#400)"
         )
     finally:
         context.close()
