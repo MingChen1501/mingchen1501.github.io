@@ -2,6 +2,7 @@
 layout: post
 lang: en
 ref: life-around-a-shrimp-pond
+date: 2026-10-22 13:22 +0700
 author: Ming Chen
 title: "Life around a shrimp pond"
 tags: [doi-song]

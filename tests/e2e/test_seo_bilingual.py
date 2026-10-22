@@ -132,7 +132,7 @@ def _post_url(path):
     if path.parent == REPO_ROOT / "_posts":
         slug = re.sub(r"^\d{4}-\d{2}-\d{2}-", "", path.stem)
         return f"/{path.stem[:10].replace('-', '/')}/{slug}.html"
-    date = _value(_front_matter(path), "date") or ""
+    date = (_value(_front_matter(path), "date") or "")[:10]
     return f"/vi/{date.replace('-', '/')}/{path.stem}.html"
 
 

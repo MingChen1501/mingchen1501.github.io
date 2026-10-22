@@ -2,7 +2,7 @@
 layout: post
 lang: vi
 ref: lessons-opencode-subscription-multiple-coding-agents
-date: 2026-10-20
+date: 2026-10-20 11:00 +0700
 author: Ming Chen
 title: "Bài học khi mua subscription OpenCode và chạy nhiều coding agent cùng lúc"
 tags: [ai-agent]
