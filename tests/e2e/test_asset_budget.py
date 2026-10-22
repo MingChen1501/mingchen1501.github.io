@@ -62,10 +62,14 @@ SUB_FOOTER = test_post_only_js.SUB_FOOTER
 # copy-code success class + lightbox fade restart, ~260 B intentional), so
 # MAX_JS_POST_BYTES moves 49152 -> 49664; the main sheet grows
 # 48652 -> 52360 B (shared keyframes, reduced-motion guard, tokenized
-# control transitions), so MAX_CSS_BYTES moves 50176 -> 57344.)
+# control transitions), so MAX_CSS_BYTES moves 50176 -> 57344. #401
+# re-measured after the draggable-FAB experiment: toc-spy.js grows
+# ~19.0KB -> ~24.3KB (pointer drag with edge snapping, tap-vs-drag
+# disambiguation, edge persistence, native-drag guard), post-source
+# total 49151 -> 54252 B, so MAX_JS_POST_BYTES moves 49664 -> 59904.)
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
-    "MAX_JS_POST_BYTES": 49664,
+    "MAX_JS_POST_BYTES": 59904,
     "MAX_CSS_BYTES": 57344,
     "MAX_SYNTAX_CSS_BYTES": 19456,
 }

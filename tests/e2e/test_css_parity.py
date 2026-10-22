@@ -225,7 +225,15 @@ EXPECTED_VARIABLES = {
 # animation ends at its resting box, and reduced-motion/print render
 # instantly — so all baselined renders stay pixel-identical and no baseline
 # refresh is needed.
-EXPECTED_CSS_SHA256 = "49f1a81aaf8dcecae0412bfe09782c29b46d14d85c9137fc62d8de3e161a8e2c"
+# #401 (draggable FAB experiment): the `toc` partial gained `touch-action`
+# plus unselectable label text on `.toc-fab` and two additive rules
+# (`.toc-fab--right` snapping the button to the right edge above
+# back-to-top, `.toc-fab--dragging` dropping the spring while a drag is
+# under way). Diffed old vs new before bumping: pure addition, no
+# existing rule moved; the button renders only on ToC posts (the visual
+# baselines pin ToC-less posts only) and stays `hidden`/desktop-none
+# there, so no baseline refresh is needed.
+EXPECTED_CSS_SHA256 = "8ca8d1fa8adf47120f32eee1bd7e5d9f886c123e84b3b477f9944101f794b70a"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

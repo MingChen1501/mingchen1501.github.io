@@ -47,8 +47,11 @@ MAX_HELPER_CODE_LINES = 45
 # it to ~14.5KB with the phone FAB + sheet handoff, article-range progress
 # ring, and dialog focus management — same observer and tick, no new
 # request. #402 adds ~260 B (the copy-code success-state class and the
-# lightbox per-navigation fade restart), re-measured to 49151 B total.)
-MAX_TOTAL_JS_BYTES = 49664
+# lightbox per-navigation fade restart), re-measured to 49151 B total.
+# #401 adds ~5.1KB (the draggable-FAB experiment: pointer drag with edge
+# snapping, tap-vs-drag disambiguation, edge persistence, and the
+# native-drag guard), re-measured to 54252 B total.)
+MAX_TOTAL_JS_BYTES = 59904
 
 READY_CONSUMERS = (
     "copy-code.js",
