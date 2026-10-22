@@ -11,9 +11,11 @@ description: "What the Internet is and how it works — the last mile, data cent
 
 >The Internet is the most popular computer network in the world. It started as an academic research project in 1969 and grew into a global commercial network in the 1990s. ![Portrait of Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Photo: official portrait, public domain"){: width="1280" height="1600" }
 
+*Updated October 2026: figures refreshed; sources listed at the end. This post adapts a 2014 Vox explainer (credited below); passages describing the 2014 landscape are kept as history and marked as such.*
+
 ## What is the Internet?
 
-The Internet is the most popular computer network in the world. It started as an academic research project in 1969 and grew into a global commercial network in the 1990s. Today it is used by more than 4.9 billion people around the world.
+The Internet is the most popular computer network in the world. It started as an academic research project in 1969 and grew into a global commercial network in the 1990s. Today it is used by about 6 billion people — roughly three-quarters of humanity (ITU, 2025).
 
 The Internet is remarkable for its decentralization. Nobody owns the Internet or controls who can connect to it. Instead, thousands of different organizations operate their own networks and negotiate voluntary interconnection agreements.
 
@@ -23,7 +25,7 @@ Most people access Internet content with a web browser. Indeed, the web has beco
 
 The Internet has 3 basic parts:
 
-1) The "last mile" is the part of the Internet that connects homes and small businesses to the Internet. Right now, about 60% of residential Internet connections in the US are provided by cable TV companies like Comcast and Time Warner. Of the remaining 40%, a growing share uses new fiber-optic cable — most of it part of Verizon's FiOS program or AT&T's U-Verse. Finally, a significant but shrinking number still uses outdated DSL service delivered over telephone lines.
+1) The "last mile" is the part of the Internet that connects homes and small businesses to the Internet. When this piece was first written in 2014, about 60% of residential Internet connections in the US ran over cable TV networks like Comcast and Time Warner Cable, with fiber from Verizon's FiOS or AT&T's U-verse covering much of the rest. That landscape has shifted: Time Warner Cable became part of Charter (Spectrum) in 2016, and AT&T retired the U-verse brand name. As of mid-2025, just over half of US fixed connections still use cable (coaxial) networks such as Comcast Xfinity and Charter Spectrum, while nearly 3 in 10 run over fiber to the home such as AT&T Fiber and Verizon Fios — and the old copper DSL lines keep shrinking toward zero (FCC, 2025).
 The last mile also includes the towers that let people access the Internet from their mobile phones. Wireless Internet service accounts for a large and growing share of all Internet use.
 ![Diagram of the last-mile connection from your home to the carrier](/assets/img/2022-12-25-gioi-thieu-ve-internet/last-mile.jpg){: width="1200" height="800" }
 
@@ -75,7 +77,7 @@ So Internet engineers developed a new standard called IPv6. IPv6 allows an aston
 
 At first, the transition to IPv6 was slow. The technical work on the standard was finished in the 1990s, but the Internet community faced a serious chicken-and-egg problem: as long as most people used IPv4, there was little incentive for anyone to switch to IPv6.
 
-But as IPv4 addresses grew scarce, IPv6 adoption accelerated. The share of users connecting to Google over IPv6 rose from 1% in early 2013 to 6% by mid-2015.
+But as IPv4 addresses grew scarce, IPv6 adoption accelerated. The share of users connecting to Google over IPv6 rose from 1% in early 2013 to 6% by mid-2015 — and kept climbing until, in March 2026, about half of Google users connected over IPv6 for the first time (Google, 2026).
 
 ## How does wireless Internet work?
 
@@ -93,7 +95,7 @@ Cells are too large to use the low-power, unlicensed spectrum of Wi-Fi networks.
 ![Diagram of cloud computing](/assets/img/2022-12-25-gioi-thieu-ve-internet/dien-toan-dam-may.jpg){: width="1200" height="800" }
 Cloud computing describes an approach to computing that became popular in the early 2000s. By storing files on servers and delivering software over the Internet, cloud computing gives users a simpler, more reliable computing experience. Cloud computing lets consumers and businesses treat computing as a utility, leaving the technical details to technology companies.
 For example, in the 1990s many people used MS Office to edit documents and spreadsheets. They stored documents on their hard drives, and when a new version of MS Office was released, customers had to buy it and manually install it on their PCs.
-Google Docs, by contrast, is a cloud office suite. When users visit docs.google.com, they automatically get the newest version of Google Docs. Because their files are stored on Google's machines, the files are available on every computer. Even better, users never have to worry about losing their files when a hard drive fails (M$ now has its own cloud office suite called Office 365).
+Google Docs, by contrast, is a cloud office suite. When users visit docs.google.com, they automatically get the newest version of Google Docs. Because their files are stored on Google's machines, the files are available on every computer. Even better, users never have to worry about losing their files when a hard drive fails (Microsoft now has its own cloud office suite called Office 365).
 There are plenty of other examples. Gmail and Hotmail are cloud email services that largely replaced desktop email apps like Outlook. Dropbox is a cloud computing service that automatically syncs data across devices, freeing people from carrying files around on floppy disks. Apple's iCloud automatically copies users' music and other files from the desktop to their mobile devices, sparing users the hassle of syncing over a USB connection.
 Cloud computing has also had a big impact on businesses. In the 1990s, companies that wanted to create a website had to buy and operate their own servers. But in 2006, Amazon.com launched Amazon Web Services, letting customers rent servers by the hour. That lowered the barrier to creating a website and made it much easier for sites to scale up capacity quickly as they grew more popular.
 
@@ -111,7 +113,7 @@ The World Wide Web is a popular way to publish information on the Internet. The 
 <figcaption>Photo: Enrique Dans, CC BY 2.0</figcaption>
 </figure>
 Over time, the web grew ever more sophisticated, supporting images, audio, video and interactive content. By the mid-1990s, companies like Yahoo and Amazon had started building profitable businesses on the web. In the 2000s, full-featured web-based applications like Yahoo Maps and Google Docs were created.
-In 1994, Berners-Lee founded the World Wide Web Consortium (W3C) to serve as the web's official standards body. He remains the W3C's director and continues to oversee the development of web standards. The web is an open platform, however, and the W3C cannot force anyone to accept its proposals. In practice, the organizations with the most influence over the web are M$, Google, Apple and Mozilla, the makers of the leading web browsers. Any technology adopted by these four companies becomes a de facto web standard.
+In 1994, Berners-Lee founded the World Wide Web Consortium (W3C) to serve as the web's official standards body. He remains the W3C's director and continues to oversee the development of web standards. The web is an open platform, however, and the W3C cannot force anyone to accept its proposals. In practice, the organizations with the most influence over the web are Microsoft, Google, Apple and Mozilla, the makers of the leading web browsers. Any technology adopted by these four companies becomes a de facto web standard.
 The web has become so popular that many people now treat it as synonymous with the Internet itself. But technically, the web is just one of many Internet applications. Other applications include email and BitTorrent.
 
 ## What is a web browser?
@@ -121,23 +123,23 @@ A web browser is a computer program that lets users download and view web pages.
 The first widely used browser was Mosaic, created by researchers at the University of Illinois. The Mosaic team moved to California to found Netscape, which built the first commercially successful web browser in 1994.
 ![Recreation of the Mosaic browser window](/assets/img/2022-12-25-gioi-thieu-ve-internet/mosaic-minh-hoa.jpg){: width="1200" height="800" }
 ![Recreation of the Netscape Navigator browser](/assets/img/2022-12-25-gioi-thieu-ve-internet/netscape-minh-hoa.jpg){: width="1200" height="800" }
-Netscape's popularity was soon eclipsed by M$'s IE, but an open-source version of the Netscape browser became the modern Firefox browser. Apple released the Safari browser in 2003, and Google released a browser called Chrome in 2008. By 2015, Chrome had become the most popular web browser with a 50% market share, while IE, Firefox and Safari also held significant shares.
+Netscape's popularity was soon eclipsed by Microsoft's IE, but an open-source version of the Netscape browser became the modern Firefox browser. Apple released the Safari browser in 2003, and Google released a browser called Chrome in 2008. Chrome went on to dominate: as of late 2026 it holds about two-thirds of worldwide browser usage, followed by Safari at under a fifth, with Edge and Firefox splitting most of the rest (Statcounter, September 2026). Microsoft retired Internet Explorer in June 2022 and points users to Edge (Microsoft, 2022).
 ![Timeline of web browsers](/assets/img/2022-12-25-gioi-thieu-ve-internet/cuoc-dua-trinh-duyet.jpg){: width="1200" height="800" }
 
-## What is SSL?
+## What is TLS (and what was SSL)?
 
-SSL stands for Secure Sockets Layer, a family of encryption technologies that lets web users protect the privacy of the information they transmit over the Internet.
+TLS stands for Transport Layer Security, the family of encryption technologies that lets web users protect the privacy of the information they transmit over the Internet. "SSL" (Secure Sockets Layer) is simply the old name for the same family: SSL 3.0 was formally deprecated in 2015 after the POODLE attack showed it was fundamentally broken (IETF RFC 7568), and its successor TLS — current version 1.3, standardized in 2018 (IETF RFC 8446) — is what actually protects your connection today, even though people still say "SSL" out of habit.
 When you visit a secure website such as gmail.com, you see a padlock next to the URL. It indicates that your communication with the site is encrypted. Here is what the interface looks like in Google's Chrome browser.
 ![Illustration of the HTTPS padlock and an encrypted connection](/assets/img/2022-12-25-gioi-thieu-ve-internet/ssl-https.jpg){: width="1200" height="800" }
 
-That padlock is supposed to signal that third parties cannot read any information you send or receive. Basically, SSL does this by turning your data into an encrypted message that only the recipient knows how to decode. If a malicious party is listening in on the conversation, it sees only a seemingly random string of characters — not your email content, Facebook posts, credit card numbers or other personal information.
-SSL was introduced by Netscape in 1994. In the early years it was used only on certain kinds of sites, such as online banking websites. In the early 2010s, Google, Yahoo and Facebook all used SSL encryption for their websites and online services. More recently, there has been a movement toward universal SSL. In 2015, Mozilla announced that future versions of the Firefox browser would treat the lack of SSL encryption as a security bug, as a way to push every website to upgrade. Google was considering doing the same with Chrome.
+That padlock is supposed to signal that third parties cannot read any information you send or receive. Basically, TLS does this by turning your data into an encrypted message that only the recipient knows how to decode. If a malicious party is listening in on the conversation, it sees only a seemingly random string of characters — not your email content, Facebook posts, credit card numbers or other personal information.
+Netscape introduced SSL in 1994; in the early years it was used only on certain kinds of sites, such as online banking websites. In the early 2010s, Google, Yahoo and Facebook all switched their sites and services to encrypted connections, and the push for universal encryption that followed succeeded: today browsers mark plain HTTP sites "Not Secure", and the overwhelming majority of web traffic is encrypted.
 
 ## What is DNS?
 
 DNS — the Domain Name System — is the reason you can reach mingchen by typing mingchen.id.vn into your browser instead of a hard-to-remember numeric address like 216.146.46.10.
 The system is hierarchical. For example, .com domains are managed by a company called Verisign. Verisign assigns subdomains like google.com and facebook.com. In turn, the owners of these second-level domains can create subdomains like mail.google.com and maps.google.com.
-Because popular websites use domain names to identify themselves publicly, DNS security has become a growing concern. Criminals as well as government spies have tried to compromise DNS to impersonate popular sites like facebook.com and gmail.com and intercept their private communications. A standard called DNSSEC seeks to strengthen DNS security with encryption, but few have adopted it.
+Because popular websites use domain names to identify themselves publicly, DNS security has become a growing concern. Criminals as well as government spies have tried to compromise DNS to impersonate popular sites like facebook.com and gmail.com and intercept their private communications. A standard called DNSSEC seeks to strengthen DNS security with cryptographic signatures. The plumbing is now largely in place — virtually every top-level domain is signed — but adoption is still a work in progress: about a third of the world's resolvers validate signatures, and only a small single-digit share of individual domains under large TLDs like .com are signed (APNIC Labs, ICANN ITHI, 2025–2026).
 ![Diagram of the DNS domain name hierarchy](/assets/img/2022-12-25-gioi-thieu-ve-internet/dns.jpg){: width="1200" height="800" }
 
 ## Who decides which domain names exist and who gets them?
@@ -147,10 +149,23 @@ There are two kinds of domain names. First are generic top-level domains (gTLDs)
 ![Illustration of generic top-level domains](/assets/img/2022-12-25-gioi-thieu-ve-internet/ten-mien-gtld.jpg){: width="1200" height="800" }
 Then there are country-code top-level domains (ccTLDs). Every country in the world has its own 2-letter code — the US ccTLD is .us, the UK's is .uk, China's is .cn. These domains are managed by authorities in each country. Some ccTLDs, such as .tv (for the island nation of Tuvalu) and .io (British Indian Ocean Territory), have become popular for use outside their own countries.
 ![Illustration of country-code top-level domains](/assets/img/2022-12-25-gioi-thieu-ve-internet/ten-mien-cctld.jpg){: width="1200" height="800" }
-In 2011, ICANN voted to make it easier to create new gTLDs. As a result, there may be dozens or even hundreds of new domains in the next few years.
+In 2011, ICANN voted to make it easier to create new gTLDs. That 2012 application round eventually added more than 1,200 new domains to the Internet's namespace — and the story did not end there: a second application round closed in August 2026 with more than 1,600 applications under review (ICANN, 2026).
 
 ## Source
 
 [Vox](https://www.vox.com/2014/6/16/18076282/the-internet)
 
 *Photo credits: the Al Gore photo is the official portrait of the US Vice President (1994, public domain); the Vint Cerf and Bob Kahn photo is a White House photo by Paul Morse (2005, public domain); the Tim Berners-Lee photo is by Enrique Dans ([CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)) — all three via Wikimedia Commons. The remaining diagrams are my own.*
+
+### Sources for the October 2026 refresh (all accessed 22 October 2026)
+
+- [ITU Facts and Figures 2025: Internet use](https://www.itu.int/itu-d/reports/statistics/2025/10/15/ff25-internet-use/) — about 6 billion people online in 2025.
+- [FCC Internet Access Services, status as of 30 June 2025](https://www.fcc.gov/document/internet-access-services-status-june-30-2025) — fixed connections by technology (cable 55.2%, fiber 28.5%).
+- [Charter completes Time Warner Cable and Bright House transactions, 2016](https://ir.charter.com/news-releases/news-release-details/charter-communications-time-warner-cable-and-bright-house/) — Time Warner Cable absorbed into Charter (Spectrum).
+- [AT&T phases out the U-verse brand for Internet and phone, 2016](https://www.nexttv.com/news/att-readies-u-verse-brand-ether-407876); [AT&T stops selling U-verse TV, 2020](https://www.nexttv.com/news/att-stops-selling-u-verse-tv).
+- [Statcounter browser market share worldwide, September 2026](https://gs.statcounter.com/browser-market-share) — Chrome about two-thirds, Safari under a fifth.
+- [Microsoft: Internet Explorer 11 retired 15 June 2022](https://blogs.windows.com/windowsexperience/2022/06/15/internet-explorer-11-has-retired-and-is-officially-out-of-support-what-you-need-to-know/).
+- [IETF RFC 7568: Deprecating SSLv3 (2015)](https://www.rfc-editor.org/info/rfc7568/) and [IETF RFC 8446: TLS 1.3 (2018)](https://www.rfc-editor.org/info/rfc8446/).
+- [Google IPv6 adoption statistics](https://www.google.com/intl/en/ipv6/statistics.html) — about half of Google users on IPv6 in 2026.
+- [ICANN: 2026 new-gTLD round closes with 1,616 applications proceeding](https://www.icann.org/en/announcements/details/icann-confirms-number-of-applications-proceeding-in-the-2026-round-22-09-2026-en); [2012 round added 1,200+ gTLDs](https://newgtldprogram.icann.org/en/application-rounds/round2/agb).
+- [APNIC Labs DNSSEC validation metrics](https://stats.labs.apnic.net/dnssec/) and [ICANN ITHI Metric M11 (DNSSEC deployment)](https://observatory.research.icann.org/graph-m11.html) — about a third of resolvers validate; single-digit share of domains signed.
