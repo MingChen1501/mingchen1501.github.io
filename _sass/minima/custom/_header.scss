@@ -36,7 +36,7 @@
   padding: 6px 14px;
   margin-left: $spacing-unit * 0.5;
   border: 1px solid $border-color-01;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: $text-color;
   font-size: $small-font-size;
   font-weight: 600;

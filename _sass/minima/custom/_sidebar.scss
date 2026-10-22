@@ -78,7 +78,7 @@ ul.sidebar-tag__posts {
   max-height: 60px;
   margin: 0;
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 // Two lines at most: a long Vietnamese title must not push the other rows out
