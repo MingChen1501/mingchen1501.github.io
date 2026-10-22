@@ -277,7 +277,7 @@ def test_no_controls_leave_the_post_pages(built_site):
         path.relative_to(built_site).as_posix()
         for path in sorted(built_site.glob("tags/*/index.html"))[:1]
     )
-    pages.extend(["about/index.html", "portfolio/index.html"])
+    pages.extend(["about/index.html", "resume/index.html"])
     for page in pages:
         assert (built_site / page).is_file(), f"{page} is missing"
         html = _read(built_site / page)

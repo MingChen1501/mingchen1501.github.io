@@ -157,7 +157,7 @@ def test_footer_description_matches_the_page_language(built_site):
     en_pages = [
         "index.html",
         "about/index.html",
-        "portfolio/index.html",
+        "resume/index.html",
         "tags/index.html",
         en_post_rel,
     ]
@@ -175,7 +175,7 @@ def test_footer_description_matches_the_page_language(built_site):
     vi_pages = [
         "vi/index.html",
         "vi/about/index.html",
-        "vi/portfolio/index.html",
+        "vi/resume/index.html",
         "vi/tags/index.html",
         vi_post_rel,
     ]

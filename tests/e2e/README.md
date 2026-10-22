@@ -215,7 +215,7 @@ Guard for #253, extended by #318. `_includes/sub-footer.html` wraps the
 (in that order, all after `site-utils.js`, each with the `?v=` build
 token) in a single `page.layout == 'post'` conditional; the five scripts
 every page needs stay unconditional. Built non-post pages (home EN/VI,
-tag index + one tag page, about, portfolio) link none of
+tag index + one tag page, about, resume) link none of
 the four scripts (9 → 5 sub-footer requests) while EN/VI post pages still
 link all four.
 
@@ -484,7 +484,7 @@ E2E_BROWSER=firefox python -m pytest tests/e2e -m "not static"
   `navigator.clipboard` (`NotAllowedError`) and Playwright grants no
   clipboard permission there. Each skip carries its reason inline.
 - `test_axe_a11y.py` scopes the `object-alt` waiver to Chromium/Firefox:
-  axe only flags the `/portfolio/` PDF `<object>` when its fallback
+  axe only flags the `/resume/` PDF `<object>` when its fallback
   renders zero boxes (the PDF plugin area covers it); headless WebKit has
   no PDF plugin intercept, renders the fallback link inline, and the rule
   never fires there. The waiver stays enforced where it applies.
@@ -507,14 +507,14 @@ Guard for #207. The pinned, vendored axe-core scanner
 (`tests/e2e/axe-core/axe.min.js`, version/source/hash/license in
 `tests/e2e/axe-core/AXE_PIN.md` — no CDN, offline-capable) is injected into
 `/`, one EN post plus its VI counterpart, `/tags/`, `/vi/`, `/about/`,
-`/portfolio/`, each at
+`/resume/`, each at
 375px and 1280px in the light colour scheme.
 
 - Fails on any `serious`/`critical` violation: the four #207 exceptions
   were resolved for real in #213, so `ACCEPTED` is empty (a future waiver
   needs a rule + node-target + deferred-fix reason). Fixed nodes that must
   keep rendering (`.lang-switcher`, `.u-email`, `blockquote`, the
-  portfolio `<object>`) plus the shipped rule ids are re-asserted so the
+  resume `<object>`) plus the shipped rule ids are re-asserted so the
   green run cannot go vacuous.
 - `minor`/`moderate` findings are printed but non-blocking.
 
@@ -525,7 +525,7 @@ broken, so this module screenshots a fixed page set at 375/768/1280px and
 fails when a fresh capture differs from the committed baseline beyond a small
 threshold: the home list, one EN post with its VI twin, the `/tags/` index
 with its VI twin, one tag page with its VI twin, about with its VI twin, and
-portfolio with its VI twin (12 pages x 3 viewports = 36 captures in
+resume with its VI twin (12 pages x 3 viewports = 36 captures in
 `tests/e2e/visual/baseline/`).
 
 - Determinism: the shared dev build (no giscus embed, no analytics), the

@@ -68,8 +68,8 @@ sitemap: false
     {% endfor %}
   {% endif %}
 
-  {% comment %} Static pages: single emission path for /tags/, /about-me/,
-    /portfolio/ (layout: page with a permalink); 404/feed/sitemap/llms are
+  {% comment %} Static pages: single emission path for /tags/, /about/,
+    /resume/ (layout: page with a permalink); 404/feed/sitemap/llms are
     never emitted. Both languages are in site.pages already (`vi/*.md` carry
     `/vi/...` permalinks); each entry links its counterpart via the shared ref.
   {% endcomment %}

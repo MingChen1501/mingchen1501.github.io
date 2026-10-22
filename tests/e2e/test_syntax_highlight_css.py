@@ -228,7 +228,7 @@ def _representative_pages(built_site):
         "page2/index.html",
         "tags/index.html",
         "about/index.html",
-        "portfolio/index.html",
+        "resume/index.html",
         "vi/index.html",
         "vi/tags/index.html",
     ]
@@ -271,7 +271,7 @@ def test_marker_and_syntax_link_agree_on_every_built_page(built_site):
 
 
 def test_code_free_pages_skip_the_second_stylesheet(built_site):
-    """Home, tag, about, portfolio, prose posts: one sheet (#275)."""
+    """Home, tag, about, resume, prose posts: one sheet (#275)."""
     for page in _representative_pages(built_site):
         html = _read(built_site / page)
         assert _syntax_link(html) is None, (
