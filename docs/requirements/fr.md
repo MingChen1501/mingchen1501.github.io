@@ -20,8 +20,8 @@ detail lives in `docs/architecture/content-pipeline.md`.
 - FR-6 Reader tools: theme toggle, lazy images, lightbox, copy-code,
   reading progress, share intents. Guards: `test_lightbox.py`,
   `test_copy_code.py`, `test_lazy_load_images.py`.
-- FR-7 Pagination (5 per page) and tag/about/portfolio pages render.
-  Guards: `test_pagination.py`, `test_portfolio_h1.py`,
+- FR-7 Pagination (5 per page) and tag/about/resume pages render.
+  Guards: `test_pagination.py`, `test_resume_h1.py`,
   `test_about_privacy.py`.
 - FR-8 No search page (removed #349): no `search.html`, no `search.js`.
   Guard: `test_site_utils.py` (post-#342 JS-adjacent coverage) and the
