@@ -1,69 +1,56 @@
-# Extraction plan: from starter docs to a real template
+# Copy-out checklist: reuse the in-repo skeleton
 
-Status: active (template starter). How to turn `docs/agentic-template/`
-into a standalone template other projects can instantiate. No new
-repository is created by the change that introduces these docs.
+Status: active. How to copy `docs/agentic-template/` into another
+project. No standalone template repository is created by this or any
+later change.
 
-## Goal state
+## Decision
 
-A new project starts from the template with one command, gets the
-`docs/` tree, the role files, the gate reference, the conventions, and
-the bootstrap guide — and contains zero source-repo history or
-blog-specific content.
+**Option B** (issue #370): keep the template as a skeleton inside this
+repo (`docs/agentic-template/` plus copyable files); no new repo. This
+blog stays the worked example. The separate-template-repo option
+(Option A in earlier revisions of this file) is rejected: a second
+repository would need periodic sync decisions with no second adoption
+in sight, so the copy-out checklist below is the whole extraction
+story.
 
-## Options
+## What to copy
 
-### Option A — GitHub template repository (recommended)
+Copy these files into the new project's `docs/agentic-template/`
+(or equivalent group) and link the group from its docs index:
 
-1. Create `gh repo create [owner]/agentic-coding-template --template`
-   from a cleaned copy of a repo containing only: the `docs/` tree
-   (with project nouns replaced by placeholders), the role files, the
-   agent guide skeleton, `script/ao-role-footer.sh`, minimal CI, and
-   `bootstrap.md` as its README entry.
-2. Cleaning checklist: drop all history referencing the source project,
-   all content directories, all baselines/fixtures, all host-specific
-   config (custom domains, analytics IDs, secrets).
-3. Consumers start with `gh repo create [owner]/[repo] --template
-   [owner]/agentic-coding-template --clone` and follow `bootstrap.md`
-   from step 2 (repo already exists).
+- `README.md` — who the template is for, what it gives, adoption checklist
+- `roles.md` — generalized role table + per-role file skeleton
+- `gate.md` — the T0–T4 spec gate + a blank worked example
+- `conventions.md` — artefact/commit/session naming, merge policy, verdict mechanics
+- `bootstrap.md` — new repo to first guarded PR, step by step
+- This file (`extraction-plan.md` is now this checklist; do not copy
+  it unless the new project also wants to offer the skeleton onward)
 
-Pros: one-command start, GitHub-native, updates flow by comparing
-against the template. Cons: requires maintaining a second repository;
-template drift needs periodic sync decisions.
+Also copy `script/ao-role-footer.sh` and the role files
+(`.opencode/agents/`) per `bootstrap.md` steps 2–3.
 
-### Option B — `degit`-style skeleton directory
+## Cleaning checklist
 
-1. Keep a `skeleton/` directory (in the template repo, once it exists)
-   with the same file set as Option A.
-2. Consumers start with `npx degit [owner]/agentic-coding-template/skeleton [repo]`
-   (or plain `cp -r` / `git archive`), with no git history carried over.
+Before first use in the new project, replace or drop source-repo specifics:
 
-Pros: no template-repo machinery, trivial to inspect. Cons: no
-update path; consumers freeze at copy time.
+1. Replace project nouns with placeholders per `bootstrap.md`
+   (project name, repo path, agent-guide path, default branch).
+2. Drop all blog-specific content: static-site-generator specifics,
+   theme styling, bilingual content rules, comment-widget
+   integrations, CDN configuration, article workflows, asset budgets,
+   visual baselines/fixtures.
+3. Drop all host-specific config: custom domains, analytics IDs,
+   secrets, `giscus.repo_id` / `giscus.category_id` values.
+4. Carry no git history: copy files with `cp -r` or `git archive`,
+   never by forking or pushing this repo's history.
 
-### Option C — scripted bootstrap
+## Consumer start
 
-1. Ship a small script (e.g. `script/bootstrap-from-template`) that
-   takes `[owner]/[repo]` plus language/toolchain answers and emits the
-   docs tree, role files, labels, and branch-protection calls.
-2. The script encodes the placeholder substitutions (project name,
-   language, build/test commands) that Options A/B leave manual.
+```sh
+cp -r docs/agentic-template [new-repo]/docs/agentic-template
+```
 
-Pros: fewest manual steps, adapts to stack answers. Cons: a script is
-code to maintain and test across platforms; overkill until at least two
-real adoptions prove the parameter set.
-
-## Recommendation
-
-Start with Option A when the second adoption appears; until then these
-starter docs are sufficient and no template repository should exist.
-Option C becomes worth it only after two adoptions have shown which
-placeholders genuinely vary.
-
-## Open decision (NOT taken here)
-
-> **Create a new repository under the owner's account to host the
-> standalone template?** Explicit owner approval required. Do not create
-> it in the PR that introduces these starter docs; raise it at the next
-> retrospective, with the recommendation above and the cleaning
-> checklist as input.
+Then follow `bootstrap.md` from step 1 (docs tree) onward in the new
+repo. Note: there is no update path — consumers freeze at copy time
+and pick up later improvements manually.

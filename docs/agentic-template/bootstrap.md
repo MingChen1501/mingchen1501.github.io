@@ -30,8 +30,7 @@ own content or explicitly defer with a link — no duplicated source of
 truth.
 
 Then copy in this template group: `agentic-template/README.md`,
-`roles.md`, `gate.md`, `conventions.md`, `bootstrap.md`,
-`extraction-plan.md` (drop the last once the template repo exists),
+`roles.md`, `gate.md`, `conventions.md`, and `bootstrap.md`,
 and link the group from `docs/README.md`.
 
 ## Step 2 — install the roles
