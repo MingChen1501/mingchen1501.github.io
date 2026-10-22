@@ -153,7 +153,7 @@ sets, and the gate procedure live in the `spec-gate` skill
 | `agentic-template/gate.md` | T0–T4 gate + blank worked example |
 | `agentic-template/conventions.md` | artefact/commit/session naming, language, merge, verdict mechanics |
 | `agentic-template/bootstrap.md` | step-by-step: new repo to first guarded PR |
-| `agentic-template/extraction-plan.md` | options for a standalone template repo + open decision |
+| `agentic-template/extraction-plan.md` | copy-out checklist for reusing the in-repo skeleton (decision: in-repo, #370) |
 
 ## Other existing docs (outside this classification)
 

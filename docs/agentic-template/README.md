@@ -6,8 +6,9 @@ wiring, the CI/test conventions, and the artefact conventions — without
 this repo's blog-specific parts.
 
 Start here. The other four files in this directory are the template
-body; `extraction-plan.md` covers turning this into a real standalone
-template repository (decision still open).
+body; `extraction-plan.md` is the copy-out checklist for reusing this
+skeleton elsewhere (decision recorded there: in-repo skeleton, no
+separate template repo — #370).
 
 ## Who it is for
 
@@ -27,7 +28,7 @@ template repository (decision still open).
 | `gate.md` | the T0–T4 change-tier spec gate + a blank worked example |
 | `conventions.md` | artefact/commit/session naming, language policy, merge policy, verdict-as-comment mechanics |
 | `bootstrap.md` | step-by-step: new repo to first guarded PR, with commands |
-| `extraction-plan.md` | how to turn this into a real template repo, with the open decision |
+| `extraction-plan.md` | copy-out checklist for reusing this skeleton (decision: in-repo, #370) |
 
 ## What is deliberately not in the template
 
