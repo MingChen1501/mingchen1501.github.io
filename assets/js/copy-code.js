@@ -38,10 +38,12 @@
       write(code.innerText || code.textContent, function () {
         setLabel(btn, DONE);
         status.textContent = DONE;
+        btn.classList.add('is-done'); // Success pop (#402; the label swap announces).
         if (timer) clearTimeout(timer);
         timer = setTimeout(function () {
           setLabel(btn, COPY);
           status.textContent = '';
+          btn.classList.remove('is-done');
         }, 2000);
       });
     });

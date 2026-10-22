@@ -40,7 +40,11 @@
   height: 100%;
   width: 0;
   background: $brand-color;
-  transition: width 0.1s linear;
+  // Smooth value transitions (#402): the bar is the second sanctioned
+  // non-transform exception (see `custom/_motion.scss`) — progress also
+  // publishes through `aria-valuenow`, and the script batches writes in
+  // rAF so smoothness never costs scroll performance.
+  transition: width $motion-fast linear;
 }
 
 .back-to-top {
@@ -59,6 +63,20 @@
   line-height: 1.4;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  // Appear/disappear (#402): enter-animation paint only — the `hidden`
+  // flip in `reading-progress.js` stays synchronous, so the button never
+  // appears late and hiding stays instant. Transform/opacity only.
+  transition: transform $motion-base $motion-ease-out, opacity $motion-base $motion-ease-out;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// The rise runs when the button unhides; it ends at the resting box, so
+// the final state (and the visual baselines) are unchanged.
+.back-to-top:not([hidden]) {
+  animation: motion-rise-in $motion-base $motion-ease-out;
 }
 
 // `hidden` must win over the pill layout above (same reason as

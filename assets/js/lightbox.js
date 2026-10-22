@@ -22,9 +22,8 @@
  *   source is available), so the page never carries a src-less image that
  *   would stall load/decoding checks and screenshot settling.
  * - Touch: a horizontal swipe moves prev/next (optional nicety, same code
- *   path as the arrow keys). No animation anywhere, so there is nothing
- *   for `prefers-reduced-motion` to disable — the stylesheet only removes
- *   transitions defensively.
+ *   path as the arrow keys). Open/close and image fades are enter paint
+ *   only (#402); reduced motion gets instant changes.
  * - Labels follow `<html lang>` (English default, Vietnamese `vi*`, #246).
  */
 (function () {
@@ -99,6 +98,10 @@
     var single = triggers.length < 2;
     prevButton.hidden = single;
     nextButton.hidden = single;
+    // Restart the fade (#402).
+    dialogImage.classList.remove('lightbox__image--fresh');
+    void dialogImage.offsetWidth;
+    dialogImage.classList.add('lightbox__image--fresh');
   }
 
   function open(index, invoking) {

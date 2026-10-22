@@ -52,6 +52,13 @@
   line-height: 1.4;
   text-decoration: none;
   cursor: pointer;
+  // Press feedback (#402): transform-only; the confirmation text swap in
+  // `share.js` stays the non-motion equivalent.
+  transition: transform $motion-fast $motion-ease-out;
+
+  &:active {
+    transform: scale(0.96);
+  }
 }
 
 .share__link:hover,

@@ -50,9 +50,22 @@
   font-size: $small-font-size;
   line-height: 1.4;
   cursor: pointer;
+  // Press + success feedback (#402): transform/opacity only. The label
+  // swap to the localized DONE string in `copy-code.js` (plus the polite
+  // live region) stays the non-motion equivalent; `.is-done` only adds
+  // the pop, set and cleared by the same script.
+  transition: transform $motion-fast $motion-ease-out;
 
   &:hover {
     border-color: $brand-color-dark;
     color: $brand-color-dark;
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  &.is-done {
+    animation: motion-pop $motion-base $motion-ease-out;
   }
 }

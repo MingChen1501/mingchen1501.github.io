@@ -1,0 +1,102 @@
+// #402: shared motion system for the FAB and interactive controls.
+// Cascade slot 11 of 12: shared keyframes plus the global reduced-motion
+// guard, just before the print kill-switch. Per-control transitions live
+// next to their base rules in their own partials (using the `$motion-*`
+// tokens from `custom-variables.scss`); this partial only defines what is
+// shared: the keyframes below, the when-NOT-to-animate rules (documented
+// here, enforced in `tests/e2e/test_motion_polish.py`), and the single
+// `prefers-reduced-motion` guard that covers every animated control. It
+// sits after the #148 legibility pass on purpose: the legibility guards
+// scan the head for desktop base rules, and a global selector list here
+// must not shadow them.
+//
+// When NOT to animate (normative for every control listed in #402):
+// - Never layout-affecting properties: animate transform/opacity only.
+//   The two progress values (the reading bar width, the FAB ring dash
+//   offset) and the theme flip (body background/color) are the only
+//   exceptions, each tokenized and each carrying a non-motion equivalent
+//   (percentage label, progressbar semantics, instant state swap).
+// - Never delay interaction: open/close and taps apply instantly
+//   (`hidden` flips synchronously, focus moves synchronously); motion is
+//   enter-animation paint only, so close paths stay instant by design.
+// - Keep focus rings instant: no transition on `:focus`/`:focus-visible`
+//   rules, and `outline` never appears in a transition list.
+// - No animation that fights the sheet focus trap: the ToC sheet still
+//   opens, traps, and returns focus exactly as in #383/#400.
+// - No flashing above 3Hz: every keyframe below runs once per trigger
+//   (never `infinite`), capped at the slow token (240ms).
+// - Print styles unaffected: `@media print` in `custom/_print.scss`
+//   kills every transition/animation, so no motion leaks onto paper.
+// - Motion is never required to understand a state change: every
+//   animated feedback pairs with a label, icon swap, or visible state.
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes motion-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes motion-pop {
+  from {
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes motion-icon-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-30deg);
+  }
+}
+
+// Reduced motion (#402): every animated control below changes state
+// instantly with no transforms/transitions — the sheet still opens, icons
+// still swap, and success states still show, only without motion. Kept as
+// one global guard (in addition to the per-partial pins) so a new animated
+// control cannot miss it: the guard test fails until its selectors land
+// here.
+@media (prefers-reduced-motion: reduce) {
+  .toc-fab,
+  .toc-fab__value,
+  .toc-sheet__backdrop,
+  .toc-sheet__panel,
+  .toc-sheet__close,
+  .post-toc__chevron,
+  .reading-progress__bar,
+  .back-to-top,
+  body,
+  .theme-toggle__icon,
+  .site-nav .nav-toggle,
+  .site-nav .menu-icon,
+  .copy-code__button,
+  .share__button,
+  .share__link,
+  .tag-chip,
+  .pagination a,
+  .post-thumb img,
+  .lightbox__backdrop,
+  .lightbox__dialog,
+  .lightbox__image,
+  .lightbox__image--fresh,
+  .lightbox__close,
+  .lightbox__prev,
+  .lightbox__next {
+    transition: none !important;
+    animation: none !important;
+  }
+}

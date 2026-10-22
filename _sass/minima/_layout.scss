@@ -72,6 +72,15 @@
       color: inherit;
       font: inherit;
       cursor: pointer;
+      // Icon morph (#402): the bars/X glyph swap (via `content` below)
+      // stays instant; the flip replays a transform/opacity-only morph so
+      // the change reads without flashing. The open/close itself never
+      // waits for it.
+      transition: transform $motion-fast $motion-ease-out;
+
+      &:active {
+        transform: scale(0.9);
+      }
 
       .menu-icon {
         float: right;
@@ -103,6 +112,13 @@
           content: "\f00d";
           font-size: 1.5em;
         }
+      }
+
+      // The morph replays on every flip (the selector starts matching
+      // anew), transform/opacity only, ending at the resting glyph.
+      &[aria-expanded="true"] .menu-icon,
+      &[aria-expanded="false"] .menu-icon {
+        animation: motion-icon-in $motion-fast $motion-ease-out;
       }
     }
 
@@ -389,7 +405,15 @@
       display: block;
       text-decoration: none;
       border: 1px solid $border-color-01;
-      &:hover { border-color: $border-color-02 }
+      // Hover/press feedback (#402): a 1px lift on hover, a press shrink
+      // on active — transform-only, so the pager row never reflows. The
+      // border-colour swap stays instant.
+      transition: transform $motion-fast $motion-ease-out;
+      &:hover {
+        border-color: $border-color-02;
+        transform: translateY(-1px);
+      }
+      &:active { transform: scale(0.96); }
     }
     a, div {
       min-width: 41px;

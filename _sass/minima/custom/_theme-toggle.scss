@@ -166,6 +166,7 @@ html[data-theme="dark"] {
   &__icon {
     width: 20px;
     height: 20px;
+    transform-origin: center;
   }
 
   // The sun shows in dark mode, the moon in light mode. Both selectors also
@@ -181,6 +182,10 @@ html[data-theme="dark"] {
 
   html[data-theme="dark"] & &__icon--sun {
     display: block;
+    // Icon crossfade (#402): the incoming icon pops in on transform/
+    // opacity only; the swap itself (display flip) is instant, so the
+    // state never depends on the motion. Runs once per flip.
+    animation: motion-icon-in $motion-base $motion-ease-out;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -190,6 +195,7 @@ html[data-theme="dark"] {
 
     html:not([data-theme="light"]) & &__icon--sun {
       display: block;
+      animation: motion-icon-in $motion-base $motion-ease-out;
     }
   }
 }
@@ -218,9 +224,11 @@ html[data-theme="dark"] {
 }
 
 // Short cross-fade when the theme flips; readers who asked for reduced
-// motion get an instant switch instead.
+// motion get an instant switch instead. Tokenized (#402): the one
+// sanctioned colour transition (the flip itself), instant under the
+// `no-preference` gate below and the global guard in `custom/_motion.scss`.
 @media (prefers-reduced-motion: no-preference) {
   body {
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color $motion-base $motion-ease-out, color $motion-base $motion-ease-out;
   }
 }

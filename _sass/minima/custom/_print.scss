@@ -11,6 +11,13 @@
 // media only). Keep it that way: no top-level rules in this partial.
 // ---------------------------------------------------------------------------
 @media print {
+  // Motion never prints (#402): no transition/transform may leak into
+  // print output — every control renders its resting state on paper.
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+
   // Chrome around the article never prints: header/nav, sidebars, both TOC
   // mounts (inline + sidebar copy), the share row, Related posts, comments
   // (and the disabled-comments notice), footer, the fixed reading progress

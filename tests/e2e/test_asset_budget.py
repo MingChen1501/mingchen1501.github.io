@@ -58,11 +58,15 @@ SUB_FOOTER = test_post_only_js.SUB_FOOTER
 # ~38.3KB prod. #383 re-measured after the phone FAB + sheet rework:
 # toc-spy.js grew ~10.1KB -> ~14.5KB with the handoff, article-range ring,
 # and dialog focus management on the same observer and tick, re-measured
-# to ~44.2KB prod.)
+# to ~44.2KB prod. #402 re-measured: post-source total 49151 B (the
+# copy-code success class + lightbox fade restart, ~260 B intentional), so
+# MAX_JS_POST_BYTES moves 49152 -> 49664; the main sheet grows
+# 48652 -> 52360 B (shared keyframes, reduced-motion guard, tokenized
+# control transitions), so MAX_CSS_BYTES moves 50176 -> 57344.)
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
-    "MAX_JS_POST_BYTES": 49152,
-    "MAX_CSS_BYTES": 50176,
+    "MAX_JS_POST_BYTES": 49664,
+    "MAX_CSS_BYTES": 57344,
     "MAX_SYNTAX_CSS_BYTES": 19456,
 }
 

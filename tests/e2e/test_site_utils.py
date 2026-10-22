@@ -46,8 +46,9 @@ MAX_HELPER_CODE_LINES = 45
 # post-only `toc-spy.js` nested disclosure + scroll-spy, ~9KB. #383 grows
 # it to ~14.5KB with the phone FAB + sheet handoff, article-range progress
 # ring, and dialog focus management — same observer and tick, no new
-# request.)
-MAX_TOTAL_JS_BYTES = 49152
+# request. #402 adds ~260 B (the copy-code success-state class and the
+# lightbox per-navigation fade restart), re-measured to 49151 B total.)
+MAX_TOTAL_JS_BYTES = 49664
 
 READY_CONSUMERS = (
     "copy-code.js",

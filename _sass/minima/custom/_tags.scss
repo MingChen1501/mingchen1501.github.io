@@ -29,12 +29,24 @@ ul.tag-chip-list--home {
   font-size: $small-font-size;
   line-height: 1.6;
   color: $text-color;
+  // Hover/press feedback (#402): a 1px lift on hover, a press shrink on
+  // active — transform-only, so rows never reflow. Colour/border swaps
+  // stay instant (the non-motion equivalent).
+  transition: transform $motion-fast $motion-ease-out;
 
   &:hover,
   &:focus {
     border-color: $brand-color-dark;
     color: $brand-color-dark;
     text-decoration: none;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.96);
   }
 }
 
