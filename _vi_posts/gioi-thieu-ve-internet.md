@@ -131,12 +131,12 @@ Sự phổ biến của Netscape đã sớm bị IE của Microsoft làm lu mờ
 
 ## TLS là gì (và SSL là gì) ?
 
-TLS là viết tắt của Transport Layer Security — họ công nghệ mã hóa giúp người dùng web bảo vệ quyền riêng tư của thông tin mình truyền qua internet. Còn "SSL" (Secure Sockets Layer) chỉ là tên gọi cũ của cùng họ công nghệ này: SSL 3.0 đã bị khai tử chính thức từ năm 2015 sau khi vụ tấn công POODLE cho thấy nó hỏng từ gốc (IETF RFC 7568), và kẻ kế nhiệm là TLS — bản mới nhất 1.3 được chuẩn hóa năm 2018 (IETF RFC 8446) — mới là thứ thực sự bảo vệ kết nối của bạn hôm nay, dù ngoài miệng người ta vẫn quen gọi là "SSL".
+TLS là viết tắt của Transport Layer Security — họ công nghệ mã hóa giúp người dùng web bảo vệ quyền riêng tư của thông tin mình truyền qua internet. Còn "SSL" (Secure Sockets Layer) chỉ là tên gọi cũ của cùng họ công nghệ này: SSL 3.0 đã bị khai tử chính thức từ năm 2015 sau khi vụ tấn công POODLE cho thấy nó hỏng từ gốc (IETF RFC 7568), và kẻ kế nhiệm là TLS — bản 1.3, chuẩn mới nhất, được chuẩn hóa năm 2018 (IETF RFC 8446) và sửa đổi năm 2026 (IETF RFC 9846) — mới là thứ thực sự bảo vệ kết nối của bạn hôm nay, dù ngoài miệng người ta vẫn quen gọi là "SSL".
 Khi bạn truy cập một trang web an toàn chẳng hạn như gmail.com bạn sẽ thấy một ổ khóa bên cạnh URL. Nó cho biết rằng thông tin liên lạc của bạn với trang web đã được mã hóa. Đây là giao diện trong trình duyệt chrome của google.
 ![Minh họa ổ khóa HTTPS và kết nối được mã hóa](/assets/img/2022-12-25-gioi-thieu-ve-internet/ssl-https.jpg){: width="1200" height="800" }
 
 Khóa đó được cho là báo hiệu rằng các bên thứ ba sẽ không thể đọc bất kỳ thông tin nào bạn gửi hoặc nhận. về cơ bản, TLS thực hiện điều này bằng cách chuyển đổi dữ liệu của bạn thành một thông điệp đã được mã hóa mà chỉ người nhận mới biết cách giải mã. Nếu một kẻ xấu đang nghe lén cuộc hội thoại, nó sẽ chỉ thấy một chuỗi ký tự có vẻ như ngẫu nhiên chứ không phải nội dung email, bài đăng trên Facebook, số thẻ tín dụng hay thông tin cá nhân khác của bạn.
-Netscape giới thiệu SSL vào năm 1994. Những năm đầu, nó chỉ được dùng trên một số loại trang web, chẳng hạn các trang ngân hàng trực tuyến. Đầu những năm 2010, Google, Yahoo và Facebook đều chuyển trang web và dịch vụ của mình sang kết nối mã hóa, và phong trào mã hóa toàn diện sau đó đã thắng: ngày nay trình duyệt gắn nhãn "Không bảo mật" cho các trang HTTP trần, và đại đa số lưu lượng web đã được mã hóa.
+Netscape giới thiệu SSL vào năm 1994. Những năm đầu, nó chỉ được dùng trên một số loại trang web, chẳng hạn các trang ngân hàng trực tuyến. Đầu những năm 2010, Google, Yahoo và Facebook đều chuyển trang web và dịch vụ của mình sang kết nối mã hóa, và phong trào mã hóa toàn diện sau đó đã thắng: ngày nay trình duyệt gắn nhãn "Không bảo mật" cho các trang HTTP trần, và đại đa số lưu lượng web đã được mã hóa (Google Transparency Report, 2026).
 
 ## DNS là gì ?
 
@@ -168,7 +168,8 @@ Vào năm 2011, ICANN đã bỏ phiếu để việc tạo gTLD mới dễ dàng
 - [AT&T khai tử thương hiệu U-verse cho Internet và điện thoại, 2016](https://www.nexttv.com/news/att-readies-u-verse-brand-ether-407876); [AT&T ngừng bán U-verse TV, 2020](https://www.nexttv.com/news/att-stops-selling-u-verse-tv).
 - [Statcounter: thị phần trình duyệt toàn cầu, tháng 9/2026](https://gs.statcounter.com/browser-market-share) — Chrome khoảng hai phần ba, Safari chưa đầy một phần năm.
 - [Microsoft: Internet Explorer 11 nghỉ hưu ngày 15/6/2022](https://blogs.windows.com/windowsexperience/2022/06/15/internet-explorer-11-has-retired-and-is-officially-out-of-support-what-you-need-to-know/).
-- [IETF RFC 7568: khai tử SSLv3 (2015)](https://www.rfc-editor.org/info/rfc7568/) và [IETF RFC 8446: TLS 1.3 (2018)](https://www.rfc-editor.org/info/rfc8446/).
+- [IETF RFC 7568: khai tử SSLv3 (2015)](https://www.rfc-editor.org/info/rfc7568/) và [IETF RFC 8446: TLS 1.3 (2018)](https://www.rfc-editor.org/info/rfc8446/), được sửa đổi bởi [IETF RFC 9846: TLS 1.3 (2026)](https://www.rfc-editor.org/info/rfc9846/).
+- [Google Transparency Report: mã hóa HTTPS trên web](https://transparencyreport.google.com/https/overview?hl=en) — khoảng 95% trở lên số trang tải trong Chrome dùng HTTPS.
 - [Thống kê IPv6 của Google](https://www.google.com/intl/en/ipv6/statistics.html) — khoảng một nửa người dùng Google dùng IPv6 năm 2026.
 - [ICANN: đợt gTLD mới 2026 khép lại với 1.616 hồ sơ được xét](https://www.icann.org/en/announcements/details/icann-confirms-number-of-applications-proceeding-in-the-2026-round-22-09-2026-en); [đợt 2012 bổ sung hơn 1.200 gTLD](https://newgtldprogram.icann.org/en/application-rounds/round2/agb).
 - [APNIC Labs: tỉ lệ kiểm tra DNSSEC](https://stats.labs.apnic.net/dnssec/) và [ICANN ITHI Metric M11 (triển khai DNSSEC)](https://observatory.research.icann.org/graph-m11.html) — khoảng một phần ba máy phân giải kiểm tra; tỉ lệ tên miền được ký chỉ một chữ số.

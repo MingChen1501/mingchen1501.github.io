@@ -128,12 +128,12 @@ Netscape's popularity was soon eclipsed by Microsoft's IE, but an open-source ve
 
 ## What is TLS (and what was SSL)?
 
-TLS stands for Transport Layer Security, the family of encryption technologies that lets web users protect the privacy of the information they transmit over the Internet. "SSL" (Secure Sockets Layer) is simply the old name for the same family: SSL 3.0 was formally deprecated in 2015 after the POODLE attack showed it was fundamentally broken (IETF RFC 7568), and its successor TLS — current version 1.3, standardized in 2018 (IETF RFC 8446) — is what actually protects your connection today, even though people still say "SSL" out of habit.
+TLS stands for Transport Layer Security, the family of encryption technologies that lets web users protect the privacy of the information they transmit over the Internet. "SSL" (Secure Sockets Layer) is simply the old name for the same family: SSL 3.0 was formally deprecated in 2015 after the POODLE attack showed it was fundamentally broken (IETF RFC 7568), and its successor TLS — version 1.3, the latest standard, specified in 2018 (IETF RFC 8446) and revised in 2026 (IETF RFC 9846) — is what actually protects your connection today, even though people still say "SSL" out of habit.
 When you visit a secure website such as gmail.com, you see a padlock next to the URL. It indicates that your communication with the site is encrypted. Here is what the interface looks like in Google's Chrome browser.
 ![Illustration of the HTTPS padlock and an encrypted connection](/assets/img/2022-12-25-gioi-thieu-ve-internet/ssl-https.jpg){: width="1200" height="800" }
 
 That padlock is supposed to signal that third parties cannot read any information you send or receive. Basically, TLS does this by turning your data into an encrypted message that only the recipient knows how to decode. If a malicious party is listening in on the conversation, it sees only a seemingly random string of characters — not your email content, Facebook posts, credit card numbers or other personal information.
-Netscape introduced SSL in 1994; in the early years it was used only on certain kinds of sites, such as online banking websites. In the early 2010s, Google, Yahoo and Facebook all switched their sites and services to encrypted connections, and the push for universal encryption that followed succeeded: today browsers mark plain HTTP sites "Not Secure", and the overwhelming majority of web traffic is encrypted.
+Netscape introduced SSL in 1994; in the early years it was used only on certain kinds of sites, such as online banking websites. In the early 2010s, Google, Yahoo and Facebook all switched their sites and services to encrypted connections, and the push for universal encryption that followed succeeded: today browsers mark plain HTTP sites "Not Secure", and the overwhelming majority of web traffic is encrypted (Google Transparency Report, 2026).
 
 ## What is DNS?
 
@@ -165,7 +165,8 @@ In 2011, ICANN voted to make it easier to create new gTLDs. That 2012 applicatio
 - [AT&T phases out the U-verse brand for Internet and phone, 2016](https://www.nexttv.com/news/att-readies-u-verse-brand-ether-407876); [AT&T stops selling U-verse TV, 2020](https://www.nexttv.com/news/att-stops-selling-u-verse-tv).
 - [Statcounter browser market share worldwide, September 2026](https://gs.statcounter.com/browser-market-share) — Chrome about two-thirds, Safari under a fifth.
 - [Microsoft: Internet Explorer 11 retired 15 June 2022](https://blogs.windows.com/windowsexperience/2022/06/15/internet-explorer-11-has-retired-and-is-officially-out-of-support-what-you-need-to-know/).
-- [IETF RFC 7568: Deprecating SSLv3 (2015)](https://www.rfc-editor.org/info/rfc7568/) and [IETF RFC 8446: TLS 1.3 (2018)](https://www.rfc-editor.org/info/rfc8446/).
+- [IETF RFC 7568: Deprecating SSLv3 (2015)](https://www.rfc-editor.org/info/rfc7568/) and [IETF RFC 8446: TLS 1.3 (2018)](https://www.rfc-editor.org/info/rfc8446/), revised by [IETF RFC 9846: TLS 1.3 (2026)](https://www.rfc-editor.org/info/rfc9846/).
+- [Google Transparency Report: HTTPS encryption on the web](https://transparencyreport.google.com/https/overview?hl=en) — about 95% or more of Chrome page loads over HTTPS.
 - [Google IPv6 adoption statistics](https://www.google.com/intl/en/ipv6/statistics.html) — about half of Google users on IPv6 in 2026.
 - [ICANN: 2026 new-gTLD round closes with 1,616 applications proceeding](https://www.icann.org/en/announcements/details/icann-confirms-number-of-applications-proceeding-in-the-2026-round-22-09-2026-en); [2012 round added 1,200+ gTLDs](https://newgtldprogram.icann.org/en/application-rounds/round2/agb).
 - [APNIC Labs DNSSEC validation metrics](https://stats.labs.apnic.net/dnssec/) and [ICANN ITHI Metric M11 (DNSSEC deployment)](https://observatory.research.icann.org/graph-m11.html) — about a third of resolvers validate; single-digit share of domains signed.
