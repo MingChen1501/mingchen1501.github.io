@@ -34,6 +34,6 @@ Nếu bạn thấy bài viết nào hữu ích, hoặc muốn góp ý, trao đ�
 
 ## Colophon
 
-Trang này được dựng bằng [Jekyll](https://jekyllrb.com) với theme [minima](https://github.com/jekyll/minima) tùy biến, và lưu trữ trên [GitHub Pages](https://pages.github.com). Trang không dùng cookie, không gắn mã theo dõi hay phân tích riêng nào.
+Trang này được dựng bằng Jekyll với theme minima tùy biến, và lưu trữ trên GitHub Pages. Trang không dùng cookie, không gắn mã theo dõi hay phân tích riêng nào.
 
 Cảm ơn bạn đã ghé thăm, chúc bạn một ngày vui vẻ!

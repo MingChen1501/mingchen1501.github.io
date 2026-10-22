@@ -32,6 +32,6 @@ If you find a post useful, or want to share feedback, I always enjoy hearing fro
 
 ## Colophon
 
-This site is built with [Jekyll](https://jekyllrb.com) using a customized [minima](https://github.com/jekyll/minima) theme, and hosted on [GitHub Pages](https://pages.github.com). It sets no cookies and runs no analytics or trackers of its own.
+This site is built with Jekyll using a customized minima theme, and hosted on GitHub Pages. It sets no cookies and runs no analytics or trackers of its own.
 
 Thanks for stopping by, and have a lovely day!
