@@ -294,8 +294,14 @@ def ensure(path):
     return node
 
 
-def compact(value):
-    text = json.dumps(value, sort_keys=True)
+def redact(value, key):
+    if key == "env" and isinstance(value, dict):
+        return {name: "***" for name in value}
+    return value
+
+
+def compact(value, key=None):
+    text = json.dumps(redact(value, key), sort_keys=True)
     if len(text) > 160:
         return text[:157] + "..."
     return text
@@ -354,12 +360,12 @@ print("config diff for project '%s' (%d top-level keys -> %d):"
       % (project_id, len(before_keys), len(after_keys)), file=sys.stderr)
 for key in changed:
     print("  ~ %s: %s -> %s"
-          % (key, compact(before[key]), compact(config[key])),
+          % (key, compact(before[key], key), compact(config[key], key)),
           file=sys.stderr)
 for key in added:
-    print("  + %s: %s" % (key, compact(config[key])), file=sys.stderr)
+    print("  + %s: %s" % (key, compact(config[key], key)), file=sys.stderr)
 for key in removed:
-    print("  - %s: %s" % (key, compact(before[key])), file=sys.stderr)
+    print("  - %s: %s" % (key, compact(before[key], key)), file=sys.stderr)
 if not (changed or added or removed):
     print("  (no changes; merged config is identical)", file=sys.stderr)
 unchanged = [k for k in after_keys if k not in changed
