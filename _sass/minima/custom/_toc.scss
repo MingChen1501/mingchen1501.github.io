@@ -253,10 +253,9 @@ ul.post-toc__children {
 
 // Phone FAB focus (#395): a tap must never leave the browser-default
 // (black) `:focus` outline stuck on the round button, while keyboard
-// users keep a visible accent indicator. Pointer focus (including the
-// programmatic `fab.focus()` return after a tap-close, which never
-// matches `:focus-visible`) draws no outline at all; keyboard focus
-// draws the site link accent — `$link-base-color` compiles to
+// users keep a visible accent indicator. Pointer `:focus` that does not
+// match `:focus-visible` draws no outline at all; keyboard focus draws
+// the site link accent — `$link-base-color` compiles to
 // `var(--minima-link-base-color)`, so it follows the light/dark theme
 // with no extra override. Same 3px/3px geometry as the global
 // `:focus-visible` rule in `custom/_a11y.scss`; the outline follows the
@@ -271,6 +270,18 @@ ul.post-toc__children {
 .toc-fab:focus-visible {
   outline: 3px solid $link-base-color;
   outline-offset: 3px;
+}
+
+// Phone FAB pointer close (#400): the programmatic `fab.focus()` return
+// after a tap-close still matches `:focus-visible` in some engines, so
+// the accent rule above paints a stuck ring even for pointer users (the
+// reported path is tapping the FAB itself to close). Pointer-initiated
+// closes carry `.toc-fab--no-focus-ring` (marked in `assets/js/toc-spy.js`
+// from the last input modality), which outranks the accent rule without
+// moving DOM focus; the next keydown drops the class, so keyboard-driven
+// closes keep their ring on every path.
+.toc-fab.toc-fab--no-focus-ring:focus-visible {
+  outline: none;
 }
 
 .toc-fab__ring {
