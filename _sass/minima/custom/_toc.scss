@@ -245,10 +245,36 @@ ul.post-toc__children {
   display: flex;
   align-items: center;
   justify-content: center;
+  // Draggable FAB experiment (#401): the gesture owns touches starting
+  // on the 48px button (page scroll still starts anywhere else), so a
+  // finger drag moves the button instead of the page behind it. The
+  // label text is unselectable, so a drag never seeds a text selection.
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   // Motion polish (#402): press/hover feedback on transform only (the
   // spring easing is reserved for the FAB), so the 48px box never moves
   // layout — only its paint. The state change itself stays instant.
   transition: transform $motion-base $motion-spring;
+}
+
+// Draggable FAB experiment (#401): the snapped right edge. `left` flips
+// to `right` (still clearing the right safe area), and the button stacks
+// above back-to-top — bottom-right, 44px tall on a 16px margin — so the
+// two pills never overlap when both show. The share row and the Giscus
+// embed are in-flow content: like back-to-top over article text, they
+// legitimately slide beneath the fixed button while scrolling, and the
+// 16px/76px bottoms keep both snapped edges disjoint from their boxes.
+.toc-fab--right {
+  left: auto;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+// While a drag is under way the spring transition would lag behind the
+// finger: direct manipulation tracks 1:1, and the snap itself is instant.
+.toc-fab--dragging {
+  transition: none;
 }
 
 .toc-fab:hover {
@@ -268,10 +294,13 @@ ul.post-toc__children {
 // `var(--minima-link-base-color)`, so it follows the light/dark theme
 // with no extra override. Same 3px/3px geometry as the global
 // `:focus-visible` rule in `custom/_a11y.scss`; the outline follows the
-// 50% border radius. Placement stays fixed bottom-left (back-to-top
-// owns bottom-right): drag-to-move would need tap-vs-drag
-// disambiguation, a keyboard alternative, and position persistence for
-// a 48px button whose corner is already clear of every target.
+// 50% border radius. Resting placement is bottom-left by default
+// (back-to-top owns bottom-right); the #401 drag experiment lets pointer
+// users snap the button to either edge (right stacks above back-to-top),
+// while keyboard users keep operating the native button in place —
+// tap-vs-drag disambiguation and edge persistence live in
+// `assets/js/toc-spy.js`, so a 48px button whose default corner is
+// already clear of every target needs no keyboard drag path.
 .toc-fab:focus:not(:focus-visible) {
   outline: none;
 }

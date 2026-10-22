@@ -41,6 +41,11 @@
 # sheet grows 48652 -> 52360 B with the shared keyframes, the global
 # reduced-motion guard, and the per-control tokenized transitions, so the
 # CSS ceiling moves 50176 -> 57344 (~10% headroom, per policy).
+# Re-measured 2026-10-22 for #401 (dev build): post-source total
+# 54252 B (11 files) — toc-spy.js grows ~19.0KB -> ~24.3KB with the
+# draggable-FAB experiment (pointer drag with edge snapping, tap-vs-drag
+# disambiguation, edge persistence, and the native-drag guard), ~5.1KB of
+# intentional addition, so the post ceiling moves 49664 -> 59904.
 #
 # Headroom policy: each ceiling sits ~10% above its measured total — wide
 # enough for a small intentional addition, tight enough that re-adding any
@@ -58,7 +63,7 @@
 # Max first-party JS bytes for home/tag/about/portfolio pages.
 MAX_JS_PAGE_BYTES=23552
 # Max first-party JS bytes for post pages (production worst case).
-MAX_JS_POST_BYTES=49664
+MAX_JS_POST_BYTES=59904
 # Max bytes for the compiled code-free assets/css/style.css.
 MAX_CSS_BYTES=57344
 # Max bytes for the conditional companion assets/css/syntax.css (#275).

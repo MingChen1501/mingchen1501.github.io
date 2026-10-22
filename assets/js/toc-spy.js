@@ -41,6 +41,22 @@
  * transition is pinned in CSS). Real `<button>` toggles give Enter/Space
  * natively; `tabindex` and the desktop outer `details[open]` are never
  * touched.
+ *
+ * Draggable FAB experiment (#401): on phone layouts the button drags
+ * with pointer/touch input and snaps to the nearest horizontal edge on
+ * release (left by default, right stacked above back-to-top via
+ * `.toc-fab--right`), persisted in `localStorage` with a left default
+ * and a silent fallback when storage is unavailable. A press that moves
+ * within FAB_DRAG_THRESHOLD_PX still counts as a tap and opens the
+ * sheet; a longer move never opens it (its click is swallowed). Drag is
+ * pointer-only by design: keyboard users keep the unchanged native
+ * button (Tab-reachable, Enter/Space-operable) resting at the default
+ * edge, so no separate keyboard drag path is needed. Dragging never
+ * touches the sheet, the trap, or the ring — it only flips the edge
+ * class while the sheet stays shut. A native drag tripped by a FAB
+ * press (article images under the floating button stay draggable) is
+ * swallowed while the press is in flight, so it cannot pointercancel
+ * the gesture.
  */
 (function () {
   var EDGE_PX = 24;
@@ -460,7 +476,115 @@
     });
 
     if (fabOn) {
+      // Draggable FAB experiment (#401): pointer drag moves the button
+      // and release snaps to the nearest horizontal edge (left default;
+      // right stacks above back-to-top via `.toc-fab--right`, so the two
+      // never overlap). The edge persists in `localStorage`; anything
+      // missing or foreign falls back to the default, and an unavailable
+      // store fails silent. A press moving within FAB_DRAG_THRESHOLD_PX
+      // stays a tap (its click still toggles the sheet); beyond it the
+      // press is a drag and its click is swallowed, so a drag never
+      // opens the sheet. Keyboard users keep the native button behaviour
+      // unchanged (Tab-reachable, Enter/Space-operable at the default
+      // edge); drag never touches the sheet, the trap, or the ring.
+      var FAB_DRAG_THRESHOLD_PX = 10;
+      var FAB_EDGE_STORAGE_KEY = 'toc-fab-edge';
+      var FAB_DEFAULT_EDGE = 'left';
+      function applyFabEdge(edge) {
+        fab.classList.toggle('toc-fab--right', edge === 'right');
+        fab.style.transform = '';
+      }
+      try {
+        var fabStoredEdge = window.localStorage.getItem(FAB_EDGE_STORAGE_KEY);
+        applyFabEdge(
+          fabStoredEdge === 'left' || fabStoredEdge === 'right'
+            ? fabStoredEdge
+            : FAB_DEFAULT_EDGE
+        );
+      } catch (fabEdgeReadErr) {
+        applyFabEdge(FAB_DEFAULT_EDGE);
+      }
+      var fabDown = false;
+      var fabDragged = false;
+      var fabStartX = 0;
+      var fabStartY = 0;
+      var fabSwallowClick = false;
+      function fabDragEnd(event) {
+        if (!fabDown) {
+          return;
+        }
+        fabDown = false;
+        fab.classList.remove('toc-fab--dragging');
+        fab.style.transform = '';
+        if (!fabDragged) {
+          return;
+        }
+        fabDragged = false;
+        fabSwallowClick = true;
+        if (!event || event.type === 'pointercancel') {
+          return;
+        }
+        var edge = event.clientX > window.innerWidth / 2 ? 'right' : 'left';
+        applyFabEdge(edge);
+        try {
+          window.localStorage.setItem(FAB_EDGE_STORAGE_KEY, edge);
+        } catch (fabEdgeWriteErr) {}
+      }
+      fab.addEventListener('pointerdown', function (event) {
+        if (event.pointerType === 'mouse' && event.button !== 0) {
+          return;
+        }
+        // A new press starts a new gesture: a pointercancelled drag leaves
+        // fabSwallowClick set (its click never fires), so reset it here or
+        // the cancelled gesture would eat the next tap (#401).
+        fabSwallowClick = false;
+        fabDown = true;
+        fabDragged = false;
+        fabStartX = event.clientX;
+        fabStartY = event.clientY;
+        fab.style.transform = '';
+        try {
+          fab.setPointerCapture(event.pointerId);
+        } catch (fabCaptureErr) {}
+      });
+      fab.addEventListener('pointermove', function (event) {
+        if (!fabDown) {
+          return;
+        }
+        var fabDx = event.clientX - fabStartX;
+        var fabDy = event.clientY - fabStartY;
+        if (!fabDragged) {
+          if (Math.hypot(fabDx, fabDy) <= FAB_DRAG_THRESHOLD_PX) {
+            return;
+          }
+          fabDragged = true;
+          fab.classList.add('toc-fab--dragging');
+        }
+        fab.style.transform = 'translate(' + fabDx + 'px, ' + fabDy + 'px)';
+      });
+      fab.addEventListener('pointerup', fabDragEnd);
+      fab.addEventListener('pointercancel', fabDragEnd);
+      // A press that starts on the FAB can still trip the browser's
+      // native drag-and-drop (the article's linked images are draggable
+      // and may sit under the floating button): the `dragstart` would
+      // pointercancel the gesture mid-drag. Swallow only a native drag
+      // that starts while a FAB press is in flight, so image/link
+      // dragging elsewhere on the page keeps working.
+      document.addEventListener('dragstart', function (event) {
+        if (fabDown) {
+          event.preventDefault();
+        }
+      });
       fab.addEventListener('click', function () {
+        // A click ends any press (including synthetic pointerdown
+        // sequences without a matching pointerup), so stale drag state
+        // can never leak into the next gesture.
+        fabDown = false;
+        fab.classList.remove('toc-fab--dragging');
+        if (fabSwallowClick) {
+          fabSwallowClick = false;
+          return;
+        }
         if (sheet.hidden) {
           openSheet();
         } else {

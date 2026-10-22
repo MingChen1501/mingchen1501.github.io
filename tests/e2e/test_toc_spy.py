@@ -77,8 +77,10 @@ SCRIPT_PATH = "/assets/js/toc-spy.js"
 # `role="dialog"` with a real Tab trap plus background `inert`/`aria-hidden`
 # (~17.5KB); the pointer-close ring suppression (#400) tracks the last
 # input modality so pointer closes mark the button instead of leaving a
-# stuck accent ring (~19KB).
-MAX_SCRIPT_BYTES = 20 * 1024
+# stuck accent ring (~19KB); the draggable-FAB experiment (#401) adds
+# pointer-drag with edge snapping, tap-vs-drag disambiguation and edge
+# persistence (~23KB).
+MAX_SCRIPT_BYTES = 24 * 1024
 
 EN_LONG_POST = "/2022/12/25/explaining-the-internet.html"
 VI_LONG_POST = "/vi/2022/12/25/gioi-thieu-ve-internet.html"
@@ -521,6 +523,103 @@ def test_the_fab_pointer_close_marks_the_button_by_modality():
     )
     assert "outline: none" in rule.group(1) or "outline:none" in rule.group(1), (
         "a marked (pointer-closed) FAB must draw no outline (#400)"
+    )
+
+
+@pytest.mark.static
+def test_the_fab_drag_uses_a_named_threshold_and_persists_the_edge():
+    """Draggable FAB experiment (#401): tap-vs-drag is a named 8–10px
+    constant; the edge persists in `localStorage` with a named default
+    and a silent fallback when storage is unavailable; release and
+    cancellation both end the drag, and a drag swallows its click so it
+    never opens the sheet."""
+    text = _read(SCRIPT)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    match = re.search(r"var FAB_DRAG_THRESHOLD_PX\s*=\s*(\d+)", code)
+    assert match, (
+        "the tap-vs-drag threshold must be a named constant (#401)"
+    )
+    assert 8 <= int(match.group(1)) <= 10, (
+        f"the drag threshold is {match.group(1)}px, outside the 8-10px "
+        "tap band (#401)"
+    )
+    assert "FAB_EDGE_STORAGE_KEY" in code, (
+        "the persisted edge must key off a named storage constant (#401)"
+    )
+    assert "toc-fab-edge" in code, (
+        "the FAB edge must persist under its own storage key (#401)"
+    )
+    assert "FAB_DEFAULT_EDGE" in code, (
+        "a named default edge must apply when nothing is stored (#401)"
+    )
+    assert code.count("localStorage") >= 2, (
+        "the edge must be both read and written through localStorage "
+        "(#401)"
+    )
+    assert "try" in code and "catch" in code, (
+        "unavailable storage must fail silent, never throw (#401)"
+    )
+    assert "pointerdown" in code and "pointermove" in code, (
+        "the drag must track pointer press and movement (#401)"
+    )
+    assert "pointerup" in code and "pointercancel" in code, (
+        "release and cancellation must both end the drag (#401)"
+    )
+    assert "setPointerCapture" in code, (
+        "the drag must capture the pointer so release always lands (#401)"
+    )
+    assert "toc-fab--right" in code, (
+        "the snapped edge must flip through the right-edge class (#401)"
+    )
+    assert "toc-fab--dragging" in code, (
+        "the in-progress drag must mark the button (#401)"
+    )
+    assert "fabSwallowClick" in code, (
+        "a drag must swallow its click so it never opens the sheet (#401)"
+    )
+    pointerdown = re.search(
+        r"addEventListener\('pointerdown', function \(event\) \{(.*?)\}\);",
+        code,
+        re.S,
+    )
+    assert pointerdown and "fabSwallowClick = false" in pointerdown.group(1), (
+        "a new press must reset the swallow-click flag so a pointercancelled "
+        "drag cannot eat the next tap (#401)"
+    )
+    assert "dragstart" in code, (
+        "a native drag tripped by a FAB press (article images under the "
+        "floating button are draggable) must be swallowed so it cannot "
+        "pointercancel the gesture (#401)"
+    )
+    assert "keyboard" in text.lower(), (
+        "the pointer-only drag must document the keyboard fallback (#401)"
+    )
+
+
+@pytest.mark.static
+def test_the_fab_drag_styles_snap_with_safe_area():
+    """The right edge clears the right safe area and stacks above
+    back-to-top; the gesture owns touches on the button only (#401)."""
+    scss = _read(TOC_SCSS)
+    right = re.search(r"\.toc-fab--right\s*\{(.*?)\}", scss, re.S)
+    assert right, "the snapped right edge needs its own rule (#401)"
+    body = right.group(1)
+    assert "env(safe-area-inset-right" in body, (
+        "the right edge must clear the right safe area (#401)"
+    )
+    assert "env(safe-area-inset-bottom" in body, (
+        "the stacked right edge must keep the bottom safe area (#401)"
+    )
+    assert "bottom: calc(76px" in body, (
+        "the right edge must stack above back-to-top "
+        "(44px + 16px margin + 16px bottom, #401)"
+    )
+    assert "touch-action: none" in scss, (
+        "the drag gesture must own touches starting on the button (#401)"
+    )
+    dragging = re.search(r"\.toc-fab--dragging\s*\{(.*?)\}", scss, re.S)
+    assert dragging and "transition: none" in dragging.group(1), (
+        "direct manipulation must track 1:1 with no spring lag (#401)"
     )
 
 
@@ -2154,6 +2253,215 @@ def test_no_js_long_post_lists_every_row_with_working_anchors(
         plain.locator(f"{mount} .post-toc__nav a[href='#{ids[4]}']").click()
         plain.wait_for_function(
             f"() => window.location.hash === '#{ids[4]}'", timeout=10_000
+        )
+    finally:
+        context.close()
+
+
+# --- draggable FAB experiment (needs Ruby + a browser, #401) ----------------
+
+
+def _fab_center(page):
+    box = page.locator(".toc-fab").bounding_box()
+    assert box is not None, "expected a laid-out FAB (#401)"
+    return box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+
+
+def _drag_fab(page, width, side):
+    """Drag the FAB toward an edge with real pointer events (#401).
+
+    The press travels most of the viewport, far past the tap threshold,
+    so it must count as a drag: the sheet stays shut and the button
+    snaps to the release edge.
+    """
+    start_x, start_y = _fab_center(page)
+    target_x = width - 24 if side == "right" else 24
+    page.mouse.move(start_x, start_y)
+    page.mouse.down()
+    page.mouse.move((start_x + target_x) / 2, start_y, steps=5)
+    page.mouse.move(target_x, start_y, steps=5)
+    page.mouse.up()
+
+
+def _fab_edge(page):
+    return page.evaluate(
+        "document.querySelector('.toc-fab')"
+        ".classList.contains('toc-fab--right') ? 'right' : 'left'"
+    )
+
+
+@pytest.mark.parametrize("width", [375])
+def test_phone_fab_tap_still_opens_the_sheet(built_site_url, browser, width):
+    """A press within the drag threshold still counts as a tap (#401)."""
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        before = phone.locator(".toc-fab").bounding_box()
+        phone.get_by_role("button", name=re.compile("On this page")).click()
+        expect(phone.locator(".toc-sheet")).to_be_visible()
+        after = phone.locator(".toc-fab").bounding_box()
+        assert abs(after["x"] - before["x"]) <= 1, (
+            "a tap must not move the FAB (#401)"
+        )
+        assert _fab_edge(phone) == "left", (
+            "a tap must not change the snapped edge (#401)"
+        )
+        phone.keyboard.press("Escape")
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375])
+def test_phone_fab_drag_snaps_to_edge_and_persists_across_reload(
+    built_site_url, browser, width
+):
+    """Drag right snaps + persists; drag left snaps back (#401).
+
+    Zero accidental opens across the drags below: a drag must never
+    open the sheet (the experiment's keep/revert signal starts here).
+    """
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        _drag_fab(phone, width, "right")
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        assert _fab_edge(phone) == "right", (
+            "releasing right of centre must snap right (#401)"
+        )
+        box = phone.locator(".toc-fab").bounding_box()
+        assert box["x"] + box["width"] / 2 > width / 2, (
+            "the snapped FAB must rest on the right half (#401)"
+        )
+        assert phone.evaluate(
+            "window.localStorage.getItem('toc-fab-edge')"
+        ) == "right", "the snapped edge must persist (#401)"
+        phone.reload(wait_until="load")
+        phone.wait_for_function(
+            "() => { const fab = document.querySelector('.toc-fab');"
+            " return fab && !fab.hidden; }",
+            timeout=10_000,
+        )
+        assert _fab_edge(phone) == "right", (
+            "a reload must restore the persisted edge (#401)"
+        )
+        # The keyboard path is untouched by the pointer-only drag: focus
+        # the button where it rests and the sheet still opens and shuts.
+        phone.evaluate(
+            "document.querySelector('.toc-fab').focus({preventScroll: true})"
+        )
+        phone.keyboard.press("Enter")
+        expect(phone.locator(".toc-sheet")).to_be_visible()
+        phone.keyboard.press("Escape")
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        _drag_fab(phone, width, "left")
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        assert _fab_edge(phone) == "left", (
+            "releasing left of centre must snap back left (#401)"
+        )
+        assert phone.evaluate(
+            "window.localStorage.getItem('toc-fab-edge')"
+        ) == "left", "the snapped-back edge must persist (#401)"
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375])
+def test_phone_fab_cancelled_drag_does_not_eat_the_next_tap(
+    built_site_url, browser, width
+):
+    """A pointercancelled drag must not swallow the next tap (#401).
+
+    The cancelled gesture arms the swallow-click flag (its own click never
+    fires); the following press must reset it so the tap opens the sheet.
+    """
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        phone.evaluate(
+            """() => {
+              const fab = document.querySelector('.toc-fab');
+              const box = fab.getBoundingClientRect();
+              const x = box.x + box.width / 2;
+              const y = box.y + box.height / 2;
+              const detail = (cx, cy) => ({
+                bubbles: true, cancelable: true, clientX: cx, clientY: cy,
+                pointerId: 1, pointerType: 'touch', button: 0,
+                isPrimary: true,
+              });
+              fab.dispatchEvent(
+                new PointerEvent('pointerdown', detail(x, y))
+              );
+              fab.dispatchEvent(
+                new PointerEvent('pointermove', detail(x + 60, y))
+              );
+              fab.dispatchEvent(
+                new PointerEvent('pointercancel', detail(x + 60, y))
+              );
+            }"""
+        )
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        assert _fab_edge(phone) == "left", (
+            "a cancelled drag must not snap the edge (#401)"
+        )
+        phone.get_by_role("button", name=re.compile("On this page")).click()
+        expect(phone.locator(".toc-sheet")).to_be_visible()
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375])
+def test_phone_fab_drag_never_overlaps_back_to_top_or_share(
+    built_site_url, browser, width
+):
+    """The snapped right edge stacks above back-to-top; share stays clear."""
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        _drag_fab(phone, width, "right")
+        assert _fab_edge(phone) == "right"
+        phone.evaluate("window.scrollTo(0, 800)")
+        phone.wait_for_function(
+            "() => !document.querySelector('.back-to-top').hidden",
+            timeout=10_000,
+        )
+        rects = phone.evaluate(
+            """() => { const box = (sel) => {
+              const el = document.querySelector(sel);
+              const r = el.getBoundingClientRect();
+              return {x: r.x, y: r.y, width: r.width, height: r.height}; };
+              return { fab: box('.toc-fab'), top: box('.back-to-top'),
+                share: box('.share') }; }"""
+        )
+        for name in ("top", "share"):
+            assert _disjoint(rects["fab"], rects[name]), (
+                f"the snapped FAB overlaps {name} at {width}px: "
+                f"{rects} (#401)"
+            )
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375])
+def test_phone_fab_drag_never_overlaps_giscus(
+    comments_site_url, browser, width
+):
+    """The snapped right edge clears the Giscus embed too (#401)."""
+    context, phone = _comments_phone_page(browser, comments_site_url, width)
+    try:
+        _drag_fab(phone, width, "right")
+        assert _fab_edge(phone) == "right"
+        phone.evaluate("window.scrollTo(0, 800)")
+        phone.wait_for_function(
+            "() => document.querySelector('iframe.giscus-frame') !== null",
+            timeout=10_000,
+        )
+        rects = phone.evaluate(
+            """() => { const box = (sel) => {
+              const el = document.querySelector(sel);
+              const r = el.getBoundingClientRect();
+              return {x: r.x, y: r.y, width: r.width, height: r.height}; };
+              return { fab: box('.toc-fab'),
+                frame: box('iframe.giscus-frame') }; }"""
+        )
+        assert _disjoint(rects["fab"], rects["frame"]), (
+            f"the snapped FAB overlaps Giscus at {width}px: {rects} (#401)"
         )
     finally:
         context.close()
