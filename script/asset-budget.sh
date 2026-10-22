@@ -26,6 +26,10 @@
 #   page   21225 B (7 files), post 38298 B (11 files, prod),
 #   css main 45120 B, css syntax companion 17455 B (was one 62449 B file
 #   before #275; code-free pages download 27.8% less render-blocking CSS).
+# Re-measured 2026-10-22 for #383 (dev and production agree): post
+# 44220 B (11 files, prod) — toc-spy.js grew ~10.1KB -> ~14.5KB with the
+# phone FAB + sheet handoff, article-range progress ring, and dialog focus
+# management, reusing the same observer and rAF tick (no new request).
 # (#342 removed the search page and its search.js: the former SEARCH kind
 # is gone with its ceiling. #345 re-measured after the nested-disclosure
 # rework: toc-spy.js grew ~5.1KB -> ~8.6KB with the branch collapse,
@@ -47,7 +51,7 @@
 # Max first-party JS bytes for home/tag/about/portfolio pages.
 MAX_JS_PAGE_BYTES=23552
 # Max first-party JS bytes for post pages (production worst case).
-MAX_JS_POST_BYTES=41984
+MAX_JS_POST_BYTES=49152
 # Max bytes for the compiled code-free assets/css/style.css.
 MAX_CSS_BYTES=50176
 # Max bytes for the conditional companion assets/css/syntax.css (#275).

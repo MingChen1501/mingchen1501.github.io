@@ -38,12 +38,14 @@ Guarded here:
   hides with its collapsed parent; the existing live-scroll
   exactly-one-`aria-current` assertion still holds on the long EN post;
   with JS disabled every level stays visible with working anchors;
-- phone (needs Ruby + a browser, #377): at 360/375px the inline copy
-  starts as one summary row (44px target), the expanded list is bounded
-  to 50vh with its own scroll, rows truncate with an ellipsis instead of
-  wrapping, every visible target clears 24px (toggles 32px), the active
-  row stays inside the panel without moving the page, and 320px never
-  overflows; desktop behaviour is unchanged.
+- phone (needs Ruby + a browser, #383): at 320/360/375/414px the inline
+  copy gives way to a floating button with a reading-progress ring (the
+  no-JS fallback keeps the #377/#382 collapsed inline list); the button
+  opens a bottom sheet holding the moved nav, scrolled to the marked row;
+  the sheet shuts on its button, Esc, the backdrop, or a row tap (which
+  jumps and hands focus back); the ring tracks the article range while
+  shut; the button never overlaps back-to-top; desktop behaviour is
+  unchanged.
 """
 
 import re
@@ -62,12 +64,15 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "assets" / "js" / "toc-spy.js"
 TOC_SCSS = REPO_ROOT / "_sass" / "minima" / "custom" / "_toc.scss"
 LAYOUT_SCSS = REPO_ROOT / "_sass" / "minima" / "_layout.scss"
+POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 SUB_FOOTER = test_post_only_js.SUB_FOOTER
 
 SCRIPT_PATH = "/assets/js/toc-spy.js"
 # The scroll-spy ships on post pages only (#345): keep it small. Nested
-# disclosure grew the script from ~5KB (flat highlight only) to ~8.6KB.
-MAX_SCRIPT_BYTES = 10 * 1024
+# disclosure grew the script from ~5KB (flat highlight only) to ~8.6KB;
+# the phone FAB + sheet + article-range ring (#383) reuses the same
+# observer and rAF tick and grows it to ~14KB.
+MAX_SCRIPT_BYTES = 15 * 1024
 
 EN_LONG_POST = "/2022/12/25/explaining-the-internet.html"
 VI_LONG_POST = "/vi/2022/12/25/gioi-thieu-ve-internet.html"
@@ -151,15 +156,19 @@ def test_the_spy_marks_one_row_per_mount_with_aria_current():
 
 
 @pytest.mark.static
-def test_the_spy_collapses_branches_and_the_phone_shell_but_never_the_page():
+def test_the_spy_collapses_branches_and_hides_the_phone_inline_for_the_fab():
     text = _read(SCRIPT)
     # Strip the header comment: the assertions below pin runtime behaviour,
     # while the comment is allowed to narrate the design.
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     # Collapsing is per-branch runtime state: the script hides children
-    # lists and flips their toggles (#345). On phone layouts it also starts
-    # the INLINE copy as one summary row (#377: the open list fills most of
-    # the first viewport); the desktop copy stays open.
+    # lists and flips their toggles (#345). On phone layouts the INLINE
+    # copy goes away entirely (#383: the open list fills most of the first
+    # viewport): the script flags `html.toc-fab-on` (a JS-only class, so
+    # no-JS readers keep the inline collapsed ToC from #382), moves that
+    # mount's nav node into the sheet slot — the same nodes, so the spy
+    # keeps marking them with the same observer and tick — and reveals the
+    # floating button. The desktop copy stays open.
     assert ".post-toc__toggle" in code, (
         "collapsing must drive the per-branch disclosure toggles (#345)"
     )
@@ -167,27 +176,29 @@ def test_the_spy_collapses_branches_and_the_phone_shell_but_never_the_page():
         "collapsed branches must hide their children list (#345)"
     )
     assert ".post-toc-mount--inline" in code, (
-        "only the inline (phone) copy may start collapsed (#377)"
+        "only the inline (phone) copy may give way to the button (#383)"
     )
-    assert "removeAttribute('open')" in code, (
-        "the phone default closes the inline outer details (#377)"
+    assert "toc-fab-on" in code, (
+        "the inline mount must hide behind a JS-only class so the no-JS "
+        "fallback keeps rendering (#383)"
     )
-    assert re.search(r"\.open\s*=", code) is None, (
-        "the script must never force a ToC open, only the phone default "
-        "may close the inline shell (#377)"
+    assert "appendChild" in code, (
+        "the sheet must reuse the inline nav node, not a second copy "
+        "with its own subscription (#383)"
     )
     assert "getComputedStyle" in code and "=== 'none'" in code, (
-        "the phone default must key off the visible mount, not a "
-        "hardcoded breakpoint (#377)"
+        "the phone handoff must key off the visible mount, not a "
+        "hardcoded breakpoint (#377, #383)"
     )
-    # The default anchor jump is instant; nothing smooth is ever added, so
-    # prefers-reduced-motion needs no handling (#345).
+    # The default anchor jump is instant; nothing animated is ever added
+    # here, so prefers-reduced-motion needs no handling in this script
+    # (the ring transition is pinned in CSS instead, #383).
     assert "smooth" not in code, (
-        "the scroll-spy must not smooth-scroll (reduced motion, #345)"
+        "the scroll-spy must not animate scrolling (reduced motion, #345)"
     )
     # The page itself never moves: no viewport-scrolling calls. The one
-    # exception is the bounded phone panel, which nudges its own
-    # `scrollTop` so the active row stays inside it (#377).
+    # exception is the sheet panel, which nudges its own moved nav's
+    # `scrollTop` so the active row stays inside it (#377, #383).
     assert "scrollIntoView" not in code, (
         "the scroll-spy must never scroll anything into view (#345)"
     )
@@ -195,16 +206,183 @@ def test_the_spy_collapses_branches_and_the_phone_shell_but_never_the_page():
         "the scroll-spy must never move the viewport itself (#345)"
     )
     assert "nav.scrollTop" in code, (
-        "the active row must be kept inside the bounded phone panel via "
-        "the panel's own scrollTop (#377)"
+        "the active row must be kept inside the sheet via the moved nav's "
+        "own scrollTop (#383)"
     )
-    # Keyboard stays native: real buttons toggle on Enter/Space, links stay
-    # plain anchors, and auto-expand never moves focus.
+    # Keyboard stays native: real buttons toggle on Enter/Space and links
+    # stay plain anchors. Focus moves only across the dialog handoff (open
+    # puts focus on the close button, close returns it to the button);
+    # marking and auto-expansion never move focus.
     assert "tabindex" not in code.lower() and "tabIndex" not in code, (
         "the scroll-spy must leave the ToC tab order alone (#345)"
     )
-    assert ".focus(" not in code and "activeElement" not in code, (
-        "auto-expansion must never move focus (#345)"
+    assert ".focus()" in code, (
+        "the sheet open/close handoff must move focus (#383)"
+    )
+    assert "activeElement" not in code, (
+        "focus tracking must not sniff the active element (#383)"
+    )
+    for name in (
+        "function mark(",
+        "function syncBranches(",
+        "function apply(",
+        "function fabProgress(",
+    ):
+        start = code.index(name)
+        nxt = code.find("\n    function ", start + 1)
+        body = code[start:nxt if nxt != -1 else len(code)]
+        assert ".focus(" not in body, (
+            f"{name} must never move focus: only the sheet open/close "
+            "handoff may (#345, #383)"
+        )
+
+
+@pytest.mark.static
+def test_the_fab_ring_tracks_the_article_range_not_the_document():
+    """Progress reads 0% above the body and 100% at its end (#383)."""
+    text = _read(SCRIPT)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    assert ".post-content" in code, (
+        "the ring must range over the article body, not the document (#383)"
+    )
+    assert "offsetHeight" in code, (
+        "the range must derive from the article's own height (#383)"
+    )
+    assert "innerHeight" in code, (
+        "the range must discount the viewport like any scrollable range "
+        "(#383)"
+    )
+    assert "data-toc-ring" in code, (
+        "the ring node must be addressed through its data hook (#383)"
+    )
+    assert "strokeDashoffset" in code, (
+        "the ring must publish progress as a circle dash offset (#383)"
+    )
+    assert "data-toc-fab-label" in code and "data-toc-fab-base" in code, (
+        "the same value must reach AT as label text in the page language "
+        "(#383)"
+    )
+    assert "Math.round" in code, (
+        "the text equivalent must report whole percent points (#383)"
+    )
+    # The ring is decorative: the svg ships `aria-hidden` in the layout
+    # (asserted with the markup below), so the script must not add a
+    # second live name of its own.
+    assert "aria-label" not in code or "data-label-show" in code, (
+        "the ring update must go through label text, not a redundant "
+        "aria-label (#383)"
+    )
+
+
+@pytest.mark.static
+def test_the_spy_keeps_a_single_observer_with_a_passive_schedule():
+    """The sheet reuses the one observer and tick: no second cost (#383)."""
+    text = _read(SCRIPT)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    assert code.count("new IntersectionObserver") == 1, (
+        "exactly one observer may watch the headings: the sheet reuses it "
+        "(#383)"
+    )
+    assert "data-toc-slot" in code, (
+        "the sheet must take the moved inline nav, never a second list "
+        "(#383)"
+    )
+
+
+@pytest.mark.static
+def test_the_sheet_handoff_is_keyboard_and_pointer_complete():
+    """Button, Esc, backdrop and close button; expanded state exposed."""
+    text = _read(SCRIPT)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    assert "aria-expanded" in code, (
+        "the button must expose the sheet state (#383)"
+    )
+    assert "aria-controls" in code or "data-toc-fab" in code, (
+        "the button must own the sheet (#383)"
+    )
+    assert "'Escape'" in code or '"Escape"' in code, (
+        "Esc must shut the sheet (#383)"
+    )
+    assert "data-toc-backdrop" in code, (
+        "a backdrop tap must shut the sheet (#383)"
+    )
+    assert "data-toc-close" in code, (
+        "a close button must shut the sheet (#383)"
+    )
+
+
+@pytest.mark.static
+def test_the_fab_markup_lives_in_the_post_layout_only():
+    """Hidden button + sheet, localized, post pages with a ToC only (#383)."""
+    layout = _read(POST_LAYOUT)
+    assert "show_toc" in layout and "data-toc-fab" in layout, (
+        "the button must render only where the ToC renders (#383)"
+    )
+    for needle in (
+        'class="toc-fab" hidden',
+        'data-toc-fab aria-expanded="false" aria-controls="toc-sheet"',
+        'class="toc-sheet" hidden',
+        'data-toc-sheet id="toc-sheet"',
+        'role="dialog" aria-modal="true"',
+        'data-toc-slot',
+        'data-toc-backdrop',
+        'data-toc-close',
+        'data-toc-ring',
+        "toc-fab__ring",
+        'aria-hidden="true"',
+        "visually-hidden",
+        "data-toc-fab-base",
+        "On this page",
+        "Trong bài này",
+    ):
+        assert needle in layout, (
+            f"the post layout must ship `{needle}` (#383)"
+        )
+    for template in sorted((REPO_ROOT / "_layouts").glob("*.html")):
+        if template.name == "post.html":
+            continue
+        assert "toc-fab" not in _read(template), (
+            f"{template.relative_to(REPO_ROOT)} must not render the phone "
+            "ToC button: post pages only (#383)"
+        )
+
+
+@pytest.mark.static
+def test_the_fab_styles_float_bottom_left_with_safe_area():
+    """48px target bottom-left (back-to-top owns right), sheet + ring (#383)."""
+    scss = _read(TOC_SCSS)
+    assert ".toc-fab[hidden]" in scss and ".toc-sheet[hidden]" in scss, (
+        "the `hidden` attribute must win so no-JS readers see neither "
+        "control (#383)"
+    )
+    assert "position: fixed" in scss, (
+        "both controls must float above the page (#383)"
+    )
+    assert "env(safe-area-inset-" in scss, (
+        "the button and sheet must clear phone safe areas (#383)"
+    )
+    assert "width: 48px" in scss and "height: 48px" in scss, (
+        "the button must clear 44px with margin (#383)"
+    )
+    assert "left:" in scss and "z-index: 950" in scss, (
+        "the button sits bottom-left above content but below the sheet "
+        "(back-to-top keeps bottom-right, #383)"
+    )
+    assert "z-index: 1000" in scss, (
+        "the sheet must layer above the button (#383)"
+    )
+    assert "max-height: 75vh" in scss, (
+        "the sheet panel must never fill the viewport (#383)"
+    )
+    assert ".toc-sheet .post-toc__nav" in scss, (
+        "the moved nav keeps its own bounded scroll inside the sheet (#383)"
+    )
+    assert "stroke-dasharray: 125.66" in scss, (
+        "the ring geometry must match the script constant (#383)"
+    )
+    assert scss.count("prefers-reduced-motion") >= 2, (
+        "the ring transition needs its own reduced-motion pin next to the "
+        "chevron one (#383)"
     )
 
 
@@ -519,7 +697,9 @@ def test_long_posts_render_both_mounts_expanded(built_site, rel, label):
     for mount in re.findall(
         r'<nav class="post-toc__nav"[^>]*>.*?</nav>', html, re.S
     ):
-        assert "hidden" not in mount, (
+        # (`aria-hidden` on the chevrons is static decoration, not a
+        # hidden subtree: match the attribute, not the substring.)
+        assert re.search(r"\shidden(?:[\s=/>])", mount) is None, (
             f"{rel}: static ToC must not hide any level (#345)"
         )
         assert 'aria-expanded="true"' in mount or "<button" not in mount, (
@@ -957,100 +1137,103 @@ def _phone_page(browser, site_url, width, scheme="light"):
     return context, page
 
 
-@pytest.mark.parametrize("width", [360, 375])
+@pytest.mark.parametrize("width", [320, 360, 375, 414])
 @pytest.mark.parametrize("scheme", ["light", "dark"])
-def test_phone_inline_toc_starts_as_one_summary_row(
+def test_phone_fab_replaces_the_inline_mount(
     built_site_url, browser, width, scheme
 ):
-    """Phones start collapsed: one 44px summary row above the article (#377).
+    """Phones get a reachable FAB; the inline mount goes away (JS path).
 
     Audit 2026-10-22: the open 16-row list cost 510px / 73% of a 700px
-    viewport before the first paragraph; collapsed it costs one row.
+    viewport before the first paragraph; #383 replaces it with one
+    floating button (the no-JS fallback keeps the inline list).
     """
     context, phone = _phone_page(browser, built_site_url, width, scheme)
     try:
         assert phone.evaluate(
+            "document.documentElement.classList.contains('toc-fab-on')"
+        ), "the JS path must flag the FAB handoff (#383)"
+        assert phone.evaluate(
             "getComputedStyle(document.querySelector("
             "'.post-toc-mount--inline')).display"
-        ) != "none"
+        ) == "none"
         assert phone.evaluate(
             "getComputedStyle(document.querySelector("
             "'.post-toc-mount--sidebar')).display"
         ) == "none"
-        assert phone.locator(
-            ".post-toc-mount--inline details.post-toc[open]"
-        ).count() == 0, (
-            "the phone inline ToC must start collapsed (#377)"
+        fab = phone.get_by_role("button", name=re.compile("On this page"))
+        assert fab.count() == 1
+        box = fab.first.bounding_box()
+        assert box["width"] >= 44 and box["height"] >= 44, (
+            "the FAB must clear 44px, got "
+            f"{box['width']:.0f}x{box['height']:.0f} at {width}px (#383)"
         )
-        summary_h = phone.locator(
-            ".post-toc-mount--inline .post-toc__summary"
-        ).evaluate("el => el.getBoundingClientRect().height")
-        assert summary_h >= 44, (
-            f"the phone summary row is {summary_h:.0f}px, below 44px (#377)"
+        # Bottom-left within the viewport: back-to-top owns bottom-right.
+        assert box["x"] < width / 2, (
+            f"the FAB must sit left of centre at {width}px, got x={box['x']:.0f}"
         )
-        toc_h = phone.locator(
-            ".post-toc-mount--inline details.post-toc"
-        ).evaluate("el => el.getBoundingClientRect().height")
-        assert toc_h <= 0.15 * 700, (
-            f"collapsed phone ToC costs {toc_h:.0f}px of a 700px viewport "
-            "(#377)"
+        assert box["x"] >= 0 and box["y"] + box["height"] <= 700, (
+            "the FAB must stay inside the viewport (#383)"
         )
+        assert phone.locator(".toc-sheet").is_hidden(), (
+            "the sheet starts shut (#383)"
+        )
+        assert phone.evaluate(
+            "document.documentElement.scrollWidth <= window.innerWidth"
+        ), f"the FAB must not overflow a {width}px viewport (#383)"
     finally:
         context.close()
 
 
 @pytest.mark.parametrize("width", [360, 375])
-def test_phone_expanded_list_is_bounded_and_single_line(
+def test_phone_sheet_lists_bounded_single_line_rows(
     built_site_url, browser, width
 ):
-    """Tapping the summary opens a 50vh scrollable list; rows truncate (#377).
+    """Tapping the FAB opens a bounded sheet; rows truncate (#383).
 
-    Audit 2026-10-22: 2 of 16 titles wrapped onto two lines; the open list
-    ran 510px unbounded.
+    Audit 2026-10-22: 2 of 16 titles wrapped onto two lines; the inline
+    list ran 510px unbounded. The sheet caps the moved nav instead.
     """
     context, phone = _phone_page(browser, built_site_url, width)
     try:
-        phone.locator(
-            ".post-toc-mount--inline .post-toc__summary"
-        ).click()
-        expect(phone.locator(
-            ".post-toc-mount--inline details.post-toc[open]"
-        )).to_have_count(1)
-        nav = phone.locator(".post-toc-mount--inline .post-toc__nav")
+        phone.get_by_role("button", name=re.compile("On this page")).click()
+        sheet = phone.locator(".toc-sheet")
+        expect(sheet).to_be_visible()
+        nav = phone.locator(".toc-sheet .post-toc__nav")
+        assert nav.count() == 1, (
+            "the inline nav must move into the sheet slot (#383)"
+        )
         box = nav.evaluate(
             "el => ({client: el.clientHeight, scroll: el.scrollHeight})"
         )
-        assert box["client"] <= 0.5 * 700 + 1, (
-            f"the expanded phone list is {box['client']:.0f}px, over the "
-            "50vh cap (#377)"
+        assert box["client"] <= 0.6 * 700 + 1, (
+            f"the sheet list is {box['client']:.0f}px, over the 60vh cap "
+            "(#383)"
         )
         assert box["scroll"] >= box["client"], (
-            "the long-post list must scroll inside the panel (#377)"
+            "the long-post list must scroll inside the sheet (#383)"
         )
         heights = phone.locator(
-            ".post-toc-mount--inline .post-toc__item a"
-        ).evaluate_all("els => els.map(el => el.getBoundingClientRect().height)")
+            ".toc-sheet .post-toc__item a"
+        ).evaluate_all("els => els.map(el => el.getBoundingClientRect().height).filter(h => h > 0)")
         assert heights and all(h <= 25 for h in heights), (
-            f"phone rows must stay single-line, got {heights} (#377)"
+            f"sheet rows must stay single-line, got {heights} (#383)"
         )
     finally:
         context.close()
 
 
-def test_phone_active_row_stays_inside_the_panel_without_moving_the_page(
+def test_phone_active_row_stays_inside_the_sheet_without_moving_the_page(
     built_site_url, browser
 ):
-    """Scrolling the article keeps the marked row visible in the panel (#377).
+    """Scrolling the article keeps the marked row visible in the sheet (#383).
 
-    Audit 2026-10-22: after a mid-article scroll the active row sat above
-    the viewport on every width/theme. The panel nudges only its own
-    scrollTop; the page itself must land exactly where requested.
+    The sheet nudges only the moved nav's scrollTop; the page itself must
+    land exactly where requested.
     """
     context, phone = _phone_page(browser, built_site_url, 375)
     try:
-        phone.locator(
-            ".post-toc-mount--inline .post-toc__summary"
-        ).click()
+        phone.get_by_role("button", name=re.compile("On this page")).click()
         target = phone.evaluate(
             """() => { const hs = document.querySelectorAll(
               '.post-content h2[id]');
@@ -1060,36 +1243,36 @@ def test_phone_active_row_stays_inside_the_panel_without_moving_the_page(
         phone.evaluate(f"window.scrollTo(0, {target})")
         phone.wait_for_function(
             """() => document.querySelector(
-              '.post-toc-mount--inline a[aria-current="location"]'
+              '.toc-sheet a[aria-current="location"]'
             ) !== null""",
             timeout=10_000,
         )
         state = phone.evaluate(
             """() => { const nav = document.querySelector(
-              '.post-toc-mount--inline .post-toc__nav');
+              '.toc-sheet .post-toc__nav');
               const a = document.querySelector(
-              '.post-toc-mount--inline a[aria-current="location"]');
+              '.toc-sheet a[aria-current="location"]');
               const p = nav.getBoundingClientRect();
               const r = a.getBoundingClientRect();
               return { inPanel: r.top >= p.top - 1 && r.bottom <= p.bottom + 1,
                 pageY: window.scrollY }; }"""
         )
         assert state["inPanel"], (
-            "the active row must be visible inside the phone panel (#377)"
+            "the active row must be visible inside the sheet (#383)"
         )
         assert abs(state["pageY"] - target) <= 2, (
             f"the page moved to {state['pageY']:.0f}, expected {target:.0f}: "
-            "the panel must never move the page (#377)"
+            "the panel must never move the page (#383)"
         )
     finally:
         context.close()
 
 
 @pytest.mark.parametrize("scheme", ["light", "dark"])
-def test_phone_tap_targets_and_no_overflow_at_320px(
+def test_phone_sheet_targets_and_no_overlap_at_320px(
     built_site_url, browser, scheme
 ):
-    """Every visible phone target clears 24px; 320px never overflows (#377)."""
+    """Every visible sheet target clears 24px; FAB clears 44px; 320px calm."""
     context = browser.new_context(
         viewport={"width": 320, "height": 700}, color_scheme=scheme
     )
@@ -1098,24 +1281,265 @@ def test_phone_tap_targets_and_no_overflow_at_320px(
         page.goto(
             built_site_url.rstrip("/") + EN_LONG_POST, wait_until="load"
         )
-        page.locator(
-            ".post-toc-mount--inline .post-toc__summary"
-        ).click()
+        fab = page.get_by_role("button", name=re.compile("On this page"))
+        box = fab.first.bounding_box()
+        assert box["width"] >= 44 and box["height"] >= 44, (
+            "the FAB must clear 44px at 320px (#383)"
+        )
+        fab.first.click()
+        expect(page.locator(".toc-sheet")).to_be_visible()
+        # Collapsed branches keep their rows out of the a11y tree at 0x0:
+        # only laid-out targets count here.
         sizes = page.evaluate(
             """() => Array.from(document.querySelectorAll(
-              '.post-toc-mount--inline .post-toc__summary,'
-              + ' .post-toc-mount--inline .post-toc__item a'
-            )).map(el => { const r = el.getBoundingClientRect();
+              '.toc-sheet .post-toc__item a,'
+              + ' .toc-sheet .toc-sheet__close'
+            )).filter(el => el.getBoundingClientRect().height > 0)
+              .map(el => { const r = el.getBoundingClientRect();
               return [Math.round(r.width), Math.round(r.height)]; })"""
         )
-        assert sizes, "expected visible phone ToC targets (#377)"
+        assert sizes, "expected visible sheet targets (#383)"
         for w, h in sizes:
             assert w >= 24 and h >= 24, (
-                f"phone ToC target measures {w}x{h}, below 24px (#377)"
+                f"sheet target measures {w}x{h}, below 24px (#383)"
             )
         assert page.evaluate(
             "document.documentElement.scrollWidth <= window.innerWidth"
-        ), "the phone ToC must not overflow a 320px viewport (#377)"
+        ), "the sheet must not overflow a 320px viewport (#383)"
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [320, 360, 375, 414])
+def test_phone_fab_never_overlaps_back_to_top(
+    built_site_url, browser, width
+):
+    """Past the threshold both pills show, disjoint, inside the viewport."""
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        phone.evaluate("window.scrollTo(0, 800)")
+        phone.wait_for_function(
+            "() => !document.querySelector('.back-to-top').hidden",
+            timeout=10_000,
+        )
+        rects = phone.evaluate(
+            """() => { const r = (s) => {
+              const el = document.querySelector(s);
+              const b = el.getBoundingClientRect();
+              return {x: b.x, y: b.y, w: b.width, h: b.height}; };
+              return { fab: r('.toc-fab'), top: r('.back-to-top') }; }"""
+        )
+        for name, r in rects.items():
+            assert r["x"] >= 0 and r["x"] + r["w"] <= width, (
+                f"{name} leaves the viewport at {width}px (#383)"
+            )
+        overlap = not (
+            rects["fab"]["x"] + rects["fab"]["w"] <= rects["top"]["x"]
+            or rects["top"]["x"] + rects["top"]["w"] <= rects["fab"]["x"]
+            or rects["fab"]["y"] + rects["fab"]["h"] <= rects["top"]["y"]
+            or rects["top"]["y"] + rects["top"]["h"] <= rects["fab"]["y"]
+        )
+        assert not overlap, (
+            f"the FAB overlaps back-to-top at {width}px: "
+            f"{rects} (#383)"
+        )
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [360, 375])
+def test_phone_sheet_opens_closes_with_focus_handoff(
+    built_site_url, browser, width
+):
+    """Button, Esc, backdrop and close button; focus in and back (#383)."""
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        # Start mid-article: the sheet must preserve the reading position.
+        phone.evaluate("window.scrollTo(0, 1200)")
+        phone.wait_for_function("() => window.scrollY === 1200", timeout=10_000)
+        fab = phone.get_by_role("button", name=re.compile("On this page"))
+        sheet = phone.locator(".toc-sheet")
+        before = phone.evaluate("window.scrollY")
+        fab.first.click()
+        expect(sheet).to_be_visible()
+        assert fab.first.get_attribute("aria-expanded") == "true"
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-sheet__close')"
+        ), "opening must move focus into the sheet (#383)"
+        assert phone.evaluate("window.scrollY") == before, (
+            "opening the sheet must not move the page (#383)"
+        )
+        phone.keyboard.press("Escape")
+        expect(sheet).to_be_hidden()
+        assert fab.first.get_attribute("aria-expanded") == "false"
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-fab')"
+        ), "Esc must return focus to the button (#383)"
+        assert phone.evaluate("window.scrollY") == before, (
+            "closing the sheet must not move the page (#383)"
+        )
+        fab.first.click()
+        expect(sheet).to_be_visible()
+        phone.locator(".toc-sheet__backdrop").click(position={"x": 20, "y": 20})
+        expect(sheet).to_be_hidden()
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-fab')"
+        ), "backdrop close must return focus to the button (#383)"
+        fab.first.click()
+        expect(sheet).to_be_visible()
+        phone.locator(".toc-sheet__close").click()
+        expect(sheet).to_be_hidden()
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-fab')"
+        ), "close-button close must return focus to the button (#383)"
+    finally:
+        context.close()
+
+
+def test_phone_ring_tracks_the_article_range(built_site_url, browser):
+    """0% at the top, mid-way through, 100% at the end — sheet shut (#383)."""
+    context, phone = _phone_page(browser, built_site_url, 375)
+    try:
+        label = phone.locator("[data-toc-fab-label]")
+        ring = phone.locator("[data-toc-ring]")
+        assert "0%" in label.inner_text()
+        assert ring.evaluate(
+            "el => el.style.strokeDashoffset"
+        ) in ("", "125.66"), (
+            "the ring starts empty at the top (#383)"
+        )
+        halfway = phone.evaluate(
+            """() => { const a = document.querySelector('.post-content');
+              const top = a.getBoundingClientRect().top + window.scrollY;
+              return top + (a.offsetHeight - window.innerHeight) / 2; }"""
+        )
+        phone.evaluate(f"window.scrollTo(0, {halfway})")
+        phone.wait_for_function(
+            """() => { const t = document.querySelector(
+              '[data-toc-fab-label]').textContent;
+              const m = t.match(/(\d+)%/);
+              return m && +m[1] > 0 && +m[1] < 100; }""",
+            timeout=10_000,
+        )
+        mid_text = label.inner_text()
+        mid_pct = int(re.search(r"(\d+)%", mid_text).group(1))
+        assert 10 <= mid_pct <= 90, (
+            f"halfway through the article the ring reads {mid_text} (#383)"
+        )
+        phone.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        phone.wait_for_function(
+            """() => document.querySelector('[data-toc-fab-label]')
+              .textContent.includes('100%')""",
+            timeout=10_000,
+        )
+        assert phone.locator(".toc-sheet").is_hidden(), (
+            "the ring must track while the sheet stays shut (#383)"
+        )
+    finally:
+        context.close()
+
+
+def test_phone_row_tap_navigates_and_closes_the_sheet(
+    built_site_url, browser
+):
+    """A row tap jumps to its section, shuts the sheet, returns focus (#383)."""
+    context, phone = _phone_page(browser, built_site_url, 375)
+    try:
+        ids = phone.evaluate(
+            """() => Array.from(
+              document.querySelectorAll('.post-content h2[id]')
+            ).map(h => h.id)"""
+        )
+        target = ids[5]
+        phone.get_by_role("button", name=re.compile("On this page")).click()
+        expect(phone.locator(".toc-sheet")).to_be_visible()
+        phone.evaluate(
+            f"document.querySelector('.toc-sheet a[href=\"#{target}\"]').click()"
+        )
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        phone.wait_for_function(
+            f"() => window.location.hash === '#{target}'", timeout=10_000
+        )
+        top = phone.evaluate(
+            f"document.getElementById('{target}')"
+            ".getBoundingClientRect().top"
+        )
+        assert top >= -2, (
+            f"the #{target} heading lands {top:.0f}px up: the jump must not "
+            "hide it under the header (#383)"
+        )
+        marked = phone.locator(
+            ".toc-sheet a[aria-current='location']"
+        ).evaluate_all("links => links.map(a => a.getAttribute('href'))")
+        assert marked == [f"#{target}"], (
+            f"the tapped row must mark, got {marked} (#383)"
+        )
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-fab')"
+        ), "closing after a row tap must return focus to the button (#383)"
+    finally:
+        context.close()
+
+
+def test_phone_sheet_marks_the_section_being_read(
+    built_site_url, browser
+):
+    """Opening mid-article shows the current row marked and in view (#383)."""
+    context, phone = _phone_page(browser, built_site_url, 375)
+    try:
+        target = phone.evaluate(
+            """() => { const hs = document.querySelectorAll(
+              '.post-content h2[id]');
+              const h = hs[Math.floor(hs.length / 2)];
+              return { y: h.getBoundingClientRect().top + window.scrollY - 10,
+                id: h.id }; }"""
+        )
+        phone.evaluate(f"window.scrollTo(0, {target['y']})")
+        phone.wait_for_function(
+            f"""() => document.querySelector('.toc-sheet')
+              !== null && document.querySelector(
+              '.post-toc-mount--sidebar a[aria-current="location"]'
+              )?.getAttribute('href') === '#{target["id"]}'""",
+            timeout=10_000,
+        )
+        phone.get_by_role("button", name=re.compile("On this page")).click()
+        expect(phone.locator(".toc-sheet")).to_be_visible()
+        marked = phone.locator(
+            ".toc-sheet a[aria-current='location']"
+        ).evaluate_all("links => links.map(a => a.getAttribute('href'))")
+        assert marked == [f"#{target['id']}"], (
+            f"exactly one sheet row must mark, got {marked} (#383)"
+        )
+        state = phone.evaluate(
+            """() => { const nav = document.querySelector(
+              '.toc-sheet .post-toc__nav');
+              const a = document.querySelector(
+              '.toc-sheet a[aria-current="location"]');
+              const p = nav.getBoundingClientRect();
+              const r = a.getBoundingClientRect();
+              return r.top >= p.top - 1 && r.bottom <= p.bottom + 1; }"""
+        )
+        assert state, (
+            "the sheet must open scrolled to the section being read (#383)"
+        )
+    finally:
+        context.close()
+
+
+def test_vietnamese_fab_uses_the_local_name(built_site_url, browser):
+    """The VI twin names the button 'Trong bài này' with the same flow."""
+    context = browser.new_context(viewport={"width": 375, "height": 700})
+    try:
+        page = context.new_page()
+        page.goto(
+            built_site_url.rstrip("/") + VI_LONG_POST, wait_until="load"
+        )
+        fab = page.get_by_role("button", name=re.compile("Trong bài này"))
+        assert fab.count() == 1
+        fab.first.click()
+        expect(page.locator(".toc-sheet")).to_be_visible()
+        page.keyboard.press("Escape")
+        expect(page.locator(".toc-sheet")).to_be_hidden()
     finally:
         context.close()
 

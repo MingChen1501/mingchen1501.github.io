@@ -55,10 +55,13 @@ SUB_FOOTER = test_post_only_js.SUB_FOOTER
 # ~45.1KB, the conditional companion to ~17.5KB. #345 re-measured after
 # the nested-disclosure rework: toc-spy.js grew ~5.1KB -> ~8.6KB with the
 # branch collapse, auto-expand, and pinning logic, re-measured to
-# ~38.3KB prod.)
+# ~38.3KB prod. #383 re-measured after the phone FAB + sheet rework:
+# toc-spy.js grew ~10.1KB -> ~14.5KB with the handoff, article-range ring,
+# and dialog focus management on the same observer and tick, re-measured
+# to ~44.2KB prod.)
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
-    "MAX_JS_POST_BYTES": 41984,
+    "MAX_JS_POST_BYTES": 49152,
     "MAX_CSS_BYTES": 50176,
     "MAX_SYNTAX_CSS_BYTES": 19456,
 }

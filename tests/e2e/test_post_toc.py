@@ -314,11 +314,22 @@ def test_exactly_one_toc_mount_is_visible_per_viewport(
             wait_until="load",
         )
         displays = page.evaluate(_MOUNT_DISPLAY_JS)
-        assert displays[visible] != "none", (
-            f"expected the {visible} ToC mount to be visible at {width}px"
-        )
-        assert displays[hidden] == "none", (
-            f"expected the {hidden} ToC mount to be hidden at {width}px"
-        )
+        if width < 960:
+            # Phone JS path (#383): the inline mount gives way to the
+            # floating button, so neither static mount shows.
+            assert displays["inline"] == "none", (
+                f"the inline mount must hide behind the FAB at {width}px"
+            )
+            assert displays["sidebar"] == "none"
+            assert page.locator(".toc-fab").is_visible(), (
+                f"the FAB must be reachable at {width}px"
+            )
+        else:
+            assert displays[visible] != "none", (
+                f"expected the {visible} ToC mount to be visible at {width}px"
+            )
+            assert displays[hidden] == "none", (
+                f"expected the {hidden} ToC mount to be hidden at {width}px"
+            )
     finally:
         context.close()

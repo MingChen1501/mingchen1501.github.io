@@ -187,7 +187,16 @@ EXPECTED_VARIABLES = {
 # stay identical and the ToC-less visual baselines need no refresh. (A
 # `scroll-margin-top` guard was prototyped and reverted: it parked anchor
 # jumps on the scroll-spy marking boundary.)
-EXPECTED_CSS_SHA256 = "47aa524eed210e007a5661e8a4b4424bfc2f7699d85f5ae451625d6c09be0b46"
+# #383 (phone ToC floating button + sheet): the `toc` partial gained the
+# additive `.toc-fab` / `.toc-sheet` block (fixed 48px bottom-left button
+# with its progress ring, bottom sheet with backdrop + dialog panel, the
+# moved nav keeping the bounded single-line row model inside the sheet,
+# desktop hide, reduced-motion pin, JS-only `html.toc-fab-on` inline
+# hide), and the `print` partial hides both controls. Diffed old vs new
+# before bumping: pure addition, no existing rule moved; the button and
+# sheet render only on ToC posts (the visual baselines pin ToC-less posts
+# only) and stay `hidden`/desktop-none there, so no baseline refresh.
+EXPECTED_CSS_SHA256 = "a55e757d1f53250cc8fbcca89182a74c24ba7d26348e7ab2404a10d621e4df7c"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

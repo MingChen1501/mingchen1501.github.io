@@ -14,7 +14,7 @@ Guarded here:
   `test_visual_regression.py` capture screen media only) (static);
 - the block hides every chrome selector (header/nav, sidebars, TOC mounts,
   share row, Related posts, comments, footer, reading progress, back-to-top,
-  lightbox, skip link), expands the article column, keeps readable print
+  phone ToC button + sheet (#383), lightbox, skip link), expands the article column, keeps readable print
   typography, appends destination URLs to outbound links, avoids page breaks
   inside headings/images/code and bounds images (static);
 - the print partial introduces none of the tokens the #148 legibility guard
@@ -138,6 +138,8 @@ HIDDEN_SELECTORS = (
     ".site-footer",
     ".reading-progress",
     ".back-to-top",
+    ".toc-fab",
+    ".toc-sheet",
     ".lightbox",
     ".skip-link",
 )
