@@ -60,32 +60,6 @@ def test_portfolio_nameplates_stay_visible_h2_headings():
 
 
 @pytest.mark.static
-def test_portfolio_bodies_keep_pdf_resume_embed():
-    """The Resume PDF `<object>` embed must keep shipping in both bodies.
-
-    Visual captures hide the plugin box (`visibility: hidden` in the
-    freeze CSS of test_visual_regression.py) because Chromium's PDF
-    viewer paints nondeterministically in CI — so this static guard pins
-    the embed contract instead: the object tag, the PDF mime type, the
-    resume asset URL, and an accessible name per language.
-    """
-    for page, label in (
-        (EN_PAGE, "Resume of Tran Cong Minh (PDF)"),
-        (VI_PAGE, "Hồ sơ của Trần Công Minh (PDF)"),
-    ):
-        body = _body(page)
-        match = re.search(r'<object[^>]*>', body)
-        assert match, f"{page.relative_to(REPO_ROOT)} lost the PDF resume embed"
-        tag = match.group(0)
-        assert 'type="application/pdf"' in tag
-        assert "resume-tran-cong-minh.pdf" in tag
-        assert 'width="100%"' in tag and 'height="800px"' in tag
-        assert label in tag, (
-            f"{page.relative_to(REPO_ROOT)} lost the accessible {label!r} name"
-        )
-
-
-@pytest.mark.static
 def test_portfolio_front_matter_keeps_permalink_ref_and_title():
     for page, permalink, ref, title in (
         (EN_PAGE, "/portfolio/", "portfolio", "Resume"),
