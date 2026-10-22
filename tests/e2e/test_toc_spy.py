@@ -577,6 +577,15 @@ def test_the_fab_drag_uses_a_named_threshold_and_persists_the_edge():
     assert "fabSwallowClick" in code, (
         "a drag must swallow its click so it never opens the sheet (#401)"
     )
+    pointerdown = re.search(
+        r"addEventListener\('pointerdown', function \(event\) \{(.*?)\}\);",
+        code,
+        re.S,
+    )
+    assert pointerdown and "fabSwallowClick = false" in pointerdown.group(1), (
+        "a new press must reset the swallow-click flag so a pointercancelled "
+        "drag cannot eat the next tap (#401)"
+    )
     assert "dragstart" in code, (
         "a native drag tripped by a FAB press (article images under the "
         "floating button are draggable) must be swallowed so it cannot "
@@ -2351,6 +2360,49 @@ def test_phone_fab_drag_snaps_to_edge_and_persists_across_reload(
         assert phone.evaluate(
             "window.localStorage.getItem('toc-fab-edge')"
         ) == "left", "the snapped-back edge must persist (#401)"
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375])
+def test_phone_fab_cancelled_drag_does_not_eat_the_next_tap(
+    built_site_url, browser, width
+):
+    """A pointercancelled drag must not swallow the next tap (#401).
+
+    The cancelled gesture arms the swallow-click flag (its own click never
+    fires); the following press must reset it so the tap opens the sheet.
+    """
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        phone.evaluate(
+            """() => {
+              const fab = document.querySelector('.toc-fab');
+              const box = fab.getBoundingClientRect();
+              const x = box.x + box.width / 2;
+              const y = box.y + box.height / 2;
+              const detail = (cx, cy) => ({
+                bubbles: true, cancelable: true, clientX: cx, clientY: cy,
+                pointerId: 1, pointerType: 'touch', button: 0,
+                isPrimary: true,
+              });
+              fab.dispatchEvent(
+                new PointerEvent('pointerdown', detail(x, y))
+              );
+              fab.dispatchEvent(
+                new PointerEvent('pointermove', detail(x + 60, y))
+              );
+              fab.dispatchEvent(
+                new PointerEvent('pointercancel', detail(x + 60, y))
+              );
+            }"""
+        )
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        assert _fab_edge(phone) == "left", (
+            "a cancelled drag must not snap the edge (#401)"
+        )
+        phone.get_by_role("button", name=re.compile("On this page")).click()
+        expect(phone.locator(".toc-sheet")).to_be_visible()
     finally:
         context.close()
 

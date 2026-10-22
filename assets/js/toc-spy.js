@@ -534,6 +534,10 @@
         if (event.pointerType === 'mouse' && event.button !== 0) {
           return;
         }
+        // A new press starts a new gesture: a pointercancelled drag leaves
+        // fabSwallowClick set (its click never fires), so reset it here or
+        // the cancelled gesture would eat the next tap (#401).
+        fabSwallowClick = false;
         fabDown = true;
         fabDragged = false;
         fabStartX = event.clientX;
