@@ -42,9 +42,10 @@ Guarded here:
   copy gives way to a floating button with a reading-progress ring (the
   no-JS fallback keeps the #377/#382 collapsed inline list); the button
   opens a bottom sheet holding the moved nav, scrolled to the marked row;
-  the sheet shuts on its button, Esc, the backdrop, or a row tap (which
-  jumps and hands focus back); the ring tracks the article range while
-  shut; the button never overlaps back-to-top; desktop behaviour is
+  the sheet traps Tab with an inert background and shuts on its button,
+  Esc, the backdrop, or a row tap (which jumps and hands focus back);
+  the ring tracks the article range while shut; the button never overlaps
+  back-to-top, the share row, or the Giscus embed; desktop behaviour is
   unchanged.
 """
 
@@ -58,6 +59,7 @@ import conftest
 import pytest
 from playwright.sync_api import expect
 
+import test_giscus_comments
 import test_post_only_js
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -71,8 +73,10 @@ SCRIPT_PATH = "/assets/js/toc-spy.js"
 # The scroll-spy ships on post pages only (#345): keep it small. Nested
 # disclosure grew the script from ~5KB (flat highlight only) to ~8.6KB;
 # the phone FAB + sheet + article-range ring (#383) reuses the same
-# observer and rAF tick and grows it to ~14KB.
-MAX_SCRIPT_BYTES = 15 * 1024
+# observer and rAF tick and grows it to ~14KB; the review follow-up keeps
+# `role="dialog" aria-modal="true"` with a real Tab trap plus background
+# `inert`/`aria-hidden` (~17.5KB).
+MAX_SCRIPT_BYTES = 18 * 1024
 
 EN_LONG_POST = "/2022/12/25/explaining-the-internet.html"
 VI_LONG_POST = "/vi/2022/12/25/gioi-thieu-ve-internet.html"
@@ -210,8 +214,8 @@ def test_the_spy_collapses_branches_and_hides_the_phone_inline_for_the_fab():
         "own scrollTop (#383)"
     )
     # Keyboard stays native: real buttons toggle on Enter/Space and links
-    # stay plain anchors. Focus moves only across the dialog handoff (open
-    # puts focus on the close button, close returns it to the button);
+    # stay plain anchors. Focus moves only across the open/close handoff
+    # and inside the sheet Tab trap (first-to-last wrap, #383 review);
     # marking and auto-expansion never move focus.
     assert "tabindex" not in code.lower() and "tabIndex" not in code, (
         "the scroll-spy must leave the ToC tab order alone (#345)"
@@ -219,8 +223,20 @@ def test_the_spy_collapses_branches_and_hides_the_phone_inline_for_the_fab():
     assert ".focus()" in code, (
         "the sheet open/close handoff must move focus (#383)"
     )
-    assert "activeElement" not in code, (
-        "focus tracking must not sniff the active element (#383)"
+    # The trap is the only reader of the focused element: it wraps Tab at
+    # the panel edges, never to follow or steal focus.
+    trap_start = code.index("function trapTab(")
+    trap_end = code.find("\n    function ", trap_start + 1)
+    trap = code[trap_start:trap_end if trap_end != -1 else len(code)]
+    assert "activeElement" in trap, (
+        "the Tab trap must wrap at the panel edges (#383)"
+    )
+    without_trap = code[:trap_start] + (
+        code[trap_end:] if trap_end != -1 else ""
+    )
+    assert "activeElement" not in without_trap, (
+        "focus tracking must not sniff the active element outside the "
+        "sheet Tab trap (#383)"
     )
     for name in (
         "function mark(",
@@ -308,6 +324,43 @@ def test_the_sheet_handoff_is_keyboard_and_pointer_complete():
     )
     assert "data-toc-close" in code, (
         "a close button must shut the sheet (#383)"
+    )
+
+
+@pytest.mark.static
+def test_the_sheet_traps_tab_and_inerts_the_background():
+    """`aria-modal` means it: Tab wraps inside, background goes inert."""
+    text = _read(SCRIPT)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    assert "function trapTab(" in code, (
+        "the sheet must trap Tab while open (#383)"
+    )
+    assert "'Tab'" in code or '"Tab"' in code, (
+        "the trap must key off the Tab key (#383)"
+    )
+    assert "shiftKey" in code, (
+        "the trap must wrap both ways (#383)"
+    )
+    assert "getClientRects" in code, (
+        "the trap must cycle rendered stops only: collapsed branches "
+        "are hidden, so their rows never tab (#383)"
+    )
+    # The sheet lives in the article, so the covered landmarks are named
+    # explicitly — inerting a shared ancestor would silence the panel.
+    # (The FAB stays out: it is the sheet's own toggle, and the Tab trap
+    # already keeps keyboard focus inside.)
+    for selector in (
+        ".site-header",
+        ".post-content",
+        ".post-sidebar",
+        ".share",
+        ".comments",
+    ):
+        assert selector in code, (
+            f"the background {selector} must go inert while open (#383)"
+        )
+    assert code.count("setBackgroundModal(") >= 3, (
+        "open and every close path must flip the background (#383)"
     )
 
 
@@ -1347,6 +1400,136 @@ def test_phone_fab_never_overlaps_back_to_top(
         context.close()
 
 
+COMMENTS_DEV_OVERLAY = "comments:\n  dev: true\n"
+
+
+@pytest.fixture(scope="module")
+def comments_site_url(tmp_path_factory):
+    """Dev build with the comments section rendered (Giscus, no network).
+
+    The shared build skips comments (`comments.dev` is false), so overlap
+    with the Giscus embed needs its own overlay build: the same dev
+    environment plus the rendered `.comments` section and client script.
+    """
+    bundle = conftest._bundle()
+    if bundle is None:
+        pytest.skip(
+            "`bundle` not found: the comments overlap guard needs Ruby + "
+            "`bundle install` (CI installs both in .github/workflows/e2e.yml)"
+        )
+    workdir = tmp_path_factory.mktemp("site-build-comments-config")
+    overlay = workdir / "overlay.yml"
+    overlay.write_text(COMMENTS_DEV_OVERLAY, encoding="utf-8")
+    destination = tmp_path_factory.mktemp("site-build-comments")
+    result = subprocess.run(
+        [bundle, "exec", "jekyll", "build",
+         "--config",
+         ",".join([str(REPO_ROOT / "_config.yml"), str(overlay)]),
+         "--destination", str(destination)],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=BUILD_TIMEOUT_S,
+    )
+    if result.returncode != 0:
+        pytest.fail(
+            "`jekyll build` (comments overlay) failed with exit code "
+            f"{result.returncode}\n"
+            f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
+        )
+    with conftest._served(destination) as url:
+        yield url
+
+
+def _comments_phone_page(browser, site_url, width):
+    """A phone-width page on the comments build with a stubbed embed.
+
+    The Giscus client is the zero-network stub (same mount, same
+    `giscus-frame` class as the real widget), booted eagerly so the
+    iframe box exists before any scrolling; every other third party stays
+    blocked like `_phone_page`.
+    """
+    context = browser.new_context(viewport={"width": width, "height": 700})
+    context.add_init_script("window.__giscusEager = true")
+    page = context.new_page()
+    origin = urlparse(site_url).netloc
+    page.route(
+        "**/*",
+        lambda route: route.continue_()
+        if urlparse(route.request.url).netloc == origin
+        else route.abort(),
+    )
+    # Registered after the catch-all so it wins for the client script:
+    # Playwright matches the most recently registered route first.
+    test_giscus_comments._stub_giscus_client(page, [])
+    page.goto(site_url.rstrip("/") + EN_LONG_POST, wait_until="load")
+    page.wait_for_function(
+        "() => Array.from(document.images).every(i => i.complete)",
+        timeout=15_000,
+    )
+    return context, page
+
+
+def _disjoint(first, second):
+    """True when two getBoundingClientRect boxes share no area."""
+    return (
+        first["x"] + first["width"] <= second["x"]
+        or second["x"] + second["width"] <= first["x"]
+        or first["y"] + first["height"] <= second["y"]
+        or second["y"] + second["height"] <= first["y"]
+    )
+
+
+@pytest.mark.parametrize("width", [375, 414])
+def test_phone_fab_never_overlaps_share_or_giscus(
+    comments_site_url, browser, width
+):
+    """The FAB clears the share row and the Giscus embed at 375/414px.
+
+    The FAB is fixed bottom-left, so content legitimately slides beneath
+    it while scrolling (same as back-to-top over article text); this pins
+    the regression instead — at mid-article offsets both blocks are
+    in-flow below the fold, disjoint from the FAB box. A future
+    fixed/sticky refactor parking either block over the FAB fails here.
+    """
+    context, phone = _comments_phone_page(browser, comments_site_url, width)
+    try:
+        phone.evaluate("window.scrollTo(0, 800)")
+        phone.wait_for_function(
+            "() => !document.querySelector('.back-to-top').hidden",
+            timeout=10_000,
+        )
+        phone.wait_for_function(
+            "() => document.querySelector('iframe.giscus-frame') !== null",
+            timeout=10_000,
+        )
+        assert phone.locator(".share").count() == 1, (
+            "expected the share row in the comments build (#383)"
+        )
+        assert phone.locator(".comments").count() == 1, (
+            "expected the comments section in the comments build (#383)"
+        )
+        rects = phone.evaluate(
+            """() => { const box = (sel) => {
+              const el = document.querySelector(sel);
+              if (!el) return null;
+              const r = el.getBoundingClientRect();
+              return {x: r.x, y: r.y, width: r.width, height: r.height}; };
+              return { fab: box('.toc-fab'), share: box('.share'),
+                comments: box('.comments'),
+                frame: box('iframe.giscus-frame') }; }"""
+        )
+        for name in ("share", "comments", "frame"):
+            assert rects[name] is not None, (
+                f"expected a laid-out {name} box at {width}px (#383)"
+            )
+            assert _disjoint(rects["fab"], rects[name]), (
+                f"the FAB overlaps {name} at {width}px: {rects} (#383)"
+            )
+    finally:
+        context.close()
+
+
 @pytest.mark.parametrize("width", [360, 375])
 def test_phone_sheet_opens_closes_with_focus_handoff(
     built_site_url, browser, width
@@ -1392,6 +1575,65 @@ def test_phone_sheet_opens_closes_with_focus_handoff(
         assert phone.evaluate(
             "document.activeElement.classList.contains('toc-fab')"
         ), "close-button close must return focus to the button (#383)"
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width", [375])
+def test_phone_sheet_traps_tab_focus_inside_the_panel(
+    built_site_url, browser, width
+):
+    """Tab cycles inside the open sheet; the background stays inert."""
+    context, phone = _phone_page(browser, built_site_url, width)
+    try:
+        fab = phone.get_by_role("button", name=re.compile("On this page"))
+        fab.first.click()
+        expect(phone.locator(".toc-sheet")).to_be_visible()
+        # The covered landmarks drop out of the tab order and the AT tree.
+        assert phone.evaluate(
+            "document.querySelector('.post-content').hasAttribute('inert')"
+        ), "the article body must go inert while the sheet is open (#383)"
+        assert phone.evaluate(
+            "document.querySelector('.post-content')"
+            ".getAttribute('aria-hidden') === 'true'"
+        ), "older AT must hide the article body while open (#383)"
+        stops = phone.evaluate(
+            """() => Array.from(document.querySelectorAll(
+              '.toc-sheet__panel a[href],'
+              + ' .toc-sheet__panel button:not([disabled])'
+            )).filter(el => el.getClientRects().length > 0).length"""
+        )
+        assert stops > 1, (
+            f"expected more than one tab stop in the sheet, got {stops} (#383)"
+        )
+        # Tab past every stop and around again: focus never leaves.
+        for _ in range(stops + 2):
+            phone.keyboard.press("Tab")
+            assert phone.evaluate(
+                "document.querySelector('.toc-sheet__panel')"
+                ".contains(document.activeElement)"
+            ), "Tab escaped the open sheet (#383)"
+        # The other way: Shift+Tab on the first stop wraps to the last.
+        phone.evaluate(
+            "document.querySelector('.toc-sheet__close').focus()"
+        )
+        phone.keyboard.press("Shift+Tab")
+        assert phone.evaluate(
+            """() => { const rendered = Array.from(
+              document.querySelectorAll(
+                '.toc-sheet__panel a[href],'
+                + ' .toc-sheet__panel button:not([disabled])'
+              )).filter(el => el.getClientRects().length > 0);
+              return document.activeElement === rendered[rendered.length - 1]; }"""
+        ), "Shift+Tab on the first stop must wrap to the last (#383)"
+        phone.keyboard.press("Escape")
+        expect(phone.locator(".toc-sheet")).to_be_hidden()
+        assert phone.evaluate(
+            "document.querySelectorAll('[inert]').length === 0"
+        ), "closing must restore the background (#383)"
+        assert phone.evaluate(
+            "document.activeElement.classList.contains('toc-fab')"
+        ), "Esc must return focus to the button (#383)"
     finally:
         context.close()
 

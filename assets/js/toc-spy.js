@@ -26,7 +26,15 @@
  * sheet. The sheet shuts on its close button, its backdrop, and Esc;
  * focus moves into it on open and returns to the button on close — a
  * row tap returns focus at once and again on `hashchange` (Firefox
- * resets focus to the body as the navigation lands).
+ * resets focus to the body as the navigation lands). The panel keeps
+ * `role="dialog" aria-modal="true"` with a real focus trap rather than
+ * dropping to a plain disclosure: a modal promise without a trap lets
+ * Tab wander behind the backdrop, which is worse for AT users than no
+ * dialog role — and the trap is one keydown branch over the panel's own
+ * links and buttons (no second subscription, no `tabindex` juggling),
+ * so it cannot drift out of sync. While open, the covered landmarks go
+ * `inert` (tab order + a11y tree where implemented) and `aria-hidden`
+ * (older AT), restored on every close path.
  * Opening the sheet never moves focus by itself beyond that handoff, and
  * auto-expansion never moves focus at all. Anchor jumps stay instant, so
  * there is nothing for `prefers-reduced-motion` to disable here (the ring
@@ -132,6 +140,7 @@
       ? fabLabel.getAttribute('data-toc-fab-base') || ''
       : '';
     var closeBtn = sheet ? sheet.querySelector('[data-toc-close]') : null;
+    var panel = sheet ? sheet.querySelector('.toc-sheet__panel') : null;
     var backdrop = sheet
       ? sheet.querySelector('[data-toc-backdrop]')
       : null;
@@ -178,6 +187,63 @@
     // the `hashchange` listener below consumes it. Open/close disarm.
     var rowHash = null;
 
+    // Covered landmarks (#383 review): named explicitly because the
+    // sheet itself lives in the article — inerting a shared ancestor
+    // would silence the panel too. The FAB stays out: it is the sheet's
+    // own toggle (it owns the panel via `aria-controls` and click
+    // toggles it shut), and the Tab trap already keeps keyboard focus
+    // inside — inerting it would only yank the AT context from its label.
+    var COVERED_SELECTORS =
+      '.site-header, .post-header, .post-content, .post-sidebar, ' +
+      '.share, .comments';
+
+    function setBackgroundModal(modal) {
+      Array.prototype.forEach.call(
+        document.querySelectorAll(COVERED_SELECTORS),
+        function (el) {
+          if (modal) {
+            el.setAttribute('inert', '');
+            el.setAttribute('aria-hidden', 'true');
+          } else {
+            el.removeAttribute('inert');
+            el.removeAttribute('aria-hidden');
+          }
+        }
+      );
+    }
+
+    // Tab trap (#383 review): the `aria-modal` panel owns Tab while
+    // open, wrapping first-to-last both ways over rendered stops only
+    // (collapsed branches are `hidden`, so their rows never tab). Every
+    // stop is a native link or button; the tab order itself stays
+    // untouched.
+    var TRAP_SELECTOR = 'a[href], button:not([disabled])';
+
+    function trapTab(event) {
+      if (!panel) {
+        return;
+      }
+      var stops = Array.prototype.filter.call(
+        panel.querySelectorAll(TRAP_SELECTOR),
+        function (el) {
+          return el.getClientRects().length > 0;
+        }
+      );
+      if (!stops.length) {
+        event.preventDefault();
+        return;
+      }
+      var first = stops[0];
+      var last = stops[stops.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
     function openSheet() {
       if (!fabOn || !sheet.hidden) {
         return;
@@ -185,6 +251,9 @@
       rowHash = null;
       sheet.hidden = false;
       fab.setAttribute('aria-expanded', 'true');
+      // Inert first: the opener (the FAB) is covered too, so focusing
+      // the panel before this would blur right back out.
+      setBackgroundModal(true);
       apply();
       if (closeBtn) {
         closeBtn.focus();
@@ -198,6 +267,8 @@
       rowHash = null;
       sheet.hidden = true;
       fab.setAttribute('aria-expanded', 'false');
+      // Restore before refocusing: the button is covered while open.
+      setBackgroundModal(false);
       if (refocus !== false) {
         fab.focus();
       }
@@ -379,10 +450,14 @@
         });
       }
       document.addEventListener('keydown', function (event) {
-        if (
-          (event.key === 'Escape' || event.key === 'Esc') &&
-          !sheet.hidden
-        ) {
+        if (!fabOn || sheet.hidden) {
+          return;
+        }
+        if (event.key === 'Tab') {
+          trapTab(event);
+          return;
+        }
+        if (event.key === 'Escape' || event.key === 'Esc') {
           closeSheet();
         }
       });
