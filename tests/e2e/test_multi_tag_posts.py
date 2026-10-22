@@ -122,14 +122,18 @@ def test_layout_unions_every_tag_in_the_pages_language():
 
 
 @pytest.mark.static
-def test_layout_fallback_keys_off_the_union():
+def test_layout_latest_section_excludes_related_and_current():
     text = _read(POST_LAYOUT)
-    # No siblings under ANY tag -> Latest posts; the size check reads the
-    # de-duplicated union, and the fallback still honours #328 (nothing newer
-    # than the page) with the honest heading in both languages.
-    assert "tag_posts.size <= 1" in text
-    assert "use_latest" in text
-    assert "latest_post" in text and "<= page.date" in text
+    # #386: Latest sits below Related (never a replacing fallback), excludes
+    # the current page and everything Related already shows, caps at three,
+    # and no longer filters to `date <= page.date` (#328 superseded here).
+    assert "related_urls" in text
+    assert "latest_posts" in text
+    assert "related_count" in text
+    assert "latest_shown < 3" in text
+    assert "related_urls contains" in text
+    assert "<= page.date" not in text
+    assert "use_latest" not in text
     assert "Latest posts" in text
     assert "Bài viết mới nhất" in text
 
@@ -282,17 +286,23 @@ def overlay_catalogs(overlay_site):
     return en, vi
 
 
-def _assert_union_section(html, main_url, main_tags, catalog, heading):
+def _assert_union_section(html, main_url, main_tags, catalog, heading, latest_heading):
     sections = _sidebar_sections(html)
-    assert len(sections) == 1, f"{main_url}: want exactly one section"
-    section_heading, links = sections[0]
-    # A union with siblings keeps the true Related heading (no fallback).
+    assert len(sections) == 2, f"{main_url}: want Related + Latest, got {sections}"
+    (section_heading, links), (second_heading, latest_links) = sections
+    # A union with siblings keeps the true Related heading plus Latest below
+    # (#386: no Latest fallback replacing Related).
     assert section_heading == heading, f"{main_url}: {section_heading!r}"
+    assert second_heading == latest_heading, f"{main_url}: {second_heading!r}"
     assert 1 <= len(links) <= 5, f"{main_url}: {len(links)} links"
+    assert 1 <= len(latest_links) <= 3, f"{main_url}: {len(latest_links)} latest links"
     # The current page never lists itself, and never twice.
-    assert main_url not in links, f"{main_url}: lists itself"
+    assert main_url not in links + latest_links, f"{main_url}: lists itself"
     assert len(links) == len(set(links)), f"{main_url}: duplicate links {links}"
-    # Every link shares at least one tag with the page: the union proof.
+    assert not (set(links) & set(latest_links)), (
+        f"{main_url}: Related and Latest must not overlap: {links} vs {latest_links}"
+    )
+    # Every Related link shares at least one tag with the page: union proof.
     for link in links:
         assert link in catalog, f"{main_url}: links to unknown post {link}"
         assert catalog[link] & main_tags, (
@@ -306,7 +316,7 @@ def test_en_multi_tag_post_unions_both_tags(overlay_site, overlay_catalogs):
     en_catalog, _ = overlay_catalogs
     html = _read(destination / EN_MAIN_URL.lstrip("/"))
     links = _assert_union_section(
-        html, EN_MAIN_URL, {"ai-agent", "linux-tooling"}, en_catalog, "Related posts"
+        html, EN_MAIN_URL, {"ai-agent", "linux-tooling"}, en_catalog, "Related posts", "Latest posts"
     )
     # Siblings from EACH tag appear: alpha via ai-agent, beta via linux-tooling.
     assert EN_ALPHA_URL in links, f"missing ai-agent sibling: {links}"
@@ -325,6 +335,7 @@ def test_vi_multi_tag_post_unions_both_tags(overlay_site, overlay_catalogs):
         {"ai-agent", "linux-tooling"},
         vi_catalog,
         "Bài viết cùng chủ đề",
+        "Bài viết mới nhất",
     )
     assert VI_SIB_A_URL in links, f"missing ai-agent sibling: {links}"
     assert VI_SIB_B_URL in links, f"missing linux-tooling sibling: {links}"
