@@ -13,8 +13,10 @@ Determinism: every capture uses the shared dev build (the external giscus
 embed is never fetched, analytics only renders in production), blocks
 third-party requests, pins the light colour scheme with reduced motion,
 disables animations/transitions/caret blinking via injected CSS, waits for
-webfonts (`document.fonts.ready`) and for every image to decode (scrolling
-once through the page so lazy-loaded images settle), then screenshots the
+webfonts (`document.fonts.ready`) and for every same-origin image to decode
+(scrolling once through the page so lazy-loaded images settle; third-party
+images are blocked by design and article attachments stay external by
+policy (#195), so they settle but never gate the shot), then screenshots the
 full page. Baselines are half-scale JPEG (`SCALE`, `JPEG_QUALITY`) so 36
 captures stay under the 2 MB budget; downscaling plus JPEG encode/decode is
 deterministic for identical pixels, so the threshold only absorbs
@@ -138,9 +140,20 @@ async () => {
       setTimeout(resolve, 5000);
     });
   }));
+  // Third-party requests are aborted by design (see `_stable_page`), and
+  // article attachment images stay at external URLs by policy (#195), so
+  // those can never decode here: only same-origin images gate the shot.
+  const local = images.filter((img) => {
+    try {
+      const src = img.currentSrc || img.src;
+      return new URL(src, location.href).origin === location.origin;
+    } catch (e) {
+      return true;
+    }
+  });
   return {
-    imageCount: images.length,
-    decoded: images.filter((i) => i.complete && i.naturalWidth > 0).length,
+    imageCount: local.length,
+    decoded: local.filter((i) => i.complete && i.naturalWidth > 0).length,
   };
 }
 """
@@ -235,8 +248,10 @@ def _capture(page, site_url, path):
     page.wait_for_timeout(200)
     stats = page.evaluate(_SETTLE_JS)
     assert stats["decoded"] == stats["imageCount"], (
-        f"{path}: only {stats['decoded']}/{stats['imageCount']} images decoded; "
-        "a half-loaded image would make the baseline flaky"
+        f"{path}: only {stats['decoded']}/{stats['imageCount']} same-origin "
+        "images decoded; a half-loaded image would make the baseline flaky "
+        "(third-party images are blocked by design and never gate the shot, "
+        "#195)"
     )
     return _process(page.screenshot(full_page=True))
 

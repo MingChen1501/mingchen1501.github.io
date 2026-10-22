@@ -24,7 +24,9 @@
  * Triggers: `IntersectionObserver` plus a passive rAF-throttled
  * scroll/resize fallback; link clicks mark immediately and shut the
  * sheet. The sheet shuts on its close button, its backdrop, and Esc;
- * focus moves into it on open and returns to the button on close.
+ * focus moves into it on open and returns to the button on close — a
+ * row tap returns focus at once and again on `hashchange` (Firefox
+ * resets focus to the body as the navigation lands).
  * Opening the sheet never moves focus by itself beyond that handoff, and
  * auto-expansion never moves focus at all. Anchor jumps stay instant, so
  * there is nothing for `prefers-reduced-motion` to disable here (the ring
@@ -172,10 +174,15 @@
       fabLabel.textContent = fabBase + ', ' + pct + '%';
     }
 
+    // Row-tap focus return (#383): the tapped hash arms the return;
+    // the `hashchange` listener below consumes it. Open/close disarm.
+    var rowHash = null;
+
     function openSheet() {
       if (!fabOn || !sheet.hidden) {
         return;
       }
+      rowHash = null;
       sheet.hidden = false;
       fab.setAttribute('aria-expanded', 'true');
       apply();
@@ -188,6 +195,7 @@
       if (!fabOn || sheet.hidden) {
         return;
       }
+      rowHash = null;
       sheet.hidden = true;
       fab.setAttribute('aria-expanded', 'false');
       if (refocus !== false) {
@@ -338,22 +346,16 @@
         if (!link || !nav.contains(link)) {
           return;
         }
-        // The anchor jump is instant; mark the row now instead of waiting
-        // for the next scroll event so the click feels immediate. A row
-        // tap inside the open sheet also shuts it: hide first without
-        // moving focus, then hand focus back on the next frame, so the
-        // fragment navigation cannot clobber the return.
-        mark(link.getAttribute('href').slice(1));
+        // Mark at once so the click feels immediate; a row tap inside
+        // the open sheet also shuts it: hide, focus the button, and arm
+        // the return for when the fragment lands — Firefox resets focus
+        // to the body after this task (#383).
+        var rowHref = link.getAttribute('href');
+        mark(rowHref.slice(1));
         if (fabOn && sheet.contains(link)) {
           closeSheet(false);
-          var refocus = function () {
-            fab.focus();
-          };
-          if (window.requestAnimationFrame) {
-            window.requestAnimationFrame(refocus);
-          } else {
-            refocus();
-          }
+          fab.focus();
+          rowHash = rowHref;
         }
       });
     });
@@ -382,6 +384,14 @@
           !sheet.hidden
         ) {
           closeSheet();
+        }
+      });
+      // The tapped fragment lands after the tap task: refocus then
+      // (Firefox resets focus to the body). Pending tap only (#383).
+      window.addEventListener('hashchange', function () {
+        if (rowHash !== null && window.location.hash === rowHash) {
+          rowHash = null;
+          fab.focus();
         }
       });
     }

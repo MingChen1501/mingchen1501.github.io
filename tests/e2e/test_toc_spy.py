@@ -1403,10 +1403,12 @@ def test_phone_ring_tracks_the_article_range(built_site_url, browser):
         label = phone.locator("[data-toc-fab-label]")
         ring = phone.locator("[data-toc-ring]")
         assert "0%" in label.inner_text()
-        assert ring.evaluate(
-            "el => el.style.strokeDashoffset"
-        ) in ("", "125.66"), (
-            "the ring starts empty at the top (#383)"
+        # Engines serialize the same offset differently (Chromium keeps the
+        # unitless "125.66", Firefox reports "125.66px"), so compare the
+        # number, not the string (#383).
+        offset = ring.evaluate("el => el.style.strokeDashoffset")
+        assert offset == "" or abs(float(re.match(r"[0-9.]+", offset).group()) - 125.66) < 0.01, (
+            f"the ring starts empty at the top, got {offset!r} (#383)"
         )
         halfway = phone.evaluate(
             """() => { const a = document.querySelector('.post-content');
@@ -1415,7 +1417,7 @@ def test_phone_ring_tracks_the_article_range(built_site_url, browser):
         )
         phone.evaluate(f"window.scrollTo(0, {halfway})")
         phone.wait_for_function(
-            """() => { const t = document.querySelector(
+            r"""() => { const t = document.querySelector(
               '[data-toc-fab-label]').textContent;
               const m = t.match(/(\d+)%/);
               return m && +m[1] > 0 && +m[1] < 100; }""",
