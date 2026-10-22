@@ -48,10 +48,11 @@ your own stack when adopting.
 ## Adoption checklist
 
 - [ ] Register the AO project for the new repo: `ao project add
-  --name [repo] --path $(pwd)`, then `ao project set-config
+  --name [repo] --path $(pwd)`, then `script/ao-project-config.sh
   [project-id] --agent-rules-file [agent guide, e.g. AGENTS.md]` so
   every session loads the same rules (see `bootstrap.md` step 3;
-  `set-config` replaces the whole config, so use `--config-json`
+  never a bare `set-config` field flag — it replaces the whole
+  config, so merge via the wrapper or use `--config-json`
   with the complete object when other settings exist).
 - [ ] Copy the `docs/` classification tree and index table
   (`bootstrap.md` step 1); mark every row `active`, `stub (not needed

@@ -16,3 +16,5 @@ Session id is optional in review bodies only; otherwise always include it. Merge
 Reviewer must differ from implementer (`dev` vs `dev-peer-review`, `content` vs `content-review`). A reviewer posts one COMMENT verdict with its footer and never posts code.
 
 Worker and orchestrator reports are posted to GitHub (issue comment or dedicated issue), not written into the repo or left only in local files — see the "Reports" section of `docs/project/issue-conventions.md`.
+
+Never use a bare `ao project set-config <id>` field-flag invocation (one focused flag replaces the whole per-project config); use `script/ao-project-config.sh` or `--config-json` with the full object.

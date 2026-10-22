@@ -51,17 +51,21 @@ list) so internal specs never leak to users.
 
 ```sh
 ao project add --name [repo] --path $(pwd)
-ao project set-config [project-id] --agent-rules-file [repo-relative path to your agent guide, e.g. AGENTS.md]
+script/ao-project-config.sh [project-id] --agent-rules-file [repo-relative path to your agent guide, e.g. AGENTS.md]
 ```
 
 `[project-id]` is the id shown by `ao project ls` (derived from the
 path unless overridden with `--id` at add time). The rules file path
 is repo-relative, so every session loads the same rules.
 
-Warning: `ao project set-config` replaces the whole per-project
-config, even when focused flags are used. If the project already has
-other settings (model, env, branch, reviewers), pass the complete
-object with `--config-json` so nothing is dropped:
+Warning: never call `ao project set-config [project-id]` with a
+focused field flag directly — a bare flag invocation replaces the
+whole per-project config, silently dropping unrelated settings
+(model, reviewers, orchestrator rules). `script/ao-project-config.sh` (copy it into the
+new repo with this template) reads the current config first and
+writes the full merged object back with `--config-json`, refusing to
+run when the current config cannot be read. The only safe raw form is
+the full object:
 
 ```sh
 ao project set-config [project-id] --config-json \
