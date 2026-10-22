@@ -9,7 +9,7 @@ drives the progress bar + back-to-top button that ship ``hidden`` in
 rendered only on posts), ``lightbox.js`` (which queries
 ``.post-content img``, absent from non-post ``.post-content`` blocks) and
 ``toc-spy.js`` (which marks the ``.post-toc__nav`` row being read, rendered
-only from ``_layouts/post.html``). Home, tag, about and portfolio pages
+only from ``_layouts/post.html``). Home, tag, about and resume pages
 rendered none of those controls yet downloaded all five files (#253 gated
 share + reading-progress; #318 gated copy-code + lightbox the same way;
 #345 gates toc-spy the same way).
@@ -22,7 +22,7 @@ Guarded here:
   ``page.layout == 'post'`` conditional (static);
 - the five scripts every page needs stay unconditional (static);
 - built non-post pages (home EN/VI, tag index + one tag page, about,
-  portfolio) link none of the five scripts and go from 10 to 5
+  resume) link none of the five scripts and go from 10 to 5
   sub-footer script requests, while built EN/VI post pages still link
   all five with a non-empty epoch token (built, needs Ruby).
 """
@@ -124,7 +124,7 @@ def _non_post_pages(built_site):
         "vi/index.html",
         "tags/index.html",
         "about/index.html",
-        "portfolio/index.html",
+        "resume/index.html",
     ]
     pages.extend(
         path.relative_to(built_site).as_posix()
@@ -134,7 +134,7 @@ def _non_post_pages(built_site):
 
 
 def test_non_post_pages_skip_all_post_only_scripts(built_site):
-    """Home, tag, about, portfolio: no post-only downloads (#318).
+    """Home, tag, about, resume: no post-only downloads (#318).
 
     Non-post pages drop from 10 to 5 sub-footer scripts; every page keeps the
     five scripts it actually needs.

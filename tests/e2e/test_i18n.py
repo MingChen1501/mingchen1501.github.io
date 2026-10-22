@@ -38,7 +38,7 @@ NOTICE_INCLUDE = "{% include vi-fallback-notice.html %}"
 
 # Old Vietnamese URLs (on `origin/master` when #93 was filed). Every one of
 # them must keep resolving — via a redirect stub to `/vi/...` (#93) — except
-# the language-neutral `/portfolio/`, `/tags/` and `/tags/<tag>/` paths, which
+# the language-neutral `/tags/` and `/tags/<tag>/` paths, which
 # the default language takes over (they were already English or
 # language-neutral, so nothing is lost; the switcher leads to `/vi/`).
 EXPECTED_REDIRECTS = {
@@ -131,7 +131,7 @@ def _content_sources():
     return [
         (POSTS_DIR, "en"),
         (VI_POSTS_DIR, "vi"),
-        (REPO_ROOT, None),  # about.md, portfolio.md, tags.md
+        (REPO_ROOT, None),  # about.md, resume.md, tags.md
         (REPO_ROOT / "vi", None),  # vi/about.md, vi/tags.md
         (TAGS_DIR, None),
         (VI_TAGS_DIR, None),
@@ -340,7 +340,7 @@ def test_old_vietnamese_urls_keep_a_redirect():
     for posts_dir in (POSTS_DIR, VI_POSTS_DIR):
         for path in sorted(posts_dir.glob("*.md")):
             covered.update(_redirects(_front_matter(path)))
-    for page in ["about.md", "portfolio.md", "tags.md"]:
+    for page in ["about.md", "resume.md", "tags.md"]:
         for base in (REPO_ROOT, REPO_ROOT / "vi"):
             candidate = base / page
             if candidate.is_file():
@@ -720,11 +720,11 @@ def test_no_switcher_targets_a_paginated_url(built_site):
 
 
 def test_switcher_pairs_stay_correct_after_the_pagination_fix(built_site):
-    """Spot-check exact counterpart pairs (posts EN/VI, about, portfolio,
+    """Spot-check exact counterpart pairs (posts EN/VI, about, resume,
     tags) so the #104 first-match fix cannot misroute them."""
     pairs = [
         ("/about/", "/vi/about/"),
-        ("/portfolio/", "/vi/portfolio/"),
+        ("/resume/", "/vi/resume/"),
         ("/tags/", "/vi/tags/"),
         ("/tags/ai-agent/", "/vi/tags/ai-agent/"),
         (
@@ -755,8 +755,8 @@ def test_old_vietnamese_urls_emit_redirects_to_vi(built_site):
 
 
 def test_canonicals_are_self_referencing(built_site):
-    for url in ["/", "/vi/", "/about/", "/vi/about/", "/portfolio/",
-                "/vi/portfolio/", "/tags/ai-agent/", "/vi/tags/ai-agent/"]:
+    for url in ["/", "/vi/", "/about/", "/vi/about/", "/resume/",
+                "/vi/resume/", "/tags/ai-agent/", "/vi/tags/ai-agent/"]:
         built = _file_for(built_site, url)
         assert built.is_file(), f"{url} is missing from the build"
         html = built.read_text(encoding="utf-8")

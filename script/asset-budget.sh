@@ -10,7 +10,7 @@
 # regrowing every page. No runtime behavior change — test-only numbers.
 #
 # Page kinds follow the test_post_only_js.py split:
-#   - PAGE  (home, tag, about, portfolio): the scripts every page needs.
+#   - PAGE  (home, tag, about, resume): the scripts every page needs.
 #   - POST  (post, production worst case): the page scripts + the post-only
 #     scripts (#253: share.js, reading-progress.js, plus #318: copy-code.js,
 #     lightbox.js, plus #345: toc-spy.js) + the comments sync script
@@ -60,7 +60,7 @@
 #
 # shellcheck shell=sh
 
-# Max first-party JS bytes for home/tag/about/portfolio pages.
+# Max first-party JS bytes for home/tag/about/resume pages.
 MAX_JS_PAGE_BYTES=23552
 # Max first-party JS bytes for post pages (production worst case).
 MAX_JS_POST_BYTES=59904

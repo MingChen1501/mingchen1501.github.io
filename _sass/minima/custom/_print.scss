@@ -121,6 +121,19 @@
     break-inside: avoid;
   }
 
+  // Resume page (#387): the in-page jump links (`Full CV ↓` /
+  // `Back to Resume ↑`, `.resume-jump`) are screen navigation with no
+  // paper meaning, so they never print. The full-CV section (`#cv`)
+  // starts on a fresh sheet, keeping the Resume part cleanly printable
+  // on its own and the CV page breaks sane.
+  .post-content .resume-jump {
+    display: none !important;
+  }
+
+  .post-content #cv {
+    break-before: page;
+  }
+
   // Long code lines wrap to the page instead of clipping past the margin.
   .post-content pre {
     white-space: pre-wrap;

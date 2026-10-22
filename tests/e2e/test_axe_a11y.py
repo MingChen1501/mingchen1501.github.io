@@ -6,7 +6,7 @@ offline, no CDN) over the key templates and fails on `serious`/`critical`
 violations. `minor`/`moderate` findings are reported but non-blocking.
 
 Coverage: `/`, one EN post plus its VI counterpart (same `ref`), the `/tags/`
-index, `/vi/`, `/about/`, `/portfolio/` — each at phone width (375px) and one
+index, `/vi/`, `/about/`, `/resume/` — each at phone width (375px) and one
 desktop viewport (1280px), in the light colour scheme.
 
 Delivery: the scanner is vendored, not fetched. `axe-core/AXE_PIN.md` records
@@ -28,7 +28,7 @@ finding outright:
 - `color-contrast` on `blockquote > p` (coffee post EN+VI): blockquote text
   deepened to `#616161` (6.1:1 on `#fdfdfd`) without touching
   `$brand-color`, so the rest of the site keeps its design.
-- `object-alt` on `/portfolio/` `<object>`: the resume embed carries a
+- `object-alt` on `/resume/` `<object>`: the resume embed carries a
   matching `title`/`aria-label` next to its in-element fallback link
   (labelled, not replaced).
 
@@ -50,9 +50,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 AXE_JS = REPO_ROOT / "tests" / "e2e" / "axe-core" / "axe.min.js"
 AXE_PIN_DOC = REPO_ROOT / "tests" / "e2e" / "axe-core" / "AXE_PIN.md"
 CUSTOM_SCSS = REPO_ROOT / "_sass" / "minima" / "custom" / "_a11y.scss"
-PORTFOLIO_MD = {
-    "portfolio.md": "Resume of Tran Cong Minh (PDF)",
-    "vi/portfolio.md": "Hồ sơ của Trần Công Minh (PDF)",
+RESUME_MD = {
+    "resume.md": "Resume of Tran Cong Minh (PDF)",
+    "vi/resume.md": "Hồ sơ của Trần Công Minh (PDF)",
 }
 
 AXE_VERSION = "4.14.0"
@@ -67,7 +67,7 @@ VIEWPORT_HEIGHT = 800
 EN_POST = "/2022/10/27/brewing-vietnamese-coffee.html"
 VI_POST = "/vi/2022/10/27/cach-pha-ca-phe.html"
 
-PAGES = ["/", EN_POST, VI_POST, "/tags/", "/vi/", "/about/", "/portfolio/"]
+PAGES = ["/", EN_POST, VI_POST, "/tags/", "/vi/", "/about/", "/resume/"]
 VIEWPORTS = (PHONE_WIDTH, DESKTOP_WIDTH)
 
 # Rule ids whose `serious`/`critical` findings fail the suite outright.
@@ -195,9 +195,9 @@ def test_blockquote_dark_color_meets_aa_contrast():
 
 
 @pytest.mark.static
-def test_portfolio_object_has_accessible_name_and_fallback():
+def test_resume_object_has_accessible_name_and_fallback():
     """The #213 object-alt fix: labelled embed, fallback link retained."""
-    for rel, label in PORTFOLIO_MD.items():
+    for rel, label in RESUME_MD.items():
         md = _read(REPO_ROOT / rel)
         tag = re.search(r"<object\b[^>]*>", md)
         assert tag, f"{rel} renders no resume <object> to judge (#213)"
@@ -316,7 +316,7 @@ def test_fixed_nodes_still_render_and_rules_still_ship(built_site):
         "blockquote": "<blockquote",
         "object": "<object",
     }
-    portfolio_only = {"object"}
+    resume_only = {"object"}
     seen = {target: False for target in targets}
     checked = 0
     for path in PAGES:
@@ -325,7 +325,7 @@ def test_fixed_nodes_still_render_and_rules_still_ship(built_site):
             else _read(built_site / path.lstrip("/"))
         checked += 1
         for target, snippet in targets.items():
-            if target in portfolio_only and path != "/portfolio/":
+            if target in resume_only and path != "/resume/":
                 continue
             if snippet in html:
                 seen[target] = True

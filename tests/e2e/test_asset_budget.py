@@ -30,7 +30,7 @@ both files deliberately):
   static guard.
 
 Page kinds follow the ``test_post_only_js.py`` split: home, post, tag,
-about/portfolio (``page`` layout). Failure messages name the
+about/resume (``page`` layout). Failure messages name the
 measured bytes and the budget file.
 """
 
@@ -253,7 +253,7 @@ def _representative_pages(built_site):
     """One built page per kind, both languages where shipped."""
     pages = {
         "page": ["index.html", "vi/index.html", "tags/index.html",
-                 "about/index.html", "portfolio/index.html"],
+                 "about/index.html", "resume/index.html"],
         "post": [EN_POST_REL.as_posix(), VI_POST_REL.as_posix()],
     }
     tag_pages = sorted(built_site.glob("tags/*/index.html"))

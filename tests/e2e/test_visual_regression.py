@@ -7,13 +7,13 @@ fresh capture differs from the committed baseline beyond a small threshold.
 
 Page set (EN plus VI, #208): the home list, one EN post with its VI twin, the
 `/tags/` index with its VI twin, one tag page with its VI twin, about with its
-VI twin, and portfolio with its VI twin.
+VI twin, and resume with its VI twin.
 
 Determinism: every capture uses the shared dev build (the external giscus
 embed is never fetched, analytics only renders in production), blocks
 third-party requests, pins the light colour scheme with reduced motion,
 disables animations/transitions/caret blinking via injected CSS (which also
-hides the resume-PDF plugin box on the portfolio pages — its paint is
+hides the resume-PDF plugin box on the resume pages — its paint is
 nondeterministic headless, so baselines assert its layout space, never its
 pixels), waits for
 webfonts (`document.fonts.ready`) and for every same-origin image to decode
@@ -116,13 +116,13 @@ CASES = (
     ("tag-page-vi", "/vi/tags/doi-song/index.html"),
     ("about-en", "/about/index.html"),
     ("about-vi", "/vi/about/index.html"),
-    ("portfolio-en", "/portfolio/index.html"),
-    ("portfolio-vi", "/vi/portfolio/index.html"),
+    ("resume-en", "/resume/index.html"),
+    ("resume-vi", "/vi/resume/index.html"),
 )
 
 # Kills animation/transition/caret nondeterminism; the repo ships no keyframe
 # animations, but smooth scrolling and blinking carets must not smear a shot.
-# The portfolio pages embed the resume PDF (`object[type=application/pdf]`),
+# The resume pages embed the resume PDF (`object[type=application/pdf]`),
 # whose plugin paint is nondeterministic in headless CI (blank white box on
 # some runs, black box on others, #409): hidden during captures so the
 # baselines assert layout, never plugin pixels. `visibility` (not `display`)

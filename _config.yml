@@ -25,7 +25,7 @@ minima:
   # Specific pages for site navigation.
   nav_pages:
     - about.md
-    - portfolio.md
+    - resume.md
     - tags.md
 
   # Social Media Links.
