@@ -129,6 +129,7 @@ sets, and the gate procedure live in the `spec-gate` skill
 | Risk register | `project/risk-register.md` | active | live risk list |
 | Decision log | `project/decision-log.md` | active | decision list pointing at ADRs |
 | Issue conventions | `project/issue-conventions.md` | active | title+label convention for issues and PRs |
+| Metrics (agent-ops) | `project/metrics.md` | active | roles/DORA/cost definitions and how to run the scripts |
 
 ## Release
 
