@@ -181,12 +181,13 @@ jobs:
             ${{ runner.os }}-playwright-
       - name: Install Playwright browser (${{ matrix.browser }})
         # Cache hit (#421): the browser binary is already on disk, so a
-        # plain `install` is a fast no-op — unless the runner image lacks
-        # the engine's OS libraries (webkit on ubuntu-latest: the binary
-        # installs fine but cannot launch). When the install output reports
-        # missing host dependencies, install just the OS deps
-        # (`install-deps`, no browser download) with the same bounded
-        # retry; chromium/firefox skip apt entirely on this path.
+        # plain `install` is a fast no-op. Whether the runner image also
+        # carries the engine's OS libraries is proven by a real headless
+        # launch, not by parsing install output (webkit on ubuntu-latest
+        # ships the binary but not libgtk-4/libgraphene and friends).
+        # Smoke pass -> done, no apt. Smoke fail -> top up OS deps with
+        # bounded install-deps, smoke again; still red -> fail the job
+        # with the launch log.
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         timeout-minutes: 15
         run: |
@@ -197,21 +198,46 @@ jobs:
             echo "Browser install failed; failing fast (see #421)."
             exit 1
           fi
-          if echo "$install_out" | grep -q "Host system is missing dependencies"; then
-            echo "OS dependencies missing for ${{ matrix.browser }}; installing them (bounded retry)..."
-            for attempt in 1 2; do
-              if timeout 6m python -m playwright install-deps ${{ matrix.browser }}; then
-                exit 0
-              fi
-              echo "Dependency install attempt $attempt failed or timed out; retrying once..."
-              for _ in $(seq 1 24); do
-                sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
-                sleep 5
-              done
+          smoke_launch() {
+            timeout 60 python - <<'PYEOF'
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              engine = getattr(p, "${{ matrix.browser }}")
+              browser = engine.launch(headless=True)
+              page = browser.new_page()
+              page.goto("about:blank")
+              browser.close()
+          print("smoke launch OK: ${{ matrix.browser }}")
+          PYEOF
+          }
+          if smoke_launch; then
+            echo "Smoke launch passed; no OS dependency install needed."
+            exit 0
+          fi
+          echo "Smoke launch failed for ${{ matrix.browser }}; installing OS dependencies (bounded retry)..."
+          deps_ok=0
+          for attempt in 1 2; do
+            if timeout 6m python -m playwright install-deps ${{ matrix.browser }}; then
+              deps_ok=1
+              break
+            fi
+            echo "Dependency install attempt $attempt failed or timed out; retrying once..."
+            for _ in $(seq 1 24); do
+              sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+              sleep 5
             done
+          done
+          if [ "$deps_ok" != "1" ]; then
             echo "Browser dependency install failed twice; failing fast (see #421)."
             exit 1
           fi
+          echo "Re-running smoke launch after dependency install..."
+          if smoke_launch; then
+            echo "Smoke launch passed after dependency install."
+            exit 0
+          fi
+          echo "Smoke launch still failing after dependency install; failing fast (see #421)."
+          exit 1
       - name: Install Playwright browser with deps (${{ matrix.browser }})
         # Cache miss only (#421): full install including OS deps. Each
         # attempt is capped at 6 min; one retry absorbs a transient mirror
