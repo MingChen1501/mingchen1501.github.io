@@ -129,6 +129,11 @@ jobs:
     needs: [classify, build-site]
     if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
+    # Hang backstop (#421): the suite itself takes ~3-5 min per engine and
+    # the slowest healthy job on record is ~18 min (a stalled apt mirror
+    # inside the browser-install step). Kill anything slower so a hang
+    # fails fast with evidence instead of burning 40+ min of wall clock.
+    timeout-minutes: 25
     # `actions: write` for the "Download built site" step
     # (actions/download-artifact) and the "Upload fresh visual captures"
     # step (actions/upload-artifact; write covers both).
@@ -145,6 +150,41 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+      - name: Quiesce apt (#421)
+        # Fresh ubuntu runners boot with unattended-upgrades — or an
+        # apt-daily timer firing mid-job — holding dpkg's lock for many
+        # minutes (run 39902712204: PID 3453 through a whole 6-min attempt
+        # AND the 5-min wait; run 39904461383: a new holder again after
+        # quiesce). So: disable the periodic triggers via apt config
+        # (needs no systemd), stop + disable + mask via systemd with
+        # VISIBLE outcomes, and give every apt invocation on this runner
+        # a native lock wait (DPkg::Lock::Timeout, proven valid via
+        # `apt-config -o DPkg::Lock::Timeout=330 dump`) through a config
+        # file — Playwright's install/install-deps accept no apt flags, so
+        # the config file is the only injection point. Manual fuser
+        # polling is replaced by this apt-native wait; per-attempt
+        # timestamps still separate mirror stalls from lock contention.
+        # Never kill -9 a running apt (dpkg corruption risk); the
+        # install steps TERM only verified unattended-upgrade workers.
+        run: |
+          echo "--- disabling periodic apt triggers + native lock wait (no systemd needed) ---"
+          echo 'APT::Periodic::Enable "0";' | sudo tee /etc/apt/apt.conf.d/99-ci-disable-periodic >/dev/null
+          echo 'DPkg::Lock::Timeout "330";' | sudo tee /etc/apt/apt.conf.d/99-ci-lock-timeout >/dev/null
+          apt-config dump | grep -E "Periodic::Enable|Lock::Timeout" || true
+          echo "--- stopping + disabling + masking unattended-upgrades and apt-daily ---"
+          sudo systemctl stop unattended-upgrades.service || echo "stop u-u service rc=$?"
+          sudo systemctl stop unattended-upgrades.timer || echo "stop u-u timer rc=$?"
+          sudo systemctl stop apt-daily.service apt-daily.timer apt-daily-upgrade.service apt-daily-upgrade.timer || echo "stop apt-daily rc=$?"
+          sudo systemctl disable unattended-upgrades.service unattended-upgrades.timer || echo "disable u-u rc=$?"
+          sudo systemctl disable apt-daily.service apt-daily.timer apt-daily-upgrade.service apt-daily-upgrade.timer || echo "disable apt-daily rc=$?"
+          sudo systemctl mask unattended-upgrades.service unattended-upgrades.timer || echo "mask u-u rc=$?"
+          sudo dpkg --configure -a || echo "dpkg --configure -a rc=$?"
+          echo "--- verify ---"
+          sudo systemctl is-active unattended-upgrades.service || true
+          sudo systemctl is-enabled unattended-upgrades.service || true
+          sudo systemctl is-active apt-daily.timer || true
+          echo "remaining apt users, if any:"
+          ps -ef | grep -E "[a]pt-get|[d]pkg|[u]nattended" || echo "(none visible)"
       - name: Download built site (#320)
         uses: actions/download-artifact@v8
         with:
@@ -166,7 +206,33 @@ jobs:
       - name: Resolve Playwright version
         id: playwright
         run: echo "version=$(python -m pip show playwright | awk '/^Version:/ {print $2}')" >> "$GITHUB_OUTPUT"
+      - name: Prepare apt package cache dir (#421)
+        # actions/cache restores as the runner user, but apt writes
+        # root-owned files here — take ownership first so restore and
+        # the post-job save work without sudo.
+        run: |
+          sudo mkdir -p /var/cache/apt/archives/partial
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/apt/archives
+      - name: Cache apt packages (#421)
+        # Design pivot (run 39904461383): webkit needs a measured 117 MB
+        # of system debs and the mirror trickles — retrying a 100 MB+
+        # download every job cannot win. Cache only finished *.deb files
+        # (glob: partial/ downloads and lock files stay out, so root-
+        # owned partials can never break the save with a tar permission
+        # error — dispatch #1 lesson) keyed per engine + Playwright
+        # version (restore-keys span version bumps, debs barely change);
+        # a cache miss falls back to the old mirror path (slow but
+        # correct). actions/cache restores here and saves in its
+        # post-step. ~117 MB for webkit, far less for the other engines
+        # — well within the 10 GB repo cache budget.
+        uses: actions/cache@v6
+        with:
+          path: /var/cache/apt/archives/*.deb
+          key: ${{ runner.os }}-apt-${{ matrix.browser }}-${{ steps.playwright.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-apt-${{ matrix.browser }}-
       - name: Cache Playwright browsers
+        id: playwright-cache
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
@@ -174,8 +240,264 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
       - name: Install Playwright browser (${{ matrix.browser }})
-        run: python -m playwright install --with-deps ${{ matrix.browser }}
+        # Cache hit (#421): the browser binary is already on disk, so a
+        # plain `install` is a fast no-op. Whether the runner image also
+        # carries the engine's OS libraries is proven by a real headless
+        # launch, not by parsing install output (webkit on ubuntu-latest
+        # ships the binary but not libgtk-4/libgraphene and friends).
+        # Smoke pass -> done, no apt. Smoke fail -> top up OS deps with
+        # bounded install-deps (apt-native lock wait via the Quiesce
+        # step's DPkg::Lock::Timeout), smoke again; still red -> fail
+        # the job with the launch log. A dead attempt re-stops periodic
+        # workers and TERMs the holder ONLY if it is a verified
+        # unattended-upgrades worker (safe: ephemeral runner, TERM lets
+        # dpkg roll back, unlike kill -9); unknown holders are never
+        # touched.
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        timeout-minutes: 25
+        run: |
+          if install_out=$(python -m playwright install ${{ matrix.browser }} 2>&1); then
+            echo "$install_out"
+          else
+            echo "$install_out"
+            echo "Browser install failed; failing fast (see #421)."
+            exit 1
+          fi
+          smoke_launch() {
+            timeout 60 python - <<'PYEOF'
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              engine = getattr(p, "${{ matrix.browser }}")
+              browser = engine.launch(headless=True)
+              page = browser.new_page()
+              page.goto("about:blank")
+              browser.close()
+          print("smoke launch OK: ${{ matrix.browser }}")
+          PYEOF
+          }
+          if smoke_launch; then
+            echo "Smoke launch passed; no OS dependency install needed."
+            exit 0
+          fi
+          echo "Smoke launch failed for ${{ matrix.browser }}; installing OS dependencies (bounded retry)..."
+          # TERM only verified unattended-upgrades workers AND orphaned
+          # apt-get downloaders reparented to init (PPID 1) — those are
+          # leftovers of our own timed-out attempt (run 39916453942:
+          # PID 3641 kept downloading after its parent died and starved
+          # the retry), safe to stop on an ephemeral runner.
+          run_capped() {
+            # Run "$@" with a hard cap, killing the WHOLE process group
+            # on timeout. Plain `timeout` only signals the direct child,
+            # leaving an orphaned apt-get holding dpkg's lock; setsid
+            # puts the attempt in its own group so nothing survives.
+            # Returns 124 on timeout, else the command's exit code.
+            local cap=$1; shift
+            setsid "$@" &
+            local child=$!
+            local waited=0
+            while kill -0 "$child" 2>/dev/null; do
+              sleep 5
+              waited=$((waited + 5))
+              if [ "$waited" -ge "$cap" ]; then
+                echo "command exceeded ${cap}s; terminating process group $child..."
+                kill -TERM -- -"$child" 2>/dev/null || true
+                sleep 10
+                kill -KILL -- -"$child" 2>/dev/null || true
+                wait "$child" 2>/dev/null || true
+                return 124
+              fi
+            done
+            wait "$child"
+          }
+          release_apt_lock() {
+            # Graceful re-stop in case a periodic trigger fired mid-job,
+            # then inspect the holder with its FULL command line AND
+            # parent PID and TERM it only if it is (a) an
+            # unattended-upgrades worker, or (b) an apt-get reparented to
+            # init (PPID 1): an orphaned downloader from our own
+            # timed-out attempt (run 39916453942), safe to stop on an
+            # ephemeral runner. Unknown live-parent holders are never
+            # touched — the job fails fast with their identity.
+            sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
+            holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
+            if [ -z "$holder" ]; then
+              echo "dpkg lock is free."
+            else
+              termed=0
+              for pid in $holder; do
+                comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+                args=$(ps -p "$pid" -o args= 2>/dev/null || true)
+                ppid=$(ps -p "$pid" -o ppid= 2>/dev/null || true)
+                if [ -z "$comm" ]; then
+                  echo "lock holder PID $pid already exited."
+                  continue
+                fi
+                echo "lock holder PID $pid PPID $ppid comm=[$comm] args=[$args]"
+                case "$comm" in
+                  *unattended*|*apt-daily*)
+                    echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
+                    sudo kill -TERM "$pid" || true
+                    termed=1
+                    ;;
+                  apt-get)
+                    if [ "$ppid" = "1" ]; then
+                      echo "holder is an orphaned apt-get (PPID 1), leftover of our timed-out attempt; sending TERM..."
+                      sudo kill -TERM "$pid" || true
+                      termed=1
+                    else
+                      echo "unknown live apt-get holder; leaving it alone (see #421)."
+                    fi
+                    ;;
+                  *) echo "unknown holder; leaving it alone (see #421)." ;;
+                esac
+              done
+              if [ "$termed" = "1" ]; then
+                for i in $(seq 1 12); do
+                  sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+                  sleep 5
+                done
+              fi
+            fi
+            # Repair any interrupted unpack from the killed attempt
+            # (harmless when clean; fails fast when genuinely held).
+            sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
+          }
+          deps_ok=0
+          for attempt in 1 2; do
+            echo "Dependency install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
+            start=$SECONDS
+            if run_capped 600 python -m playwright install-deps ${{ matrix.browser }}; then
+              echo "Dependency install attempt $attempt succeeded in $((SECONDS - start))s."
+              deps_ok=1
+              break
+            fi
+            echo "Dependency install attempt $attempt failed after $((SECONDS - start))s."
+            release_apt_lock
+            echo "retrying once..."
+          done
+          if [ "$deps_ok" != "1" ]; then
+            echo "Browser dependency install failed twice; failing fast (see #421)."
+            exit 1
+          fi
+          echo "Re-running smoke launch after dependency install..."
+          if smoke_launch; then
+            echo "Smoke launch passed after dependency install."
+            exit 0
+          fi
+          echo "Smoke launch still failing after dependency install; failing fast (see #421)."
+          exit 1
+      - name: Install Playwright browser with deps (${{ matrix.browser }})
+        # Cache miss only (#421): full install including OS deps. Each
+        # attempt is capped at 10 min with whole-process-group kill
+        # (run_capped: plain `timeout` orphans apt-get holding the lock;
+        # run 39916453942) and timestamped so classifiable as mirror
+        # classifiable as mirror stall (~360s) vs lock contention
+        # (seconds, exit 100); one retry absorbs a transient stall, then
+        # the job fails fast with evidence instead of hanging 10-40 min.
+        # apt waits on the lock natively (DPkg::Lock::Timeout from the
+        # Quiesce step's config file); a dead attempt re-stops periodic
+        # workers and TERMs the holder only if it is a verified
+        # unattended-upgrades worker, never unknown processes.
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 25
+        run: |
+          # TERM only verified unattended-upgrades workers AND orphaned
+          # apt-get downloaders reparented to init (PPID 1) — those are
+          # leftovers of our own timed-out attempt (run 39916453942:
+          # PID 3641 kept downloading after its parent died and starved
+          # the retry), safe to stop on an ephemeral runner.
+          run_capped() {
+            # Run "$@" with a hard cap, killing the WHOLE process group
+            # on timeout. Plain `timeout` only signals the direct child,
+            # leaving an orphaned apt-get holding dpkg's lock; setsid
+            # puts the attempt in its own group so nothing survives.
+            # Returns 124 on timeout, else the command's exit code.
+            local cap=$1; shift
+            setsid "$@" &
+            local child=$!
+            local waited=0
+            while kill -0 "$child" 2>/dev/null; do
+              sleep 5
+              waited=$((waited + 5))
+              if [ "$waited" -ge "$cap" ]; then
+                echo "command exceeded ${cap}s; terminating process group $child..."
+                kill -TERM -- -"$child" 2>/dev/null || true
+                sleep 10
+                kill -KILL -- -"$child" 2>/dev/null || true
+                wait "$child" 2>/dev/null || true
+                return 124
+              fi
+            done
+            wait "$child"
+          }
+          release_apt_lock() {
+            # Graceful re-stop in case a periodic trigger fired mid-job,
+            # then inspect the holder with its FULL command line AND
+            # parent PID and TERM it only if it is (a) an
+            # unattended-upgrades worker, or (b) an apt-get reparented to
+            # init (PPID 1): an orphaned downloader from our own
+            # timed-out attempt (run 39916453942), safe to stop on an
+            # ephemeral runner. Unknown live-parent holders are never
+            # touched — the job fails fast with their identity.
+            sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
+            holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
+            if [ -z "$holder" ]; then
+              echo "dpkg lock is free."
+            else
+              termed=0
+              for pid in $holder; do
+                comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+                args=$(ps -p "$pid" -o args= 2>/dev/null || true)
+                ppid=$(ps -p "$pid" -o ppid= 2>/dev/null || true)
+                if [ -z "$comm" ]; then
+                  echo "lock holder PID $pid already exited."
+                  continue
+                fi
+                echo "lock holder PID $pid PPID $ppid comm=[$comm] args=[$args]"
+                case "$comm" in
+                  *unattended*|*apt-daily*)
+                    echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
+                    sudo kill -TERM "$pid" || true
+                    termed=1
+                    ;;
+                  apt-get)
+                    if [ "$ppid" = "1" ]; then
+                      echo "holder is an orphaned apt-get (PPID 1), leftover of our timed-out attempt; sending TERM..."
+                      sudo kill -TERM "$pid" || true
+                      termed=1
+                    else
+                      echo "unknown live apt-get holder; leaving it alone (see #421)."
+                    fi
+                    ;;
+                  *) echo "unknown holder; leaving it alone (see #421)." ;;
+                esac
+              done
+              if [ "$termed" = "1" ]; then
+                for i in $(seq 1 12); do
+                  sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+                  sleep 5
+                done
+              fi
+            fi
+            # Repair any interrupted unpack from the killed attempt
+            # (harmless when clean; fails fast when genuinely held).
+            sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
+          }
+          for attempt in 1 2; do
+            echo "Browser install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
+            start=$SECONDS
+            if run_capped 600 python -m playwright install --with-deps ${{ matrix.browser }}; then
+              echo "Browser install attempt $attempt succeeded in $((SECONDS - start))s."
+              exit 0
+            fi
+            echo "Browser install attempt $attempt failed after $((SECONDS - start))s."
+            release_apt_lock
+            echo "retrying once..."
+          done
+          echo "Browser install failed twice; failing fast (see #421)."
+          exit 1
       - name: Run browser E2E, layout overflow and tag-chip guards
+        id: pytest
         env:
           E2E_BROWSER: ${{ matrix.browser }}
           # Shared build from the build-site job (#320): the suite serves
@@ -185,14 +507,58 @@ jobs:
           # on the machine, so the canonical visual baselines (#208) are
           # collected from this runner, never generated locally.
           SAVE_FRESH_DIR: tests/e2e/visual/fresh
-        run: python -m pytest tests/e2e -v -m "not static"
+        run: |
+          set -o pipefail
+          python -m pytest tests/e2e -v -m "not static" 2>&1 | tee pytest-e2e-${{ matrix.browser }}.log
+      - name: Summarize engine result (${{ matrix.browser }})
+        # Debuggability (#421): name the failing specs and pin the head in
+        # the job summary so the next person never re-derives which engine
+        # and spec went red.
+        if: failure()
+        run: |
+          {
+            echo "## E2E browser (${{ matrix.browser }}) failed on ${GITHUB_SHA}"
+            echo ""
+            echo "Failing specs (first 20):"
+            echo '```'
+            if [ -f pytest-e2e-${{ matrix.browser }}.log ]; then
+              grep -E "^(FAILED|ERROR)" pytest-e2e-${{ matrix.browser }}.log | head -20 || echo "(no FAILED/ERROR lines in the pytest log)"
+            else
+              echo "(pytest never ran: a setup/install step failed first)"
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload pytest log (${{ matrix.browser }})
+        # `warn`, not `error` (#421): when setup/install fails the suite
+        # never runs, so a missing log is expected — not a new failure.
+        # The visual-captures upload below stays `error`: when tests really
+        # run and fail, fresh captures must exist.
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pytest-log-${{ matrix.browser }}
+          path: pytest-e2e-${{ matrix.browser }}.log
+          if-no-files-found: warn
       - name: Upload fresh visual captures (${{ matrix.browser }})
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: visual-fresh-${{ matrix.browser }}
           path: tests/e2e/visual/fresh/
-          if-no-files-found: error
+          # Warn — not error — when the suite never ran (install failed
+          # first, so the pytest step was skipped and no captures can
+          # exist); the job is already red for the real cause. Error only
+          # when tests really ran and failed without captures (#421).
+          if-no-files-found: ${{ steps.pytest.outcome == 'skipped' && 'warn' || 'error' }}
+      - name: Fix apt cache ownership (#421)
+        # The post-job cache save runs as the runner user, but apt
+        # writes root-owned .debs — re-take ownership last (runs even
+        # when install failed, so completed .debs from a failed attempt
+        # still get banked) so the save never fails on permissions.
+        # Non-fatal by design: cache housekeeping must never redden a
+        # green job.
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" /var/cache/apt/archives || echo "chown rc=$? (non-fatal)"
 
   # Desktop pass (#273): unchanged thresholds (performance warn-only at
   # 0.85, accessibility/best-practices/SEO error at 0.90) served from the
@@ -296,6 +662,10 @@ jobs:
   # reports "skipped", which never satisfies a required check, so protect
   # THIS job instead. It passes when the full matrix passed, or when a
   # content-only PR skipped the matrix with green static guards.
+  # Gating honesty (#421): every job in this workflow runs on the same
+  # head, so this rollup can only ever reflect $GITHUB_SHA — it is pinned
+  # below for auditability and still fails closed (any non-success need
+  # fails the gate; a cancelled superseded run never reports success).
   e2e-summary:
     name: "E2E suite result"
     runs-on: "ubuntu-latest"
@@ -304,6 +674,7 @@ jobs:
     steps:
       - name: Report suite result
         run: |
+          echo "E2E suite result for head ${GITHUB_SHA}"
           if [ "${{ needs.classify.outputs.content_only }}" = "true" ]; then
             echo "Content-only PR: browser matrix skipped by design (#229)."
             [ "${{ needs.static-guards.result }}" = "success" ]

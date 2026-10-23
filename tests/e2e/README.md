@@ -622,6 +622,38 @@ without a `bundle` executable they skip themselves with an explicit reason.
   -m "not static"`, so no engine rebuilds the site or sets up Ruby (the
   `built_site` fixture serves the shared directory as-is; assertions are
   unchanged). Skipped on content-only PRs;
+- Hang/retry policy (#421): the suite itself takes ~3-5 min per engine,
+  but `playwright install --with-deps` runs apt on every job even with a
+  warm browser cache, and stalled mirrors have held that step 10-40 min
+  (all three engines, at different times — runner infra, not an engine
+  defect; dispatch 39897137841 even failed the install on a cache hit).
+  So the install is cache-conditional: on a cache hit the job runs a
+  plain `playwright install` (fast no-op) and proves the engine really
+  launches with a headless smoke test (`about:blank`, 60 s cap) — only
+  a failed smoke triggers `install-deps`, and only a cache miss runs
+  `--with-deps`, bounded (10 min per attempt, whole-process-group
+  kill on timeout so no orphaned apt-get survives holding dpkg's
+  lock — slow-mirror downloads need >6 min at observed trickle
+  speed — one retry, then fail fast) with a 25-min job backstop. Pinned by
+  `tests/e2e/test_browser_install_smoke.py` (static). On failure the job summary
+  names the failing specs with the head SHA, and the pytest log (when
+  the suite ran) plus fresh visual captures upload as artifacts
+  (`warn`, not `error`, when the suite never ran because install failed
+  first — the job is already red for the real cause); attempts are
+  timestamped; apt waits on the dpkg lock natively
+  (`DPkg::Lock::Timeout`, dropped in by the Quiesce apt step, which
+  also disables the periodic triggers and stops + masks
+  unattended-upgrades/apt-daily up front — never kill -9 a running
+  apt); a dead attempt re-stops the periodic workers and TERMs the
+  lock holder only after identifying it by full command line as an
+  unattended-upgrades worker, never unknown processes — so a red reads
+  as mirror stall (~360 s attempts) vs lock contention; the 117 MB of
+  webkit system debs (measured) is cached per engine + Playwright
+  version at `/var/cache/apt/archives/*.deb` (glob: finished debs
+  only — partial downloads and lock files stay out, so root-owned
+  partials can never break the save; restored before install, saved
+  post-job, with a final always-run ownership fix), with the mirror
+  path as the slow-but-correct fallback on cache miss;
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
   emulation, `numberOfRuns: 3` with median assertion) — both served from
