@@ -648,10 +648,11 @@ without a `bundle` executable they skip themselves with an explicit reason.
   unattended-upgrades worker, never unknown processes — so a red reads
   as mirror stall (~360 s attempts) vs lock contention; the 117 MB of
   webkit system debs (measured) is cached per engine + Playwright
-  version at `/var/cache/apt/archives` (restored before install,
-  saved post-job, so even a timed-out download banks its partials),
-  with the mirror path as the slow-but-correct fallback on cache
-  miss;
+  version at `/var/cache/apt/archives/*.deb` (glob: finished debs
+  only — partial downloads and lock files stay out, so root-owned
+  partials can never break the save; restored before install, saved
+  post-job, with a final always-run ownership fix), with the mirror
+  path as the slow-but-correct fallback on cache miss;
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
   emulation, `numberOfRuns: 3` with median assertion) — both served from

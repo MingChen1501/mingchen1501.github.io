@@ -98,22 +98,29 @@ def test_quiesce_step_disables_periodic_triggers_and_verifies():
 
 def test_apt_package_cache_straddles_install():
     # The 117 MB webkit system-deb download cannot be retried into
-    # existence on a trickling mirror (run 39904461383): cache the
-    # .debs per engine + Playwright version. The dir must be
-    # runner-owned before restore, and restore must precede install.
+    # existence on a trickling mirror (run 39904461383): cache only
+    # finished *.debs per engine + Playwright version (glob excludes
+    # partial/ and lock files, so root-owned partials can never break
+    # the save). The dir must be runner-owned before restore, and a
+    # final always-run chown must precede the post-job save.
     names = [s.get("name", "") for s in _steps()]
     prepare_at = names.index("Prepare apt package cache dir (#421)")
     cache_at = names.index("Cache apt packages (#421)")
-    assert prepare_at < cache_at
+    fix_at = names.index("Fix apt cache ownership (#421)")
+    assert prepare_at < cache_at < fix_at
     for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
         at = next(i for i, n in enumerate(names) if n.startswith(prefix))
         assert cache_at < at, f"apt cache must restore before {prefix}"
     assert "chown" in _steps()[prepare_at]["run"]
     assert "/var/cache/apt/archives" in _steps()[prepare_at]["run"]
     cache_with = _steps()[cache_at]["with"]
-    assert cache_with["path"] == "/var/cache/apt/archives"
+    assert cache_with["path"] == "/var/cache/apt/archives/*.deb"
     assert "matrix.browser" in cache_with["key"]
     assert "playwright.outputs.version" in cache_with["key"]
+    fix_step = _steps()[fix_at]
+    assert fix_step.get("if") == "always()"
+    assert "chown" in fix_step["run"]
+    assert "/var/cache/apt/archives" in fix_step["run"]
 
 
 def test_install_attempts_are_timestamped():

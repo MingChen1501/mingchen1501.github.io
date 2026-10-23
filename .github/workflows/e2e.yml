@@ -216,16 +216,18 @@ jobs:
       - name: Cache apt packages (#421)
         # Design pivot (run 39904461383): webkit needs a measured 117 MB
         # of system debs and the mirror trickles — retrying a 100 MB+
-        # download every job cannot win. Cache the .debs keyed per engine
-        # + Playwright version (restore-keys span version bumps, debs
-        # barely change); a cache miss falls back to the old mirror path
-        # (slow but correct). actions/cache restores here and saves in
-        # its post-step, so even a timed-out slow download banks its
-        # partials for the retry. ~117 MB for webkit, far less for the
-        # other engines — well within the 10 GB repo cache budget.
+        # download every job cannot win. Cache only finished *.deb files
+        # (glob: partial/ downloads and lock files stay out, so root-
+        # owned partials can never break the save with a tar permission
+        # error — dispatch #1 lesson) keyed per engine + Playwright
+        # version (restore-keys span version bumps, debs barely change);
+        # a cache miss falls back to the old mirror path (slow but
+        # correct). actions/cache restores here and saves in its
+        # post-step. ~117 MB for webkit, far less for the other engines
+        # — well within the 10 GB repo cache budget.
         uses: actions/cache@v6
         with:
-          path: /var/cache/apt/archives
+          path: /var/cache/apt/archives/*.deb
           key: ${{ runner.os }}-apt-${{ matrix.browser }}-${{ steps.playwright.outputs.version }}
           restore-keys: |
             ${{ runner.os }}-apt-${{ matrix.browser }}-
@@ -455,6 +457,15 @@ jobs:
           # exist); the job is already red for the real cause. Error only
           # when tests really ran and failed without captures (#421).
           if-no-files-found: ${{ steps.pytest.outcome == 'skipped' && 'warn' || 'error' }}
+      - name: Fix apt cache ownership (#421)
+        # The post-job cache save runs as the runner user, but apt
+        # writes root-owned .debs — re-take ownership last (runs even
+        # when install failed, so completed .debs from a failed attempt
+        # still get banked) so the save never fails on permissions.
+        # Non-fatal by design: cache housekeeping must never redden a
+        # green job.
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" /var/cache/apt/archives || echo "chown rc=$? (non-fatal)"
 
   # Desktop pass (#273): unchanged thresholds (performance warn-only at
   # 0.85, accessibility/best-practices/SEO error at 0.90) served from the
