@@ -51,8 +51,14 @@ doc group.
   confirmation. Never push directly to `master`; work on a branch + PR.
 - Every issue and PR carries exactly one risk label (`risk-low` / `risk-medium`
   / `risk-high` / `risk-very-high`); squash merge only
-  (`gh pr merge <n> --squash --delete-branch`) on green CI; `risk-high`,
-  `risk-very-high`, or a missing label needs explicit owner approval.
+  (`gh pr merge <n> --squash --delete-branch`) on green CI.
+  `risk-low`: the team decides and merges on green CI plus one APPROVE
+  review from a different-role reviewer, with no owner gate (the
+  orchestrator reports completion only, never asks). `risk-medium`:
+  the team merges after review and the owner is informed via the
+  normal report flow (no explicit approval needed). `risk-high`,
+  `risk-very-high`, or a missing label needs explicit owner approval
+  before merging.
 - Issue and PR titles/labels follow `docs/project/issue-conventions.md` (`[type] Imperative summary`, one type label + one `risk-*` label).
 - All public repo artifacts MUST be English (PRs, commits, issues, review
   comments, code comments); Vietnamese only for internal AO reporting.
