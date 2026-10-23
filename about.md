@@ -17,7 +17,7 @@ Professionally, I work in software and enjoy exploring new technologies, especia
 
 ## Privacy
 
-This site sets no cookies and runs no analytics or trackers of its own. Your theme choice is saved only in this browser's `localStorage` (key `theme`) — clear it anytime via your browser's site-data settings. Comments stay off on local and sandbox builds, so no comment-related third party loads there. On the live site, post pages load Giscus (GitHub Discussions) from giscus.app, exposing request-level data (IP address, user agent, page path) to giscus.app/GitHub as soon as the comments widget loads; signing in or commenting is governed by GitHub's privacy terms. Pages are served over TLS through Cloudflare's edge network, which also handles caching and email-address obfuscation.
+This site runs no analytics or trackers of its own. The only first-party cookie it sets is a `lang` language preference (`en`/`vi`), written only when you use the language switcher so your choice sticks — including past the Vietnam geo redirect — for a year. Your theme choice is saved only in this browser's `localStorage` (key `theme`) — clear either anytime via your browser's site-data settings. Comments stay off on local and sandbox builds, so no comment-related third party loads there. On the live site, post pages load Giscus (GitHub Discussions) from giscus.app, exposing request-level data (IP address, user agent, page path) to giscus.app/GitHub as soon as the comments widget loads; signing in or commenting is governed by GitHub's privacy terms. Pages are served over TLS through Cloudflare's edge network, which also handles caching and email-address obfuscation.
 
 ## Contact
 
@@ -32,6 +32,6 @@ If you find a post useful, or want to share feedback, I always enjoy hearing fro
 
 ## Colophon
 
-This site is built with Jekyll using a customized minima theme, and hosted on GitHub Pages. It sets no cookies and runs no analytics or trackers of its own.
+This site is built with Jekyll using a customized minima theme, and hosted on GitHub Pages. It runs no analytics or trackers of its own and sets no cookies except the `lang` language-preference cookie described above.
 
 Thanks for stopping by, and have a lovely day!

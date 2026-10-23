@@ -19,7 +19,7 @@ Về chuyên môn, mình làm việc trong lĩnh vực phần mềm và thích t
 
 ## Quyền riêng tư
 
-Trang này không dùng cookie, không gắn mã theo dõi hay phân tích riêng nào. Lựa chọn giao diện sáng/tối chỉ lưu trong `localStorage` của chính trình duyệt này (khóa `theme`) — bạn có thể xóa bất cứ lúc nào trong phần cài đặt dữ liệu trang web. Bình luận được tắt trên bản local và bản sandbox, nên ở đó không tải gì từ bên thứ ba liên quan đến bình luận. Trên trang live, các trang bài viết tải Giscus (GitHub Discussions) từ giscus.app — ngay khi khung bình luận tải xong, các thông tin kỹ thuật (địa chỉ IP, user agent, đường dẫn trang) đã được gửi tới giscus.app/GitHub; việc đăng nhập hay viết bình luận tuân theo điều khoản quyền riêng tư của GitHub. Các trang được phục vụ qua TLS bởi mạng biên Cloudflare, nơi cũng xử lý bộ nhớ đệm và che địa chỉ email.
+Trang này không gắn mã theo dõi hay phân tích riêng nào. Cookie duy nhất của trang là tùy chọn ngôn ngữ `lang` (`en`/`vi`), chỉ được đặt khi bạn dùng nút chuyển ngôn ngữ để lựa chọn của bạn được giữ — kể cả khi đi qua chuyển hướng địa lý Việt Nam — trong một năm. Lựa chọn giao diện sáng/tối chỉ lưu trong `localStorage` của chính trình duyệt này (khóa `theme`) — bạn có thể xóa cả hai bất cứ lúc nào trong phần cài đặt dữ liệu trang web. Bình luận được tắt trên bản local và bản sandbox, nên ở đó không tải gì từ bên thứ ba liên quan đến bình luận. Trên trang live, các trang bài viết tải Giscus (GitHub Discussions) từ giscus.app — ngay khi khung bình luận tải xong, các thông tin kỹ thuật (địa chỉ IP, user agent, đường dẫn trang) đã được gửi tới giscus.app/GitHub; việc đăng nhập hay viết bình luận tuân theo điều khoản quyền riêng tư của GitHub. Các trang được phục vụ qua TLS bởi mạng biên Cloudflare, nơi cũng xử lý bộ nhớ đệm và che địa chỉ email.
 
 ## Liên hệ
 
@@ -34,6 +34,6 @@ Nếu bạn thấy bài viết nào hữu ích, hoặc muốn góp ý, trao đ�
 
 ## Colophon
 
-Trang này được dựng bằng Jekyll với theme minima tùy biến, và lưu trữ trên GitHub Pages. Trang không dùng cookie, không gắn mã theo dõi hay phân tích riêng nào.
+Trang này được dựng bằng Jekyll với theme minima tùy biến, và lưu trữ trên GitHub Pages. Trang không gắn mã theo dõi hay phân tích riêng nào và không dùng cookie nào ngoài cookie tùy chọn ngôn ngữ `lang` nêu trên.
 
 Cảm ơn bạn đã ghé thăm, chúc bạn một ngày vui vẻ!

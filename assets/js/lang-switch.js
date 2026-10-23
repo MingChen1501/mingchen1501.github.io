@@ -93,10 +93,30 @@
     try { history.replaceState(null, '', clean); }
     catch (e) {}
   }
+  // Language preference (#423): the Cloudflare geo rule sends first-visit VN
+  // traffic on the EN home (/) to /vi/ on every hit, so tapping back to EN
+  // just redirects again. Remember the explicit switcher choice in a
+  // first-party `lang` cookie (a year, so it sticks across visits); the edge
+  // rule skips the redirect while `lang=en` is present, so EN stays
+  // reachable and VI still lands on /vi/ by default. Content is static per
+  // URL, so the cookie varies no page bytes and breaks no cache.
+  var COOKIE_MAX_AGE = 31536000; // one year, in seconds
+  function remember(link) {
+    var lang = link.getAttribute('hreflang');
+    if (lang !== 'en' && lang !== 'vi') return;
+    try {
+      document.cookie = 'lang=' + lang + '; max-age=' + COOKIE_MAX_AGE
+        + '; path=/; SameSite=Lax';
+    } catch (e) {}
+  }
   function run() {
     land();
     var link = document.querySelector('.lang-switcher');
-    if (link) enhance(link);
+    if (!link) return;
+    // A plain click (mouse, Enter, modifier-clicks) fires before the
+    // navigation, so the follow-up request already carries the preference.
+    link.addEventListener('click', function () { remember(link); });
+    enhance(link);
   }
   window.SiteUtils.onReady(run);
 })();

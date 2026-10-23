@@ -28,3 +28,9 @@ detail lives in `docs/architecture/content-pipeline.md`.
   absence pinned in `docs/architecture/javascript.md`.
 - FR-9 Excluded internals never ship (`AGENTS.md`, `.opencode/`, `tests/`,
   `script/`, `docs/`). Guard: `test_excluded_paths.py`.
+- FR-10 Language preference (#423): an explicit switcher choice sticks
+  via a first-party `lang` cookie (`en`/`vi`, `path=/`, one year,
+  `SameSite=Lax`); first-visit VN readers still land on `/vi/`, the
+  choice survives reload and navigation in both directions, and page
+  bytes stay static per URL so caches are unaffected. Guards:
+  `test_lang_switch_fragment.py`, `test_about_privacy.py`.

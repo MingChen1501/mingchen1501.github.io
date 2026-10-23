@@ -5,7 +5,7 @@ the loading contract.
 
 ## Current structure
 
-`assets/js/` holds 11 files, 1,502 LOC, no bundler, no framework, no
+`assets/js/` holds 11 files, 1,522 LOC, no bundler, no framework, no
 third-party runtime (giscus/disqus SDKs load only inside the comments
 embed). Every file has at least one `<script>` caller (no orphan JS).
 
@@ -15,7 +15,7 @@ embed). Every file has at least one `<script>` caller (no orphan JS).
 | `lazy-load.js` | 19 | content-image lazy loading (#86) | every page |
 | `nav-toggle.js` | 45 | mobile nav disclosure (#114) | every page |
 | `copy-code.js` | 53 | copy button on `pre > code` (#126) | every page |
-| `lang-switch.js` | 102 | `ref`-based language switch | every page |
+| `lang-switch.js` | 122 | `ref`-based language switch + `lang` preference cookie (#423) | every page |
 | `theme-toggle.js` | 79 | explicit light/dark pin (#220) | every page |
 | `lightbox.js` | 292 | image lightbox dialog (#223) | every page |
 | `share.js` | 60 | share intents + copy-link | posts only (#253) |
