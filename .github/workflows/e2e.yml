@@ -172,6 +172,7 @@ jobs:
         id: playwright
         run: echo "version=$(python -m pip show playwright | awk '/^Version:/ {print $2}')" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
+        id: playwright-cache
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
@@ -179,12 +180,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
       - name: Install Playwright browser (${{ matrix.browser }})
-        # Bounded install retry (#421): `install --with-deps` runs apt every
-        # job even on a warm browser cache, and stalled mirrors have held
-        # this step 10-40 min (webkit 37 min, firefox 19 min, chromium
-        # ~10 min) while the suite itself takes ~3-5 min. Each attempt is
-        # capped at 6 min; one retry absorbs a transient mirror stall, then
-        # the job fails fast with evidence instead of hanging.
+        # Cache hit (#421): the browser binary is already on disk, so a
+        # plain `install` is a fast no-op and apt is skipped entirely — no
+        # mirror stall is possible on this path (dispatch 39897137841
+        # proved the old unconditional `--with-deps` could fail even on a
+        # warm cache).
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: python -m playwright install ${{ matrix.browser }}
+      - name: Install Playwright browser with deps (${{ matrix.browser }})
+        # Cache miss only (#421): full install including OS deps. Each
+        # attempt is capped at 6 min; one retry absorbs a transient mirror
+        # stall, then the job fails fast with evidence instead of hanging
+        # 10-40 min. Before retrying, wait out any dpkg lock left by the
+        # timed-out attempt's orphaned apt-get (capped, so this cannot hang
+        # the step itself).
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         timeout-minutes: 15
         run: |
           for attempt in 1 2; do
@@ -192,7 +202,10 @@ jobs:
               exit 0
             fi
             echo "Browser install attempt $attempt failed or timed out; retrying once..."
-            sleep 15
+            for _ in $(seq 1 24); do
+              sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+              sleep 5
+            done
           done
           echo "Browser install failed twice; failing fast (see #421)."
           exit 1
@@ -228,12 +241,16 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload pytest log (${{ matrix.browser }})
+        # `warn`, not `error` (#421): when setup/install fails the suite
+        # never runs, so a missing log is expected — not a new failure.
+        # The visual-captures upload below stays `error`: when tests really
+        # run and fail, fresh captures must exist.
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: pytest-log-${{ matrix.browser }}
           path: pytest-e2e-${{ matrix.browser }}.log
-          if-no-files-found: error
+          if-no-files-found: warn
       - name: Upload fresh visual captures (${{ matrix.browser }})
         if: failure()
         uses: actions/upload-artifact@v7

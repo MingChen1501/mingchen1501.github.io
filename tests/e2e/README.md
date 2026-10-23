@@ -626,10 +626,13 @@ without a `bundle` executable they skip themselves with an explicit reason.
   but `playwright install --with-deps` runs apt on every job even with a
   warm browser cache, and stalled mirrors have held that step 10-40 min
   (all three engines, at different times — runner infra, not an engine
-  defect). So the install step retries once (6 min per attempt, then fail
-  fast) and the job carries a 25-min backstop. On failure the job summary
-  names the failing specs with the head SHA, and the full pytest log plus
-  fresh visual captures upload as artifacts;
+  defect; dispatch 39897137841 even failed the install on a cache hit).
+  So the install is cache-conditional: on a cache hit the job runs a
+  plain `playwright install` (fast no-op, no apt); only a cache miss
+  runs `--with-deps`, bounded (6 min per attempt, one retry, then fail
+  fast) with a 25-min job backstop. On failure the job summary
+  names the failing specs with the head SHA, and the pytest log (when
+  the suite ran) plus fresh visual captures upload as artifacts;
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
   emulation, `numberOfRuns: 3` with median assertion) — both served from
