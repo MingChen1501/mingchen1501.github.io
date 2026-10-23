@@ -12,6 +12,12 @@ on:
 permissions:
   contents: read
 
+# A superseded push cancels its in-flight run instead of letting a whole
+# duplicate Jekyll-matrix run finish (#418); same group pattern as e2e.yml.
+concurrency:
+  group: site-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: "Test with Jekyll ${{ matrix.jekyll }}"

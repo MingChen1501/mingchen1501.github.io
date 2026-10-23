@@ -21,11 +21,11 @@ coverage overlaps.
   `article-intake`, `cibuild`, `update-visual-baselines`, plus thin
   `bootstrap`/`build`/`server` wrappers, `ao-role-footer.sh`, and
   `ao-project-config.sh`.
-- `.github/workflows/` (4 files): `ci.yaml` (Jekyll matrix +
+- `.github/workflows/` (3 files): `ci.yaml` (Jekyll matrix +
   image guards + `cibuild`), `e2e.yml` (shared content-only
   classifier → static guards → one shared build → browser matrix +
-  both LHCI passes, #320), `visual-baselines.yml`, `demo_site.yml`
-  (legacy upstream-minima demo deploy, unrelated to the personal site).
+  both LHCI passes, #320; plus a daily schedule giving `master` its
+  LHCI signal, #418), `visual-baselines.yml`.
   The shared classifier step lives in
   `.github/actions/classify-content-only/`.
 
@@ -70,9 +70,9 @@ skill maps each touch area to its guard test.
   `test_content_images.py` + `test_external_images.py` +
   `test_vi_alt_text.py` + `test_asset_budget.py`). Some layering is
   intentional (static vs browser); record it, then merge strict dupes.
-- `demo_site.yml` (Ruby 2.7, upstream demo deploy) looks stale next to the
-  Ruby 3.3 `ci.yaml`/`e2e.yml` — confirm and remove or pin (noted, no
-  issue filed; one-line follow-up for the next audit).
+- `demo_site.yml` (Ruby 2.7, upstream demo deploy) was stale next to the
+  Ruby 3.3 `ci.yaml`/`e2e.yml` — removed by #418 (manual-only legacy,
+  unrelated to the personal site).
 
 ## Open questions
 

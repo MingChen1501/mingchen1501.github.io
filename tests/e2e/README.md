@@ -632,8 +632,9 @@ without a `bundle` executable they skip themselves with an explicit reason.
   photo-heavy Tet 2023 posts (EN/VI), and `/tags/`. Both passes assert
   performance warn-only at 0.85 and
   accessibility/best-practices/SEO as errors at 0.90, so a mobile
-  regression is visible per PR without blocking on noise. Both run on PRs
-  and manual dispatches only, and are skipped on content-only PRs
+  regression is visible per PR without blocking on noise. Both run on PRs,
+  manual dispatches, and the daily `master` schedule (#418) — never on
+  master pushes — and are skipped on content-only PRs
   alongside the browser matrix;
 - `E2E suite result` and `Lighthouse suite result` - aggregators for
   branch protection: each passes when its jobs passed, or when a
@@ -695,5 +696,8 @@ To force the full suite on a content-only PR, dispatch the workflow
 manually with `full=true` (the default): the Actions tab → `E2E + Lighthouse` → `Run workflow` on the PR branch. `full=false` on a
 dispatch re-runs classification against the branch instead.
 
-Both run on pushes and pull requests to `master`; a superseded push cancels its
-in-flight run (`concurrency` with `cancel-in-progress`).
+Both workflows run on pushes and pull requests to `master`; a superseded push cancels its
+in-flight run (`concurrency` with `cancel-in-progress`, #418). `E2E +
+Lighthouse` additionally runs on a daily schedule (`0 6 * * *` UTC) so
+`master` gets an LHCI signal even though Lighthouse never runs on
+master pushes (#418).
