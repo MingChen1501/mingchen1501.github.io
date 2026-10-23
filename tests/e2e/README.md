@@ -639,7 +639,9 @@ without a `bundle` executable they skip themselves with an explicit reason.
   (`warn`, not `error`, when the suite never ran because install failed
   first — the job is already red for the real cause); attempts are
   timestamped and the dpkg lock is awaited (holder logged) before the
-  first attempt and between retries, so a red reads as mirror stall
+  first attempt and between retries — fresh runners boot with
+  unattended-upgrades, which the Quiesce apt step stops + masks up
+  front (never kill -9 a running apt) — so a red reads as mirror stall
   (~360 s attempts) vs lock contention (seconds, exit 100);
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile

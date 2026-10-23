@@ -150,6 +150,21 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+      - name: Quiesce apt (#421)
+        # Fresh ubuntu runners boot with unattended-upgrades holding
+        # dpkg's lock for many minutes (run 39902712204: PID 3453 through
+        # a whole 6-min install-deps attempt AND the 5-min wait, so both
+        # attempts exited 100 — retry can never beat a still-running
+        # process). Stop + mask it before anything touches apt. Never
+        # kill -9 a running apt (dpkg corruption risk); the bounded
+        # lock-wait in the install steps covers whatever remains.
+        run: |
+          sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
+          sudo systemctl stop unattended-upgrades.timer 2>/dev/null || true
+          sudo systemctl mask unattended-upgrades.service 2>/dev/null || true
+          sudo systemctl mask unattended-upgrades.timer 2>/dev/null || true
+          echo "unattended-upgrades stopped/masked (best effort); remaining apt users, if any:"
+          ps -ef | grep -E "[a]pt-get|[d]pkg|[u]nattended" || echo "(none visible)"
       - name: Download built site (#320)
         uses: actions/download-artifact@v8
         with:

@@ -40,6 +40,21 @@ def test_job_has_hang_backstop():
     assert job.get("timeout-minutes") == 25
 
 
+def test_quiesce_apt_runs_before_any_install():
+    # Fresh runners boot with unattended-upgrades holding dpkg's lock
+    # (run 39902712204): the quiesce step must exist and run before
+    # every step that can touch apt.
+    names = [s.get("name", "") for s in _steps()]
+    assert "Quiesce apt (#421)" in names
+    quiesce_at = names.index("Quiesce apt (#421)")
+    for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
+        at = next(i for i, n in enumerate(names) if n.startswith(prefix))
+        assert quiesce_at < at, f"Quiesce apt must precede {prefix}"
+    run = _steps()[quiesce_at]["run"]
+    assert "unattended-upgrades" in run
+    assert "kill -9" not in run
+
+
 def test_cache_step_exposes_cache_hit():
     cache = _step("Cache Playwright browsers")
     assert cache.get("id") == "playwright-cache"
