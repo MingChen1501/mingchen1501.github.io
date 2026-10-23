@@ -622,6 +622,14 @@ without a `bundle` executable they skip themselves with an explicit reason.
   -m "not static"`, so no engine rebuilds the site or sets up Ruby (the
   `built_site` fixture serves the shared directory as-is; assertions are
   unchanged). Skipped on content-only PRs;
+- Hang/retry policy (#421): the suite itself takes ~3-5 min per engine,
+  but `playwright install --with-deps` runs apt on every job even with a
+  warm browser cache, and stalled mirrors have held that step 10-40 min
+  (all three engines, at different times — runner infra, not an engine
+  defect). So the install step retries once (6 min per attempt, then fail
+  fast) and the job carries a 25-min backstop. On failure the job summary
+  names the failing specs with the head SHA, and the full pytest log plus
+  fresh visual captures upload as artifacts;
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
   emulation, `numberOfRuns: 3` with median assertion) — both served from

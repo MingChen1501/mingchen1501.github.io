@@ -129,6 +129,11 @@ jobs:
     needs: [classify, build-site]
     if: needs.classify.outputs.content_only != 'true'
     runs-on: "ubuntu-latest"
+    # Hang backstop (#421): the suite itself takes ~3-5 min per engine and
+    # the slowest healthy job on record is ~18 min (a stalled apt mirror
+    # inside the browser-install step). Kill anything slower so a hang
+    # fails fast with evidence instead of burning 40+ min of wall clock.
+    timeout-minutes: 25
     # `actions: write` for the "Download built site" step
     # (actions/download-artifact) and the "Upload fresh visual captures"
     # step (actions/upload-artifact; write covers both).
@@ -174,7 +179,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
       - name: Install Playwright browser (${{ matrix.browser }})
-        run: python -m playwright install --with-deps ${{ matrix.browser }}
+        # Bounded install retry (#421): `install --with-deps` runs apt every
+        # job even on a warm browser cache, and stalled mirrors have held
+        # this step 10-40 min (webkit 37 min, firefox 19 min, chromium
+        # ~10 min) while the suite itself takes ~3-5 min. Each attempt is
+        # capped at 6 min; one retry absorbs a transient mirror stall, then
+        # the job fails fast with evidence instead of hanging.
+        timeout-minutes: 15
+        run: |
+          for attempt in 1 2; do
+            if timeout 6m python -m playwright install --with-deps ${{ matrix.browser }}; then
+              exit 0
+            fi
+            echo "Browser install attempt $attempt failed or timed out; retrying once..."
+            sleep 15
+          done
+          echo "Browser install failed twice; failing fast (see #421)."
+          exit 1
       - name: Run browser E2E, layout overflow and tag-chip guards
         env:
           E2E_BROWSER: ${{ matrix.browser }}
@@ -185,7 +206,34 @@ jobs:
           # on the machine, so the canonical visual baselines (#208) are
           # collected from this runner, never generated locally.
           SAVE_FRESH_DIR: tests/e2e/visual/fresh
-        run: python -m pytest tests/e2e -v -m "not static"
+        run: |
+          set -o pipefail
+          python -m pytest tests/e2e -v -m "not static" 2>&1 | tee pytest-e2e-${{ matrix.browser }}.log
+      - name: Summarize engine result (${{ matrix.browser }})
+        # Debuggability (#421): name the failing specs and pin the head in
+        # the job summary so the next person never re-derives which engine
+        # and spec went red.
+        if: failure()
+        run: |
+          {
+            echo "## E2E browser (${{ matrix.browser }}) failed on ${GITHUB_SHA}"
+            echo ""
+            echo "Failing specs (first 20):"
+            echo '```'
+            if [ -f pytest-e2e-${{ matrix.browser }}.log ]; then
+              grep -E "^(FAILED|ERROR)" pytest-e2e-${{ matrix.browser }}.log | head -20 || echo "(no FAILED/ERROR lines in the pytest log)"
+            else
+              echo "(pytest never ran: a setup/install step failed first)"
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload pytest log (${{ matrix.browser }})
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pytest-log-${{ matrix.browser }}
+          path: pytest-e2e-${{ matrix.browser }}.log
+          if-no-files-found: error
       - name: Upload fresh visual captures (${{ matrix.browser }})
         if: failure()
         uses: actions/upload-artifact@v7
@@ -296,6 +344,10 @@ jobs:
   # reports "skipped", which never satisfies a required check, so protect
   # THIS job instead. It passes when the full matrix passed, or when a
   # content-only PR skipped the matrix with green static guards.
+  # Gating honesty (#421): every job in this workflow runs on the same
+  # head, so this rollup can only ever reflect $GITHUB_SHA — it is pinned
+  # below for auditability and still fails closed (any non-success need
+  # fails the gate; a cancelled superseded run never reports success).
   e2e-summary:
     name: "E2E suite result"
     runs-on: "ubuntu-latest"
@@ -304,6 +356,7 @@ jobs:
     steps:
       - name: Report suite result
         run: |
+          echo "E2E suite result for head ${GITHUB_SHA}"
           if [ "${{ needs.classify.outputs.content_only }}" = "true" ]; then
             echo "Content-only PR: browser matrix skipped by design (#229)."
             [ "${{ needs.static-guards.result }}" = "success" ]
