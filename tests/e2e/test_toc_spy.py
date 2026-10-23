@@ -757,6 +757,118 @@ def test_nested_indentation_is_css_driven_per_level_class():
     )
 
 
+@pytest.mark.static
+def test_toc_decodes_entities_before_a_single_escape():
+    """`->` headings must not double-escape in the ToC (#420).
+
+    kramdown pre-encodes `>`/`&`/quotes as entities in the rendered
+    heading HTML, so `strip_html` leaves `-&gt;` behind. The include must
+    decode the standard entities once before its single `escape`;
+    `&amp;` decodes last so `&amp;lt;` stays a literal `&lt;` instead of
+    becoming `<`.
+    """
+    include = _read(REPO_ROOT / "_includes" / "post-toc.html")
+    decode = (
+        "replace: '&lt;', '<' | replace: '&gt;', '>' "
+        "| replace: '&quot;', '\"' | replace: '&#39;', \"'\" "
+        "| replace: '&amp;', '&'"
+    )
+    assert decode in include, (
+        "the ToC must decode entities once before escaping (#420)"
+    )
+    assert include.index("replace: '&amp;', '&'") > include.index(
+        "replace: '&gt;', '>'"
+    ), "the ToC must decode `&amp;` last so `&amp;lt;` stays literal (#420)"
+    assert include.count("toc_title | escape") == 1, (
+        "the ToC title must escape exactly once (#420)"
+    )
+
+
+# --- entities harness: `->` / `&` headings render verbatim (needs Ruby) -------
+
+
+ENTITIES_SECTIONS = (
+    # (anchor, kramdown-emitted heading HTML, expected rendered row text).
+    ("issue-flow", "The issue -&gt; PR -&gt; reviewer -&gt; merge flow",
+     "The issue -> PR -> reviewer -> merge flow"),
+    ("fish-chips", "Fish &amp; Chips", "Fish & Chips"),
+    ("angle-demo", "A &lt;tag&gt; demo", "A <tag> demo"),
+)
+
+
+@pytest.fixture(scope="module")
+def entities_nav_html(tmp_path_factory):
+    """Render the real include over kramdown-encoded headings (#420)."""
+    bundle = conftest._bundle()
+    if bundle is None:
+        pytest.skip(
+            "`bundle` not found: the entities harness needs Ruby + "
+            "`bundle install` (CI installs both in .github/workflows/e2e.yml)"
+        )
+    scratch = tmp_path_factory.mktemp("toc-entities-src")
+    (scratch / "_includes").symlink_to(
+        (REPO_ROOT / "_includes").resolve(), target_is_directory=True
+    )
+    sample = "".join(
+        f'<h2 id="{hid}">{heading}</h2>'
+        for hid, heading, _ in ENTITIES_SECTIONS
+    )
+    (scratch / "toc-entities.html").write_text(
+        "---\n---\n"
+        "{%- capture harness_html -%}"
+        + sample
+        + "{%- endcapture -%}\n"
+        '{%- include post-toc.html html=harness_html lang="en" '
+        'mount="inline" -%}\n',
+        encoding="utf-8",
+    )
+    destination = tmp_path_factory.mktemp("toc-entities-build")
+    result = subprocess.run(
+        [bundle, "exec", "jekyll", "build",
+         "--source", str(scratch), "--destination", str(destination)],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=BUILD_TIMEOUT_S,
+    )
+    if result.returncode != 0:
+        pytest.fail(
+            "`jekyll build` (entities harness) failed with exit code "
+            f"{result.returncode}\n"
+            f"--- stdout ---\n{result.stdout}\n--- stderr ---\n{result.stderr}"
+        )
+    html = (destination / "toc-entities.html").read_text(encoding="utf-8")
+    nav = re.search(
+        r'<nav class="post-toc__nav"[^>]*>(.*?)</nav>', html, re.S
+    )
+    assert nav, "expected the entities harness ToC nav (#420)"
+    return nav.group(1)
+
+
+def test_toc_renders_entity_headings_verbatim(entities_nav_html):
+    """ToC rows match their headings: no double-escape, no raw `<>` (#420)."""
+    import html as html_lib
+
+    assert "-&amp;gt;" not in entities_nav_html, (
+        "the ToC double-escaped `->` headings (#420)"
+    )
+    assert "&amp;amp;" not in entities_nav_html, (
+        "the ToC double-escaped `&` headings (#420)"
+    )
+    rows = dict(
+        re.findall(r'<a href="#([^"]+)">(.*?)</a>', entities_nav_html, re.S)
+    )
+    for hid, _, expected in ENTITIES_SECTIONS:
+        assert hid in rows, f"expected a ToC row for #{hid} (#420)"
+        assert html_lib.unescape(rows[hid]) == expected, (
+            f"ToC row #{hid} reads {html_lib.unescape(rows[hid])!r}, "
+            f"expected {expected!r} (#420)"
+        )
+        assert "<" not in rows[hid] and ">" not in rows[hid], (
+            f"ToC row #{hid} leaks a raw angle bracket (#420)"
+        )
+
+
 # --- harness: the real include at h2/h3/h4 depth (needs Ruby) ---------------
 
 

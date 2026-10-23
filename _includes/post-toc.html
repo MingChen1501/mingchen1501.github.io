@@ -58,6 +58,14 @@
       {%- assign toc_heading = toc_chunk | split: toc_close | first -%}
       {%- assign toc_tag = toc_heading | split: '>' | first | append: '>' -%}
       {%- assign toc_title = toc_heading | remove_first: toc_tag | strip_html | strip -%}
+      {%- comment -%}
+        kramdown pre-encodes `>`/`&`/quotes as entities in the rendered
+        heading, so `strip_html` leaves e.g. `-&gt;` behind. Decoding once
+        here before the single `escape` below keeps the ToC row identical
+        to the heading text (#420). Order matters: `&amp;` decodes last so
+        `&amp;lt;` stays a literal `&lt;` instead of becoming `<`.
+      {%- endcomment -%}
+      {%- assign toc_title = toc_title | replace: '&lt;', '<' | replace: '&gt;', '>' | replace: '&quot;', '"' | replace: '&#39;', "'" | replace: '&amp;', '&' -%}
       {%- if toc_anchor != '' and toc_title != '' -%}
         {%- capture toc_rec %}{{ toc_level }}{{ toc_fld_sep }}{{ toc_anchor }}{{ toc_fld_sep }}{{ toc_title | escape }}{% endcapture -%}
         {%- if toc_records == '' -%}
