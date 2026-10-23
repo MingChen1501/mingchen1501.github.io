@@ -32,7 +32,8 @@
   open>`, every branch `aria-expanded="true"`, no `hidden` anywhere), so
   without JS every level is visible and every anchor works. Collapsing and
   scroll-spy auto-expansion are runtime progressive enhancement owned by
-  `assets/js/toc-spy.js`, which runs on load, never by this markup.
+  the ToC modules (`assets/js/toc-spy.js` core, `toc-sheet.js` phone sheet,
+  `toc-fab-drag.js` drag), which run on load, never by this markup.
 {%- endcomment -%}
 {%- assign toc_lang = include.lang | default: page.lang | default: 'en' -%}
 {%- assign toc_label = 'On this page' -%}
