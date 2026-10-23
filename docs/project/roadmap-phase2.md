@@ -11,13 +11,12 @@ reorder streams. Each milestone is 1–2 weeks of agent time.
 Why: small UX defects compound into a neglected feel; clearing the
 known backlog first keeps later work on a clean baseline.
 
-- In: button shape audit (#389), mobile nav flash (#384), sidebar
-  sections (#386), Resume/CV (#387), About (#388).
-- Out: new reader-facing features; redesigns beyond the listed fixes.
-- Exit: the five listed issues are closed; every reader-visible change
-  in the milestone has a guard test or updated visual baseline
-  (checkable in the merged diffs); Lighthouse CI is green on the
-  milestone's PRs.
+- In: verification that #389, #384, #386, #387, #388 stay closed
+  with guards/baselines in place; fix any regressions found.
+- Out: new reader-facing features; redesigns beyond regression fixes.
+- Exit: verification is posted confirming the five stay closed with
+  guards/baselines in place; any regressions found are closed with
+  guards green; Lighthouse CI is green on the milestone's PRs.
 - Dependencies: none.
 
 ## M2 — Discovery closure (owner: `qa-lead`)
@@ -49,16 +48,16 @@ plus evergreen refreshes keep the archive accurate.
 ## M4 — Ops and measurement (owner: `release-manager`)
 
 Why: DORA plus agent metrics make throughput reportable instead of
-inferred; the phase audit (#390) closes the loop before Phase 3.
+inferred; the phase audit (#430) closes the loop before Phase 3.
 
-- In: DORA + agent metrics (companion issue), phase audit (#390),
+- In: DORA + agent metrics (#392), phase audit (#430),
   stack hygiene, owner decision #154 (geo-redirect).
-- Out: new metrics tooling beyond what the companion issue scopes;
+- Out: new metrics tooling beyond what #392 scopes;
   platform migrations.
 - Exit: the metrics report is posted with median PR lead time under
   1 day over the milestone window (measured from merge timestamps);
-  the phase audit is filed; CI is green on `master` at milestone end.
-- Dependencies: metric definitions come from the companion issue;
+  the phase audit (#430) is closed; CI is green on `master` at milestone end.
+- Dependencies: metric definitions come from #392;
   geo-redirect work is blocked on the #154 owner decision (see below).
 
 ## Non-goals for the phase
@@ -85,4 +84,4 @@ Live register: `project/risk-register.md`.
 |---|---|
 | #154 geo-redirect: build it or drop it | M4 platform work |
 | ADR-004 Q1–Q5 (slugs, single-post launch, coming-soon shape, JSON-LD shape, index discoverability) | M3 series implementation |
-| DORA + agent metric definitions and targets (companion issue) | M4 exit measurement |
+| DORA + agent metric definitions and targets (#392) | M4 exit measurement |
