@@ -181,12 +181,37 @@ jobs:
             ${{ runner.os }}-playwright-
       - name: Install Playwright browser (${{ matrix.browser }})
         # Cache hit (#421): the browser binary is already on disk, so a
-        # plain `install` is a fast no-op and apt is skipped entirely — no
-        # mirror stall is possible on this path (dispatch 39897137841
-        # proved the old unconditional `--with-deps` could fail even on a
-        # warm cache).
+        # plain `install` is a fast no-op — unless the runner image lacks
+        # the engine's OS libraries (webkit on ubuntu-latest: the binary
+        # installs fine but cannot launch). When the install output reports
+        # missing host dependencies, install just the OS deps
+        # (`install-deps`, no browser download) with the same bounded
+        # retry; chromium/firefox skip apt entirely on this path.
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: python -m playwright install ${{ matrix.browser }}
+        timeout-minutes: 15
+        run: |
+          if install_out=$(python -m playwright install ${{ matrix.browser }} 2>&1); then
+            echo "$install_out"
+          else
+            echo "$install_out"
+            echo "Browser install failed; failing fast (see #421)."
+            exit 1
+          fi
+          if echo "$install_out" | grep -q "Host system is missing dependencies"; then
+            echo "OS dependencies missing for ${{ matrix.browser }}; installing them (bounded retry)..."
+            for attempt in 1 2; do
+              if timeout 6m python -m playwright install-deps ${{ matrix.browser }}; then
+                exit 0
+              fi
+              echo "Dependency install attempt $attempt failed or timed out; retrying once..."
+              for _ in $(seq 1 24); do
+                sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+                sleep 5
+              done
+            done
+            echo "Browser dependency install failed twice; failing fast (see #421)."
+            exit 1
+          fi
       - name: Install Playwright browser with deps (${{ matrix.browser }})
         # Cache miss only (#421): full install including OS deps. Each
         # attempt is capped at 6 min; one retry absorbs a transient mirror

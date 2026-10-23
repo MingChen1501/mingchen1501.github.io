@@ -628,9 +628,11 @@ without a `bundle` executable they skip themselves with an explicit reason.
   (all three engines, at different times — runner infra, not an engine
   defect; dispatch 39897137841 even failed the install on a cache hit).
   So the install is cache-conditional: on a cache hit the job runs a
-  plain `playwright install` (fast no-op, no apt); only a cache miss
-  runs `--with-deps`, bounded (6 min per attempt, one retry, then fail
-  fast) with a 25-min job backstop. On failure the job summary
+  plain `playwright install` (fast no-op, no apt) and only tops up OS
+  libraries via `install-deps` when the engine reports them missing
+  (webkit on the ubuntu runner image; chromium/firefox skip apt
+  entirely); only a cache miss runs `--with-deps`, bounded (6 min per
+  attempt, one retry, then fail fast) with a 25-min job backstop. On failure the job summary
   names the failing specs with the head SHA, and the pytest log (when
   the suite ran) plus fresh visual captures upload as artifacts;
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
