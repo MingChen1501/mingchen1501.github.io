@@ -74,16 +74,26 @@ def test_cache_hit_step_smoke_gates_install_deps():
     assert "--with-deps" not in run
 
 
-def test_install_steps_await_dpkg_lock_before_first_attempt():
-    # Fresh runners boot with unattended-upgrades holding dpkg's lock
-    # (dispatch 39900668031): both install steps await the lock (holder
-    # logged via ps) before the first attempt, not only between retries.
+def test_install_steps_release_lock_only_from_verified_upgraders():
+    # Lock contention is handled apt-natively (DPkg::Lock::Timeout) plus
+    # a fallback that TERMs the holder ONLY after identifying it by full
+    # command line as an unattended-upgrades worker; unknown holders are
+    # never touched, and kill -9 is never used.
     for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
         run = _step(prefix)["run"]
-        assert "wait_for_apt_lock" in run
-        assert run.index("wait_for_apt_lock() {") < run.index("for attempt in 1 2")
-        assert "fuser /var/lib/dpkg/lock-frontend" in run
-        assert "ps -p" in run
+        assert "wait_for_apt_lock" not in run
+        assert "release_apt_lock" in run
+        assert "-o comm=" in run and "-o args=" in run
+        assert "kill -TERM" in run
+        assert "kill -9" not in run
+
+
+def test_quiesce_step_disables_periodic_triggers_and_verifies():
+    run = _step("Quiesce apt (#421)")["run"]
+    assert "DPkg::Lock::Timeout" in run
+    assert "apt-daily" in run
+    assert "is-active" in run
+    assert "kill -9" not in run
 
 
 def test_install_attempts_are_timestamped():

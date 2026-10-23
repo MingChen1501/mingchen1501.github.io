@@ -638,11 +638,14 @@ without a `bundle` executable they skip themselves with an explicit reason.
   the suite ran) plus fresh visual captures upload as artifacts
   (`warn`, not `error`, when the suite never ran because install failed
   first — the job is already red for the real cause); attempts are
-  timestamped and the dpkg lock is awaited (holder logged) before the
-  first attempt and between retries — fresh runners boot with
-  unattended-upgrades, which the Quiesce apt step stops + masks up
-  front (never kill -9 a running apt) — so a red reads as mirror stall
-  (~360 s attempts) vs lock contention (seconds, exit 100);
+  timestamped; apt waits on the dpkg lock natively
+  (`DPkg::Lock::Timeout`, dropped in by the Quiesce apt step, which
+  also disables the periodic triggers and stops + masks
+  unattended-upgrades/apt-daily up front — never kill -9 a running
+  apt); a dead attempt re-stops the periodic workers and TERMs the
+  lock holder only after identifying it by full command line as an
+  unattended-upgrades worker, never unknown processes — so a red reads
+  as mirror stall (~360 s attempts) vs lock contention;
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
   emulation, `numberOfRuns: 3` with median assertion) — both served from

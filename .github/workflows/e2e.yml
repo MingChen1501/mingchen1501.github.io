@@ -151,19 +151,39 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v7
       - name: Quiesce apt (#421)
-        # Fresh ubuntu runners boot with unattended-upgrades holding
-        # dpkg's lock for many minutes (run 39902712204: PID 3453 through
-        # a whole 6-min install-deps attempt AND the 5-min wait, so both
-        # attempts exited 100 — retry can never beat a still-running
-        # process). Stop + mask it before anything touches apt. Never
-        # kill -9 a running apt (dpkg corruption risk); the bounded
-        # lock-wait in the install steps covers whatever remains.
+        # Fresh ubuntu runners boot with unattended-upgrades — or an
+        # apt-daily timer firing mid-job — holding dpkg's lock for many
+        # minutes (run 39902712204: PID 3453 through a whole 6-min attempt
+        # AND the 5-min wait; run 39904461383: a new holder again after
+        # quiesce). So: disable the periodic triggers via apt config
+        # (needs no systemd), stop + disable + mask via systemd with
+        # VISIBLE outcomes, and give every apt invocation on this runner
+        # a native lock wait (DPkg::Lock::Timeout, proven valid via
+        # `apt-config -o DPkg::Lock::Timeout=330 dump`) through a config
+        # file — Playwright's install/install-deps accept no apt flags, so
+        # the config file is the only injection point. Manual fuser
+        # polling is replaced by this apt-native wait; per-attempt
+        # timestamps still separate mirror stalls from lock contention.
+        # Never kill -9 a running apt (dpkg corruption risk); the
+        # install steps TERM only verified unattended-upgrade workers.
         run: |
-          sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
-          sudo systemctl stop unattended-upgrades.timer 2>/dev/null || true
-          sudo systemctl mask unattended-upgrades.service 2>/dev/null || true
-          sudo systemctl mask unattended-upgrades.timer 2>/dev/null || true
-          echo "unattended-upgrades stopped/masked (best effort); remaining apt users, if any:"
+          echo "--- disabling periodic apt triggers + native lock wait (no systemd needed) ---"
+          echo 'APT::Periodic::Enable "0";' | sudo tee /etc/apt/apt.conf.d/99-ci-disable-periodic >/dev/null
+          echo 'DPkg::Lock::Timeout "330";' | sudo tee /etc/apt/apt.conf.d/99-ci-lock-timeout >/dev/null
+          apt-config dump | grep -E "Periodic::Enable|Lock::Timeout" || true
+          echo "--- stopping + disabling + masking unattended-upgrades and apt-daily ---"
+          sudo systemctl stop unattended-upgrades.service || echo "stop u-u service rc=$?"
+          sudo systemctl stop unattended-upgrades.timer || echo "stop u-u timer rc=$?"
+          sudo systemctl stop apt-daily.service apt-daily.timer apt-daily-upgrade.service apt-daily-upgrade.timer || echo "stop apt-daily rc=$?"
+          sudo systemctl disable unattended-upgrades.service unattended-upgrades.timer || echo "disable u-u rc=$?"
+          sudo systemctl disable apt-daily.service apt-daily.timer apt-daily-upgrade.service apt-daily-upgrade.timer || echo "disable apt-daily rc=$?"
+          sudo systemctl mask unattended-upgrades.service unattended-upgrades.timer || echo "mask u-u rc=$?"
+          sudo dpkg --configure -a || echo "dpkg --configure -a rc=$?"
+          echo "--- verify ---"
+          sudo systemctl is-active unattended-upgrades.service || true
+          sudo systemctl is-enabled unattended-upgrades.service || true
+          sudo systemctl is-active apt-daily.timer || true
+          echo "remaining apt users, if any:"
           ps -ef | grep -E "[a]pt-get|[d]pkg|[u]nattended" || echo "(none visible)"
       - name: Download built site (#320)
         uses: actions/download-artifact@v8
@@ -201,8 +221,13 @@ jobs:
         # launch, not by parsing install output (webkit on ubuntu-latest
         # ships the binary but not libgtk-4/libgraphene and friends).
         # Smoke pass -> done, no apt. Smoke fail -> top up OS deps with
-        # bounded install-deps, smoke again; still red -> fail the job
-        # with the launch log.
+        # bounded install-deps (apt-native lock wait via the Quiesce
+        # step's DPkg::Lock::Timeout), smoke again; still red -> fail
+        # the job with the launch log. A dead attempt re-stops periodic
+        # workers and TERMs the holder ONLY if it is a verified
+        # unattended-upgrades worker (safe: ephemeral runner, TERM lets
+        # dpkg roll back, unlike kill -9); unknown holders are never
+        # touched.
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         timeout-minutes: 15
         run: |
@@ -230,29 +255,42 @@ jobs:
             exit 0
           fi
           echo "Smoke launch failed for ${{ matrix.browser }}; installing OS dependencies (bounded retry)..."
-          wait_for_apt_lock() {
-            # Fresh runners often boot with unattended-upgrades holding
-            # dpkg's lock (dispatch 39900668031: PID 3485). Wait capped
-            # ~5 min instead of failing instantly, logging the holder each
-            # round so the next red is classifiable as lock contention
-            # rather than a mirror stall.
-            for i in $(seq 1 60); do
-              holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
-              if [ -z "$holder" ]; then
-                if [ "$i" != "1" ]; then
-                  echo "dpkg lock free after ~$(((i - 1) * 5))s of waiting."
-                fi
-                return 0
+          release_apt_lock() {
+            # Graceful re-stop in case a periodic trigger fired mid-job,
+            # then inspect the holder with its FULL command line and TERM
+            # it only if it is an unattended-upgrades worker.
+            sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
+            holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
+            if [ -z "$holder" ]; then
+              echo "dpkg lock is free."
+              return 0
+            fi
+            termed=0
+            for pid in $holder; do
+              comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+              args=$(ps -p "$pid" -o args= 2>/dev/null || true)
+              if [ -z "$comm" ]; then
+                echo "lock holder PID $pid already exited."
+                continue
               fi
-              echo "dpkg lock held (wait $i/60), PID(s): $holder"
-              for pid in $holder; do
-                ps -p "$pid" -o pid,etime,cmd 2>/dev/null || echo "(PID $pid already exited)"
-              done
-              sleep 5
+              echo "lock holder PID $pid comm=[$comm] args=[$args]"
+              case "$comm" in
+                *unattended*|*apt-daily*)
+                  echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
+                  sudo kill -TERM "$pid" || true
+                  termed=1
+                  ;;
+                *) echo "unknown holder; leaving it alone (see #421)." ;;
+              esac
             done
-            echo "WARNING: dpkg lock still held after ~5 min; proceeding anyway and letting the attempt speak (see #421)."
+            if [ "$termed" = "1" ]; then
+              for i in $(seq 1 12); do
+                sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+                sleep 5
+              done
+              sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
+            fi
           }
-          wait_for_apt_lock
           deps_ok=0
           for attempt in 1 2; do
             echo "Dependency install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
@@ -262,8 +300,9 @@ jobs:
               deps_ok=1
               break
             fi
-            echo "Dependency install attempt $attempt failed after $((SECONDS - start))s; retrying once..."
-            wait_for_apt_lock
+            echo "Dependency install attempt $attempt failed after $((SECONDS - start))s."
+            release_apt_lock
+            echo "retrying once..."
           done
           if [ "$deps_ok" != "1" ]; then
             echo "Browser dependency install failed twice; failing fast (see #421)."
@@ -282,31 +321,49 @@ jobs:
         # classifiable as mirror stall (~360s) vs lock contention
         # (seconds, exit 100); one retry absorbs a transient stall, then
         # the job fails fast with evidence instead of hanging 10-40 min.
-        # The dpkg lock is awaited (capped ~5 min, holder logged) before
-        # the first attempt — fresh runners boot with
-        # unattended-upgrades — and again between attempts for a lock
-        # left by a timed-out attempt's orphaned apt-get.
+        # apt waits on the lock natively (DPkg::Lock::Timeout from the
+        # Quiesce step's config file); a dead attempt re-stops periodic
+        # workers and TERMs the holder only if it is a verified
+        # unattended-upgrades worker, never unknown processes.
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         timeout-minutes: 15
         run: |
-          wait_for_apt_lock() {
-            for i in $(seq 1 60); do
-              holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
-              if [ -z "$holder" ]; then
-                if [ "$i" != "1" ]; then
-                  echo "dpkg lock free after ~$(((i - 1) * 5))s of waiting."
-                fi
-                return 0
+          release_apt_lock() {
+            # Graceful re-stop in case a periodic trigger fired mid-job,
+            # then inspect the holder with its FULL command line and TERM
+            # it only if it is an unattended-upgrades worker.
+            sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
+            holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
+            if [ -z "$holder" ]; then
+              echo "dpkg lock is free."
+              return 0
+            fi
+            termed=0
+            for pid in $holder; do
+              comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+              args=$(ps -p "$pid" -o args= 2>/dev/null || true)
+              if [ -z "$comm" ]; then
+                echo "lock holder PID $pid already exited."
+                continue
               fi
-              echo "dpkg lock held (wait $i/60), PID(s): $holder"
-              for pid in $holder; do
-                ps -p "$pid" -o pid,etime,cmd 2>/dev/null || echo "(PID $pid already exited)"
-              done
-              sleep 5
+              echo "lock holder PID $pid comm=[$comm] args=[$args]"
+              case "$comm" in
+                *unattended*|*apt-daily*)
+                  echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
+                  sudo kill -TERM "$pid" || true
+                  termed=1
+                  ;;
+                *) echo "unknown holder; leaving it alone (see #421)." ;;
+              esac
             done
-            echo "WARNING: dpkg lock still held after ~5 min; proceeding anyway and letting the attempt speak (see #421)."
+            if [ "$termed" = "1" ]; then
+              for i in $(seq 1 12); do
+                sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+                sleep 5
+              done
+              sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
+            fi
           }
-          wait_for_apt_lock
           for attempt in 1 2; do
             echo "Browser install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
             start=$SECONDS
@@ -314,8 +371,9 @@ jobs:
               echo "Browser install attempt $attempt succeeded in $((SECONDS - start))s."
               exit 0
             fi
-            echo "Browser install attempt $attempt failed after $((SECONDS - start))s; retrying once..."
-            wait_for_apt_lock
+            echo "Browser install attempt $attempt failed after $((SECONDS - start))s."
+            release_apt_lock
+            echo "retrying once..."
           done
           echo "Browser install failed twice; failing fast (see #421)."
           exit 1
