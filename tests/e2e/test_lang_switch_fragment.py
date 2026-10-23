@@ -19,6 +19,10 @@ Guarded here:
 - the built post pages ship a fragment/query-free switcher href (no-JS
   degradation is today's top landing) with hreflang/canonical intact
   (build);
+- the switcher remembers the explicit choice in a first-party `lang`
+  cookie (`en`/`vi` from the target, `path=/`, one year, `SameSite=Lax`),
+  so EN survives the VN geo redirect on reload and navigation
+  (static + browser, #423).
 - switching mid-article EN->VI and VI->EN lands on the same section index
   with a clean URL, while a bogus index or fragment degrades to the top
   with no page errors (browser, on the long Internet post pair).
@@ -41,8 +45,11 @@ SCRIPT_PATH = "/assets/js/lang-switch.js"
 
 # Two-sided work (source href + counterpart landing) in one file, still
 # fetched deferred on every page: keep it small.
-MAX_SCRIPT_BYTES = 4096
-MAX_SCRIPT_CODE_LINES = 95
+# Re-measured 2026-10-23 for #423 (dev build): the `lang`-preference
+# remember block adds ~1KB, so the ceilings move 4096 -> 5120 B and
+# 95 -> 105 code lines.
+MAX_SCRIPT_BYTES = 5120
+MAX_SCRIPT_CODE_LINES = 105
 
 EN_POST_PATH = "2022/12/25/explaining-the-internet.html"
 VI_POST_PATH = "vi/2022/12/25/gioi-thieu-ve-internet.html"
@@ -113,6 +120,27 @@ def test_the_switch_script_is_linked_with_the_cache_version_token():
         "the `?v=` build token, like every other fixed-URL asset (#61)"
     )
     assert re.search(r"site\.time", conftest.template_with_includes(SUB_FOOTER))
+
+
+@pytest.mark.static
+def test_the_script_remembers_the_choice_in_a_cookie():
+    """#423: the explicit switcher tap sticks, or the VN geo rule traps
+    readers in Vietnamese — EN must stay reachable from VN."""
+    text = _read(SCRIPT)
+    assert "document.cookie" in text
+    assert "'lang='" in text, (
+        "the preference cookie must be named `lang` (the edge rule keys on it)"
+    )
+    # Cross-visit stickiness, site-wide scope, no CSRF surface.
+    assert "max-age=" in text
+    assert "path=/" in text
+    assert "SameSite=Lax" in text
+    # The value follows the switcher target in both directions (the link
+    # already carries `hreflang="en|vi"`), and the remember step never
+    # navigates by itself: the plain link does that, as before.
+    assert "getAttribute('hreflang')" in text or 'getAttribute("hreflang")' in text
+    assert "location.href =" not in text and "location.assign" not in text
+    assert "location.replace" not in text and "window.open" not in text
 
 
 @pytest.mark.static
@@ -252,6 +280,37 @@ def test_switching_mid_article_keeps_the_section(
         )
         assert landed == target_ids[index]
         assert _nearest_section(page) == index
+        assert not errors, f"JS page errors after the switch: {errors}"
+
+
+@pytest.mark.parametrize(
+    "source,target,cookie",
+    [("/vi/", "/", "lang=en"), ("/", "/vi/", "lang=vi")],
+)
+def test_switcher_choice_sticks_in_a_cookie(
+    source, target, cookie, built_site_url, browser
+):
+    """#423: an explicit switch remembers `lang`, so EN survives the VN geo
+    redirect on reload and navigation (the edge rule skips the redirect
+    while `lang=en` is present); switching back to VI works too."""
+    for page, errors in _page(browser, built_site_url):
+        page.goto(f"{built_site_url}{source}", wait_until="load")
+        page.wait_for_selector(".lang-switcher", state="visible", timeout=10_000)
+        with page.expect_navigation(wait_until="load", timeout=15_000):
+            page.evaluate("() => document.querySelector('.lang-switcher').click()")
+        assert urlparse(page.url).path == target, (
+            f"the switch led to {page.url}, expected {target}"
+        )
+        assert cookie in (page.evaluate("() => document.cookie") or ""), (
+            f"the switcher did not remember {cookie} in {page.url}"
+        )
+        page.reload(wait_until="load")
+        assert urlparse(page.url).path == target, (
+            f"the reload left {target} for {page.url}"
+        )
+        assert cookie in (page.evaluate("() => document.cookie") or ""), (
+            f"the reload dropped {cookie} on {page.url}"
+        )
         assert not errors, f"JS page errors after the switch: {errors}"
 
 

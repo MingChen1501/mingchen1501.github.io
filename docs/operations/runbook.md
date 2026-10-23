@@ -2,6 +2,15 @@
 
 Status: active. Owns the when-it-breaks playbook.
 
+- Geo redirect traps VN readers in Vietnamese (#423, Cloudflare
+  dashboard — not in this repo): the VN `/ -> /vi/` redirect rule must
+  skip requests carrying the reader's explicit choice, or EN is
+  unreachable from VN. Rule shape: `(ip.geoip.country eq "VN" and
+  http.request.uri.path eq "/" and not http.cookie contains "lang=en")`
+  -> 302 to `/vi/`. First visits still land on `/vi/`; the switcher
+  writes `lang=en|vi` (`path=/`, one year, `SameSite=Lax`), so EN sticks
+  on reload and navigation. No cache change: page bytes are static per
+  URL, the cookie varies nothing.
 - Jekyll build red: run `bundle exec jekyll build --trace` locally,
   fix the Liquid/data error (`_data/*.yml` syntax is the usual suspect),
   push again. `master` keeps serving the last good deploy meanwhile.

@@ -2,7 +2,8 @@
 
 Both about pages (`/about/`, `/vi/about/`, shared `ref: about`) carry a
 short privacy section disclosing what the site stores and which third
-parties see the reader: no first-party trackers or cookies, the theme
+parties see the reader: no first-party trackers, only the `lang`
+language-preference cookie (#423), the theme
 choice in this browser's `localStorage` (key `theme`), Giscus comments
 (GitHub) on post pages, and Cloudflare edge processing (TLS, caching,
 email obfuscation).
@@ -39,7 +40,7 @@ def test_en_about_source_has_privacy_section():
     assert re.search(r"^##\s+Privacy\s*$", body, re.M), (
         "EN about needs a `## Privacy` section"
     )
-    for token in ("localStorage", "`theme`", "Giscus", "Cloudflare"):
+    for token in ("localStorage", "`theme`", "Giscus", "Cloudflare", "`lang`"):
         assert token in body, f"EN privacy note must mention {token}"
     assert "cookie" in body.lower(), "EN privacy note must mention cookies"
 
@@ -50,7 +51,7 @@ def test_vi_about_source_has_privacy_section():
     assert re.search(r"^##\s+Quy.n ri.ng t", body, re.M), (
         "VI about needs a `## Quyen rieng tu` section"
     )
-    for token in ("localStorage", "`theme`", "Giscus", "Cloudflare"):
+    for token in ("localStorage", "`theme`", "Giscus", "Cloudflare", "`lang`"):
         assert token in body, f"VI privacy note must mention {token}"
     assert "cookie" in body.lower(), "VI privacy note must mention cookie"
 
@@ -99,6 +100,9 @@ def test_en_about_renders_privacy_section(built_site):
     section = _privacy_section(html, "/about/").lower()
     for token in ("localstorage", "theme", "giscus", "cloudflare", "cookie"):
         assert token in section, f"/about/ privacy section must mention {token}"
+    assert re.search(r"\blang\b", section), (
+        "/about/ privacy section must name the `lang` preference cookie (#423)"
+    )
 
 
 def test_vi_about_renders_privacy_section(built_site):
@@ -106,6 +110,9 @@ def test_vi_about_renders_privacy_section(built_site):
     section = _privacy_section(html, "/vi/about/").lower()
     for token in ("localstorage", "theme", "giscus", "cloudflare", "cookie"):
         assert token in section, f"/vi/about/ privacy section must mention {token}"
+    assert re.search(r"\blang\b", section), (
+        "/vi/about/ privacy section must name the `lang` preference cookie (#423)"
+    )
 
 
 def test_about_hreflang_and_canonicals_unchanged(built_site):
