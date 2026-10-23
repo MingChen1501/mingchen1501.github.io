@@ -280,47 +280,93 @@ jobs:
             exit 0
           fi
           echo "Smoke launch failed for ${{ matrix.browser }}; installing OS dependencies (bounded retry)..."
+          # TERM only verified unattended-upgrades workers AND orphaned
+          # apt-get downloaders reparented to init (PPID 1) — those are
+          # leftovers of our own timed-out attempt (run 39916453942:
+          # PID 3641 kept downloading after its parent died and starved
+          # the retry), safe to stop on an ephemeral runner.
+          run_capped() {
+            # Run "$@" with a hard cap, killing the WHOLE process group
+            # on timeout. Plain `timeout` only signals the direct child,
+            # leaving an orphaned apt-get holding dpkg's lock; setsid
+            # puts the attempt in its own group so nothing survives.
+            # Returns 124 on timeout, else the command's exit code.
+            local cap=$1; shift
+            setsid "$@" &
+            local child=$!
+            local waited=0
+            while kill -0 "$child" 2>/dev/null; do
+              sleep 5
+              waited=$((waited + 5))
+              if [ "$waited" -ge "$cap" ]; then
+                echo "command exceeded ${cap}s; terminating process group $child..."
+                kill -TERM -- -"$child" 2>/dev/null || true
+                sleep 10
+                kill -KILL -- -"$child" 2>/dev/null || true
+                wait "$child" 2>/dev/null || true
+                return 124
+              fi
+            done
+            wait "$child"
+          }
           release_apt_lock() {
             # Graceful re-stop in case a periodic trigger fired mid-job,
-            # then inspect the holder with its FULL command line and TERM
-            # it only if it is an unattended-upgrades worker.
+            # then inspect the holder with its FULL command line AND
+            # parent PID and TERM it only if it is (a) an
+            # unattended-upgrades worker, or (b) an apt-get reparented to
+            # init (PPID 1): an orphaned downloader from our own
+            # timed-out attempt (run 39916453942), safe to stop on an
+            # ephemeral runner. Unknown live-parent holders are never
+            # touched — the job fails fast with their identity.
             sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
             holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
             if [ -z "$holder" ]; then
               echo "dpkg lock is free."
-              return 0
-            fi
-            termed=0
-            for pid in $holder; do
-              comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
-              args=$(ps -p "$pid" -o args= 2>/dev/null || true)
-              if [ -z "$comm" ]; then
-                echo "lock holder PID $pid already exited."
-                continue
-              fi
-              echo "lock holder PID $pid comm=[$comm] args=[$args]"
-              case "$comm" in
-                *unattended*|*apt-daily*)
-                  echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
-                  sudo kill -TERM "$pid" || true
-                  termed=1
-                  ;;
-                *) echo "unknown holder; leaving it alone (see #421)." ;;
-              esac
-            done
-            if [ "$termed" = "1" ]; then
-              for i in $(seq 1 12); do
-                sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
-                sleep 5
+            else
+              termed=0
+              for pid in $holder; do
+                comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+                args=$(ps -p "$pid" -o args= 2>/dev/null || true)
+                ppid=$(ps -p "$pid" -o ppid= 2>/dev/null || true)
+                if [ -z "$comm" ]; then
+                  echo "lock holder PID $pid already exited."
+                  continue
+                fi
+                echo "lock holder PID $pid PPID $ppid comm=[$comm] args=[$args]"
+                case "$comm" in
+                  *unattended*|*apt-daily*)
+                    echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
+                    sudo kill -TERM "$pid" || true
+                    termed=1
+                    ;;
+                  apt-get)
+                    if [ "$ppid" = "1" ]; then
+                      echo "holder is an orphaned apt-get (PPID 1), leftover of our timed-out attempt; sending TERM..."
+                      sudo kill -TERM "$pid" || true
+                      termed=1
+                    else
+                      echo "unknown live apt-get holder; leaving it alone (see #421)."
+                    fi
+                    ;;
+                  *) echo "unknown holder; leaving it alone (see #421)." ;;
+                esac
               done
-              sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
+              if [ "$termed" = "1" ]; then
+                for i in $(seq 1 12); do
+                  sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+                  sleep 5
+                done
+              fi
             fi
+            # Repair any interrupted unpack from the killed attempt
+            # (harmless when clean; fails fast when genuinely held).
+            sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
           }
           deps_ok=0
           for attempt in 1 2; do
             echo "Dependency install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
             start=$SECONDS
-            if timeout 10m python -m playwright install-deps ${{ matrix.browser }}; then
+            if run_capped 600 python -m playwright install-deps ${{ matrix.browser }}; then
               echo "Dependency install attempt $attempt succeeded in $((SECONDS - start))s."
               deps_ok=1
               break
@@ -342,8 +388,9 @@ jobs:
           exit 1
       - name: Install Playwright browser with deps (${{ matrix.browser }})
         # Cache miss only (#421): full install including OS deps. Each
-        # attempt is capped at 10 min (slow-mirror downloads need >6 min
-        # at observed trickle speed; run 39904461383) and timestamped so
+        # attempt is capped at 10 min with whole-process-group kill
+        # (run_capped: plain `timeout` orphans apt-get holding the lock;
+        # run 39916453942) and timestamped so classifiable as mirror
         # classifiable as mirror stall (~360s) vs lock contention
         # (seconds, exit 100); one retry absorbs a transient stall, then
         # the job fails fast with evidence instead of hanging 10-40 min.
@@ -354,46 +401,92 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         timeout-minutes: 25
         run: |
+          # TERM only verified unattended-upgrades workers AND orphaned
+          # apt-get downloaders reparented to init (PPID 1) — those are
+          # leftovers of our own timed-out attempt (run 39916453942:
+          # PID 3641 kept downloading after its parent died and starved
+          # the retry), safe to stop on an ephemeral runner.
+          run_capped() {
+            # Run "$@" with a hard cap, killing the WHOLE process group
+            # on timeout. Plain `timeout` only signals the direct child,
+            # leaving an orphaned apt-get holding dpkg's lock; setsid
+            # puts the attempt in its own group so nothing survives.
+            # Returns 124 on timeout, else the command's exit code.
+            local cap=$1; shift
+            setsid "$@" &
+            local child=$!
+            local waited=0
+            while kill -0 "$child" 2>/dev/null; do
+              sleep 5
+              waited=$((waited + 5))
+              if [ "$waited" -ge "$cap" ]; then
+                echo "command exceeded ${cap}s; terminating process group $child..."
+                kill -TERM -- -"$child" 2>/dev/null || true
+                sleep 10
+                kill -KILL -- -"$child" 2>/dev/null || true
+                wait "$child" 2>/dev/null || true
+                return 124
+              fi
+            done
+            wait "$child"
+          }
           release_apt_lock() {
             # Graceful re-stop in case a periodic trigger fired mid-job,
-            # then inspect the holder with its FULL command line and TERM
-            # it only if it is an unattended-upgrades worker.
+            # then inspect the holder with its FULL command line AND
+            # parent PID and TERM it only if it is (a) an
+            # unattended-upgrades worker, or (b) an apt-get reparented to
+            # init (PPID 1): an orphaned downloader from our own
+            # timed-out attempt (run 39916453942), safe to stop on an
+            # ephemeral runner. Unknown live-parent holders are never
+            # touched — the job fails fast with their identity.
             sudo systemctl stop unattended-upgrades.service 2>/dev/null || true
             holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
             if [ -z "$holder" ]; then
               echo "dpkg lock is free."
-              return 0
-            fi
-            termed=0
-            for pid in $holder; do
-              comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
-              args=$(ps -p "$pid" -o args= 2>/dev/null || true)
-              if [ -z "$comm" ]; then
-                echo "lock holder PID $pid already exited."
-                continue
-              fi
-              echo "lock holder PID $pid comm=[$comm] args=[$args]"
-              case "$comm" in
-                *unattended*|*apt-daily*)
-                  echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
-                  sudo kill -TERM "$pid" || true
-                  termed=1
-                  ;;
-                *) echo "unknown holder; leaving it alone (see #421)." ;;
-              esac
-            done
-            if [ "$termed" = "1" ]; then
-              for i in $(seq 1 12); do
-                sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
-                sleep 5
+            else
+              termed=0
+              for pid in $holder; do
+                comm=$(ps -p "$pid" -o comm= 2>/dev/null || true)
+                args=$(ps -p "$pid" -o args= 2>/dev/null || true)
+                ppid=$(ps -p "$pid" -o ppid= 2>/dev/null || true)
+                if [ -z "$comm" ]; then
+                  echo "lock holder PID $pid already exited."
+                  continue
+                fi
+                echo "lock holder PID $pid PPID $ppid comm=[$comm] args=[$args]"
+                case "$comm" in
+                  *unattended*|*apt-daily*)
+                    echo "holder is an unattended-upgrades worker on an ephemeral runner; sending TERM..."
+                    sudo kill -TERM "$pid" || true
+                    termed=1
+                    ;;
+                  apt-get)
+                    if [ "$ppid" = "1" ]; then
+                      echo "holder is an orphaned apt-get (PPID 1), leftover of our timed-out attempt; sending TERM..."
+                      sudo kill -TERM "$pid" || true
+                      termed=1
+                    else
+                      echo "unknown live apt-get holder; leaving it alone (see #421)."
+                    fi
+                    ;;
+                  *) echo "unknown holder; leaving it alone (see #421)." ;;
+                esac
               done
-              sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
+              if [ "$termed" = "1" ]; then
+                for i in $(seq 1 12); do
+                  sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+                  sleep 5
+                done
+              fi
             fi
+            # Repair any interrupted unpack from the killed attempt
+            # (harmless when clean; fails fast when genuinely held).
+            sudo dpkg --configure -a || echo "dpkg --configure -a rc=$? (non-fatal)"
           }
           for attempt in 1 2; do
             echo "Browser install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
             start=$SECONDS
-            if timeout 10m python -m playwright install --with-deps ${{ matrix.browser }}; then
+            if run_capped 600 python -m playwright install --with-deps ${{ matrix.browser }}; then
               echo "Browser install attempt $attempt succeeded in $((SECONDS - start))s."
               exit 0
             fi

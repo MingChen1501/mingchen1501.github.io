@@ -123,9 +123,24 @@ def test_apt_package_cache_straddles_install():
     assert "/var/cache/apt/archives" in fix_step["run"]
 
 
+def test_install_attempts_kill_process_group_on_timeout():
+    # Plain `timeout` only signals the direct child, orphaning apt-get
+    # with dpkg's lock (run 39916453942: PID 3641 survived attempt 1
+    # and starved attempt 2). Both install steps cap attempts via a
+    # setsid process-group kill, and TERM orphaned apt-get holders
+    # (PPID 1) while never touching unknown live holders.
+    for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
+        run = _step(prefix)["run"]
+        assert "run_capped()" in run
+        assert "setsid" in run
+        assert 'kill -TERM -- -"$child"' in run
+        assert "-o ppid=" in run
+        assert "PPID 1" in run
+
+
 def test_install_attempts_are_timestamped():
-    # Attempt start/end timestamps separate mirror stalls (~360s) from
-    # lock contention (seconds, exit 100) in the next red log.
+    # Attempt start/end timestamps separate mirror stalls from lock
+    # contention in the next red log.
     for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
         run = _step(prefix)["run"]
         assert "starting at $(date -u" in run
@@ -137,7 +152,8 @@ def test_cache_miss_step_uses_bounded_with_deps():
     assert step.get("if") == "steps.playwright-cache.outputs.cache-hit != 'true'"
     assert step.get("timeout-minutes") == 25
     assert "--with-deps" in step["run"]
-    assert "timeout 10m" in step["run"]
+    assert "run_capped 600" in step["run"]
+    assert "timeout 10m" not in step["run"]
 
 
 def test_pytest_log_upload_warns_when_suite_never_ran():
