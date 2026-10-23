@@ -1,4 +1,4 @@
-"""Guards for #253 + #318 + #345: post-only JS loads on post pages only.
+"""Guards for #253 + #318 + #345 + #417: post-only JS loads on post pages only.
 
 Every page used to ship every first-party script: ``_includes/sub-footer.html``
 loaded nine deferred scripts unconditionally, including ``share.js`` (which
@@ -8,23 +8,25 @@ drives the progress bar + back-to-top button that ship ``hidden`` in
 ``_layouts/post.html``), ``copy-code.js`` (which enhances ``pre > code``,
 rendered only on posts), ``lightbox.js`` (which queries
 ``.post-content img``, absent from non-post ``.post-content`` blocks) and
-``toc-spy.js`` (which marks the ``.post-toc__nav`` row being read, rendered
-only from ``_layouts/post.html``). Home, tag, about and resume pages
-rendered none of those controls yet downloaded all five files (#253 gated
+the ToC modules (``toc-spy.js`` core, ``toc-sheet.js`` phone sheet,
+``toc-fab-drag.js`` drag, which mark the ``.post-toc__nav`` row being read,
+rendered only from ``_layouts/post.html``). Home, tag, about and resume pages
+rendered none of those controls yet downloaded all seven files (#253 gated
 share + reading-progress; #318 gated copy-code + lightbox the same way;
-#345 gates toc-spy the same way).
+#345 gates toc-spy the same way; #417 splits it into core + sheet + drag
+without leaving the gate).
 
 Guarded here:
 
-- the five tags stay in ``sub-footer.html`` with the ``?v=`` build token in
+- the seven tags stay in ``sub-footer.html`` with the ``?v=`` build token in
   the same relative order (copy-code, lightbox, share, reading-progress,
-  then toc-spy, all after ``site-utils.js``), wrapped in a single
-  ``page.layout == 'post'`` conditional (static);
+  then the ToC core, sheet and drag, all after ``site-utils.js``), wrapped
+  in a single ``page.layout == 'post'`` conditional (static);
 - the five scripts every page needs stay unconditional (static);
 - built non-post pages (home EN/VI, tag index + one tag page, about,
-  resume) link none of the five scripts and go from 10 to 5
+  resume) link none of the seven scripts and go from 10 to 5
   sub-footer script requests, while built EN/VI post pages still link
-  all five with a non-empty epoch token (built, needs Ruby).
+  all seven with a non-empty epoch token (built, needs Ruby).
 """
 
 import re
@@ -45,13 +47,16 @@ ALWAYS_LOADED = (
     "/assets/js/theme-toggle.js",
 )
 
-# Scripts that only post pages need, in document order (#253, #318, #345).
+# Scripts that only post pages need, in document order (#253, #318, #345,
+# #417 splits the ToC scroll-spy into core + sheet + drag).
 POST_ONLY = (
     "/assets/js/copy-code.js",
     "/assets/js/lightbox.js",
     "/assets/js/share.js",
     "/assets/js/reading-progress.js",
     "/assets/js/toc-spy.js",
+    "/assets/js/toc-sheet.js",
+    "/assets/js/toc-fab-drag.js",
 )
 
 EN_POST_REL = Path("2022/10/27/brewing-vietnamese-coffee.html")
@@ -67,7 +72,7 @@ def _read(path):
 
 @pytest.mark.static
 def test_the_post_only_scripts_are_gated_on_the_post_layout():
-    """All five tags render only where the post markup lives (#253, #318, #345)."""
+    """All seven tags render only where the post markup lives (#253, #318, #345, #417)."""
     html = _read(SUB_FOOTER)
     gate = re.search(r"\{%-?\s*if page\.layout == 'post'\s*-?%\}", html)
     assert gate, (
@@ -94,7 +99,8 @@ def test_the_gated_scripts_keep_token_and_order():
     positions = [html.index(f"{path}?v=") for path in POST_ONLY]
     assert positions == sorted(positions), (
         "post-only order must stay copy-code, lightbox, share, "
-        "reading-progress, toc-spy (deferred scripts run in document order)"
+        "reading-progress, toc-spy, toc-sheet, toc-fab-drag "
+        "(deferred scripts run in document order)"
     )
     helper_pos = html.index("/assets/js/site-utils.js?v=")
     assert helper_pos < positions[0], (
@@ -158,8 +164,8 @@ def test_non_post_pages_skip_all_post_only_scripts(built_site):
         )
 
 
-def test_post_pages_still_load_all_five_scripts(built_site):
-    """EN + VI posts keep all five tags with a real epoch token (#318, #345)."""
+def test_post_pages_still_load_all_post_only_scripts(built_site):
+    """EN + VI posts keep all seven tags with a real epoch token (#318, #345, #417)."""
     for rel in (EN_POST_REL, VI_POST_REL):
         assert (built_site / rel).is_file(), f"{rel} is missing"
         html = _read(built_site / rel)

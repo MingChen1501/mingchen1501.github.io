@@ -66,7 +66,12 @@ SUB_FOOTER = test_post_only_js.SUB_FOOTER
 # re-measured after the draggable-FAB experiment: toc-spy.js grows
 # ~19.0KB -> ~24.3KB (pointer drag with edge snapping, tap-vs-drag
 # disambiguation, edge persistence, native-drag guard), post-source
-# total 49151 -> 54252 B, so MAX_JS_POST_BYTES moves 49664 -> 59904.)
+# total 49151 -> 54252 B, so MAX_JS_POST_BYTES moves 49664 -> 59904.
+# #417 re-measured after splitting the monolith into toc-spy.js (core,
+# ~10.1KB) + toc-sheet.js (phone sheet, ~10.6KB) + toc-fab-drag.js (drag,
+# ~4.9KB): behaviour identical, no new runtime requests, post-source total
+# 54252 -> ~55.3KB (the `window.TocSpy` contract costs ~1KB), still under
+# the unchanged MAX_JS_POST_BYTES = 59904 — no ceiling bump by design.)
 EXPECTED_BUDGET = {
     "MAX_JS_PAGE_BYTES": 23552,
     "MAX_JS_POST_BYTES": 59904,
@@ -86,7 +91,7 @@ VI_POST_REL = test_post_only_js.VI_POST_REL
 #: Unique first-party scripts each page kind may reference. Post is the
 #: production worst case: dev builds skip the comments include
 #: (``comments.dev: false``), so the built-dev assertion below expects the
-#: ten-file set while the static byte assertion covers all eleven.
+#: twelve-file set while the static byte assertion covers all thirteen.
 EXPECTED_SETS = {
     "page": frozenset(test_post_only_js.ALWAYS_LOADED),
     "post": frozenset(

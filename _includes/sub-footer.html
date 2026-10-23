@@ -41,7 +41,7 @@
 {%- endcomment -%}
 <script src="/assets/js/theme-toggle.js?v={{ asset_version }}" defer></script>
 {%- comment -%}
-  Post-only scripts (#253, #318, #345): copy-code + lightbox + share +
+  Post-only scripts (#253, #318, #345, #417): copy-code + lightbox + share +
   reading progress + ToC scroll-spy. Their markup ships only from post
   pages (code blocks, `.post-content` images, the share row include, the
   hidden progress bar and back-to-top button, the automatic ToC), so
@@ -83,13 +83,28 @@
 {%- endcomment -%}
 <script src="/assets/js/reading-progress.js?v={{ asset_version }}" defer></script>
 {%- comment -%}
-  ToC scroll-spy (#345). Progressive enhancement only: the ToC ships
-  expanded with plain anchors (both mounts), so without JS it stays fully
-  usable; this script only marks the row for the section being read
-  (`aria-current="location"` on both copies). Post-only like the other
+  ToC scroll-spy core (#345, split #417). Progressive enhancement only:
+  the ToC ships expanded with plain anchors (both mounts), so without JS
+  it stays fully usable; this script only marks the row for the section
+  being read (`aria-current="location"` on both copies) and collapses /
+  auto-expands the disclosure branches. Post-only like the other
   post-page enhancements: the `.post-toc__nav` markup renders from
   `_layouts/post.html` alone. A fixed-URL asset like the scripts above,
-  so it carries the same build token.
+  so it carries the same build token. The phone FAB + sheet
+  (`toc-sheet.js`) and its drag gesture (`toc-fab-drag.js`) load next, in
+  that order: deferred scripts run in document order, and both build on
+  the `window.TocSpy` contract this script publishes.
 {%- endcomment -%}
 <script src="/assets/js/toc-spy.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  ToC phone sheet (#383, split #417). Owns the floating button + bottom
+  sheet on phone layouts (handoff, progress ring, dialog focus
+  management) on top of the core above. Post-only, same token.
+{%- endcomment -%}
+<script src="/assets/js/toc-sheet.js?v={{ asset_version }}" defer></script>
+{%- comment -%}
+  ToC FAB drag (#401, split #417). Pointer drag with edge snapping for
+  the phone button above; stands down without it. Post-only, same token.
+{%- endcomment -%}
+<script src="/assets/js/toc-fab-drag.js?v={{ asset_version }}" defer></script>
 {%- endif %}

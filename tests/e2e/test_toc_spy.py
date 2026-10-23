@@ -3,9 +3,10 @@
 `_includes/post-toc.html` renders a NESTED list (h2 > h3 > h4, children
 `<ul>`s as real descendants of their parent `<li>`) starting fully
 expanded with plain anchors, so the ToC works with JS disabled; the
-post-only `assets/js/toc-spy.js` progressively enhances it: on load every
-branch collapses (default view H2 only), the scroll-spy marks the row
-being read (`aria-current="location"` on both copies, styled in
+post-only ToC modules (`assets/js/toc-spy.js` + `toc-sheet.js` +
+`toc-fab-drag.js`, guarded here) progressively enhance it: on load the
+core collapses every branch (default view H2 only), the scroll-spy marks
+the row being read (`aria-current="location"` on both copies, styled in
 `custom/_toc.scss` with the theme-aware link colour plus a bar and a
 semibold weight — never colour-only) and auto-expands the active branch
 plus its ancestors, collapsing auto-opened branches on leave unless the
@@ -60,27 +61,38 @@ import pytest
 from playwright.sync_api import expect
 
 import test_giscus_comments
+import test_asset_budget
 import test_post_only_js
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = REPO_ROOT / "assets" / "js" / "toc-spy.js"
+SPY = REPO_ROOT / "assets" / "js" / "toc-spy.js"
+SHEET = REPO_ROOT / "assets" / "js" / "toc-sheet.js"
+DRAG = REPO_ROOT / "assets" / "js" / "toc-fab-drag.js"
+MODULES = (SPY, SHEET, DRAG)
 TOC_SCSS = REPO_ROOT / "_sass" / "minima" / "custom" / "_toc.scss"
 LAYOUT_SCSS = REPO_ROOT / "_sass" / "minima" / "_layout.scss"
 POST_LAYOUT = REPO_ROOT / "_layouts" / "post.html"
 SUB_FOOTER = test_post_only_js.SUB_FOOTER
 
-SCRIPT_PATH = "/assets/js/toc-spy.js"
-# The scroll-spy ships on post pages only (#345): keep it small. Nested
-# disclosure grew the script from ~5KB (flat highlight only) to ~8.6KB;
-# the phone FAB + sheet + article-range ring (#383) reuses the same
-# observer and rAF tick and grows it to ~14KB; the review follow-up keeps
-# `role="dialog"` with a real Tab trap plus background `inert`/`aria-hidden`
-# (~17.5KB); the pointer-close ring suppression (#400) tracks the last
-# input modality so pointer closes mark the button instead of leaving a
-# stuck accent ring (~19KB); the draggable-FAB experiment (#401) adds
-# pointer-drag with edge snapping, tap-vs-drag disambiguation and edge
-# persistence (~23KB).
-MAX_SCRIPT_BYTES = 24 * 1024
+SPY_PATH = "/assets/js/toc-spy.js"
+SHEET_PATH = "/assets/js/toc-sheet.js"
+DRAG_PATH = "/assets/js/toc-fab-drag.js"
+TOC_MODULE_PATHS = (SPY_PATH, SHEET_PATH, DRAG_PATH)
+# One module per concern, each small enough that no single post script
+# dominates the post budget the way the 24KB monolith did (#417): the
+# scroll-spy core (~10KB), the phone FAB + sheet + ring + focus model
+# (~10.5KB, #383/#400), and the FAB drag gesture (~5KB, #401). Caps sit
+# ~15% above the measured split so a small intentional addition fits but
+# regrowing a monolith trips the guard.
+MAX_MODULE_BYTES = {
+    "toc-spy.js": 12 * 1024,
+    "toc-sheet.js": 12 * 1024,
+    "toc-fab-drag.js": 6 * 1024,
+}
+# Combined, the split must cost barely more than the monolith it
+# replaces: the only intentional addition is the `window.TocSpy` contract
+# between the modules (~1KB, #417).
+MAX_TOC_MODULES_BYTES = 27 * 1024
 
 EN_LONG_POST = "/2022/12/25/explaining-the-internet.html"
 VI_LONG_POST = "/vi/2022/12/25/gioi-thieu-ve-internet.html"
@@ -95,25 +107,44 @@ def _read(path):
 
 
 @pytest.mark.static
-def test_the_spy_script_exists_and_stays_vanilla():
-    assert SCRIPT.is_file(), f"{SCRIPT.relative_to(REPO_ROOT)} is missing"
-    text = _read(SCRIPT)
-    assert len(text.encode("utf-8")) <= MAX_SCRIPT_BYTES, (
-        "the ToC scroll-spy ships on post pages only: keep it under "
-        f"{MAX_SCRIPT_BYTES} bytes (#345)"
+def test_the_spy_modules_exist_and_stay_vanilla():
+    for module in MODULES:
+        assert module.is_file(), f"{module.relative_to(REPO_ROOT)} is missing"
+        text = _read(module)
+        assert len(text.encode("utf-8")) <= MAX_MODULE_BYTES[module.name], (
+            f"{module.name} must stay under "
+            f"{MAX_MODULE_BYTES[module.name]} bytes (#417)"
+        )
+        assert "import " not in text and "require(" not in text, (
+            f"{module.name} must not depend on anything (#345, #417)"
+        )
+        assert "SiteUtils.onReady" in text, (
+            f"{module.name} must run through the shared DOM-ready helper "
+            "after site-utils.js (#246, #345, #417)"
+        )
+
+
+@pytest.mark.static
+def test_no_single_toc_module_dominates_the_post_budget():
+    """The split must hold: small focused modules, cheap together (#417)."""
+    sizes = {m.name: len(_read(m).encode("utf-8")) for m in MODULES}
+    assert sum(sizes.values()) <= MAX_TOC_MODULES_BYTES, (
+        f"the ToC modules weigh {sum(sizes.values())} bytes together, over "
+        f"{MAX_TOC_MODULES_BYTES}: the split must cost barely more than "
+        "the monolith it replaces (#417)"
     )
-    assert "import " not in text and "require(" not in text, (
-        "the scroll-spy must not depend on anything (#345)"
-    )
-    assert "SiteUtils.onReady" in text, (
-        "the scroll-spy must run through the shared DOM-ready helper "
-        "after site-utils.js (#246, #345)"
-    )
+    ceiling = test_asset_budget.EXPECTED_BUDGET["MAX_JS_POST_BYTES"]
+    for name, size in sizes.items():
+        assert size <= ceiling // 4, (
+            f"{name} is {size} bytes, over a quarter of the post budget "
+            f"({ceiling}): no single shipped JS file may dominate it the "
+            "way toc-spy.js did (#417)"
+        )
 
 
 @pytest.mark.static
 def test_the_spy_observes_headings_with_a_passive_scroll_fallback():
-    text = _read(SCRIPT)
+    text = _read(SPY)
     assert "IntersectionObserver" in text, (
         "the scroll-spy must observe headings instead of polling (#345)"
     )
@@ -127,7 +158,7 @@ def test_the_spy_observes_headings_with_a_passive_scroll_fallback():
 
 @pytest.mark.static
 def test_the_spy_derives_its_offset_from_the_measured_header():
-    text = _read(SCRIPT)
+    text = _read(SPY)
     assert "getBoundingClientRect().height" in text, (
         "the scroll-spy offset must derive from the measured header "
         "height when the header is sticky/fixed (#345)"
@@ -151,7 +182,7 @@ def test_the_spy_derives_its_offset_from_the_measured_header():
 
 @pytest.mark.static
 def test_the_spy_marks_one_row_per_mount_with_aria_current():
-    text = _read(SCRIPT)
+    text = _read(SPY)
     assert 'aria-current", "location"' in text or (
         "'aria-current', 'location'" in text
     ), 'the active row must use aria-current="location" (#345)'
@@ -164,25 +195,78 @@ def test_the_spy_marks_one_row_per_mount_with_aria_current():
 
 
 @pytest.mark.static
-def test_the_spy_collapses_branches_and_hides_the_phone_inline_for_the_fab():
-    text = _read(SCRIPT)
+def test_the_spy_collapses_branches_without_moving_the_page_or_focus():
+    """Core owns collapsing; marking and auto-expansion never move focus."""
+    text = _read(SPY)
     # Strip the header comment: the assertions below pin runtime behaviour,
     # while the comment is allowed to narrate the design.
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
-    # Collapsing is per-branch runtime state: the script hides children
-    # lists and flips their toggles (#345). On phone layouts the INLINE
-    # copy goes away entirely (#383: the open list fills most of the first
-    # viewport): the script flags `html.toc-fab-on` (a JS-only class, so
-    # no-JS readers keep the inline collapsed ToC from #382), moves that
-    # mount's nav node into the sheet slot — the same nodes, so the spy
-    # keeps marking them with the same observer and tick — and reveals the
-    # floating button. The desktop copy stays open.
+    # Collapsing is per-branch runtime state: the core hides children
+    # lists and flips their toggles (#345).
     assert ".post-toc__toggle" in code, (
         "collapsing must drive the per-branch disclosure toggles (#345)"
     )
     assert ".hidden" in code or "hidden =" in code, (
         "collapsed branches must hide their children list (#345)"
     )
+    # The default anchor jump is instant; nothing animated is ever added
+    # here, so prefers-reduced-motion needs no handling in this module.
+    for module in MODULES:
+        module_code = re.sub(r"/\*.*?\*/", "", _read(module), flags=re.S)
+        assert "smooth" not in module_code, (
+            f"{module.name} must not animate scrolling "
+            "(reduced motion, #345, #417)"
+        )
+        # The page itself never moves: no viewport-scrolling calls in any
+        # module. The one exception is the core's sheet-panel nudge of the
+        # moved nav's own `scrollTop` (#377, #383).
+        assert "scrollIntoView" not in module_code, (
+            f"{module.name} must never scroll anything into view "
+            "(#345, #417)"
+        )
+        assert re.search(r"scrollTo\s*\(", module_code) is None, (
+            f"{module.name} must never move the viewport itself (#345, #417)"
+        )
+        # Keyboard stays native: real buttons toggle on Enter/Space and
+        # links stay plain anchors.
+        assert "tabindex" not in module_code.lower(), (
+            f"{module.name} must leave the ToC tab order alone (#345, #417)"
+        )
+        assert "tabIndex" not in module_code, (
+            f"{module.name} must leave the ToC tab order alone (#345, #417)"
+        )
+    assert "nav.scrollTop" in code, (
+        "the active row must be kept inside the sheet via the moved nav's "
+        "own scrollTop (#383)"
+    )
+    # Marking and auto-expansion never move focus: only the sheet open/close
+    # handoff may (owned by toc-sheet.js, #383).
+    for name in (
+        "function mark(",
+        "function syncBranches(",
+        "function apply(",
+    ):
+        start = code.index(name)
+        nxt = code.find("\n    function ", start + 1)
+        body = code[start:nxt if nxt != -1 else len(code)]
+        assert ".focus(" not in body, (
+            f"{name} must never move focus: only the sheet open/close "
+            "handoff may (#345, #383, #417)"
+        )
+
+
+@pytest.mark.static
+def test_the_sheet_takes_over_the_phone_inline_mount():
+    """Sheet owns the phone handoff: class flag, node move, reveal (#383)."""
+    text = _read(SHEET)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    # On phone layouts the INLINE copy goes away entirely (#383: the open
+    # list fills most of the first viewport): the sheet flags
+    # `html.toc-fab-on` (a JS-only class, so no-JS readers keep the inline
+    # collapsed ToC from #382), moves that mount's nav node into the sheet
+    # slot — the same nodes, so the spy keeps marking them with the same
+    # observer and tick — and reveals the floating button. The desktop copy
+    # stays open.
     assert ".post-toc-mount--inline" in code, (
         "only the inline (phone) copy may give way to the button (#383)"
     )
@@ -197,32 +281,6 @@ def test_the_spy_collapses_branches_and_hides_the_phone_inline_for_the_fab():
     assert "getComputedStyle" in code and "=== 'none'" in code, (
         "the phone handoff must key off the visible mount, not a "
         "hardcoded breakpoint (#377, #383)"
-    )
-    # The default anchor jump is instant; nothing animated is ever added
-    # here, so prefers-reduced-motion needs no handling in this script
-    # (the ring transition is pinned in CSS instead, #383).
-    assert "smooth" not in code, (
-        "the scroll-spy must not animate scrolling (reduced motion, #345)"
-    )
-    # The page itself never moves: no viewport-scrolling calls. The one
-    # exception is the sheet panel, which nudges its own moved nav's
-    # `scrollTop` so the active row stays inside it (#377, #383).
-    assert "scrollIntoView" not in code, (
-        "the scroll-spy must never scroll anything into view (#345)"
-    )
-    assert re.search(r"scrollTo\s*\(", code) is None, (
-        "the scroll-spy must never move the viewport itself (#345)"
-    )
-    assert "nav.scrollTop" in code, (
-        "the active row must be kept inside the sheet via the moved nav's "
-        "own scrollTop (#383)"
-    )
-    # Keyboard stays native: real buttons toggle on Enter/Space and links
-    # stay plain anchors. Focus moves only across the open/close handoff
-    # and inside the sheet Tab trap (first-to-last wrap, #383 review);
-    # marking and auto-expansion never move focus.
-    assert "tabindex" not in code.lower() and "tabIndex" not in code, (
-        "the scroll-spy must leave the ToC tab order alone (#345)"
     )
     assert ".focus()" in code, (
         "the sheet open/close handoff must move focus (#383)"
@@ -242,25 +300,25 @@ def test_the_spy_collapses_branches_and_hides_the_phone_inline_for_the_fab():
         "focus tracking must not sniff the active element outside the "
         "sheet Tab trap (#383)"
     )
-    for name in (
-        "function mark(",
-        "function syncBranches(",
-        "function apply(",
-        "function fabProgress(",
-    ):
-        start = code.index(name)
-        nxt = code.find("\n    function ", start + 1)
-        body = code[start:nxt if nxt != -1 else len(code)]
-        assert ".focus(" not in body, (
-            f"{name} must never move focus: only the sheet open/close "
-            "handoff may (#345, #383)"
+    for module in (SPY, DRAG):
+        other = re.sub(r"/\*.*?\*/", "", _read(module), flags=re.S)
+        assert "activeElement" not in other, (
+            f"{module.name} must not sniff the focused element: only the "
+            "sheet Tab trap may (#383, #417)"
         )
+    start = code.index("function fabProgress(")
+    nxt = code.find("\n    function ", start + 1)
+    body = code[start:nxt if nxt != -1 else len(code)]
+    assert ".focus(" not in body, (
+        "function fabProgress( must never move focus: only the sheet "
+        "open/close handoff may (#345, #383, #417)"
+    )
 
 
 @pytest.mark.static
 def test_the_fab_ring_tracks_the_article_range_not_the_document():
     """Progress reads 0% above the body and 100% at its end (#383)."""
-    text = _read(SCRIPT)
+    text = _read(SHEET)
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     assert ".post-content" in code, (
         "the ring must range over the article body, not the document (#383)"
@@ -297,12 +355,16 @@ def test_the_fab_ring_tracks_the_article_range_not_the_document():
 @pytest.mark.static
 def test_the_spy_keeps_a_single_observer_with_a_passive_schedule():
     """The sheet reuses the one observer and tick: no second cost (#383)."""
-    text = _read(SCRIPT)
-    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
-    assert code.count("new IntersectionObserver") == 1, (
-        "exactly one observer may watch the headings: the sheet reuses it "
-        "(#383)"
+    combined = "".join(
+        re.sub(r"/\*.*?\*/", "", _read(module), flags=re.S)
+        for module in MODULES
     )
+    assert combined.count("new IntersectionObserver") == 1, (
+        "exactly one observer may watch the headings across all ToC "
+        "modules: the sheet reuses it (#383, #417)"
+    )
+    text = _read(SHEET)
+    code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     assert "data-toc-slot" in code, (
         "the sheet must take the moved inline nav, never a second list "
         "(#383)"
@@ -312,7 +374,7 @@ def test_the_spy_keeps_a_single_observer_with_a_passive_schedule():
 @pytest.mark.static
 def test_the_sheet_handoff_is_keyboard_and_pointer_complete():
     """Button, Esc, backdrop and close button; expanded state exposed."""
-    text = _read(SCRIPT)
+    text = _read(SHEET)
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     assert "aria-expanded" in code, (
         "the button must expose the sheet state (#383)"
@@ -334,7 +396,7 @@ def test_the_sheet_handoff_is_keyboard_and_pointer_complete():
 @pytest.mark.static
 def test_the_sheet_traps_tab_and_inerts_the_background():
     """`aria-modal` means it: Tab wraps inside, background goes inert."""
-    text = _read(SCRIPT)
+    text = _read(SHEET)
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     assert "function trapTab(" in code, (
         "the sheet must trap Tab while open (#383)"
@@ -495,7 +557,7 @@ def test_the_fab_pointer_close_marks_the_button_by_modality():
     the keyboard accent rule only while the mark is present; the next
     keydown drops the mark so keyboard users keep their ring.
     """
-    text = _read(SCRIPT)
+    text = _read(SHEET)
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     assert "pointerdown" in code, (
         "pointer closes must be detected from real input events (#400)"
@@ -533,7 +595,7 @@ def test_the_fab_drag_uses_a_named_threshold_and_persists_the_edge():
     and a silent fallback when storage is unavailable; release and
     cancellation both end the drag, and a drag swallows its click so it
     never opens the sheet."""
-    text = _read(SCRIPT)
+    text = _read(DRAG)
     code = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     match = re.search(r"var FAB_DRAG_THRESHOLD_PX\s*=\s*(\d+)", code)
     assert match, (
@@ -625,7 +687,7 @@ def test_the_fab_drag_styles_snap_with_safe_area():
 
 @pytest.mark.static
 def test_the_spy_pins_manual_branches_against_auto_collapse():
-    text = _read(SCRIPT)
+    text = _read(SPY)
     assert "data-manual" in text, (
         "an explicit toggle must pin its branch until the next explicit "
         "toggle, so auto-collapse leaves it alone (#345)"
@@ -636,21 +698,33 @@ def test_the_spy_pins_manual_branches_against_auto_collapse():
 
 
 @pytest.mark.static
-def test_the_spy_script_is_gated_to_post_pages():
-    """The tag lives in the post-layout conditional with its token (#345)."""
+def test_the_spy_modules_are_gated_to_post_pages_in_dependency_order():
+    """The tags live in the post-layout conditional with their token (#417).
+
+    Deferred scripts run in document order: the core first (it publishes
+    `window.TocSpy`), then the sheet (it registers on that contract), then
+    the drag (it consumes the sheet registration) — all after the shared
+    helper and the other post-only scripts.
+    """
     html = _read(SUB_FOOTER)
     gate = re.search(r"\{%-?\s*if page\.layout == 'post'\s*-?%\}", html)
     assert gate, "the post-layout gate in sub-footer.html is gone (#345)"
     gated = html[gate.end():html.index("endif", gate.end())]
-    assert f"{SCRIPT_PATH}?v=" in gated, (
-        "the toc-spy script tag must live inside the post-layout "
-        "conditional (#345)"
+    positions = [gated.index(f"{path}?v=") for path in TOC_MODULE_PATHS]
+    for path in TOC_MODULE_PATHS:
+        assert f"{path}?v=" in gated, (
+            f"the {path.rsplit('/', 1)[-1]} script tag must live inside the "
+            "post-layout conditional (#345, #417)"
+        )
+    assert positions == sorted(positions), (
+        "ToC module order must stay core, sheet, drag: deferred scripts "
+        "run in document order (#417)"
     )
-    assert gated.index("/assets/js/reading-progress.js?v=") < gated.index(
-        f"{SCRIPT_PATH}?v="
-    ), "toc-spy must load after reading-progress in document order (#345)"
+    assert gated.index("/assets/js/reading-progress.js?v=") < positions[0], (
+        "toc-spy must load after reading-progress in document order (#345)"
+    )
     assert html.index("/assets/js/site-utils.js?v=") < html.index(
-        f"{SCRIPT_PATH}?v="
+        f"{SPY_PATH}?v="
     ), "toc-spy must load after the shared helper (#246, #345)"
 
 
@@ -894,7 +968,8 @@ def _harness_source(scratch):
     )
     js_dir = scratch / "js"
     js_dir.mkdir()
-    for name in ("site-utils.js", "toc-spy.js"):
+    for name in ("site-utils.js", "toc-spy.js", "toc-sheet.js",
+                 "toc-fab-drag.js"):
         shutil.copy(REPO_ROOT / "assets" / "js" / name, js_dir / name)
     sample = "".join(
         f'<{level} id="{hid}">{title}</{level}>'
@@ -915,7 +990,9 @@ def _harness_source(scratch):
         'mount="inline" -%}\n'
         '<main class="post-content">' + body + "</main>\n"
         '<script src="js/site-utils.js" defer></script>\n'
-        '<script src="js/toc-spy.js" defer></script>\n',
+        '<script src="js/toc-spy.js" defer></script>\n'
+        '<script src="js/toc-sheet.js" defer></script>\n'
+        '<script src="js/toc-fab-drag.js" defer></script>\n',
         encoding="utf-8",
     )
 
@@ -1042,7 +1119,7 @@ def test_long_posts_render_both_mounts_expanded(built_site, rel, label):
         '<details class="post-toc" open>', ""
     ), f"{rel}: no collapsed ToC copy may remain (#345)"
     # The static markup never hides anything: collapsing is runtime state
-    # owned by toc-spy.js (no-JS contract).
+    # owned by the ToC modules (no-JS contract, #345, #417).
     for mount in re.findall(
         r'<nav class="post-toc__nav"[^>]*>.*?</nav>', html, re.S
     ):

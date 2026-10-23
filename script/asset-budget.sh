@@ -13,7 +13,8 @@
 #   - PAGE  (home, tag, about, resume): the scripts every page needs.
 #   - POST  (post, production worst case): the page scripts + the post-only
 #     scripts (#253: share.js, reading-progress.js, plus #318: copy-code.js,
-#     lightbox.js, plus #345: toc-spy.js) + the comments sync script
+#     lightbox.js, plus #345/#417: the toc-spy.js core, toc-sheet.js and
+#     toc-fab-drag.js modules) + the comments sync script
 #     (assets/js/giscus-theme.js, rendered only in production builds
 #     where comments are enabled).
 #   - CSS: the main compiled assets/css/style.css, identical for every
@@ -46,6 +47,13 @@
 # draggable-FAB experiment (pointer drag with edge snapping, tap-vs-drag
 # disambiguation, edge persistence, and the native-drag guard), ~5.1KB of
 # intentional addition, so the post ceiling moves 49664 -> 59904.
+# Re-measured 2026-10-23 for #417 (dev build): post-source total
+# ~55.3KB (13 files) — the 24.3KB toc-spy.js monolith splits into
+# toc-spy.js (core scroll-spy, ~10.1KB) + toc-sheet.js (phone FAB + sheet
+# + ring + focus, ~10.6KB) + toc-fab-drag.js (drag gesture, ~4.9KB) with
+# identical behaviour and no new runtime requests; the `window.TocSpy`
+# contract between the modules costs ~1.1KB. No ceiling moves: the split
+# exists to restore budget headroom, so a bump here would defeat it.
 #
 # Headroom policy: each ceiling sits ~10% above its measured total — wide
 # enough for a small intentional addition, tight enough that re-adding any

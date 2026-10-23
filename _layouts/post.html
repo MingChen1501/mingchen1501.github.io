@@ -256,8 +256,9 @@ layout: base
     posts with a ToC. Both controls ship with the `hidden` attribute, so
     readers without JS never see a dead button or an empty sheet — the
     inline collapsed ToC from #382 stays their usable fallback. When JS
-    runs, `assets/js/toc-spy.js` (same post-only script, no second
-    observer) hides the inline mount via `html.toc-fab-on`, moves its nav
+    runs, `assets/js/toc-spy.js` (same post-only scripts — core, sheet and
+    drag, one observer, no second subscription) hides the inline mount via
+    `html.toc-fab-on`, moves its nav
     into the sheet slot, reveals the button, and drives the decorative
     progress ring from the article's own scrollable range. Desktop keeps
     the sidebar ToC untouched. Labels follow `post_lang` like the rest of
