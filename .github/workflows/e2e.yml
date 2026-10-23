@@ -215,17 +215,40 @@ jobs:
             exit 0
           fi
           echo "Smoke launch failed for ${{ matrix.browser }}; installing OS dependencies (bounded retry)..."
+          wait_for_apt_lock() {
+            # Fresh runners often boot with unattended-upgrades holding
+            # dpkg's lock (dispatch 39900668031: PID 3485). Wait capped
+            # ~5 min instead of failing instantly, logging the holder each
+            # round so the next red is classifiable as lock contention
+            # rather than a mirror stall.
+            for i in $(seq 1 60); do
+              holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
+              if [ -z "$holder" ]; then
+                if [ "$i" != "1" ]; then
+                  echo "dpkg lock free after ~$(((i - 1) * 5))s of waiting."
+                fi
+                return 0
+              fi
+              echo "dpkg lock held (wait $i/60), PID(s): $holder"
+              for pid in $holder; do
+                ps -p "$pid" -o pid,etime,cmd 2>/dev/null || echo "(PID $pid already exited)"
+              done
+              sleep 5
+            done
+            echo "WARNING: dpkg lock still held after ~5 min; proceeding anyway and letting the attempt speak (see #421)."
+          }
+          wait_for_apt_lock
           deps_ok=0
           for attempt in 1 2; do
+            echo "Dependency install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
+            start=$SECONDS
             if timeout 6m python -m playwright install-deps ${{ matrix.browser }}; then
+              echo "Dependency install attempt $attempt succeeded in $((SECONDS - start))s."
               deps_ok=1
               break
             fi
-            echo "Dependency install attempt $attempt failed or timed out; retrying once..."
-            for _ in $(seq 1 24); do
-              sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
-              sleep 5
-            done
+            echo "Dependency install attempt $attempt failed after $((SECONDS - start))s; retrying once..."
+            wait_for_apt_lock
           done
           if [ "$deps_ok" != "1" ]; then
             echo "Browser dependency install failed twice; failing fast (see #421)."
@@ -240,27 +263,49 @@ jobs:
           exit 1
       - name: Install Playwright browser with deps (${{ matrix.browser }})
         # Cache miss only (#421): full install including OS deps. Each
-        # attempt is capped at 6 min; one retry absorbs a transient mirror
-        # stall, then the job fails fast with evidence instead of hanging
-        # 10-40 min. Before retrying, wait out any dpkg lock left by the
-        # timed-out attempt's orphaned apt-get (capped, so this cannot hang
-        # the step itself).
+        # attempt is capped at 6 min and timestamped so a red is
+        # classifiable as mirror stall (~360s) vs lock contention
+        # (seconds, exit 100); one retry absorbs a transient stall, then
+        # the job fails fast with evidence instead of hanging 10-40 min.
+        # The dpkg lock is awaited (capped ~5 min, holder logged) before
+        # the first attempt — fresh runners boot with
+        # unattended-upgrades — and again between attempts for a lock
+        # left by a timed-out attempt's orphaned apt-get.
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         timeout-minutes: 15
         run: |
-          for attempt in 1 2; do
-            if timeout 6m python -m playwright install --with-deps ${{ matrix.browser }}; then
-              exit 0
-            fi
-            echo "Browser install attempt $attempt failed or timed out; retrying once..."
-            for _ in $(seq 1 24); do
-              sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
+          wait_for_apt_lock() {
+            for i in $(seq 1 60); do
+              holder=$(sudo fuser /var/lib/dpkg/lock-frontend 2>/dev/null || true)
+              if [ -z "$holder" ]; then
+                if [ "$i" != "1" ]; then
+                  echo "dpkg lock free after ~$(((i - 1) * 5))s of waiting."
+                fi
+                return 0
+              fi
+              echo "dpkg lock held (wait $i/60), PID(s): $holder"
+              for pid in $holder; do
+                ps -p "$pid" -o pid,etime,cmd 2>/dev/null || echo "(PID $pid already exited)"
+              done
               sleep 5
             done
+            echo "WARNING: dpkg lock still held after ~5 min; proceeding anyway and letting the attempt speak (see #421)."
+          }
+          wait_for_apt_lock
+          for attempt in 1 2; do
+            echo "Browser install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
+            start=$SECONDS
+            if timeout 6m python -m playwright install --with-deps ${{ matrix.browser }}; then
+              echo "Browser install attempt $attempt succeeded in $((SECONDS - start))s."
+              exit 0
+            fi
+            echo "Browser install attempt $attempt failed after $((SECONDS - start))s; retrying once..."
+            wait_for_apt_lock
           done
           echo "Browser install failed twice; failing fast (see #421)."
           exit 1
       - name: Run browser E2E, layout overflow and tag-chip guards
+        id: pytest
         env:
           E2E_BROWSER: ${{ matrix.browser }}
           # Shared build from the build-site job (#320): the suite serves
@@ -308,7 +353,11 @@ jobs:
         with:
           name: visual-fresh-${{ matrix.browser }}
           path: tests/e2e/visual/fresh/
-          if-no-files-found: error
+          # Warn — not error — when the suite never ran (install failed
+          # first, so the pytest step was skipped and no captures can
+          # exist); the job is already red for the real cause. Error only
+          # when tests really ran and failed without captures (#421).
+          if-no-files-found: ${{ steps.pytest.outcome == 'skipped' && 'warn' || 'error' }}
 
   # Desktop pass (#273): unchanged thresholds (performance warn-only at
   # 0.85, accessibility/best-practices/SEO error at 0.90) served from the

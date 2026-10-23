@@ -59,6 +59,27 @@ def test_cache_hit_step_smoke_gates_install_deps():
     assert "--with-deps" not in run
 
 
+def test_install_steps_await_dpkg_lock_before_first_attempt():
+    # Fresh runners boot with unattended-upgrades holding dpkg's lock
+    # (dispatch 39900668031): both install steps await the lock (holder
+    # logged via ps) before the first attempt, not only between retries.
+    for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
+        run = _step(prefix)["run"]
+        assert "wait_for_apt_lock" in run
+        assert run.index("wait_for_apt_lock() {") < run.index("for attempt in 1 2")
+        assert "fuser /var/lib/dpkg/lock-frontend" in run
+        assert "ps -p" in run
+
+
+def test_install_attempts_are_timestamped():
+    # Attempt start/end timestamps separate mirror stalls (~360s) from
+    # lock contention (seconds, exit 100) in the next red log.
+    for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
+        run = _step(prefix)["run"]
+        assert "starting at $(date -u" in run
+        assert "SECONDS - start" in run
+
+
 def test_cache_miss_step_uses_bounded_with_deps():
     step = _step("Install Playwright browser with deps (")
     assert step.get("if") == "steps.playwright-cache.outputs.cache-hit != 'true'"
@@ -70,6 +91,19 @@ def test_cache_miss_step_uses_bounded_with_deps():
 def test_pytest_log_upload_warns_when_suite_never_ran():
     step = _step("Upload pytest log (")
     assert step["with"]["if-no-files-found"] == "warn"
+
+
+def test_pytest_run_step_has_id_for_outcome_checks():
+    assert _step("Run browser E2E,")["id"] == "pytest"
+
+
+def test_visual_captures_warn_only_when_suite_never_ran():
+    # Missing captures warn when install failed first (pytest skipped —
+    # the job is already red for the real cause) and error only when
+    # tests really ran and failed without captures.
+    value = _step("Upload fresh visual captures (")["with"]["if-no-files-found"]
+    assert "steps.pytest.outcome" in value
+    assert "'warn'" in value and "'error'" in value
 
 
 def test_summary_pins_head_sha():

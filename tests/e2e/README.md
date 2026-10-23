@@ -635,7 +635,12 @@ without a `bundle` executable they skip themselves with an explicit reason.
   fast) with a 25-min job backstop. Pinned by
   `tests/e2e/test_browser_install_smoke.py` (static). On failure the job summary
   names the failing specs with the head SHA, and the pytest log (when
-  the suite ran) plus fresh visual captures upload as artifacts;
+  the suite ran) plus fresh visual captures upload as artifacts
+  (`warn`, not `error`, when the suite never ran because install failed
+  first — the job is already red for the real cause); attempts are
+  timestamped and the dpkg lock is awaited (holder logged) before the
+  first attempt and between retries, so a red reads as mirror stall
+  (~360 s attempts) vs lock contention (seconds, exit 100);
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
   emulation, `numberOfRuns: 3` with median assertion) — both served from
