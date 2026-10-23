@@ -179,6 +179,13 @@ restate the list here — link it. Summary for orchestration use only.
 - **Self-check.** Footer before creating any issue/PR/review/comment;
   `<role> <target>` before spawning; confirm the `Role:` line in the PR
   body before merging.
+- **Merge self-check.** Before merging, confirm the gate: `risk-low` =>
+  green CI + one different-role APPROVE, then merge and report
+  completion only (never ask the owner — zero owner gates, not even a
+  report-for-approval step); `risk-medium` => merge, then inform the
+  owner via the normal report flow (no explicit approval needed);
+  `risk-high` / `risk-very-high` / missing label => explicit owner
+  approval first.
 
 ## Model separation and rate-limit rotation (#76)
 
@@ -239,6 +246,10 @@ not a guarantee of provider behaviour.
 - Merge gate: a reviewer COMMENT verdict of **APPROVE** (not a GitHub
   approval) + green CI + risk-low/risk-medium => the orchestrator
   merges autonomously (squash merge, delete branch) and reports.
+  `risk-low` carries zero owner gates — not even a report-for-approval
+  step; the orchestrator reports completion only, never asks.
+  `risk-medium` keeps the same autonomous merge; the owner is informed
+  via the normal report flow, no explicit approval needed.
   `risk-high`, `risk-very-high`, or a missing label => explicit owner
   approval required before merging.
 - Review happens **after the PR is up**, never before. Never review a
@@ -254,8 +265,12 @@ not a guarantee of provider behaviour.
 - Merge only when CI is green.
 - Stacked PRs keep their base branch alive until the child merges; do not delete
   a base branch that a child PR still targets.
-- risk-low / risk-medium: merge autonomously once CI green + review APPROVE,
-  then report.
+- risk-low: team decides and merges autonomously once CI green + one
+  different-role review APPROVE, then reports completion only — no
+  owner gate of any kind, never asks for approval.
+- risk-medium: merge autonomously once CI green + review APPROVE, then
+  report; the owner is informed via the normal report flow, no explicit
+  approval needed.
 - risk-high / risk-very-high / missing label: explicit owner approval required
   before merging.
 
@@ -264,6 +279,8 @@ not a guarantee of provider behaviour.
 - Every issue and PR carries exactly one of `risk-low`, `risk-medium`,
   `risk-high`, `risk-very-high`.
 - risk-low (green): no reader-visible behaviour change, nothing irreversible.
+  The team decides and merges on green CI + one different-role APPROVE
+  with no owner gate.
 - risk-medium (amber): reader-visible change, reversible and guarded.
 - risk-high (red): can break published URLs/SEO/content, weaken guards, change
   how assets are served/cached, or needs manual owner action.
