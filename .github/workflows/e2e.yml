@@ -206,6 +206,29 @@ jobs:
       - name: Resolve Playwright version
         id: playwright
         run: echo "version=$(python -m pip show playwright | awk '/^Version:/ {print $2}')" >> "$GITHUB_OUTPUT"
+      - name: Prepare apt package cache dir (#421)
+        # actions/cache restores as the runner user, but apt writes
+        # root-owned files here — take ownership first so restore and
+        # the post-job save work without sudo.
+        run: |
+          sudo mkdir -p /var/cache/apt/archives/partial
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/apt/archives
+      - name: Cache apt packages (#421)
+        # Design pivot (run 39904461383): webkit needs a measured 117 MB
+        # of system debs and the mirror trickles — retrying a 100 MB+
+        # download every job cannot win. Cache the .debs keyed per engine
+        # + Playwright version (restore-keys span version bumps, debs
+        # barely change); a cache miss falls back to the old mirror path
+        # (slow but correct). actions/cache restores here and saves in
+        # its post-step, so even a timed-out slow download banks its
+        # partials for the retry. ~117 MB for webkit, far less for the
+        # other engines — well within the 10 GB repo cache budget.
+        uses: actions/cache@v6
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ matrix.browser }}-${{ steps.playwright.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-apt-${{ matrix.browser }}-
       - name: Cache Playwright browsers
         id: playwright-cache
         uses: actions/cache@v6

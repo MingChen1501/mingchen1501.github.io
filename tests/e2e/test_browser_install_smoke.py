@@ -96,6 +96,26 @@ def test_quiesce_step_disables_periodic_triggers_and_verifies():
     assert "kill -9" not in run
 
 
+def test_apt_package_cache_straddles_install():
+    # The 117 MB webkit system-deb download cannot be retried into
+    # existence on a trickling mirror (run 39904461383): cache the
+    # .debs per engine + Playwright version. The dir must be
+    # runner-owned before restore, and restore must precede install.
+    names = [s.get("name", "") for s in _steps()]
+    prepare_at = names.index("Prepare apt package cache dir (#421)")
+    cache_at = names.index("Cache apt packages (#421)")
+    assert prepare_at < cache_at
+    for prefix in ("Install Playwright browser (", "Install Playwright browser with deps ("):
+        at = next(i for i, n in enumerate(names) if n.startswith(prefix))
+        assert cache_at < at, f"apt cache must restore before {prefix}"
+    assert "chown" in _steps()[prepare_at]["run"]
+    assert "/var/cache/apt/archives" in _steps()[prepare_at]["run"]
+    cache_with = _steps()[cache_at]["with"]
+    assert cache_with["path"] == "/var/cache/apt/archives"
+    assert "matrix.browser" in cache_with["key"]
+    assert "playwright.outputs.version" in cache_with["key"]
+
+
 def test_install_attempts_are_timestamped():
     # Attempt start/end timestamps separate mirror stalls (~360s) from
     # lock contention (seconds, exit 100) in the next red log.

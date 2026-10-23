@@ -646,7 +646,12 @@ without a `bundle` executable they skip themselves with an explicit reason.
   apt); a dead attempt re-stops the periodic workers and TERMs the
   lock holder only after identifying it by full command line as an
   unattended-upgrades worker, never unknown processes — so a red reads
-  as mirror stall (~360 s attempts) vs lock contention;
+  as mirror stall (~360 s attempts) vs lock contention; the 117 MB of
+  webkit system debs (measured) is cached per engine + Playwright
+  version at `/var/cache/apt/archives` (restored before install,
+  saved post-job, so even a timed-out download banks its partials),
+  with the mirror path as the slow-but-correct fallback on cache
+  miss;
 - `Lighthouse CI (desktop)` (`lighthouserc.json`, `preset: desktop`) and
   `Lighthouse CI (mobile)` (`lighthouserc.mobile.json`, default mobile
   emulation, `numberOfRuns: 3` with median assertion) — both served from
