@@ -108,9 +108,9 @@ def test_install_attempts_are_timestamped():
 def test_cache_miss_step_uses_bounded_with_deps():
     step = _step("Install Playwright browser with deps (")
     assert step.get("if") == "steps.playwright-cache.outputs.cache-hit != 'true'"
-    assert step.get("timeout-minutes") == 15
+    assert step.get("timeout-minutes") == 25
     assert "--with-deps" in step["run"]
-    assert "timeout 6m" in step["run"]
+    assert "timeout 10m" in step["run"]
 
 
 def test_pytest_log_upload_warns_when_suite_never_ran():

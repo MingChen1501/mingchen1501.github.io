@@ -229,7 +229,7 @@ jobs:
         # dpkg roll back, unlike kill -9); unknown holders are never
         # touched.
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
           if install_out=$(python -m playwright install ${{ matrix.browser }} 2>&1); then
             echo "$install_out"
@@ -295,7 +295,7 @@ jobs:
           for attempt in 1 2; do
             echo "Dependency install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
             start=$SECONDS
-            if timeout 6m python -m playwright install-deps ${{ matrix.browser }}; then
+            if timeout 10m python -m playwright install-deps ${{ matrix.browser }}; then
               echo "Dependency install attempt $attempt succeeded in $((SECONDS - start))s."
               deps_ok=1
               break
@@ -317,7 +317,8 @@ jobs:
           exit 1
       - name: Install Playwright browser with deps (${{ matrix.browser }})
         # Cache miss only (#421): full install including OS deps. Each
-        # attempt is capped at 6 min and timestamped so a red is
+        # attempt is capped at 10 min (slow-mirror downloads need >6 min
+        # at observed trickle speed; run 39904461383) and timestamped so
         # classifiable as mirror stall (~360s) vs lock contention
         # (seconds, exit 100); one retry absorbs a transient stall, then
         # the job fails fast with evidence instead of hanging 10-40 min.
@@ -326,7 +327,7 @@ jobs:
         # workers and TERMs the holder only if it is a verified
         # unattended-upgrades worker, never unknown processes.
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
           release_apt_lock() {
             # Graceful re-stop in case a periodic trigger fired mid-job,
@@ -367,7 +368,7 @@ jobs:
           for attempt in 1 2; do
             echo "Browser install attempt $attempt starting at $(date -u +%Y-%m-%dT%H:%M:%SZ)..."
             start=$SECONDS
-            if timeout 6m python -m playwright install --with-deps ${{ matrix.browser }}; then
+            if timeout 10m python -m playwright install --with-deps ${{ matrix.browser }}; then
               echo "Browser install attempt $attempt succeeded in $((SECONDS - start))s."
               exit 0
             fi

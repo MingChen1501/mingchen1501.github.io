@@ -631,7 +631,8 @@ without a `bundle` executable they skip themselves with an explicit reason.
   plain `playwright install` (fast no-op) and proves the engine really
   launches with a headless smoke test (`about:blank`, 60 s cap) — only
   a failed smoke triggers `install-deps`, and only a cache miss runs
-  `--with-deps`, bounded (6 min per attempt, one retry, then fail
+  `--with-deps`, bounded (10 min per attempt — slow-mirror downloads
+  need >6 min at observed trickle speed — one retry, then fail
   fast) with a 25-min job backstop. Pinned by
   `tests/e2e/test_browser_install_smoke.py` (static). On failure the job summary
   names the failing specs with the head SHA, and the pytest log (when
