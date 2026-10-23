@@ -5,31 +5,31 @@ touch.
 
 ## Current structure
 
-`_sass/` holds 26 files (~3,200 LOC). Entry points in `assets/css/`:
+`_sass/` holds 27 files (~3,800 LOC, including `_motion.scss` from #402). Entry points in `assets/css/`:
 
 - `style.scss` imports the skin (`minima/skins/{{ site.minima.skin }}`,
   pinned to `auto` in `_config.yml:21`) then `minima/initialize.scss`
   (variables, base, layout, custom-styles hook).
 - `syntax.scss` (#275) imports only `minima/syntax-highlight.scss` plus
   the dark/highlight mixins — the ~12.4KB Rouge token layer, linked from
-  `head.html:99` only on pages whose content contains Rouge output.
+  `head.html:108` only on pages whose content contains Rouge output.
 
 Layers, in cascade order:
 
-1. Upstream minima: `_base.scss` (306 lines), `_layout.scss` (458 lines),
+1. Upstream minima: `_base.scss` (306 lines), `_layout.scss` (492 lines),
    `initialize.scss` (50 lines) — forked, rarely touched.
 2. Skins (`skins/`, 3 files): `auto.scss` (active) builds on `classic` +
    `dark`; `classic.scss` / `dark.scss` re-export `auto`.
-3. Site partials (`custom/`, 17 files including `_variables.scss`): one scope per
+3. Site partials (`custom/`, 18 files including `_variables.scss`): one scope per
    file, imported in fixed order by `custom-styles.scss` (last import
-   wins; `print.scss` at 298 lines is deliberately last). Shared
-   dimensions live in `custom/_variables.scss` (16 lines, #174).
-4. `custom-variables.scss` (1 line, placeholder hook) and
-   `custom-styles.scss` (40 lines, index only).
+   wins; `print.scss` at 321 lines is deliberately last). Shared
+   dimensions live in `custom/_variables.scss` (40 lines, #174).
+4. `custom-variables.scss` (17 lines, placeholder hook) and
+   `custom-styles.scss` (41 lines, index only).
 
-Largest partials: `_print.scss` (298), `_theme-toggle.scss` (228),
-`_lightbox.scss` (182), `_sidebar.scss` (177). Smallest real partials
-(`_utilities.scss` 58, `_legibility.scss` 53, `_post.scss` 43) are
+Largest partials: `_print.scss` (321), `_theme-toggle.scss` (234),
+`_lightbox.scss` (213), `_sidebar.scss` (164). Smallest real partials
+(`_utilities.scss` 71, `_legibility.scss` 53, `_post.scss` 43) are
 single-concern and healthy.
 
 ## Boundaries
@@ -49,9 +49,9 @@ single-concern and healthy.
 
 - Every fixed-URL asset link carries `?v={{ asset_version }}`, assigned
   once in `_includes/asset-version.html` and shared by `head.html`
-  (stylesheets, favicon at `head.html:83,99,101`).
+  (stylesheets, favicon at `head.html:92,108,110`).
 - The `#220` theme toggle couples four places: `head.html` inline
-  bootstrap (~L82), `theme-toggle.js`, `_theme-toggle.scss`, and the
+  bootstrap (~L83), `theme-toggle.js`, `_theme-toggle.scss`, and the
   `minima.skin` setting. Guarded by `test_theme_toggle.py` (536 lines)
   plus the dark-blockquote pin in `test_axe_a11y.py`.
 - `_list-thumbs.scss` + `_includes/post-thumbnail.html` + `script/generate-thumbnails`
@@ -71,7 +71,7 @@ single-concern and healthy.
 
 ## Open questions
 
-- `_print.scss` (298 lines) is the biggest partial — is there print-only
+- `_print.scss` (321 lines) is the biggest partial — is there print-only
   dead weight, or is the size justified?
 - Should `custom-variables.scss` (placeholder) and `custom/_variables.scss`
   (real values) merge into one file?

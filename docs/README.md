@@ -169,6 +169,7 @@ sets, and the gate procedure live in the `spec-gate` skill
 | `architecture/decisions/adr-001-spec-set.md` | ADR: spec set choice |
 | `architecture/decisions/adr-002-external-images.md` | ADR: allowlisted attachment images |
 | `architecture/decisions/adr-003-bilingual-no-plugins.md` | ADR: Liquid-only i18n |
+| `architecture/decisions/adr-004-series-posts.md` | ADR: series posts, language-neutral keys (proposed) |
 | `architecture/decisions/adr-template.md` | ADR template |
 | `architecture/decisions/README.md` | ADR index and conventions |
 | `ao-rules.md` | normative AO role rules |

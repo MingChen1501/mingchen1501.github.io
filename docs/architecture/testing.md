@@ -5,20 +5,22 @@ coverage overlaps.
 
 ## Current structure
 
-- `tests/e2e/`: 65 `test_*.py` files plus `conftest.py`, fixtures, and an
-  `axe-core` vendored helper — 114 files, ~21,000 LOC in `test_*.py`. The
-  largest area of the repo (layouts + includes + SCSS + JS ≈ 6,300 LOC combined).
-  Largest files: `test_sidebar_layout.py` (1,176), `test_giscus_comments.py`
-  (979), `test_toc_spy.py` (906). Largest JS-adjacent coverage now lives in
-  `test_toc_spy.py` (#345 scroll-spy) alongside `test_site_utils.py`; #342
+- `tests/e2e/`: 69 `test_*.py` files plus `conftest.py`, fixtures, and an
+  `axe-core` vendored helper — 118 files, 24,516 lines in `test_*.py`. The
+  largest area of the repo (layouts + includes + SCSS + JS ≈ 7,300 LOC combined).
+  Largest files: `test_toc_spy.py` (2,467), `test_sidebar_layout.py` (1,204),
+  `test_giscus_comments.py` (979). Largest JS-adjacent coverage now lives in
+  `test_toc_spy.py` alongside `test_site_utils.py`; #342
   removed the search page and its 744-line `test_search.py` guard.
-- `script/` (15 files): `check-images` + `image-budget.sh` (500KB/file,
+- `script/` (16 entries): `check-images` + `image-budget.sh` (500KB/file,
   6MB-total image budgets), `check-image-details.py` (naming + dimension
   lint helper), `check-external-images` (allowlisted
-  attachment hosts, #195), `classify-content-only` (#229),
+  attachment hosts, #195), `check-images.allowlist` (attachment-host
+  exceptions), `classify-content-only` (#229),
   `asset-budget.sh` (JS/CSS byte ceilings), `generate-thumbnails` (#226),
   `article-intake`, `cibuild`, `update-visual-baselines`, plus thin
-  `bootstrap`/`build`/`server` wrappers and `ao-role-footer.sh`.
+  `bootstrap`/`build`/`server` wrappers, `ao-role-footer.sh`, and
+  `ao-project-config.sh`.
 - `.github/workflows/` (4 files): `ci.yaml` (Jekyll matrix +
   image guards + `cibuild`), `e2e.yml` (shared content-only
   classifier → static guards → one shared build → browser matrix +
@@ -74,8 +76,8 @@ skill maps each touch area to its guard test.
 
 ## Open questions
 
-- Is ~21,000 LOC of guard for ~6,300 LOC of site past the point of
+- Is ~24,500 LOC of guard for ~7,300 LOC of site past the point of
   diminishing returns, or proportional to the bilingual × theme × page-kind
   matrix? The overlap map (#297) is the evidence base for that call.
 - Should `tests/e2e/README.md` gain a per-file one-line index so the next
-  audit does not re-derive ownership by reading 65 files?
+  audit does not re-derive ownership by reading 69 files?
