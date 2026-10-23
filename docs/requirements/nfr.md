@@ -26,3 +26,8 @@ declared once in `script/` and never redeclared here.
   layout overflow. Guards: `test_internal_link_crawl.py`,
   `test_post_bare_urls.py`, `test_layout_overflow.py`,
   `test_code_table_overflow.py`.
+- NFR-7 Language-preference cookie (#423): a single first-party `lang`
+  cookie (`en`/`vi`, no PII, no tracking); no layout or CLS impact;
+  with JS disabled the switcher keeps current behaviour (counterpart
+  top, no cookie). Guards: `test_lang_switch_fragment.py`,
+  `test_about_privacy.py`.
