@@ -7,6 +7,16 @@ normative on conflicts.
   comments, code comments); Vietnamese only for internal AO reporting.
 - Every artefact signed with its role (`docs/ao-rules.md`).
 - Squash merge only, on green CI; never push directly to `master`.
+- Branch retention: squash merges pass `--delete-branch`, so a merged
+  topic branch disappears from the remote at merge time; a session
+  `ao/*` root goes the same way once its last topic PR merges. If a
+  merged branch survives (merge without delete, direct push), whoever
+  merged deletes it in the same session after verifying it is fully
+  merged (`git branch -r --merged origin/master`, always keeping
+  `master`, `HEAD`, `gh-pages`, and `2.5-stable`). Unmerged branches
+  are never deleted unilaterally — list them in the PR for the owner
+  to decide. Keep local remote-tracking refs honest with
+  `git fetch origin --prune`.
 - Exactly one risk label per issue and PR
   (`risk-low` / `risk-medium` / `risk-high` / `risk-very-high`);
   `risk-high` and above need explicit owner approval.
