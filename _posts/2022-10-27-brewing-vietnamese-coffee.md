@@ -21,14 +21,14 @@ description: "How to brew pure Vietnamese phin coffee at home: add grounds to th
 
 * Pour in water to fill 2/3 of the phin and let it bloom until the water has soaked fully into the grounds.
 
-![Phin blooming with boiling water poured to two thirds](/assets/img/2022-10-27-cach-pha-ca-phe/b3.jpg){: width="899" height="1600" }
+![Phin blooming with boiling water poured to two thirds](/assets/img/2022-10-27-cach-pha-ca-phe/b3.jpg){: width="674" height="1200" }
 
 * Fill the phin to the top with water and wait for it to finish dripping.
 
-![Phin full of boiling water dripping into the cup below](/assets/img/2022-10-27-cach-pha-ca-phe/b4.jpg){: width="899" height="1600" }
+![Phin full of boiling water dripping into the cup below](/assets/img/2022-10-27-cach-pha-ca-phe/b4.jpg){: width="674" height="1200" }
 
 * The result: a cup of pure black coffee — strong enough to keep you wide awake :D :D :D (/≧▽≦)/.
 
-![Cup of freshly brewed black phin coffee beside the filter](/assets/img/2022-10-27-cach-pha-ca-phe/b5.jpg){: width="899" height="1600" }
+![Cup of freshly brewed black phin coffee beside the filter](/assets/img/2022-10-27-cach-pha-ca-phe/b5.jpg){: width="674" height="1200" }
 
 * Add sugar, fresh milk, condensed milk and ice to taste.
