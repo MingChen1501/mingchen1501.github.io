@@ -10,3 +10,7 @@ normal issue + branch + PR flow; this file owns no separate process.
   (EN+VI pair, direct-attachment images).
 - Verify before opening a PR: the `jekyll-verify` skill;
   guard map: `docs/architecture/testing.md`.
+- Branch retention after merge: the rule lives in
+  `development/coding-standards.md` — merged topic and session-root
+  branches are deleted at merge time; unmerged branches are kept for
+  the owner to decide.
