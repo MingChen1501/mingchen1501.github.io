@@ -11,5 +11,4 @@ Status: active. Owns the config/env matrix.
 | `E2E_VISUAL=1` | opts local runs into visual compares (always on in CI) |
 | `full=true` (workflow_dispatch) | forces the full suite on a content-only PR |
 
-Ruby 3.3 in `ci.yaml`/`e2e.yml`; `demo_site.yml` still on Ruby 2.7
-(stale candidate, see `docs/architecture/testing.md`).
+Ruby 3.3 in `ci.yaml`/`e2e.yml`.

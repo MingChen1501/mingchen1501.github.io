@@ -15,6 +15,13 @@ on:
         description: "Force the full E2E + Lighthouse suite (true) or classify the branch diff (false)"
         required: false
         default: "true"
+  # Daily LHCI-on-master signal (#418): Lighthouse never runs on master
+  # pushes by design (gated on `event_name != 'push'` below), so without
+  # this a regression introduced purely by squash/base drift would surface
+  # only at the next PR. The classifier defaults to the full suite on a
+  # schedule event (no diff base), so this runs everything.
+  schedule:
+    - cron: "0 6 * * *"
 
 # Least privilege (#282): read-only by default. Jobs that upload or
 # download workflow artifacts declare their own `actions` scope below.
@@ -190,8 +197,9 @@ jobs:
   # Desktop pass (#273): unchanged thresholds (performance warn-only at
   # 0.85, accessibility/best-practices/SEO error at 0.90) served from the
   # shared build above, so the mobile pass costs no extra build. Runs on
-  # PRs and manual dispatches only (#320): the old standalone Lighthouse
-  # workflow never ran on master pushes.
+  # PRs, manual dispatches, and the daily schedule (#418) -- but never on
+  # master pushes (#320): the old standalone Lighthouse workflow never
+  # ran on master pushes.
   lighthouse-desktop:
     name: "Lighthouse CI (desktop)"
     needs: [classify, build-site]
@@ -243,8 +251,8 @@ jobs:
   # desktop pass), and `/tags/`. `numberOfRuns: 3` damps single-run noise
   # (assert uses the median); performance stays warn-only at 0.85 so mobile
   # noise never blocks a PR, matching desktop. Fixing whatever this flags is
-  # follow-up work -- this job only makes the signal visible. Runs on PRs
-  # and manual dispatches only (see above).
+  # follow-up work -- this job only makes the signal visible. Runs on PRs,
+  # manual dispatches, and the daily schedule (see above).
   lighthouse-mobile:
     name: "Lighthouse CI (mobile)"
     needs: [classify, build-site]
@@ -306,8 +314,9 @@ jobs:
           fi
 
   # Stable aggregator for branch protection (#229): see E2E suite result.
-  # Lighthouse runs on PRs and manual dispatches only (#320), so a master
-  # push or a content-only PR reports success without the LHCI jobs.
+  # Lighthouse runs on PRs, manual dispatches, and the daily schedule
+  # (#320, #418), so a master push or a content-only PR reports success
+  # without the LHCI jobs.
   lighthouse-summary:
     name: "Lighthouse suite result"
     runs-on: "ubuntu-latest"
