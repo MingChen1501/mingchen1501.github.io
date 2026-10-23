@@ -125,6 +125,7 @@ sets, and the gate procedure live in the `spec-gate` skill
 | Type | Path | Status | Purpose |
 |---|---|---|---|
 | Plan | `project/plan.md` | stub (not needed yet) | milestones — issue queue only |
+| Roadmap (phase 2) | `project/roadmap-phase2.md` | active | phase milestones with measurable exit criteria |
 | Risk register | `project/risk-register.md` | active | live risk list |
 | Decision log | `project/decision-log.md` | active | decision list pointing at ADRs |
 | Issue conventions | `project/issue-conventions.md` | active | title+label convention for issues and PRs |
