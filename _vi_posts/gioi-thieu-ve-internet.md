@@ -12,7 +12,7 @@ redirect_from:
   - /2022/12/25/gioi-thieu-ve-internet.html
 ---
 
->Internet là mạng máy tính phổ biến nhất thế giới. Nó bắt đầu như một dự án nghiên cứu học thuật vào năm 1969. Và trở thành một mạng lưới thương mại toàn cầu vào những năm 1990. ![Chân dung Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Ảnh: chân dung chính thức, phạm vi công cộng"){: width="1280" height="1600" }
+>Internet là mạng máy tính phổ biến nhất thế giới. Nó bắt đầu như một dự án nghiên cứu học thuật vào năm 1969. Và trở thành một mạng lưới thương mại toàn cầu vào những năm 1990. ![Chân dung Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Ảnh: chân dung chính thức, phạm vi công cộng"){: width="960" height="1200" }
 
 *Cập nhật tháng 10/2026: các số liệu đã được làm mới; nguồn tham khảo liệt kê ở cuối bài. Bài này phỏng theo bài giải thích của Vox năm 2014 (ghi nguồn bên dưới); những đoạn mô tả bối cảnh năm 2014 được giữ lại như tư liệu lịch sử và ghi rõ như vậy.*
 
@@ -53,7 +53,7 @@ Trong những năm 1980, nguồn tài trợ cho internet đã chuyển từ quâ
 
 Cựu phó tổng thống AI Gore thường được trích dẫn là đã tuyên bố có công trong việc phát minh ra Internet. Nhưng điều ông thực sự đã nói trong một cuộc phỏng vấn của CNN năm 1999 là “Tôi đã chủ động tạo ra Internet.” Gỏe đã bị chế giễu rộng rãi vì tuyên bố này. Những những người đã phát minh ra internet, các nhà thiết kế TCP/IP Bob Kahn và Vint Cè, đã viết để bảo vệ Gỏe vào năm 2000. Họ lập luận rằng Gỏe là “nhà lãnh đạo chính trị đầu tiên nhận ra tầm quan trọng của internet và thúc đẩy cũng như hỗ trợ sự phát triển của nó.”
 <figure class="post-figure">
-<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg" alt="Chân dung Al Gore" width="1280" height="1600">
+<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg" alt="Chân dung Al Gore" width="960" height="1200">
 <figcaption>Ảnh: chân dung chính thức, phạm vi công cộng</figcaption>
 </figure>
 “từ những năm 1970 nghị sĩ Gore đã thúc đẩy ý tưởng về viễn thông tốc độ cao,” cặp đôi này đã viết. “Với tư cách là thượng nghị sĩ vào những năm 1980, Gỏe đã thúc giục các cơ quan chính phủ hợp nhất những gì vào thời điểm đó là hàng chục mạng khác nhau và không được kết nồi thành một ‘mạng liên cơ quan’”. Một trong những phương tiện chính là để phổ biến internet ra ngoài lĩnh vực khoa học máy tính.
@@ -112,7 +112,7 @@ Nếu các bộ định tuyến internet gặp phải tắc nghẽn hoặc các 
 
 World wide web là một cách phổ biến để xuất bản thông tin trên internet. Web được tạo ra bởi Timothy Berners-Lee, một lập trình viên máy tính tại tổ chức nghiên cứu khoa học châu âu CERN, vào năm 1991. Nó cung cấp một giao diện mạnh mẽ và thân thiện với người dùng hơn các ứng dụng internet khác. Web hỗ trợ các siêu liên kết, cho phép người dùng duyệt từ tài liệu này sang tài liệu khác chỉ bằng một cú nhấp.
 <figure class="post-figure">
-<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/tim-berners-lee.jpg" alt="Tim Berners-Lee, cha đẻ của World Wide Web" width="1160" height="1600">
+<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/tim-berners-lee.jpg" alt="Tim Berners-Lee, cha đẻ của World Wide Web" width="870" height="1200">
 <figcaption>Ảnh: Enrique Dans, CC BY 2.0</figcaption>
 </figure>
 Theo thời gian, web càng ngày càng trở nên tinh vi hơn, hỗ trợ hình ảnh, âm thanh, video và nội dung tương tác. Vào giữa những năm 1990, các công ty như Yahoo và Amazon đã bắt đầu xây dựng các hoạt đông kinh doanh có lợi nhuận dựa trên web. Vào những năm 2000, các ứng dụng dựa trên web đầy đủ tính năng như Yahoo Maps và Google Docs đã được tạo ra.

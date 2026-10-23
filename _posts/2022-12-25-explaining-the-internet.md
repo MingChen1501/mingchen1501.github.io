@@ -9,7 +9,7 @@ image: /assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg
 description: "What the Internet is and how it works — the last mile, data centers and the backbone — plus applications like the web and email."
 ---
 
->The Internet is the most popular computer network in the world. It started as an academic research project in 1969 and grew into a global commercial network in the 1990s. ![Portrait of Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Photo: official portrait, public domain"){: width="1280" height="1600" }
+>The Internet is the most popular computer network in the world. It started as an academic research project in 1969 and grew into a global commercial network in the 1990s. ![Portrait of Al Gore](/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg "Photo: official portrait, public domain"){: width="960" height="1200" }
 
 *Updated October 2026: figures refreshed; sources listed at the end. This post adapts a 2014 Vox explainer (credited below); passages describing the 2014 landscape are kept as history and marked as such.*
 
@@ -50,7 +50,7 @@ In the 1980s, funding for the Internet shifted from the military to the National
 
 Former Vice President Al Gore is often quoted as claiming credit for inventing the Internet. But what he actually said in a 1999 CNN interview was "I took the initiative in creating the Internet." Gore was widely mocked for this claim. But the people who invented the Internet — TCP/IP designers Bob Kahn and Vint Cerf — wrote in his defense in 2000. They argued that Gore was "the first political leader to recognize the importance of the Internet and to promote and support its development."
 <figure class="post-figure">
-<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg" alt="Portrait of Al Gore" width="1280" height="1600">
+<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/al-gore.jpg" alt="Portrait of Al Gore" width="960" height="1200">
 <figcaption>Photo: official portrait, public domain</figcaption>
 </figure>
 "As far back as the 1970s Congressman Gore promoted the idea of high-speed telecommunications," the pair wrote. "As a Senator in the 1980s, Gore urged government agencies to consolidate what were then dozens of different and unconnected networks into an 'inter-agency network'." One of the main vehicles was to spread the Internet beyond the field of computer science.
@@ -109,7 +109,7 @@ If Internet routers run into congestion or other technical problems, they are al
 
 The World Wide Web is a popular way to publish information on the Internet. The web was created by Timothy Berners-Lee, a computer programmer at the European scientific research organization CERN, in 1991. It provided a more powerful and user-friendly interface than other Internet applications. The web supports hyperlinks, letting users browse from one document to another with a single click.
 <figure class="post-figure">
-<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/tim-berners-lee.jpg" alt="Tim Berners-Lee, father of the World Wide Web" width="1160" height="1600">
+<img src="/assets/img/2022-12-25-gioi-thieu-ve-internet/tim-berners-lee.jpg" alt="Tim Berners-Lee, father of the World Wide Web" width="870" height="1200">
 <figcaption>Photo: Enrique Dans, CC BY 2.0</figcaption>
 </figure>
 Over time, the web grew ever more sophisticated, supporting images, audio, video and interactive content. By the mid-1990s, companies like Yahoo and Amazon had started building profitable businesses on the web. In the 2000s, full-featured web-based applications like Yahoo Maps and Google Docs were created.

@@ -24,14 +24,14 @@ redirect_from:
 
 * Cho nước vào 2/3 phin và ủ khi nước ngấm hết vào cà phê.
 
-![Phin cà phê đang ủ với nước sôi đổ ngập hai phần ba](/assets/img/2022-10-27-cach-pha-ca-phe/b3.jpg){: width="899" height="1600" }
+![Phin cà phê đang ủ với nước sôi đổ ngập hai phần ba](/assets/img/2022-10-27-cach-pha-ca-phe/b3.jpg){: width="674" height="1200" }
 
 * Cho nước vào đầy phin cà phê và đợi nước nhỏ hết.
 
-![Phin đầy nước sôi đang nhỏ giọt xuống ly bên dưới](/assets/img/2022-10-27-cach-pha-ca-phe/b4.jpg){: width="899" height="1600" }
+![Phin đầy nước sôi đang nhỏ giọt xuống ly bên dưới](/assets/img/2022-10-27-cach-pha-ca-phe/b4.jpg){: width="674" height="1200" }
 
 * Thành quả là chúng ta có 1 ly cà phê nguyên chất, uống bao phê, bao tỉnh :D :D :D (/≧▽≦)/.
 
-![Ly cà phê phin đen sánh vừa pha xong đặt cạnh phin](/assets/img/2022-10-27-cach-pha-ca-phe/b5.jpg){: width="899" height="1600" }
+![Ly cà phê phin đen sánh vừa pha xong đặt cạnh phin](/assets/img/2022-10-27-cach-pha-ca-phe/b5.jpg){: width="674" height="1200" }
 
 * Chúng ta có thể thêm đường, sữa tươi, sữa đặc và thêm đá tùy sở thích.
