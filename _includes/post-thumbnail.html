@@ -8,8 +8,8 @@
   placeholder tile (a `post-thumb__placeholder` div — never an `img`, so a
   hidden twin can never sit in `document.images` undecodable and break the
   visual-regression settle check — painted light `#e8e8e8` by default and
-  dark `#262626` under `html[data-theme]` like the theme-toggle icons, #245)
-  for posts with no image. `post.content` here
+  dark `#262626` under `html[data-theme]` like the theme-toggle icons, #245;
+  the tile carries the site-initial "M" monogram, #435) for posts with no image. `post.content` here
   is the rendered HTML, so the body fallback splits on `<img` exactly like
   `_includes/site-sidebar.html` does.
 
@@ -64,7 +64,8 @@
 {%- comment -%}
   Placeholder items (#245) render one `post-thumb__placeholder` div in the
   fixed box instead of an `img`: the tile artwork lives in
-  `_sass/minima/custom/_list-thumbs.scss` as inline SVG backgrounds (light
+  `_sass/minima/custom/_list-thumbs.scss` as inline SVG backgrounds (a
+  site-initial "M" monogram, #435 — decorative only; light
   by default, dark under `html[data-theme]` with the OS
   `prefers-color-scheme` fallback for no-JS readers — the same layering as
   the theme-toggle icons). A second hidden lazy-loading img would never
