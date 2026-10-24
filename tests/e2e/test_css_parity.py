@@ -254,7 +254,14 @@ EXPECTED_VARIABLES = {
 # social icons render 8px corners where they were square — refresh those
 # visual baselines from the CI `visual-fresh-chromium` artifact; all other
 # baselines are pixel-identical.
-EXPECTED_CSS_SHA256 = "2b438727ff3dc1ea1e8b5f7ad5a3b1ee3f1b9990b9251445ec47048b2fdf5442"
+# #435 (branded placeholder): the two inlined placeholder tiles in the
+# `list-thumbs` partial swapped the generic picture-frame motif for the
+# site-initial "M" monogram in the same pinned palettes. Diffed old vs new
+# before bumping: the only changes are those three data-URI lines (light
+# tile, dark tile, and the no-JS dark repaint); no other rule moved. No
+# live list item renders the tile (every published post declares `image:`,
+# #310), so no visual baseline changes.
+EXPECTED_CSS_SHA256 = "664bc880292e9a5e61b05882fc61143415b9cc18db84f1268a295e4e3319a00e"
 
 # SHA-256 of the built `assets/css/syntax.css` companion from the same
 # sources (dev and production builds emit identical bytes). See the #275

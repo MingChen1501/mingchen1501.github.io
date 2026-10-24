@@ -65,15 +65,16 @@
 // #245: dark-aware placeholder. Placeholder items render one
 // `.post-thumb__placeholder` div (`post-thumbnail.html`) instead of an
 // `img`: the tile artwork below inlines the exact placeholder SVG bytes as
-// CSS backgrounds, so light mode paints pixel-identically to the old single
-// tile while the placeholder stays out of `document.images` entirely — a
+// CSS backgrounds — a site-initial "M" monogram (#435, decorative only,
+// never depicting post content) on the pinned neutral tile — so the
+// placeholder stays out of `document.images` entirely — a
 // second `display: none` + `loading="lazy"` img never decodes, which trips
 // the visual-regression settle check. The swap mirrors the theme-toggle
 // icons: the stored `html[data-theme]` choice wins, and the OS
 // `prefers-color-scheme` fallback covers no-JS readers. The fixed box below
 // matches the shared box above, so flipping themes never moves layout.
-$placeholder-light-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='90' viewBox='0 0 120 90' role='img' aria-label='No image'%3E %3Crect width='120' height='90' rx='4' fill='%23e8e8e8'/%3E %3Cg fill='none' stroke='%239a9a9a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E %3Crect x='38' y='24' width='44' height='34' rx='3'/%3E %3Ccircle cx='49' cy='34' r='4'/%3E %3Cpath d='M38 52 L54 38 L64 47 L72 41 L82 50 L82 58 L38 58 Z' fill='%239a9a9a' stroke='none'/%3E %3C/g%3E %3C/svg%3E");
-$placeholder-dark-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='90' viewBox='0 0 120 90' role='img' aria-label='No image'%3E %3Crect width='120' height='90' rx='4' fill='%23262626'/%3E %3Crect x='0.5' y='0.5' width='119' height='89' rx='3.5' fill='none' stroke='%233a3a3a'/%3E %3Cg fill='none' stroke='%238c8c8c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E %3Crect x='38' y='24' width='44' height='34' rx='3'/%3E %3Ccircle cx='49' cy='34' r='4'/%3E %3Cpath d='M38 52 L54 38 L64 47 L72 41 L82 50 L82 58 L38 58 Z' fill='%238c8c8c' stroke='none'/%3E %3C/g%3E %3C/svg%3E");
+$placeholder-light-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='90' viewBox='0 0 120 90' role='img' aria-label='No image'%3E %3Crect width='120' height='90' rx='4' fill='%23e8e8e8'/%3E %3Cpath d='M42 62 L42 28 L52 28 L60 40 L68 28 L78 28 L78 62 L70 62 L70 40 L60 54 L50 40 L50 62 Z' fill='%239a9a9a'/%3E %3C/svg%3E");
+$placeholder-dark-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='90' viewBox='0 0 120 90' role='img' aria-label='No image'%3E %3Crect width='120' height='90' rx='4' fill='%23262626'/%3E %3Crect x='0.5' y='0.5' width='119' height='89' rx='3.5' fill='none' stroke='%233a3a3a'/%3E %3Cpath d='M42 62 L42 28 L52 28 L60 40 L68 28 L78 28 L78 62 L70 62 L70 40 L60 54 L50 40 L50 62 Z' fill='%238c8c8c'/%3E %3C/svg%3E");
 
 .post-thumb__placeholder {
   display: block;
